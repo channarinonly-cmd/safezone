@@ -29258,6 +29258,89 @@ BUILDIN_FUNC(autostart)
 	return SCRIPT_CMD_SUCCESS;
 }
 
+BUILDIN_FUNC(autoattackstore)
+{
+	TBL_PC* sd;
+
+	if (!script_rid2sd(sd))
+		return SCRIPT_CMD_FAILURE;
+
+	if (sd->state.storage_flag && sd->state.storage_flag != 1) {
+		script_pushint(st, 0);
+		return SCRIPT_CMD_SUCCESS;
+	}
+
+	bool opened_storage = false;
+
+	if (sd->state.storage_flag != 1) {
+		sd->storage.max_amount = MIN_STORAGE;
+		sd->storage.max_amount += sd->bonus.addstoreitemcount;
+
+		if (sd->sc.getSCE(SC_AID_PERIOD_ADDSTOREITEMCOUNT))
+			sd->storage.max_amount += sd->sc.getSCE(SC_AID_PERIOD_ADDSTOREITEMCOUNT)->val1;
+
+		if (storage_storageopen(sd) == 1) {
+			script_pushint(st, 0);
+			return SCRIPT_CMD_SUCCESS;
+		}
+
+		opened_storage = true;
+	}
+
+	int stored = 0;
+
+	for (int i = MAX_INVENTORY - 1; i >= 0; i--) {
+		struct item& inv_item = sd->inventory.u.items_inventory[i];
+
+		if (!inv_item.amount || inv_item.nameid <= 0)
+			continue;
+
+		if (inv_item.equip != 0)
+			continue;
+
+		bool keep_item = false;
+
+		for (const auto& potion : sd->aa.autopotion) {
+			if (potion.is_active && potion.item_id == inv_item.nameid) {
+				keep_item = true;
+				break;
+			}
+		}
+
+		if (!keep_item) {
+			for (const auto& buff_item : sd->aa.autobuffitems) {
+				if (buff_item.is_active && buff_item.item_id == inv_item.nameid) {
+					keep_item = true;
+					break;
+				}
+			}
+		}
+
+		if (!keep_item && sd->aa.teleport.use_flywing && (inv_item.nameid == 601 || inv_item.nameid == 12323 || inv_item.nameid == 12887))
+			keep_item = true;
+
+		if (!keep_item && sd->aa.pickup_item_config == 1) {
+			keep_item = std::find(sd->aa.pickup_item_id.begin(), sd->aa.pickup_item_id.end(), inv_item.nameid) == sd->aa.pickup_item_id.end();
+		}
+
+		if (keep_item)
+			continue;
+
+		t_itemid nameid = inv_item.nameid;
+		int amount = inv_item.amount;
+		storage_storageadd(sd, &sd->storage, i, amount);
+
+		if (sd->inventory.u.items_inventory[i].nameid != nameid || sd->inventory.u.items_inventory[i].amount < amount)
+			stored += amount;
+	}
+
+	if (opened_storage)
+		storage_storageclose(sd);
+
+	script_pushint(st, stored);
+	return SCRIPT_CMD_SUCCESS;
+}
+
 /*
  * skillinfocheck(<type>,<skill_id>)
 */
@@ -30351,6 +30434,7 @@ struct script_function buildin_func[] = {
 	BUILDIN_DEF(clear2,""),
 	BUILDIN_DEF(sc_check,"i"),
 	BUILDIN_DEF(autostart,"i?"),
+	BUILDIN_DEF(autoattackstore,""),
 	BUILDIN_DEF(skillinfocheck,"ii"),
 	BUILDIN_DEF(getbountymaps,""),
 	

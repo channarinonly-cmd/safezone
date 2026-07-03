@@ -54,18 +54,59 @@ OnWeightCheck:
 	if(!sc_check(SC_AUTOATTACK)) end;
 
 	if (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90) {
-		autostart(false); // ปิดบอท
+		getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
+		@AI_return_timer = @ai_timer;
+		autostart(false);
 		if (#AI_self$ != "") {
 			pcstopfollow getCharID(3,#AI_self$);
 		}
-		warp "SavePoint", 0, 0; // วาร์ปกลับจุดเซฟล่าสุด
-		dispbottom "[Auto Attack] น้ำหนักเกิน 90% ระบบถูกยกเลิกและพาคุณกลับเมืองเรียบร้อยแล้ว!";
-		sc_end SC_STAMINA;
+		deltimer strnpcinfo(3)+"::OnWeightCheck";
+		warp "SavePoint", 0, 0;
+		dispbottom "[Auto Attack] Weight over 90%. Returning to save point to store loot.";
+		addtimer 2500, strnpcinfo(3)+"::OnAutoStore";
 		end;
 	}
 	addtimer 5000, strnpcinfo(3)+"::OnWeightCheck";
 	end;
 
+OnAutoStore:
+	if (@AI_return_map$ == "") end;
+
+	.@stored = autoattackstore();
+	if (.@stored <= 0) {
+		dispbottom "[Auto Attack] Storage failed or no loot was stored. Auto Attack stopped.";
+		set @AI_return_map$, "";
+		set @AI_return_x, 0;
+		set @AI_return_y, 0;
+		end;
+	}
+
+	dispbottom "[Auto Attack] Stored loot in storage. Returning to farm.";
+	warp @AI_return_map$, @AI_return_x, @AI_return_y;
+	addtimer 2000, strnpcinfo(3)+"::OnAutoReturnFarm";
+	end;
+
+OnAutoReturnFarm:
+	if (@AI_return_map$ == "") end;
+
+	if (getstatus(SC_STAMINA)) {
+		if(@AI_return_timer){
+			autostart(true,@AI_return_timer);
+		}else{
+			autostart(true);
+		}
+		deltimer strnpcinfo(3)+"::OnWeightCheck";
+		addtimer 5000, strnpcinfo(3)+"::OnWeightCheck";
+		dispbottom "[Auto Attack] Back to farming.";
+	} else {
+		dispbottom "[Auto Attack] Stamina is off. Auto Attack was not restarted.";
+	}
+
+	set @AI_return_map$, "";
+	set @AI_return_x, 0;
+	set @AI_return_y, 0;
+	set @AI_return_timer, 0;
+	end;
 OnMainAI:
 	if(!sc_check(SC_AUTOATTACK)){
 		// showscript "เปิดระบบ Auto Attack";
