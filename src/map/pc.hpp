@@ -436,6 +436,13 @@ struct s_autobuffitems {
 	t_tick delay;
 };
 
+struct s_autobuyitem {
+	bool is_active;
+	t_itemid item_id;
+	uint16 min_amount;
+	uint16 target_amount;
+};
+
 struct s_lastposition {
 	int map; // Previous map on Map Change
 	short x,y;
@@ -507,7 +514,9 @@ struct s_autoattack {
 	std::vector<s_autobuffskills> autobuffskills;
 	std::vector<s_autoattackskills> autoattackskills;
 	std::vector<s_autobuffitems> autobuffitems;
+	std::vector<s_autobuyitem> autobuyitems;
 	std::vector<t_itemid> pickup_item_id;
+	std::vector<t_itemid> storage_keep_item_id;
 	std::vector<uint16> flee_mobs;
 };
 

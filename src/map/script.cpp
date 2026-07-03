@@ -28483,6 +28483,36 @@ BUILDIN_FUNC(autoattackstrinfo)
 
 			script_pushstrcopy(st, buf.c_str());
 			break;
+
+		case 1002:
+			if(sd->aa.storage_keep_item_id.size()){
+				for(const auto &entry : sd->aa.storage_keep_item_id){
+					if( ( item_data = item_db.find(entry) ) == NULL )
+						continue;
+
+					safesnprintf(buffer, sizeof(buffer), "[%d] %s\n", item_data->nameid, item_data->name.c_str());
+					buf += buffer;
+				}
+			} else
+				buf += "- empty -";
+
+			script_pushstrcopy(st, buf.c_str());
+			break;
+
+		case 1003:
+			if(sd->aa.autobuyitems.size()){
+				for(const auto &entry : sd->aa.autobuyitems){
+					if( ( item_data = item_db.find(entry.item_id) ) == NULL )
+						continue;
+
+					safesnprintf(buffer, sizeof(buffer), "[%d] %s min %d -> buy to %d\n", item_data->nameid, item_data->name.c_str(), entry.min_amount, entry.target_amount);
+					buf += buffer;
+				}
+			} else
+				buf += "- empty -";
+
+			script_pushstrcopy(st, buf.c_str());
+			break;
 	}
 
 	return SCRIPT_CMD_SUCCESS;
@@ -28656,6 +28686,14 @@ case GET_INFO_FLEE_MOB:
 
 		case GET_INFO_FOCUS_MOB:
 			script_pushint(st, sd->aa.focus_mob);
+			break;
+
+		case 1002:
+			script_pushint(st, sd->aa.storage_keep_item_id.size());
+			break;
+
+		case 1003:
+			script_pushint(st, sd->aa.autobuyitems.size());
 			break;
 
 		default:
@@ -29117,6 +29155,71 @@ case GET_INFO_FLEE_MOB:
 					}
 				}
 			break;				
+
+			case 1002:
+				if(result.size() == 3){
+					t_itemid nameid = std::stoi(result.at(2));
+					int status = std::stoi(result.at(1));
+
+					if(status == -1){
+						sd->aa.storage_keep_item_id.clear();
+						break;
+					}
+
+					if( ( item_data = item_db.find(nameid) ) == NULL )
+						return SCRIPT_CMD_FAILURE;
+
+					if(!status){
+						sd->aa.storage_keep_item_id.erase(
+						std::remove_if(sd->aa.storage_keep_item_id.begin(), sd->aa.storage_keep_item_id.end(), [nameid](t_itemid const &v) {
+							return v == nameid;
+						}),
+						sd->aa.storage_keep_item_id.end());
+					} else if(!util::vector_exists(sd->aa.storage_keep_item_id, nameid)) {
+						sd->aa.storage_keep_item_id.push_back(nameid);
+					}
+				}
+				break;
+
+			case 1003:
+				if(result.size() == 5){
+					struct s_autobuyitem autobuyitem = {};
+					t_itemid nameid = std::stoi(result.at(2));
+					int status = std::stoi(result.at(1));
+					int min_amount = cap_value(std::stoi(result.at(3)), 0, 30000);
+					int target_amount = cap_value(std::stoi(result.at(4)), 0, 30000);
+
+					if(status == -1){
+						sd->aa.autobuyitems.clear();
+						break;
+					}
+
+					if( ( item_data = item_db.find(nameid) ) == NULL )
+						return SCRIPT_CMD_FAILURE;
+
+					if(!status || target_amount <= 0 || target_amount <= min_amount){
+						sd->aa.autobuyitems.erase(
+						std::remove_if(sd->aa.autobuyitems.begin(), sd->aa.autobuyitems.end(), [nameid](s_autobuyitem const &v) {
+							return v.item_id == nameid;
+						}),
+						sd->aa.autobuyitems.end());
+						break;
+					}
+
+					auto itAutobuyitem = std::find_if(sd->aa.autobuyitems.begin(), sd->aa.autobuyitems.end(), [nameid] ( s_autobuyitem const &v) {return v.item_id == nameid;});
+					if(itAutobuyitem != sd->aa.autobuyitems.end()){
+						itAutobuyitem->is_active = status;
+						itAutobuyitem->min_amount = min_amount;
+						itAutobuyitem->target_amount = target_amount;
+					} else {
+						autobuyitem.is_active = status;
+						autobuyitem.item_id = nameid;
+						autobuyitem.min_amount = min_amount;
+						autobuyitem.target_amount = target_amount;
+						sd->aa.autobuyitems.push_back(autobuyitem);
+					}
+				}
+				break;
 		}
 	}
 
@@ -29144,6 +29247,12 @@ BUILDIN_FUNC(autoattackclear)
 			break;
 		case GET_INFO_FLEE_MOB:
 			sd->aa.flee_mobs.clear();
+			break;
+		case 1002:
+			sd->aa.storage_keep_item_id.clear();
+			break;
+		case 1003:
+			sd->aa.autobuyitems.clear();
 			break;
 	}
 
@@ -29319,6 +29428,18 @@ BUILDIN_FUNC(autoattackstore)
 		if (!keep_item && sd->aa.teleport.use_flywing && (inv_item.nameid == 601 || inv_item.nameid == 12323 || inv_item.nameid == 12887))
 			keep_item = true;
 
+		if (!keep_item && std::find(sd->aa.storage_keep_item_id.begin(), sd->aa.storage_keep_item_id.end(), inv_item.nameid) != sd->aa.storage_keep_item_id.end())
+			keep_item = true;
+
+		if (!keep_item) {
+			for (const auto& buy_item : sd->aa.autobuyitems) {
+				if (buy_item.is_active && buy_item.item_id == inv_item.nameid) {
+					keep_item = true;
+					break;
+				}
+			}
+		}
+
 		if (!keep_item && sd->aa.pickup_item_config == 1) {
 			keep_item = std::find(sd->aa.pickup_item_id.begin(), sd->aa.pickup_item_id.end(), inv_item.nameid) == sd->aa.pickup_item_id.end();
 		}
@@ -29338,6 +29459,209 @@ BUILDIN_FUNC(autoattackstore)
 		storage_storageclose(sd);
 
 	script_pushint(st, stored);
+	return SCRIPT_CMD_SUCCESS;
+}
+
+static int autoattack_mapmob_sub(struct block_list* bl, va_list ap)
+{
+	nullpo_ret(bl);
+
+	mob_data* md = (mob_data*)bl;
+	std::vector<int>* mob_ids = va_arg(ap, std::vector<int>*);
+
+	if (!md || !md->mob_id || !md->db)
+		return 0;
+
+	if (std::find(mob_ids->begin(), mob_ids->end(), md->mob_id) == mob_ids->end())
+		mob_ids->push_back(md->mob_id);
+
+	return 0;
+}
+
+static std::vector<int> autoattack_menu_ids(map_session_data* sd, int type)
+{
+	std::vector<int> ids;
+
+	if (!sd)
+		return ids;
+
+	switch (type) {
+		case 0:
+			map_foreachinmap(autoattack_mapmob_sub, sd->bl.m, BL_MOB, &ids);
+			break;
+		case 1:
+		case 2:
+			for (int i = 0; i < MAX_SKILL; i++) {
+				if (sd->status.skill[i].id <= 0 || sd->status.skill[i].lv <= 0)
+					continue;
+
+				std::shared_ptr<s_skill_db> skill = skill_db.find(sd->status.skill[i].id);
+				if (!skill)
+					continue;
+
+				if ((type == 1 && (skill->ai_skill_type&SKILL_TYPE_ATTACK)) || (type == 2 && (skill->ai_skill_type&SKILL_TYPE_SUPPORT)))
+					ids.push_back(skill->nameid);
+			}
+			break;
+		case 3:
+		case 4:
+		case 5:
+			for (int i = 0; i < MAX_INVENTORY; i++) {
+				t_itemid nameid = sd->inventory.u.items_inventory[i].nameid;
+				if (nameid <= 0 || std::find(ids.begin(), ids.end(), nameid) != ids.end())
+					continue;
+
+				std::shared_ptr<item_data> item = item_db.find(nameid);
+				if (!item)
+					continue;
+
+				if (type == 3 && item->type != IT_HEALING)
+					continue;
+
+				if (type == 4) {
+					bool is_buff = false;
+					for (auto &entry : ai_item_buff) {
+						if (entry.itemid == nameid) {
+							is_buff = true;
+							break;
+						}
+					}
+					if (!is_buff)
+						continue;
+				}
+
+				ids.push_back(nameid);
+			}
+			break;
+	}
+
+	return ids;
+}
+
+static int autoattack_count_item(map_session_data* sd, t_itemid nameid)
+{
+	int amount = 0;
+
+	for (int i = 0; i < MAX_INVENTORY; i++) {
+		if (sd->inventory.u.items_inventory[i].nameid == nameid)
+			amount += sd->inventory.u.items_inventory[i].amount;
+	}
+
+	return amount;
+}
+
+BUILDIN_FUNC(autoattackmenulist)
+{
+	TBL_PC* sd;
+	std::string menu = "";
+
+	if (!script_rid2sd(sd))
+		return SCRIPT_CMD_FAILURE;
+
+	int type = script_getnum(st, 2);
+	std::vector<int> ids = autoattack_menu_ids(sd, type);
+	int count = 0;
+
+	for (int id : ids) {
+		if (count++ >= 80)
+			break;
+
+		char buffer[CHAT_SIZE_MAX] = { 0 };
+
+		if (type == 0) {
+			std::shared_ptr<s_mob_db> mob = mob_db.find(id);
+			if (!mob)
+				continue;
+			safesnprintf(buffer, sizeof(buffer), "%d - %s Lv.%d:", mob->id, mob->name.c_str(), mob->lv);
+		} else if (type == 1 || type == 2) {
+			std::shared_ptr<s_skill_db> skill = skill_db.find(id);
+			if (!skill)
+				continue;
+			int lv = pc_checkskill(sd, id);
+			safesnprintf(buffer, sizeof(buffer), "%d - %s Lv.%d:", id, skill->desc, lv);
+		} else {
+			std::shared_ptr<item_data> item = item_db.find(id);
+			if (!item)
+				continue;
+			safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item->name.c_str(), autoattack_count_item(sd, id));
+		}
+
+		menu += buffer;
+	}
+
+	menu += "Manual ID / Back";
+	script_pushstrcopy(st, menu.c_str());
+	return SCRIPT_CMD_SUCCESS;
+}
+
+BUILDIN_FUNC(autoattackmenuid)
+{
+	TBL_PC* sd;
+
+	if (!script_rid2sd(sd))
+		return SCRIPT_CMD_FAILURE;
+
+	int type = script_getnum(st, 2);
+	int index = script_getnum(st, 3);
+	std::vector<int> ids = autoattack_menu_ids(sd, type);
+
+	if (index < 1 || index > (int)ids.size() || index > 80) {
+		script_pushint(st, 0);
+		return SCRIPT_CMD_SUCCESS;
+	}
+
+	script_pushint(st, ids.at(index - 1));
+	return SCRIPT_CMD_SUCCESS;
+}
+
+BUILDIN_FUNC(autoattackbuy)
+{
+	TBL_PC* sd;
+
+	if (!script_rid2sd(sd))
+		return SCRIPT_CMD_FAILURE;
+
+	int bought = 0;
+
+	for (auto &entry : sd->aa.autobuyitems) {
+		if (!entry.is_active || entry.item_id <= 0 || entry.target_amount <= 0)
+			continue;
+
+		int current = autoattack_count_item(sd, entry.item_id);
+		if (current >= entry.min_amount)
+			continue;
+
+		std::shared_ptr<item_data> item = item_db.find(entry.item_id);
+		if (!item || item->value_buy <= 0)
+			continue;
+
+		int need = entry.target_amount - current;
+		if (need <= 0)
+			continue;
+
+		int can_afford = sd->status.zeny / item->value_buy;
+		need = cap_value(need, 0, can_afford);
+		if (need <= 0)
+			continue;
+
+		int total_cost = (int)cap_value((int64)item->value_buy * need, 0, INT_MAX);
+
+		struct item tmp_item = {};
+		tmp_item.nameid = entry.item_id;
+		tmp_item.identify = 1;
+
+		if (pc_payzeny(sd, total_cost, LOG_TYPE_NPC))
+			continue;
+
+		if (pc_additem(sd, &tmp_item, need, LOG_TYPE_NPC)) {
+			pc_getzeny(sd, total_cost, LOG_TYPE_NPC);
+			continue;
+		}
+
+		bought += need;
+	}
+
+	script_pushint(st, bought);
 	return SCRIPT_CMD_SUCCESS;
 }
 
@@ -30435,6 +30759,9 @@ struct script_function buildin_func[] = {
 	BUILDIN_DEF(sc_check,"i"),
 	BUILDIN_DEF(autostart,"i?"),
 	BUILDIN_DEF(autoattackstore,""),
+	BUILDIN_DEF(autoattackbuy,""),
+	BUILDIN_DEF(autoattackmenulist,"i"),
+	BUILDIN_DEF(autoattackmenuid,"ii"),
 	BUILDIN_DEF(skillinfocheck,"ii"),
 	BUILDIN_DEF(getbountymaps,""),
 	

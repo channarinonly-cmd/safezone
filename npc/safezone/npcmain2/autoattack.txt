@@ -73,6 +73,7 @@ OnAutoStore:
 	if (@AI_return_map$ == "") end;
 
 	.@stored = autoattackstore();
+	.@bought = autoattackbuy();
 	if (.@stored <= 0) {
 		dispbottom "[Auto Attack] Storage failed or no loot was stored. Auto Attack stopped.";
 		set @AI_return_map$, "";
@@ -81,6 +82,9 @@ OnAutoStore:
 		end;
 	}
 
+	if (.@bought > 0) {
+		dispbottom "[Auto Attack] Bought supplies: " + .@bought + " item(s).";
+	}
 	dispbottom "[Auto Attack] Stored loot in storage. Returning to farm.";
 	warp @AI_return_map$, @AI_return_x, @AI_return_y;
 	addtimer 2000, strnpcinfo(3)+"::OnAutoReturnFarm";
@@ -202,6 +206,8 @@ config_menu:
 			" ^ff0000~^000000 วาร์ป/วิง",teleport_menu,
 			" ^ff0000~^000000 กำหนดเป้าหมาย",monsters_menu,
 			" ^ff0000~^000000 กำหนดการเก็บไอเทม",pickupitems_menu,
+			" ^ff0000~^000000 Keep From Storage",storage_keep_menu,
+			" ^ff0000~^000000 Auto Buy",autobuy_menu,
 			" ^ff0000~^000000 ล้างการกำหนดเป้าหมาย",reset_mob_menu,
 			" ^ff0000~^000000 ล้างการกำหนดไอเทม",reset_item_menu,
 			" ^ff0000~^000000 หลบหนีมอน",flee_mob_menu;
@@ -559,6 +565,82 @@ pickupitems_menu:
 	goto(pickupitems_menu);
 	end;
 
+
+storage_keep_menu:
+	clear2();
+	.@menu$ = "[^FF0000*^000000 ^2f00ffKeep From Storage^000000 ^FF0000*^000000]";
+	mes .@menu$;
+	mes "Items in this list will stay in bag when Auto Attack stores loot.";
+	mes autoattackstrinfo(1002);
+
+	.@keep_menu = select(" Add from bag list"," Add by item ID"," Remove by item ID"," Clear list"," Back");
+	switch(.@keep_menu){
+		case 1:
+			.@choice = select(autoattackmenulist(5));
+			.@item_id = autoattackmenuid(5,.@choice);
+			if(.@item_id <= 0) goto(storage_keep_menu);
+			autoattackset("1002;1;" + .@item_id);
+			break;
+		case 2:
+			input .@item_id;
+			if(.@item_id > 0) autoattackset("1002;1;" + .@item_id);
+			break;
+		case 3:
+			input .@item_id;
+			if(.@item_id > 0) autoattackset("1002;0;" + .@item_id);
+			break;
+		case 4:
+			autoattackset("1002;-1;0");
+			break;
+		default:
+			goto(config_menu);
+	}
+	goto(storage_keep_menu);
+	end;
+
+autobuy_menu:
+	clear2();
+	.@menu$ = "[^FF0000*^000000 ^2f00ffAuto Buy^000000 ^FF0000*^000000]";
+	mes .@menu$;
+	mes "When Auto Attack returns to save point, it can buy supplies.";
+	mes autoattackstrinfo(1003);
+
+	.@buy_menu = select(" Add from bag list"," Add by item ID"," Remove by item ID"," Clear list"," Back");
+	switch(.@buy_menu){
+		case 1:
+			.@choice = select(autoattackmenulist(5));
+			.@item_id = autoattackmenuid(5,.@choice);
+			if(.@item_id <= 0) goto(autobuy_menu);
+			goto(autobuy_amount_menu);
+		case 2:
+			input .@item_id;
+			if(.@item_id <= 0) goto(autobuy_menu);
+			goto(autobuy_amount_menu);
+		case 3:
+			input .@item_id;
+			if(.@item_id > 0) autoattackset("1003;0;" + .@item_id + ";0;0");
+			break;
+		case 4:
+			autoattackset("1003;-1;0;0;0");
+			break;
+		default:
+			goto(config_menu);
+	}
+	goto(autobuy_menu);
+	end;
+
+autobuy_amount_menu:
+	clear2();
+	mes .@menu$;
+	mes "Buy item ID: " + .@item_id;
+	mes "Buy when amount is lower than:";
+	input .@min_amount,0,30000;
+	mes "Buy until amount reaches:";
+	input .@target_amount,1,30000;
+	if(.@target_amount <= .@min_amount) goto(autobuy_menu);
+	autoattackset("1003;1;" + .@item_id + ";" + .@min_amount + ";" + .@target_amount);
+	goto(autobuy_menu);
+	end;
 monsters_menu:
 	clear2();
 	.@menu$ = "[^FF0000•^000000 ^2f00ffกำหนดเป้าหมาย^000000 ^FF0000•^000000]";
@@ -571,9 +653,13 @@ monsters_menu:
 		case 1:
 			clear();
 			mes .@menu$;
-			mes "ระบุไอดีมอนสเตอร์ (สูงสุด "+getbattleflag("autoattack_max_moblist")+")";
-			mes autoattackstrinfo(GET_INFO_MOB,-1);
-			input .@mob_id;
+			mes "Select monster from current map.";
+			.@choice = select(autoattackmenulist(0));
+			.@mob_id = autoattackmenuid(0,.@choice);
+			if(.@mob_id <= 0) {
+				mes "Monster ID:";
+				input .@mob_id;
+			}
 			if(.@mob_id <= 0 )
 				goto(monsters_menu);
 
@@ -860,10 +946,13 @@ potion_menu:
 	if( .@potion_menu == 1 ){
 		clear();
 		mes .@menu$;
-		mes autoattackstrinfo(GET_INFO_POTION,-1);
-		mes "โปรดระบุเลขไอดียาปั้ม";
-
-		input .@potion_id;
+		mes "Select potion item.";
+		.@choice = select(autoattackmenulist(3));
+		.@potion_id = autoattackmenuid(3,.@choice);
+		if(.@potion_id <= 0) {
+			mes "Item ID:";
+			input .@potion_id;
+		}
 
 		do {
 			clear();
@@ -988,18 +1077,19 @@ buffskills_menu:
 	if( .@buffskills_menu < 3 ){
 		clear();
 		mes .@menu$;
-		mes "ระบุเลขสกิลที่ต้องการ (ID)";
-		mes "________________________";
-		// ดึงรายการสกิลที่ตัวละครมี
-		mes autoattackstrinfo(GET_INFO_SUPPORT_SKILL,-1);
-
-		input .@buff_skillid;
+		mes "Select support skill.";
+		.@choice = select(autoattackmenulist(2));
+		.@buff_skillid = autoattackmenuid(2,.@choice);
+		if(.@buff_skillid <= 0) {
+			mes "Skill ID:";
+			input .@buff_skillid;
+		}
 		if(.@buff_skillid < 1) goto(buffskills_menu);
 
 		if(!skillinfocheck(SKILL_INFO_SUPPORT,.@buff_skillid)){
 			clear();
 			mes .@menu$;
-			mes "^FF0000คุณไม่มีสกิลไอดี "+.@buff_skillid+" หรือไม่ใช่สกิลบัฟ^000000";
+			mes "^FF0000Invalid support skill.^000000";
 			next;
 			goto(buffskills_menu);
 		}
@@ -1007,7 +1097,7 @@ buffskills_menu:
 		do{
 			clear();
 			mes .@menu$;
-			mes "เลือกเลเวลของสกิลที่ต้องการใช้งาน";
+			mes "Select skill level.";
 			mes "[" + skillstrinfo(.@buff_skillid) + "]" + " - Max lv : " + getskilllv(.@buff_skillid);
 			input .@buff_skilllv;
 		} while(.@buff_skilllv < 1 || .@buff_skilllv > getskilllv(.@buff_skillid));
@@ -1060,18 +1150,19 @@ attackskills_menu:
 	if( .@attackskills_menu < 3 ){
 		clear();
 		mes .@menu$;
-		mes "ระบุเลขสกิลไอดีที่ต้องการ";
-		mes "________________________";
-		// ดึงรายการสกิลโจมตีที่ตัวละครมี
-		mes autoattackstrinfo(GET_INFO_ATTACK_SKILL,-1);
-
-		input .@attack_skillid;
+		mes "Select attack skill.";
+		.@choice = select(autoattackmenulist(1));
+		.@attack_skillid = autoattackmenuid(1,.@choice);
+		if(.@attack_skillid <= 0) {
+			mes "Skill ID:";
+			input .@attack_skillid;
+		}
 		if(.@attack_skillid < 1) goto(attackskills_menu);
 
 		if(!skillinfocheck(SKILL_INFO_ATTACK,.@attack_skillid)){
 			clear();
 			mes .@menu$;
-			mes "^FF0000คุณไม่มีสกิลไอดี "+.@attack_skillid+" หรือไม่ใช่สกิลโจมตี^000000";
+			mes "^FF0000Invalid attack skill.^000000";
 			next;
 			goto(attackskills_menu);
 		}
@@ -1079,7 +1170,7 @@ attackskills_menu:
 		do{
 			clear();
 			mes .@menu$;
-			mes "เลือกเลเวลของสกิลที่ต้องการใช้งาน";
+			mes "Select skill level.";
 			mes "[" + skillstrinfo(.@attack_skillid) + "]" + " - Max lv : " + getskilllv(.@attack_skillid);
 			input .@attack_skilllv;
 		} while(.@attack_skilllv < 1 || .@attack_skilllv > getskilllv(.@attack_skillid));
@@ -1087,7 +1178,6 @@ attackskills_menu:
 		autoattackset("4;1;"+ .@attack_skillid + ";" + .@attack_skilllv);
 		goto(attackskills_menu);
 	}
-
 	if(.@attackskills_menu == 3) {
 		if(autoattackintinfo(GET_INFO_ATTACK_SKILL) == 0){
 			mes .@menu$;
@@ -1132,10 +1222,13 @@ buffitems_menu:
 
 	.@buffitems_menu = select(" ^ff0000~^000000 เพิ่ม / แก้ไขไอเทมบัฟ"," ^ff0000~^000000 ลบไอเทมบัฟ"," ^ff0000~^000000 ยกเลิก");
 	if( .@buffitems_menu == 1 ){
-		mes "เลือกไอเทมที่ต้องการใช้งาน";
-		mes autoattackstrinfo(GET_INFO_BUFF_ITEM,-1);
-
-		input .@buffitem_id;
+		mes "Select buff item.";
+		.@choice = select(autoattackmenulist(4));
+		.@buffitem_id = autoattackmenuid(4,.@choice);
+		if(.@buffitem_id <= 0) {
+			mes "Item ID:";
+			input .@buffitem_id;
+		}
 		if(.@buffitem_id <= 0 )
 			goto(buffitems_menu);
 

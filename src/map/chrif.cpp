@@ -424,6 +424,22 @@ void chrif_aa_save(map_session_data* sd){
 			}
 		}
 	}
+	//insert aa_items - 3 - storage keep item_id
+	if(sd->aa.storage_keep_item_id.size()){
+		for (int i=0; i<sd->aa.storage_keep_item_id.size(); i++){
+			if( SQL_ERROR == Sql_Query( mmysql_handle, "INSERT INTO `aa_items` (`char_id`,`type`,`item_id`) VALUES (%d, 3, %d)", sd->status.char_id, sd->aa.storage_keep_item_id.at(i) ) ){
+				Sql_ShowDebug(mmysql_handle);
+			}
+		}
+	}
+	//insert aa_items - 4 - auto buy items (min_hp=min amount, min_sp=target amount)
+	if(sd->aa.autobuyitems.size()){
+		for(auto &itAutobuyitem : sd->aa.autobuyitems){
+			if( SQL_ERROR == Sql_Query( mmysql_handle, "INSERT INTO `aa_items` (`char_id`,`type`,`item_id`,`min_hp`,`min_sp`) VALUES (%d, 4, %d, %d, %d)", sd->status.char_id, itAutobuyitem.item_id, itAutobuyitem.min_amount, itAutobuyitem.target_amount ) ){
+				Sql_ShowDebug(mmysql_handle);
+			}
+		}
+	}
 
 	//clean aa_mobs
 	if( SQL_ERROR == Sql_Query( mmysql_handle, "DELETE FROM `aa_mobs` WHERE `char_id` = %d", sd->status.char_id ) ){
@@ -2307,4 +2323,3 @@ int chrif_gepard_save_report(map_session_data* sd, const char* report_str)
 }
 
 // (^~_~^) Gepard Shield End
-

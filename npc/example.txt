@@ -97,6 +97,13 @@ CREATE TABLE IF NOT EXISTS `aa_items` (
   UNIQUE KEY `char_id` (`char_id`,`type`,`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=tis620;
 
+-- aa_items type:
+-- 0 = auto buff item
+-- 1 = auto potion (min_hp/min_sp = HP/SP percent)
+-- 2 = pickup item list
+-- 3 = keep from storage list
+-- 4 = auto buy item (min_hp = buy below amount, min_sp = buy up to amount)
+
 CREATE TABLE IF NOT EXISTS `aa_mobs` (
   `char_id` int(10) unsigned NOT NULL,
   `mob_id` int(10) unsigned NOT NULL,
@@ -236,5 +243,4 @@ OnInit:
 +- 1.0 เริ่มระบบ Vending Cash
 +- 1.1 เพิ่มตัวตรวจสอบ Cash เมื่อทำการซื้อขาย
 +-- End of Log --
-
 

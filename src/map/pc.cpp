@@ -2380,6 +2380,7 @@ void pc_aa_load(map_session_data* sd)
 
 	struct s_autobuffitems autobuffitems = {};
 	struct s_autopotion autopotion = {};
+	struct s_autobuyitem autobuyitem = {};
 	struct s_autoheal autoheal = {};
 	struct s_autobuffskills autobuffskills = {};
 	struct s_autoattackskills autoattackskills = {};
@@ -2387,6 +2388,7 @@ void pc_aa_load(map_session_data* sd)
 	if(Sql_NumRows(mmysql_handle)){
 		while (SQL_SUCCESS == Sql_NextRow(mmysql_handle)) {
 			char* data;
+			t_itemid nameid = 0;
 			Sql_GetData(mmysql_handle, 0, &data, NULL); type = atoi(data);
 
 			switch(type){
@@ -2408,9 +2410,21 @@ void pc_aa_load(map_session_data* sd)
 					break;
 
 				case 2:
-					t_itemid nameid = 0;
 					Sql_GetData(mmysql_handle, 1, &data, NULL); nameid = atoi(data);
 					sd->aa.pickup_item_id.push_back(nameid);
+					break;
+
+				case 3:
+					Sql_GetData(mmysql_handle, 1, &data, NULL); nameid = atoi(data);
+					sd->aa.storage_keep_item_id.push_back(nameid);
+					break;
+
+				case 4:
+					autobuyitem.is_active = 1;
+					Sql_GetData(mmysql_handle, 1, &data, NULL); autobuyitem.item_id = atoi(data);
+					Sql_GetData(mmysql_handle, 2, &data, NULL); autobuyitem.min_amount = atoi(data);
+					Sql_GetData(mmysql_handle, 3, &data, NULL); autobuyitem.target_amount = atoi(data);
+					sd->aa.autobuyitems.push_back(autobuyitem);
 					break;
 			}
 		}
