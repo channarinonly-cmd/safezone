@@ -1,0 +1,345 @@
+// ===================================================
+// ระบบรีออฟชั่น (สุ่มทับออฟชั่นเดิม ในช่อง 2-5 อิงจากตารางสุ่มใหม่)
+// เพิ่มเงื่อนไขใช้ Item 3407 ตามจำนวน Slot + ปุ่มยืนยันก่อนรีออฟชั่น
+// ===================================================
+morocc,106,54,3	script	รีออฟชั่น#1	643,{
+	.@nameopts$ = "รีออฟชั่น";
+	.@req_zeny = 35000;
+	.@fail_rate = 35; 
+	.@fail_type = 2;  
+
+	disable_items;
+	if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 3000)) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "^9400D3ช่องเก็บของหรือน้ำหนักเกิน! เอาไปเก็บก่อน!^000000";
+		close;
+	}
+
+	setarray .@eq[1], EQI_HEAD_TOP, EQI_ARMOR, EQI_HAND_R, EQI_HAND_L, EQI_GARMENT, EQI_SHOES;
+	setarray .@eq_name$[1], "หมวก", "เสื้อ", "อาวุธ", "โล่/อาวุธซ้าย", "ผ้าคลุม", "รองเท้า";
+	
+	.@menu$ = "";
+	.@valid_cnt = 0;
+	for(.@i = 1; .@i <= 6; .@i++) {
+		if(getequipisequiped(.@eq[.@i])) {
+			if (.@eq[.@i] == EQI_HAND_L && getequipid(EQI_HAND_R) == getequipid(EQI_HAND_L)) {
+				continue; 
+			}
+			.@valid_cnt++;
+			.@valid_part[.@valid_cnt] = .@eq[.@i]; 
+			.@menu$ += .@eq_name$[.@i] + " -> [ ^0000FF" + getequipname(.@eq[.@i]) + "^000000 ]:";
+		}
+	}
+	
+	if (.@valid_cnt == 0) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "คุณไม่ได้สวมใส่อุปกรณ์ที่สามารถทำออฟชั่นได้เลย!";
+		close;
+	}
+	
+	.@select_idx = select(.@menu$);
+	.@part = .@valid_part[.@select_idx]; 
+
+	// หินวัตถุดิบเดิมแยกตามส่วน
+	switch(.@part) {
+		case EQI_HEAD_TOP: .@req_item = 35090; .@req_amt = 5; break;
+		case EQI_ARMOR:    .@req_item = 35091; .@req_amt = 5; break;
+		case EQI_HAND_R:   .@req_item = 35092; .@req_amt = 5; break;
+		case EQI_HAND_L:   .@req_item = 35093; .@req_amt = 5; break;
+		case EQI_GARMENT:  .@req_item = 35094; .@req_amt = 5; break;
+		case EQI_SHOES:    .@req_item = 35095; .@req_amt = 5; break;
+	}
+
+	.@equip_uid$ = getequipuniqueid(.@part);
+	.@equip_id   = getequipid(.@part);
+	.@refine_lv = getequiprefinerycnt(.@part);
+	
+	.@item_type = getiteminfo(.@equip_id, ITEMINFO_TYPE);
+	.@grp = 0;
+
+	if (.@item_type == IT_WEAPON) {
+		.@w_type = getiteminfo(.@equip_id, ITEMINFO_SUBTYPE);
+		switch(.@w_type) {
+			case W_DAGGER: .@grp = 901; break;
+			case W_BOW: .@grp = 902; break;
+			case W_STAFF: .@grp = 903; break;
+			case W_2HSTAFF: .@grp = 904; break;
+			case W_1HSWORD: .@grp = 905; break;
+			case W_2HSWORD: .@grp = 906; break;
+			case W_MACE: case W_2HMACE: .@grp = 907; break;
+			case W_KATAR: .@grp = 908; break;
+			case W_1HSPEAR: .@grp = 909; break;
+			case W_2HSPEAR: .@grp = 910; break;
+			case W_1HAXE: case W_2HAXE: .@grp = 911; break;
+			case W_MUSICAL: .@grp = 912; break;
+			case W_WHIP: .@grp = 913; break;
+			case W_BOOK: .@grp = 914; break;
+			case W_KNUCKLE: .@grp = 915; break;
+		}
+	} else {
+		switch(.@part) {
+			case EQI_GARMENT: .@grp = 916; break;
+			case EQI_ARMOR: .@grp = 917; break;
+			case EQI_HAND_L: .@grp = 918; break;
+			case EQI_SHOES: .@grp = 919; break;
+			case EQI_HEAD_TOP: .@grp = 920; break;
+		}
+	}
+
+	if (.@grp == 0) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "ไม่พบตารางออฟชั่นสำหรับอุปกรณ์ชิ้นนี้!";
+		close;
+	}
+
+	deletearray .@o_id; deletearray .@o_min; deletearray .@o_max; deletearray .@o_rate; deletearray .@o_name$;
+	if (.@grp == 901) { 
+		setarray .@o_id[0], 311, 321, 323, 302, 322, 324, 326, 301, 319, 328, 327;
+		setarray .@o_min[0], 1, 1, 2, 1, 1, 1, 1, 3, 1, 1, 1;
+		setarray .@o_max[0], 2, 10, 20, 10, 5, 15, 10, 15, 5, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 1000, 2000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "ATK", "CRI", "ATK %", "ASPD %", "CRI DMG %", "Damage All Size %", "Damage Boss %", "Variable Cast Time -%", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 902) { 
+		setarray .@o_id[0], 316, 312, 317, 321, 322, 301, 332, 325, 329, 328, 327;
+		setarray .@o_min[0], 2, 1, 1, 2, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 20, 2, 10, 20, 5, 10, 10, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 500, 100;
+		setarray .@o_name$[0], "LUK", "AGI", "FLEE", "ATK", "ASPD %", "Damage Boss %", "SP Recovery %", "Long Range ATK %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 903) { 
+		setarray .@o_id[0], 314, 315, 313, 335, 303, 320, 333, 319, 334, 345, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 500, 1, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 2, 6, 5000, 5, 5, 4, 5, 6, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 3000, 500, 100;
+		setarray .@o_name$[0], "INT", "DEX", "VIT", "Max Weight", "MATK %", "Delay -%", "Resist Demi-Human/Player %", "Variable Cast Time -%", "Heal Power %", "Jupitel Thunder %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 904) { 
+		setarray .@o_id[0], 314, 315, 313, 305, 303, 320, 333, 319, 334, 346, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 40, 1, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 2, 4, 400, 7, 10, 7, 10, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 3000, 500, 100;
+		setarray .@o_name$[0], "INT", "DEX", "VIT", "MaxHP", "MATK %", "Delay -%", "Resist Demi-Human/Player %", "Variable Cast Time -%", "Heal Power %", "Storm Gust %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 905) { 
+		setarray .@o_id[0], 311, 312, 305, 321, 302, 349, 350, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 40, 1, 1, 9, 1, 1, 1, 1, 1, 1;
+		setarray .@o_max[0], 2, 2, 400, 10, 10, 30, 2, 5, 10, 10, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 1000, 1000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "MaxHP", "ATK", "ATK %", "HP Gain on Kill", "SP Gain on Kill", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 906) { 
+		setarray .@o_id[0], 311, 313, 318, 301, 323, 302, 349, 350, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 3, 2, 1, 9, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 2, 2, 15, 20, 20, 10, 30, 2, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 2000, 5000, 1000, 1000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "VIT", "HIT", "Damage Boss %", "CRI", "ATK %", "HP Gain on Kill", "SP Gain on Kill", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 13;
+	} else if (.@grp == 907) { 
+		setarray .@o_id[0], 311, 312, 318, 317, 301, 302, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 2, 2, 3, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 2, 2, 20, 20, 20, 10, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "HIT", "FLEE", "Damage Boss %", "ATK %", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 908) { 
+		setarray .@o_id[0], 311, 312, 323, 317, 324, 301, 302, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 2, 1, 3, 3, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 2, 2, 20, 10, 15, 20, 10, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "CRI", "FLEE", "CRI DMG %", "Damage Boss %", "ATK %", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 909) { 
+		setarray .@o_id[0], 311, 312, 318, 325, 322, 332, 349, 350, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 1, 1, 1, 9, 1, 1, 1, 1, 1;
+		setarray .@o_max[0], 3, 3, 15, 15, 4, 10, 30, 2, 10, 10, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 2000, 2000, 1000, 1000, 1000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "HIT", "Long Range ATK %", "ASPD %", "SP Recovery %", "HP Gain on Kill", "SP Gain on Kill", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 910) { 
+		setarray .@o_id[0], 311, 312, 318, 325, 322, 332, 349, 350, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 1, 1, 1, 9, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 3, 15, 15, 4, 10, 30, 2, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 2000, 2000, 1000, 1000, 1000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "HIT", "Long Range ATK %", "ASPD %", "SP Recovery %", "HP Gain on Kill", "SP Gain on Kill", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 911) { 
+		setarray .@o_id[0], 311, 317, 320, 329, 326, 322, 349, 306, 350, 347, 348, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 3, 1, 1, 9, 20, 1, 1, 1, 1, 1;
+		setarray .@o_max[0], 2, 15, 10, 15, 10, 5, 30, 200, 2, 15, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 2000, 2000, 2000, 2000, 1000, 1000, 1000, 3000, 3000, 500, 100;
+		setarray .@o_name$[0], "STR", "FLEE", "Delay -%", "Damage Demi-Human/Player %", "Damage All Size %", "ASPD %", "HP Gain on Kill", "MaxSP", "SP Gain on Kill", "Cart Revolution %", "Mammonite %", "EXP %", "Drop Rate %";
+		.@pool_size = 13;
+	} else if (.@grp == 912 || .@grp == 913) { 
+		setarray .@o_id[0], 316, 312, 317, 321, 322, 301, 332, 325, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 2, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 3, 10, 20, 5, 10, 10, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 500, 100;
+		setarray .@o_name$[0], "LUK", "AGI", "FLEE", "ATK", "ASPD %", "Damage Boss %", "SP Recovery %", "Long Range ATK %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 914) { 
+		setarray .@o_id[0], 314, 315, 313, 335, 303, 320, 333, 319, 334, 351, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 500, 1, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 3, 6, 5000, 10, 5, 5, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 3000, 500, 100;
+		setarray .@o_name$[0], "INT", "DEX", "VIT", "Max Weight", "MATK %", "Delay -%", "Resist Demi-Human/Player %", "Variable Cast Time -%", "Heal Power %", "Magnus Exorcismus %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 915) { 
+		setarray .@o_id[0], 311, 312, 318, 317, 301, 302, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 2, 3, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 3, 20, 20, 20, 10, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "HIT", "FLEE", "Damage Boss %", "ATK %", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 916) { 
+		setarray .@o_id[0], 317, 305, 321, 322, 320, 319, 331, 332, 335, 328, 327;
+		setarray .@o_min[0], -15, -400, -10, 1, -5, -5, -10, -10, -5000, -7, -5;
+		setarray .@o_max[0], 15, 400, 10, 5, 5, 5, 10, 10, 5000, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 1000, 1000, 2000, 2000, 2000, 3000, 500, 100;
+		setarray .@o_name$[0], "FLEE", "MaxHP", "ATK", "ASPD %", "Delay -%", "Variable Cast Time -%", "Damage/MDMG Demi-Human/Player %", "SP Recovery %", "Max Weight", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 917) { 
+		setarray .@o_id[0], 317, 305, 308, 303, 302, 319, 333, 304, 335, 328, 327;
+		setarray .@o_min[0], 1, 40, 1, 1, 1, 1, 1, 1, 500, 1, 1;
+		setarray .@o_max[0], 15, 400, 10, 5, 5, 5, 5, 10, 5000, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 1000, 1000, 2000, 2000, 2000, 3000, 500, 100;
+		setarray .@o_name$[0], "FLEE", "MaxHP", "MDEF", "MATK %", "ATK %", "Variable Cast Time -%", "Resist Demi-Human/Player %", "Max HP/SP %", "Max Weight", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 918) { 
+		setarray .@o_id[0], 307, 305, 321, 308, 320, 310, 309, 332, 335, 328, 327;
+		setarray .@o_min[0], 1, 40, 1, 1, 1, 2, 1, 1, 500, 1, 1;
+		setarray .@o_max[0], 10, 400, 10, 5, 5, 20, 10, 10, 5000, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 1000, 1000, 2000, 2000, 2000, 3000, 500, 100;
+		setarray .@o_name$[0], "DEF", "MaxHP", "ATK", "MDEF", "Delay -%", "Resist Boss %", "Resist Neutral %", "SP Recovery %", "Max Weight", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 919) { 
+		setarray .@o_id[0], 317, 321, 305, 304, 309, 303, 326, 333, 332, 335, 328, 327;
+		setarray .@o_min[0], 1, 1, 40, 1, 1, 1, 1, 1, 1, 500, 1, 1;
+		setarray .@o_max[0], 15, 10, 400, 10, 7, 7, 5, 7, 10, 5000, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 2000, 1000, 1000, 2000, 2000, 2000, 3000, 500, 100;
+		setarray .@o_name$[0], "FLEE", "ATK", "MaxHP", "Max HP/SP %", "Resist Neutral %", "MATK %", "Damage All Size %", "Resist Demi-Human/Player %", "SP Recovery %", "Max Weight", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 920) { 
+		setarray .@o_id[0], 311, 312, 313, 314, 315, 316, 319, 302, 303, 325, 326, 335, 349, 350, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 500, 1, 1, 1, 1;
+		setarray .@o_max[0], 3, 3, 3, 3, 3, 3, 5, 10, 10, 10, 10, 5000, 3, 3, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 5000, 5000, 1000, 1000, 1000, 1000, 1000, 3000, 800, 800, 800, 500;
+		setarray .@o_name$[0], "STR", "AGI", "VIT", "INT", "DEX", "LUK", "Variable Cast Time -%", "ATK %", "MATK %", "Long Range ATK %", "Damage All Size %", "Max Weight", "HP Gain on Kill", "SP Gain on Kill", "EXP %", "Drop Rate %";
+		.@pool_size = 16;
+	}
+
+Select_Slot:
+	mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+	mes "เป้าหมาย : ^0000FF" + getequipname(.@part) + "^000000 (+"+.@refine_lv+")";
+	mes "เลือกช่อง SLOT ที่ต้องการรีออฟชั่น (สุ่มค่าใหม่):";
+	next;
+
+	.@slot_menu$ = ""; 
+	deletearray .@slot_map;
+	.@menu_idx = 1;
+
+	for (.@i = 1; .@i < 5; .@i++) {
+		if (getequiprandomoption(.@part, .@i, 0, getcharid(0)) > 0) {
+			.@slot_menu$ += "^FF0000•^000000 รีออฟชั่น SLOT ["+ (.@i + 1) +"]:";
+			.@slot_map[.@menu_idx] = .@i;
+			.@menu_idx++;
+		}
+	}
+
+	if (.@menu_idx == 1) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "^FF0000อุปกรณ์ชิ้นนี้ไม่มีออฟชั่นใน SLOT [2] - [5] ให้สุ่มใหม่ครับ^000000";
+		close;
+	}
+
+	.@slot_menu$ += "^FF0000ยกเลิก^000000";
+	
+	.@select_menu = select(.@slot_menu$);
+	if (.@select_menu == .@menu_idx) close;
+	
+	.@target_idx = .@slot_map[.@select_menu];
+	.@actual_slot = .@target_idx + 1;
+
+	// กำหนด Option_Reset_Stone 3407 ตามจำนวน Slot
+	.@reset_item = 3407;
+	.@reset_amt  = .@actual_slot;
+
+Process_Option:
+	mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+	mes "ใช้ : ^FF0000" + getitemname(.@req_item) + "^000000 จำนวน " + .@req_amt + " ชิ้น";
+	mes "ใช้ : ^FF0000" + getitemname(.@reset_item) + "^000000 จำนวน " + .@reset_amt + " ชิ้น";
+	mes "ใช้ ^FF0000" + callfunc("F_InsertComma", .@req_zeny) + "^000000 Zeny";
+	mes "โอกาสสำเร็จ : ^FF0000"+.@fail_rate+"^000000%";
+	next;
+
+	menu 
+		"^0000FFตกลง ดำเนินการเลย!^000000", -,
+		"^FF0000ยกเลิก^000000", OnCancel;
+
+	if (getequipid(.@part) != .@equip_id || getequipuniqueid(.@part) != .@equip_uid$) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "ตรวจพบความพยายามสลับไอเทมระหว่างดำเนินการ!";
+		delequip .@part; getitem 909, 1; sc_start SC_CURSE, 300000, 5; specialeffect EF_POISON;
+		close;
+	}
+
+	if (countitem(.@req_item) < .@req_amt || countitem(.@reset_item) < .@reset_amt || Zeny < .@req_zeny) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "ไอเทมวัตถุดิบ หรือ Zeny ไม่เพียงพอ";
+		close;
+	}
+	
+	Zeny -= .@req_zeny;
+	delitem .@req_item, .@req_amt;
+	delitem .@reset_item, .@reset_amt;
+
+	if (rand(1, 100) <= .@fail_rate) {
+		specialeffect 155; 
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "^FF0000กระบวนการล้มเหลว...^000000 ";
+		if(.@fail_type == 1){ mes "^FF0000อุปกรณ์ของคุณถูกทำลาย!^000000"; failedrefitem .@part; }
+		if(.@fail_type == 2){ mes "^FF0000โชคดีที่ออฟชั่นเดิมไม่หายไป พยายามใหม่นะ.^000000"; }
+		if(.@fail_type == 3){ mes "^FF0000คุณสมบัติถูกรีเซ็ต อุปกรณ์กลับเป็นสถานะเดิม.^000000"; failedrefitem .@part; getitem .@equip_id,1; }
+		close;
+		end;
+	}
+
+	.@total_rate = 0;
+	for(.@i = 0; .@i < .@pool_size; .@i++) {
+		.@total_rate += .@o_rate[.@i];
+	}
+
+	.@roll = rand(1, .@total_rate);
+	.@acc = 0;
+	.@opt_id = 0; .@opt_val = 0; .@opt_max = 0; .@opt_name$ = "";
+
+	for(.@i = 0; .@i < .@pool_size; .@i++) {
+		.@acc += .@o_rate[.@i];
+		if (.@roll <= .@acc) {
+			.@opt_id = .@o_id[.@i];
+			.@opt_val = rand(.@o_min[.@i], .@o_max[.@i]);
+			.@opt_max = .@o_max[.@i];
+			.@opt_name$ = .@o_name$[.@i];
+			break;
+		}
+	}
+
+	specialeffect 154; 
+	setrandomoption(.@part, .@target_idx, .@opt_id, .@opt_val, 0, getcharid(0)); 
+	
+	if (.@opt_val == .@opt_max) {
+		announce "[ข่าวลือออฟชั่น] : สุดยอด! ผู้เล่น ["+strcharinfo(0)+"] รีออฟชั่นได้ค่าระดับสูงสุด "+.@opt_name$+" "+.@opt_val+" ให้กับ ["+getequipname(.@part)+"]!", 0, 0x00FF00;
+	}
+	
+	mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+	mes "รีออฟชั่นใน SLOT ["+ .@actual_slot +"] สำเร็จแล้ว!";
+	mes "ได้รับพลัง: ^0000FF" + .@opt_name$ + "^000000 ค่า: ^FF0000" + .@opt_val + "^000000"; 
+	close;
+
+OnCancel:
+	close;
+
+OnInit:
+	waitingroom "รีออฟชั่น", 0;
+	end;
+}

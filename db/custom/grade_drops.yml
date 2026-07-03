@@ -1,0 +1,27 @@
+###########################################################################
+# Whispering Rain
+###########################################################################
+#
+#
+###########################################################################
+
+Header:
+  Type: GRADE_DROP_DB
+  Version: 1
+
+Body:
+  - Grade: D
+    Chance: 0
+    DropEffect: GREEN_PILLAR
+
+  - Grade: C
+    Chance: 0
+    DropEffect: BLUE_PILLAR
+
+  - Grade: B
+    Chance: 0
+    DropEffect: PURPLE_PILLAR
+
+  - Grade: A
+    Chance: 0
+    DropEffect: RED_PILLAR

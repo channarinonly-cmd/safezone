@@ -1,0 +1,59 @@
+# Runtime state
+*.pid
+*.log
+log/
+
+# Built server binaries
+/char-server
+/login-server
+/map-server
+/voice-server
+/web-server
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.o
+*.obj
+
+# Build outputs and generated configure files
+/Makefile
+/config.status
+/config.log
+/config.cache
+/autom4te.cache/
+/build/
+/bin/
+/obj/
+/Debug/
+/Release/
+/x64/
+/Win32/
+*.pdb
+*.ilk
+*.idb
+*.suo
+*.user
+*.opensdf
+*.sdf
+*.VC.db
+
+# Local/editor files
+.vs/
+.vscode/
+.idea/
+.tools/
+mingit.zip
+*.swp
+*.tmp
+Thumbs.db
+Desktop.ini
+
+# Local secrets and overrides
+.env
+*.local
+/conf/char_athena.conf
+/conf/map_athena.conf
+/conf/inter_athena.conf

@@ -1,0 +1,263 @@
+// =========================================================================================
+// Script Name: Soul Forge - Equipment Decomposer (Full Safe Version)
+// Developer: rAthena2023 Security Expert (Modified)
+// Description: ย่อยไอเทมเฉพาะกลุ่มที่กำหนด พร้อมระบบโชว์รูป ป้องกัน WPE และให้ของรางวัลตรงประเภท 100%
+// =========================================================================================
+
+-	shop	Forge_sell_shop	-1,909:-1
+
+morocc,115,54,6	script	Soul Forge	713,{
+	
+	mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+	mes "^FF0000สวัสดียอดนักรบ!^000000";
+	mes "ข้าสามารถสลายอุปกรณ์ที่คุณไม่ใช้อยู่ในกระเป๋า";
+	mes "ให้กลายเป็น ^0000FFวัตถุดิบวิญญาณ^000000 เพื่อใช้สร้างของใหม่";
+	mes "^777777(ข้าจะไม่ยุ่งกับของที่คุณกำลังสวมใส่อยู่อย่างแน่นอน)^000000";
+	next;
+
+Start_Menu:
+	switch(select("- ใช่! เปิดเตาหลอมเลย:- ดูรูปและรายการอุปกรณ์ที่รับย่อย:- คุยทีหลัง")) {
+		case 1:
+			callshop "Forge_sell_shop",2;
+			npcshopattach "Forge_sell_shop";
+			end;
+			
+		case 2:
+			goto Category_Menu;
+			
+		case 3:
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes "ตามใจเจ้า... ถ้าเปลี่ยนใจก็กลับมาหาข้าได้ตลอดเวลา";
+			close;
+	}
+
+// ========================================================
+// ?? ระบบแสดงรูปและรายการไอเทม (Mini-Icon View)
+// ========================================================
+Category_Menu:
+	mes "^FF3300[ แคตตาล็อกอุปกรณ์ที่รับย่อย ]^000000";
+	mes "เลือกหมวดหมู่ที่ต้องการตรวจสอบ:";
+	next;
+	.@cat = select("- หมวก (Headgears):- เสื้อเกราะ (Armors):- อาวุธ (Weapons):- โล่ (Shields):- ผ้าคลุม (Garments):- รองเท้า (Shoes):- กลับเมนูหลัก");
+	
+	if (.@cat == 7) goto Start_Menu;
+	
+	deletearray .@ViewList[0];
+	switch(.@cat) {
+		case 1: 
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Head1[0], getarraysize(.Grp_Head1);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Head2[0], getarraysize(.Grp_Head2);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Head3[0], getarraysize(.Grp_Head3);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Head4[0], getarraysize(.Grp_Head4);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Head5[0], getarraysize(.Grp_Head5);
+			break;
+		case 2: 
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Armor1[0], getarraysize(.Grp_Armor1);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Armor2[0], getarraysize(.Grp_Armor2);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Armor3[0], getarraysize(.Grp_Armor3);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Armor4[0], getarraysize(.Grp_Armor4);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Armor5[0], getarraysize(.Grp_Armor5);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Armor6[0], getarraysize(.Grp_Armor6);
+			break;
+		case 3: 
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_WpnEle[0], getarraysize(.Grp_WpnEle);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_WpnDmg[0], getarraysize(.Grp_WpnDmg);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_WpnBow[0], getarraysize(.Grp_WpnBow);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_WpnStaff[0], getarraysize(.Grp_WpnStaff);
+			break;
+		case 4: 
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Shield1[0], getarraysize(.Grp_Shield1);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Shield2[0], getarraysize(.Grp_Shield2);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Shield3[0], getarraysize(.Grp_Shield3);
+			break;
+		case 5: 
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Garm1[0], getarraysize(.Grp_Garm1);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Garm2[0], getarraysize(.Grp_Garm2);
+			break;
+		case 6: 
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Shoe1[0], getarraysize(.Grp_Shoe1);
+			copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Shoe2[0], getarraysize(.Grp_Shoe2);
+			break;
+	}
+
+	mes "^FF3300[ รายการไอเทม ]^000000";
+	for (.@i = 0; .@i < getarraysize(.@ViewList); .@i++) {
+		mes "^i[" + .@ViewList[.@i] + "]^FFFFFF_^000000 " + getitemname(.@ViewList[.@i]);
+	}
+	next;
+	goto Category_Menu;
+
+// ========================================================
+// ??? ระบบประมวลผลการย่อย (Safe Delete & Anti-WPE)
+// ========================================================
+OnSellItem:
+	freeloop(1);
+
+	dispbottom "[ Soul Forge ] : เริ่มต้นการสกัดวิญญาณอุปกรณ์...";
+	dispbottom "----------------------------------";
+
+	// ??? 1. กางกระเป๋าผู้เล่นออกมา เพื่อแยกของที่ใส่อยู่ กับ ของที่อยู่ในกระเป๋า
+	getinventorylist;
+
+	for( .@i=0; .@i<getarraysize(@sold_nameid); .@i++ ) {
+		.@item_id = @sold_nameid[.@i];
+		.@amount = @sold_quantity[.@i];
+		.@reward_id = 0;
+		.@multiplier = 1;
+
+		if (.@amount <= 0) continue;
+
+		// ??? 2. เช็คว่ามีของชิ้นนี้แบบ "ไม่ได้สวมใส่ (equip=0)" อยู่กี่ชิ้น
+		.@unequip_count = 0;
+		for (.@j = 0; .@j < @inventorylist_count; .@j++) {
+			if (@inventorylist_id[.@j] == .@item_id && @inventorylist_equip[.@j] == 0) {
+				.@unequip_count += @inventorylist_amount[.@j];
+			}
+		}
+
+		// ??? 3. ถ้าคนเล่นพยายามย่อยของที่กำลังใส่อยู่ ให้บล็อกทันที!
+		if (.@unequip_count < .@amount) {
+			dispbottom "• "+getitemname(.@item_id)+" : ตรวจพบการสวมใส่อยู่ ขอยกเลิกการย่อยชิ้นนี้เพื่อความปลอดภัย!", 0xFF0000;
+			continue;
+		}
+
+		// ??? 4. เช็คว่าอยู่ในลิสต์ที่อนุญาตให้ย่อยไหม
+		if (inarray(.Allowed_List[0], .@item_id) == -1) {
+			dispbottom "• "+getitemname(.@item_id)+" : ไอเทมนี้ไม่ได้อยู่ในรายการที่ข้ารับย่อย!", 0xFF0000;
+			continue;
+		}
+
+		.@type = getiteminfo(.@item_id, ITEMINFO_TYPE); 
+
+		// ========================================================
+		// ?? Logic แจกรางวัล (เช็กจาก List โดยตรง แม่นยำ 100%)
+		// ========================================================
+		if (.@type == IT_WEAPON) { 
+			.@reward_id = 35092; 
+		} 
+		else if (inarray(.Grp_Head1[0], .@item_id) != -1 || inarray(.Grp_Head2[0], .@item_id) != -1 || inarray(.Grp_Head3[0], .@item_id) != -1 || inarray(.Grp_Head4[0], .@item_id) != -1 || inarray(.Grp_Head5[0], .@item_id) != -1) { 
+			.@reward_id = 35090; // หมวก
+		} 
+		else if (inarray(.Grp_Shield1[0], .@item_id) != -1 || inarray(.Grp_Shield2[0], .@item_id) != -1 || inarray(.Grp_Shield3[0], .@item_id) != -1) { 
+			.@reward_id = 35093; // โล่
+		} 
+		else if (inarray(.Grp_Garm1[0], .@item_id) != -1 || inarray(.Grp_Garm2[0], .@item_id) != -1) { 
+			.@reward_id = 35094; // ผ้าคลุม
+		} 
+		else if (inarray(.Grp_Shoe1[0], .@item_id) != -1 || inarray(.Grp_Shoe2[0], .@item_id) != -1) { 
+			.@reward_id = 35095; // รองเท้า
+		} 
+		else if (inarray(.Grp_Armor1[0], .@item_id) != -1 || inarray(.Grp_Armor2[0], .@item_id) != -1 || inarray(.Grp_Armor3[0], .@item_id) != -1 || inarray(.Grp_Armor4[0], .@item_id) != -1 || inarray(.Grp_Armor5[0], .@item_id) != -1 || inarray(.Grp_Armor6[0], .@item_id) != -1) { 
+			.@reward_id = 35091; // เสื้อเกราะ
+		}
+
+		// ??? 5. ทำการลบไอเทมเฉพาะชิ้นที่ "ไม่ได้สวมใส่" ออกจากกระเป๋าอย่างแม่นยำ
+		.@to_delete = .@amount;
+		for (.@j = 0; .@j < @inventorylist_count && .@to_delete > 0; .@j++) {
+			if (@inventorylist_id[.@j] == .@item_id && @inventorylist_equip[.@j] == 0 && @inventorylist_amount[.@j] > 0) {
+				
+				.@qty = (@inventorylist_amount[.@j] >= .@to_delete) ? .@to_delete : @inventorylist_amount[.@j];
+				
+				// ลบเป๊ะๆ ตามสเตตัสการ์ดและการตีบวก ป้องกันการลบผิดชิ้น
+				delitem2 @inventorylist_id[.@j], .@qty, @inventorylist_identify[.@j], @inventorylist_refine[.@j], @inventorylist_attribute[.@j], @inventorylist_card1[.@j], @inventorylist_card2[.@j], @inventorylist_card3[.@j], @inventorylist_card4[.@j];
+				
+				@inventorylist_amount[.@j] -= .@qty; 
+				.@to_delete -= .@qty;
+			}
+		}
+
+		// ?? 6. สุ่มคริติคอลโบนัส (10%)
+		if (rand(1, 100) <= 10) {
+			.@multiplier = 2;
+			specialeffect 154; 
+			dispbottom "?? [Critical Overload] การสกัด "+getitemname(.@item_id)+" สำเร็จอย่างยอดเยี่ยม!", 0x00FF00;
+		}
+
+		// ?? 7. จ่ายรางวัล
+		.@final_amount = .@amount * .@multiplier;
+		getitem .@reward_id, .@final_amount;
+
+		dispbottom "• ย่อย "+getitemname(.@item_id)+" x"+.@amount+" -> ได้รับ "+getitemname(.@reward_id)+" x"+.@final_amount+" ea";
+	}
+
+	dispbottom "----------------------------------";
+	dispbottom "[ Soul Forge ] : เสร็จสิ้นกระบวนการหลอม!";
+	
+	// ล้างค่าอาร์เรย์ที่ใช้ส่งมาจากระบบร้านค้า ป้องกันผู้เล่นบั๊กค้าง
+	deletearray @sold_nameid[0];
+	deletearray @sold_quantity[0];
+	freeloop(0);
+	end;
+
+OnInit:
+	// หมวดเกราะ
+	setarray .Grp_Armor1[0], 2317, 2315,2333,2310,2324,2339;
+	setarray .Grp_Armor2[0], 2331,2319;
+	setarray .Grp_Armor3[0], 2322;
+	setarray .Grp_Armor4[0], 2336, 2371;
+	setarray .Grp_Armor5[0], 2326, 2320;
+	setarray .Grp_Armor6[0], 2318,2359,2311;
+
+	// หมวดหมวก
+	setarray .Grp_Head1[0], 2285, 2217, 5168;
+	setarray .Grp_Head2[0], 2233,2229,2280,5045,2287,5003,5030,2252,5134,2289,5017;
+	setarray .Grp_Head3[0], 2231,2213;
+	setarray .Grp_Head4[0], 2221,5141;
+	setarray .Grp_Head5[0], 5158,2299;
+
+	// หมวดโล่
+	setarray .Grp_Shield1[0], 2102;
+	setarray .Grp_Shield2[0], 2104;
+	setarray .Grp_Shield3[0], 2106,2108;
+
+	// หมวดรองเท้า
+	setarray .Grp_Shoe1[0], 2404;
+	setarray .Grp_Shoe2[0], 2406,2432;
+
+	// หมวดผ้าคลุม
+	setarray .Grp_Garm1[0], 2504,2525;
+	setarray .Grp_Garm2[0], 2506, 2523;
+
+	// หมวดอาวุธ
+	setarray .Grp_WpnEle[0], 1276,1277,1514,1253,1802,1819,1818,1810,1822,1820,1821,1812,1808,1804;
+	setarray .Grp_WpnDmg[0], 1163,1226,1220,1128,1464,1255,1127,1517,1461,1120,1361,1158,1164,1166,1261,1266;
+	setarray .Grp_WpnBow[0], 1715,1716,1726,1309,1162;
+	setarray .Grp_WpnStaff[0], 1611,1472,1625,1613,1614,1615,1551,1552,1558,1568,1569,1570,1571,1557,1559,1560,1564,1573;
+
+	// รวมรายการทั้งหมดเข้าสู่ลิสต์ตรวจสอบ
+	deletearray .Allowed_List[0];
+	
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Armor1[0], getarraysize(.Grp_Armor1);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Armor2[0], getarraysize(.Grp_Armor2);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Armor3[0], getarraysize(.Grp_Armor3);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Armor4[0], getarraysize(.Grp_Armor4);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Armor5[0], getarraysize(.Grp_Armor5);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Armor6[0], getarraysize(.Grp_Armor6);
+	
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Head1[0], getarraysize(.Grp_Head1);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Head2[0], getarraysize(.Grp_Head2);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Head3[0], getarraysize(.Grp_Head3);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Head4[0], getarraysize(.Grp_Head4);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Head5[0], getarraysize(.Grp_Head5);
+	
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Shield1[0], getarraysize(.Grp_Shield1);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Shield2[0], getarraysize(.Grp_Shield2);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Shield3[0], getarraysize(.Grp_Shield3);
+	
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Garm1[0], getarraysize(.Grp_Garm1);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Garm2[0], getarraysize(.Grp_Garm2);
+	
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Shoe1[0], getarraysize(.Grp_Shoe1);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Shoe2[0], getarraysize(.Grp_Shoe2);
+	
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_WpnEle[0], getarraysize(.Grp_WpnEle);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_WpnDmg[0], getarraysize(.Grp_WpnDmg);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_WpnBow[0], getarraysize(.Grp_WpnBow);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_WpnStaff[0], getarraysize(.Grp_WpnStaff);
+
+	npcshopdelitem "Forge_sell_shop", 909;
+	for (.@i = 0; .@i < getarraysize(.Allowed_List); .@i++) {
+		npcshopadditem "Forge_sell_shop", .Allowed_List[.@i], 1;
+	}
+	end;
+}

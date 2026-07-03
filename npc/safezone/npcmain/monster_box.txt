@@ -1,0 +1,1888 @@
+//getitem4 "<item name>",<amount>,<identify>,<refine>,<attribute>,<card1>,<card2>,<card3>,<card4>,<grade>,<RandomIDArray>,<RandomValueArray>,<RandomParamArray>{,<account ID>};
+
+function	script	hat_164	{
+
+	set .@hatcash,10; // จำนวน Cash ที่ใช้เปิด
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@hat_164[0],
+	5100,
+	5105,
+	5131,
+	5133,
+	5140,
+	5186,
+	5187,
+	5191,
+	5192,
+	5193,
+	5194,
+	5196,
+	5197,
+	5210,
+	5215,
+	5216,
+	5217,
+	5218,
+	5219,
+	5220,
+	5221,
+	5222,
+	5223,
+	5224,
+	5226,
+	5228,
+	5229,
+	5230,
+	5231,
+	5233,
+	5234,
+	5235,
+	5236,
+	5240,
+	5242,
+	5254,
+	5257,
+	5283,
+	5284,
+	5285,
+	5286,
+	5287,
+	5288,
+	5289,
+	5290,
+	5291,
+	5292,
+	5293,
+	5294,
+	5304,
+	5307,
+	5314,
+	5315,
+	5324,
+	5325,
+	5334,
+	5338,
+	5346,
+	5352,
+	5358,
+	5359,
+//	5360,
+	5361,
+	5362,
+	5363,
+	5365,
+	5373,
+	5375,
+	5376,
+	5377,
+	5378,
+	5384,
+	5388,
+	5402,
+	5407,
+	5413,
+	5414,
+	5416,
+	5417,
+	5418,
+	5422,
+	5464,
+	5469,
+	5473,
+	5483,
+	5495,
+	5496,
+	5497,
+	5498,
+	5499,
+	5503,
+	5505,
+	5509,
+	5511,
+	5519,
+	5526,
+	5527,
+	5529,
+	5538,
+	5547,
+	5554,
+	5555,
+	5556,
+	5557,
+	5561,
+	5571,
+	5574,
+	5575,
+	5579,
+	5580,
+	5585,
+	5586,
+	5594,
+	5609,
+	5610,
+	5611,
+	5654,
+	5655,
+	5656,
+	5664,
+	5665,
+	5666,
+	5671,
+	5674,
+	5742,
+	5761,
+	5762,
+	5766,
+	5776,
+	5778,
+	5779,
+	5780,
+	18599,
+	18612,
+	18613,
+	18614,
+	18615,
+	18616,
+	18617,
+	18618,
+	18619,
+	18620,
+	18638,
+	18639,
+	18640,
+	18641,
+	18642,
+	18645,
+	18643,
+	18644,
+	18646,
+	18647,
+	18648,
+	18661,
+	18662,
+	18664,
+	18665,
+	18666,
+	18667,
+	18668,
+	18887,
+	18891,
+	18893;
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	if (#DisabledMessageCB4 == 1){
+		if (#CASHPOINTS < .@hatcash){
+			dispbottom "ต้องใช้ "+.@hatcash+" Cash Point ในการเปิด";
+			end;
+		}
+
+		set hat_164,rand(1,100);
+
+		if(hat_164 <= 1){
+			set .maxitemsquest,getarraysize(.@hat_164);
+			set .@hat_164,(.@hat_164[rand(.maxitemsquest)]);
+			getitem4 .@hat_164,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Hat Box แล้วได้รับ '[A] " + getitemname(.@hat_164)+"' 1%",bc_all,0xFFFFFF;
+		}
+
+		if(hat_164 >= 2 && hat_164 <= 5){
+			set .maxitemsquest,getarraysize(.@hat_164);
+			set .@hat_164,(.@hat_164[rand(.maxitemsquest)]);
+			getitem4 .@hat_164,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Hat Box แล้วได้รับ '[B] " + getitemname(.@hat_164)+"' 3%",bc_all,0xFFFFFF;
+		}
+
+		if(hat_164 >= 6 && hat_164 <= 20){
+			set .maxitemsquest,getarraysize(.@hat_164);
+			set .@hat_164,(.@hat_164[rand(.maxitemsquest)]);
+			getitem4 .@hat_164,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+		}
+
+		if(hat_164 >= 21){
+			set .maxitemsquest,getarraysize(.@hat_164);
+			set .@hat_164,(.@hat_164[rand(.maxitemsquest)]);
+			getitem4 .@hat_164,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+		}
+		delitem 8120009,1;
+		#CASHPOINTS -= .@hatcash;
+		end;
+	}
+
+	mes "Hat Box";
+	mes "รายละเอียดในการเปิด";
+	mes "ต้องใช้ Cash Point : "+.@hatcash+"";
+	mes "คุณต้องการเปิดหรือไม่?";
+	next;
+	switch(select("ทำการเปิด","ปิดข้อความนี้ก่อนเปิด", "ยกเลิก")){
+		case 1:
+			if (#CASHPOINTS < .@hatcash){
+				dispbottom "ต้องใช้ "+.@hatcash+" Cash Point ในการเปิด";
+				end;
+			}
+
+			set hat_164,rand(1,100);
+
+			if(hat_164 <= 1){
+				set .maxitemsquest,getarraysize(.@hat_164);
+				set .@hat_164,(.@hat_164[rand(.maxitemsquest)]);
+				getitem4 .@hat_164,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Hat Box แล้วได้รับ '[A] " + getitemname(.@hat_164)+"' 1%",bc_all,0xFFFFFF;
+			}
+
+			if(hat_164 >= 2 && hat_164 <= 5){
+				set .maxitemsquest,getarraysize(.@hat_164);
+				set .@hat_164,(.@hat_164[rand(.maxitemsquest)]);
+				getitem4 .@hat_164,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Hat Box แล้วได้รับ '[B] " + getitemname(.@hat_164)+"' 3%",bc_all,0xFFFFFF;
+			}
+
+			if(hat_164 >= 6 && hat_164 <= 20){
+				set .maxitemsquest,getarraysize(.@hat_164);
+				set .@hat_164,(.@hat_164[rand(.maxitemsquest)]);
+				getitem4 .@hat_164,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+			}
+
+			if(hat_164 >= 21){
+				set .maxitemsquest,getarraysize(.@hat_164);
+				set .@hat_164,(.@hat_164[rand(.maxitemsquest)]);
+				getitem4 .@hat_164,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+			}
+			delitem 8120009,1;
+			#CASHPOINTS -= .@hatcash;
+			end;
+		case 2:
+			mes "ข้อความนี้จะไม่แจ้งเตือนในระหว่าง";
+			mes "เปิด Hat Box ครั้งต่อไป";
+			mes "คุณต้องการปิดหรือไม่?";
+			next;
+			switch(select("ปิดข้อความ", "ยกเลิก")){
+				case 1:
+					mes "คุณทำการปิดข้อความแล้ว";
+					#DisabledMessageCB4 = 1;
+					close;
+				case 2:
+					close;
+			}
+			end;
+		case 3:
+			close;
+	}
+	end;
+}
+
+function	script	custom_ovb	{
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@custom_ovb[0],
+	5066,
+	5072,
+	5175,
+	5122,
+	5120,
+	5119,
+	5118,
+	5116,
+	5114,
+	5113,
+	5112,
+	5111,
+	5090,
+	5089,
+	5088,
+	5085,
+	5055,
+	5037,
+	5035,
+	5030,
+	5015,
+	5014,
+	5011,
+	5010,
+	5005,
+	5003,
+	5002,
+	2299,
+	2298,
+	2297,
+	2295,
+	2294,
+	2291,
+	2290,
+	2289,
+	2288,
+	2287,
+	2285,
+	2282,
+	2279,
+	2278,
+	2277,
+	2276,
+	2275,
+	2274,
+	2271,
+	2270,
+	2269,
+	2268,
+	2267,
+	2266,
+	2265,
+	2263,
+	2262,
+	2261,
+	2260,
+	2259,
+	2258,
+	2257,
+	2255,
+	2254,
+	2253,
+	2252,
+	2251,
+	2250,
+	2249,
+	2248,
+	2247,
+	2246,
+	2245,
+	2244,
+	2243,
+	2242,
+	2241,
+//	2239,
+	2236,
+	2233,
+	2232,
+	2231,
+	2230,
+	2229,
+	2228,
+	2227,
+	2226,
+	2225,
+	2224,
+	2223,
+	2222,
+	2221,
+	2220,
+	2218,
+	2217,
+	2216,
+	2215,
+	2214,
+	2213,
+	2212,
+	2211,
+	2210,
+	2209,
+	2208,
+	2207,
+	2206,
+	2205,
+	2203,
+	2201,
+	2202,
+	2515,
+	2514,
+	2513,
+	2512,
+	2510,
+	2508,
+	2507,
+	2506,
+	2505,
+	2504,
+	2503,
+	2502,
+	2501,
+	2420,
+	2416,
+	2414,
+	2411,
+	2409,
+	2408,
+	2407,
+	2406,
+	2405,
+	2404,
+	2403,
+	2402,
+	2401,
+	2313,
+	2312,
+	2311,
+	2310,
+	2309,
+	2308,
+	2307,
+	2306,
+	2305,
+	2304,
+	2303,
+	2302,
+	2301,
+	//2365,
+	//2352,
+	2341,
+	2340,
+	2339,
+	2337,
+	2336,
+	2335,
+	2333,
+	2332,
+	2331,
+	2330,
+	2329,
+	2328,
+	2326,
+	2325,
+	2324,
+	2323,
+	2322,
+	2321,
+	2320,
+	2318,
+	2317,
+	2316,
+	2315,
+	2314,
+	//2125,
+	//2124,
+	//2123,
+	2113,
+	//2112,
+	2109,
+	2108,
+	2107,
+	2106,
+	2105,
+	2104,
+	2103,
+	2102,
+	2101,
+	5007,
+	5017,
+	5053,
+	5066,
+	5072,
+	2204,
+	2286,
+	2614,
+	2327;
+
+	set custom_ovb,rand(1,100);
+
+	if(custom_ovb <= 1){
+		set .maxitemsquest,getarraysize(.@custom_ovb);
+		set .@custom_ovb,(.@custom_ovb[rand(.maxitemsquest)]);
+		getitem4 .@custom_ovb,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+	}
+
+	if(custom_ovb >= 2 && custom_ovb <= 5){
+		set .maxitemsquest,getarraysize(.@custom_ovb);
+		set .@custom_ovb,(.@custom_ovb[rand(.maxitemsquest)]);
+		getitem4 .@custom_ovb,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+	}
+
+	if(custom_ovb >= 6 && custom_ovb <= 20){
+		set .maxitemsquest,getarraysize(.@custom_ovb);
+		set .@custom_ovb,(.@custom_ovb[rand(.maxitemsquest)]);
+		getitem4 .@custom_ovb,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+	}
+
+	if(custom_ovb >= 21){
+		set .maxitemsquest,getarraysize(.@custom_ovb);
+		set .@custom_ovb,(.@custom_ovb[rand(.maxitemsquest)]);
+		getitem4 .@custom_ovb,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+	}
+	delitem 8120008,1;
+	end;
+}
+
+function	script	custom_obb	{
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@custom_obb[0],
+	5175,
+	5122,
+	5120,
+	5119,
+	5118,
+	5116,
+	5114,
+	5113,
+	5112,
+	5111,
+	5090,
+	5089,
+	5088,
+	5085,
+	5055,
+	5037,
+	5035,
+	5030,
+	5015,
+	5014,
+	5011,
+	5010,
+	5005,
+	5003,
+	5002,
+	2299,
+	2298,
+	2297,
+	2295,
+	2294,
+	2291,
+	2290,
+	2289,
+	2288,
+	2287,
+	2285,
+	2282,
+	2279,
+	2278,
+	2277,
+	2276,
+	2275,
+	2274,
+	2271,
+	2270,
+	2269,
+	2268,
+	2267,
+	2266,
+	2265,
+	2263,
+	2262,
+	2261,
+	2260,
+	2259,
+	2258,
+	2257,
+	2255,
+	2254,
+	2253,
+	2252,
+	2251,
+	2250,
+	2249,
+	2248,
+	2247,
+	2246,
+	2245,
+	2244,
+	2243,
+	2242,
+	2241,
+//	2239,
+	2236,
+	2233,
+	2232,
+	2231,
+	2230,
+	2229,
+	2228,
+	2227,
+	2226,
+	2225,
+	2224,
+	2223,
+	2222,
+	2221,
+	2220,
+	2218,
+	2217,
+	2216,
+	2215,
+	2214,
+	2213,
+	2212,
+	2211,
+	2210,
+	2209,
+	2208,
+	2207,
+	2206,
+	2205,
+	2203,
+	2201,
+	2202,
+	2515,
+	2514,
+	2513,
+	2512,
+	2510,
+	2508,
+	2507,
+	2506,
+	2505,
+	2504,
+	2503,
+	2502,
+	2501,
+	2420,
+	2416,
+	2414,
+	2411,
+	2409,
+	2408,
+	2407,
+	2406,
+	2405,
+	2404,
+	2403,
+	2402,
+	2401,
+	2313,
+	2312,
+	2311,
+	2310,
+	2309,
+	2308,
+	2307,
+	2306,
+	2305,
+	2304,
+	2303,
+	2302,
+	2301,
+	//2365,
+	//2352,
+	2341,
+	2340,
+	2339,
+	2337,
+	2336,
+	2335,
+	2333,
+	2332,
+	2331,
+	2330,
+	2329,
+	2328,
+	2326,
+	2325,
+	2324,
+	2323,
+	2322,
+	2321,
+	2320,
+	2318,
+	2317,
+	2316,
+	2315,
+	2314,
+	//2125,
+	//2124,
+	//2123,
+	2113,
+	//2112,
+	2109,
+	2108,
+	2107,
+	2106,
+	2105,
+	2104,
+	2103,
+	2102,
+	2101;
+
+	set custom_obb,rand(1,100);
+
+	if(custom_obb <= 1){
+		set .maxitemsquest,getarraysize(.@custom_obb);
+		set .@custom_obb,(.@custom_obb[rand(.maxitemsquest)]);
+		getitem4 .@custom_obb,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+	}
+
+	if(custom_obb >= 2 && custom_obb <= 5){
+		set .maxitemsquest,getarraysize(.@custom_obb);
+		set .@custom_obb,(.@custom_obb[rand(.maxitemsquest)]);
+		getitem4 .@custom_obb,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+	}
+
+	if(custom_obb >= 6 && custom_obb <= 20){
+		set .maxitemsquest,getarraysize(.@custom_obb);
+		set .@custom_obb,(.@custom_obb[rand(.maxitemsquest)]);
+		getitem4 .@custom_obb,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+	}
+
+	if(custom_obb >= 21){
+		set .maxitemsquest,getarraysize(.@custom_obb);
+		set .@custom_obb,(.@custom_obb[rand(.maxitemsquest)]);
+		getitem4 .@custom_obb,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+	}
+	delitem 8120007,1;
+	end;
+}
+
+function	script	hat_85	{
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@hat_85[0],
+	5086,
+	5175,
+	2284,
+	5110,
+	2296,
+	5057,
+	5016,
+	2214,
+	5107,
+	5082,
+	2283,
+	5170,
+	5069,
+	5001,
+	5070,
+	5071,
+	5073,
+	2278,
+	5117,
+	5094,
+	5004,
+	5012,
+	2293,
+	5109,
+	5083,
+	5108,
+	5078,
+	5243,
+	2272,
+	5059,
+	5077,
+	2292,
+	5115,
+	5121,
+	5074,
+	5068,
+	5025,
+	5038,
+	5173,
+	5174,
+	5091,
+	5080,
+	5081,
+	5176,
+	5177,
+	5169,
+	5079,
+	5063,
+	5061,
+	5042,
+	5048,
+	5047,
+	5041,
+	5040,
+	5024,
+	5028,
+	5026,
+	5036,
+	5034,
+	5049,
+	5052,
+	2273,
+	5018,
+	2281,
+	2280,
+	5058,
+	5064,
+	5084,
+	5065,
+	5032,
+	5027,
+	5045,
+	5031,
+	5023,
+	5021,
+	5043,
+	5033,
+	5039,
+	5029,
+	5050,
+	5060,
+	5062,
+	5075,
+	5067,
+	5076;
+
+	set hat_85,rand(1,100);
+
+	if(hat_85 <= 1){
+		set .maxitemsquest,getarraysize(.@hat_85);
+		set .@hat_85,(.@hat_85[rand(.maxitemsquest)]);
+		getitem4 .@hat_85,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+	}
+
+	if(hat_85 >= 2 && hat_85 <= 5){
+		set .maxitemsquest,getarraysize(.@hat_85);
+		set .@hat_85,(.@hat_85[rand(.maxitemsquest)]);
+		getitem4 .@hat_85,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+	}
+
+	if(hat_85 >= 6 && hat_85 <= 20){
+		set .maxitemsquest,getarraysize(.@hat_85);
+		set .@hat_85,(.@hat_85[rand(.maxitemsquest)]);
+		getitem4 .@hat_85,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+	}
+
+	if(hat_85 >= 21){
+		set .maxitemsquest,getarraysize(.@hat_85);
+		set .@hat_85,(.@hat_85[rand(.maxitemsquest)]);
+		getitem4 .@hat_85,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+	}
+	delitem 8120006,1;
+	end;
+}
+
+function	script	monster_1_20	{
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@monster_1_20[0],
+	2306,
+	2301,
+	2402,
+	2502,
+	2322,
+//	2224,
+//	2225,
+//	5009,
+	2102;
+//	2211,
+//	2287,
+//	2236,
+//	2201;
+//	2220,
+//	2269;
+
+	set monster_1_20,rand(1,100);
+
+	if(monster_1_20 <= 1){
+		set .maxitemsquest,getarraysize(.@monster_1_20);
+		set .@monster_1_20,(.@monster_1_20[rand(.maxitemsquest)]);
+		getitem4 .@monster_1_20,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+	}
+
+	if(monster_1_20 >= 2 && monster_1_20 <= 5){
+		set .maxitemsquest,getarraysize(.@monster_1_20);
+		set .@monster_1_20,(.@monster_1_20[rand(.maxitemsquest)]);
+		getitem4 .@monster_1_20,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+	}
+
+	if(monster_1_20 >= 6 && monster_1_20 <= 20){
+		set .maxitemsquest,getarraysize(.@monster_1_20);
+		set .@monster_1_20,(.@monster_1_20[rand(.maxitemsquest)]);
+		getitem4 .@monster_1_20,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+	}
+
+	if(monster_1_20 >= 21){
+		set .maxitemsquest,getarraysize(.@monster_1_20);
+		set .@monster_1_20,(.@monster_1_20[rand(.maxitemsquest)]);
+		getitem4 .@monster_1_20,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+	}
+	delitem 8120001,1;
+	end;
+}
+
+function	script	monster_21_40	{
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@monster_21_40[0],
+//	2289,
+	2310,
+	2502,
+	2402,
+//	2207,
+	2322,
+//	2250,
+	2355,
+//	2209,
+	2303,
+	2304,
+//	5035,
+//	2225,
+//	5009,
+//	5014,
+	2326,
+//	2221,
+//	2276,
+//	2213,
+	2315,
+	2308,
+//	5158,
+	2406,
+	2506;
+
+	set monster_21_40,rand(1,100);
+
+	if(monster_21_40 <= 1){
+		set .maxitemsquest,getarraysize(.@monster_21_40);
+		set .@monster_21_40,(.@monster_21_40[rand(.maxitemsquest)]);
+		getitem4 .@monster_21_40,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+	}
+
+	if(monster_21_40 >= 2 && monster_21_40 <= 5){
+		set .maxitemsquest,getarraysize(.@monster_21_40);
+		set .@monster_21_40,(.@monster_21_40[rand(.maxitemsquest)]);
+		getitem4 .@monster_21_40,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+	}
+
+	if(monster_21_40 >= 6 && monster_21_40 <= 20){
+		set .maxitemsquest,getarraysize(.@monster_21_40);
+		set .@monster_21_40,(.@monster_21_40[rand(.maxitemsquest)]);
+		getitem4 .@monster_21_40,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+	}
+
+	if(monster_21_40 >= 21){
+		set .maxitemsquest,getarraysize(.@monster_21_40);
+		set .@monster_21_40,(.@monster_21_40[rand(.maxitemsquest)]);
+		getitem4 .@monster_21_40,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+	}
+	delitem 8120002,1;
+	end;
+}
+
+function	script	monster_41_60	{
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@monster_41_60[0],
+//	2285,
+	2405,
+	2102,
+//	5046,
+//	2236,
+//	5042,
+	2106,
+	2251,
+//	5011,
+//	5015,
+	2104,
+//	2225,
+//	5009,
+//	2253,
+	2310,
+//	5111,
+//	2227,
+//	2286,
+//	2146,
+//	5010,
+//	5088,
+//	5113,
+//	2272,
+//	2233,
+	2116,
+//	2257,
+	2317,
+//	1558,
+//	2264,
+	2305,
+	2337,
+	2404,
+//	5005,
+	2326,
+	5014,
+//	2299,
+//	2206,
+	2338,
+//	2287,
+//	2276,
+//	15012,
+	2313,
+	2333,
+	2241;
+//	2297;
+
+	set monster_41_60,rand(1,100);
+
+	if(monster_41_60 <= 1){
+		set .maxitemsquest,getarraysize(.@monster_41_60);
+		set .@monster_41_60,(.@monster_41_60[rand(.maxitemsquest)]);
+		getitem4 .@monster_41_60,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+	}
+
+	if(monster_41_60 >= 2 && monster_41_60 <= 5){
+		set .maxitemsquest,getarraysize(.@monster_41_60);
+		set .@monster_41_60,(.@monster_41_60[rand(.maxitemsquest)]);
+		getitem4 .@monster_41_60,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+	}
+
+	if(monster_41_60 >= 6 && monster_41_60 <= 20){
+		set .maxitemsquest,getarraysize(.@monster_41_60);
+		set .@monster_41_60,(.@monster_41_60[rand(.maxitemsquest)]);
+		getitem4 .@monster_41_60,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+	}
+
+	if(monster_41_60 >= 21){
+		set .maxitemsquest,getarraysize(.@monster_41_60);
+		set .@monster_41_60,(.@monster_41_60[rand(.maxitemsquest)]);
+		getitem4 .@monster_41_60,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+	}
+	delitem 8120003,1;
+	end;
+}
+
+function	script	monster_61_80	{
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@monster_61_80[0],
+	2406,
+//	5008,
+//	2236,
+//	2505,
+//	2255,
+//	2291,
+//	2217,
+	2508,
+//	2245,
+	2333,
+//	2259,
+//	2146,
+//	2207,
+//	2253,
+//	2282,
+//	2279,
+	2334,
+	2331,
+	2102,
+	2522,
+	2308,
+//	5012,
+//	5030,
+//	2504,
+	15012,
+//	2277,
+	2315,
+//	2244,
+	2336,
+//	5037,
+//	2265,
+//	2339,
+	2408,
+//	5158,
+	2104;
+
+	set monster_61_80,rand(1,100);
+
+	if(monster_61_80 <= 1){
+		set .maxitemsquest,getarraysize(.@monster_61_80);
+		set .@monster_61_80,(.@monster_61_80[rand(.maxitemsquest)]);
+		getitem4 .@monster_61_80,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+	}
+
+	if(monster_61_80 >= 2 && monster_61_80 <= 5){
+		set .maxitemsquest,getarraysize(.@monster_61_80);
+		set .@monster_61_80,(.@monster_61_80[rand(.maxitemsquest)]);
+		getitem4 .@monster_61_80,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+	}
+
+	if(monster_61_80 >= 6 && monster_61_80 <= 20){
+		set .maxitemsquest,getarraysize(.@monster_61_80);
+		set .@monster_61_80,(.@monster_61_80[rand(.maxitemsquest)]);
+		getitem4 .@monster_61_80,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+	}
+
+	if(monster_61_80 >= 21){
+		set .maxitemsquest,getarraysize(.@monster_61_80);
+		set .@monster_61_80,(.@monster_61_80[rand(.maxitemsquest)]);
+		getitem4 .@monster_61_80,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+	}
+	delitem 8120004,1;
+	end;
+}
+
+function	script	monster_81_99	{
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@monster_81_99[0],
+	2407,
+//	2409,
+	2310,
+	2318,
+	2313,
+//	2285,
+	2337,
+	2359,
+	2330,
+	2331,
+//	2252,
+//	2269,
+//	2270,
+//	5042,
+	2316,
+	2317,
+	2508,
+//	5017,
+	2334,
+	2507,
+//	5162,
+	2319,
+//	2207,
+//	2226,
+	2313,
+	2336,
+	2335,
+	2406,
+//	5367,
+	2314,
+	2315,
+//	5141,
+	5119,
+	2326,
+	2373,
+//	5045,
+	2502,
+//	2343,
+//	2372,
+	2320,
+	2408,
+//	2266,
+	2342,
+	2412,
+	2514,
+//	2248,
+	2521,
+//	5085,
+//	2517,
+//	2516,
+	2518,
+	2417,
+	2506,
+	2422,
+//	2289,
+	2229,
+//	5003,
+	2333,
+	2418,
+	2106,
+	2311,
+	2504,
+//	5111,
+//	5159,
+//	5072,
+//	2250,
+	2355,
+//	2247,
+	2420,
+	2108,
+	2104,
+//	5118,
+//	5035,
+//	5046,
+//	2264,
+//	2277,
+//	2285,
+//	2213,
+//	2220,
+//	5066,
+//	2231,
+//	2114,
+	2525,
+//	5096,
+//	2210,
+	2419,
+	5128,
+	2520,
+	2354,
+//	5172,
+//	2274,
+//	5005,
+//	5120,
+	2353;
+
+	set monster_81_99,rand(1,100);
+
+	if(monster_81_99 <= 1){
+		set .maxitemsquest,getarraysize(.@monster_81_99);
+		set .@monster_81_99,(.@monster_81_99[rand(.maxitemsquest)]);
+		getitem4 .@monster_81_99,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+	}
+
+	if(monster_81_99 >= 2 && monster_81_99 <= 5){
+		set .maxitemsquest,getarraysize(.@monster_81_99);
+		set .@monster_81_99,(.@monster_81_99[rand(.maxitemsquest)]);
+		getitem4 .@monster_81_99,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+	}
+
+	if(monster_81_99 >= 6 && monster_81_99 <= 20){
+		set .maxitemsquest,getarraysize(.@monster_81_99);
+		set .@monster_81_99,(.@monster_81_99[rand(.maxitemsquest)]);
+		getitem4 .@monster_81_99,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+	}
+
+	if(monster_81_99 >= 21){
+		set .maxitemsquest,getarraysize(.@monster_81_99);
+		set .@monster_81_99,(.@monster_81_99[rand(.maxitemsquest)]);
+		getitem4 .@monster_81_99,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+	}
+	delitem 8120005,1;
+	end;
+}
+
+-	script	DisabledMessageCB	-1,{
+	end;
+
+OnPCLoginEvent:
+	if (#DisabledMessageCB1 == 1){
+		#DisabledMessageCB1 = 0;
+	}
+	if (#DisabledMessageCB2 == 1){
+		#DisabledMessageCB2 = 0;
+	}
+	if (#DisabledMessageCB3 == 1){
+		#DisabledMessageCB3 = 0;
+	}
+	if (#DisabledMessageCB4 == 1){
+		#DisabledMessageCB4 = 0;
+	}
+	end;
+}
+
+function	script	costume_box_01	{
+
+	set .@costumecash,10; // จำนวน Cash ที่ใช้เปิด
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@costume_box_01[0],20571,20988,480107,18744,20132,19859,31165,31406,420016,31315,20147,20011,31177,20255,19677,31240,31308,19751;
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	if (#DisabledMessageCB1 == 1){
+		if (#CASHPOINTS < .@costumecash){
+			dispbottom "ต้องใช้ "+.@costumecash+" Cash Point ในการเปิด";
+			end;
+		}
+
+		set costume_box_01,rand(1,100);
+
+		if(costume_box_01 <= 1){
+			set .maxitemsquest,getarraysize(.@costume_box_01);
+			set .@costume_box_01,(.@costume_box_01[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_01,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box I แล้วได้รับ '[A] " + getitemname(.@costume_box_01)+"' 1%",bc_all,0xFFFFFF;
+		}
+
+		if(costume_box_01 >= 2 && costume_box_01 <= 5){
+			set .maxitemsquest,getarraysize(.@costume_box_01);
+			set .@costume_box_01,(.@costume_box_01[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_01,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box I แล้วได้รับ '[B] " + getitemname(.@costume_box_01)+"' 3%",bc_all,0xFFFFFF;
+		}
+
+		if(costume_box_01 >= 6 && costume_box_01 <= 20){
+			set .maxitemsquest,getarraysize(.@costume_box_01);
+			set .@costume_box_01,(.@costume_box_01[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_01,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+		}
+
+		if(costume_box_01 >= 21){
+			set .maxitemsquest,getarraysize(.@costume_box_01);
+			set .@costume_box_01,(.@costume_box_01[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_01,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+		}
+		delitem 8110001,1;
+		#CASHPOINTS -= .@costumecash;
+		end;
+	}
+
+	mes "Costume Box I";
+	mes "รายละเอียดในการเปิด";
+	mes "ต้องใช้ Cash Point : "+.@costumecash+"";
+	mes "คุณต้องการเปิดหรือไม่?";
+	next;
+	switch(select("ทำการเปิด","ปิดข้อความนี้ก่อนเปิด", "ยกเลิก")){
+		case 1:
+			if (#CASHPOINTS < .@costumecash){
+				dispbottom "ต้องใช้ "+.@costumecash+" Cash Point ในการเปิด";
+				end;
+			}
+
+			set costume_box_01,rand(1,100);
+
+			if(costume_box_01 <= 1){
+				set .maxitemsquest,getarraysize(.@costume_box_01);
+				set .@costume_box_01,(.@costume_box_01[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_01,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box I แล้วได้รับ '[A] " + getitemname(.@costume_box_01)+"' 1%",bc_all,0xFFFFFF;
+			}
+
+			if(costume_box_01 >= 2 && costume_box_01 <= 5){
+				set .maxitemsquest,getarraysize(.@costume_box_01);
+				set .@costume_box_01,(.@costume_box_01[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_01,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box I แล้วได้รับ '[B] " + getitemname(.@costume_box_01)+"' 3%",bc_all,0xFFFFFF;
+			}
+
+			if(costume_box_01 >= 6 && costume_box_01 <= 20){
+				set .maxitemsquest,getarraysize(.@costume_box_01);
+				set .@costume_box_01,(.@costume_box_01[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_01,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+			}
+
+			if(costume_box_01 >= 21){
+				set .maxitemsquest,getarraysize(.@costume_box_01);
+				set .@costume_box_01,(.@costume_box_01[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_01,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+			}
+			delitem 8110001,1;
+			#CASHPOINTS -= .@costumecash;
+			end;
+		case 2:
+			mes "ข้อความนี้จะไม่แจ้งเตือนในระหว่าง";
+			mes "เปิด Costume Box ครั้งต่อไป";
+			mes "คุณต้องการปิดหรือไม่?";
+			next;
+			switch(select("ปิดข้อความ", "ยกเลิก")){
+				case 1:
+					mes "คุณทำการปิดข้อความแล้ว";
+					#DisabledMessageCB1 = 1;
+					close;
+				case 2:
+					close;
+			}
+			end;
+		case 3:
+			close;
+	}
+	end;
+}
+
+function	script	costume_box_02	{
+
+	set .@costumecash,10; // จำนวน Cash ที่ใช้เปิด
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@costume_box_02[0],480056,19589,410081,420163,20508,31183,5912,5915,5909,420010,15842,31561,5979,5914,31121,31395,31120,20798,20507,20514,20591,20597;
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	if (#DisabledMessageCB2 == 1){
+		if (#CASHPOINTS < .@costumecash){
+			dispbottom "ต้องใช้ "+.@costumecash+" Cash Point ในการเปิด";
+			end;
+		}
+
+		set costume_box_02,rand(1,100);
+
+		if(costume_box_02 <= 1){
+			set .maxitemsquest,getarraysize(.@costume_box_02);
+			set .@costume_box_02,(.@costume_box_02[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_02,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box II แล้วได้รับ '[A] " + getitemname(.@costume_box_02)+"' 1%",bc_all,0xFFFFFF;
+		}
+
+		if(costume_box_02 >= 2 && costume_box_02 <= 5){
+			set .maxitemsquest,getarraysize(.@costume_box_02);
+			set .@costume_box_02,(.@costume_box_02[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_02,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box II แล้วได้รับ '[B] " + getitemname(.@costume_box_02)+"' 3%",bc_all,0xFFFFFF;
+		}
+
+		if(costume_box_02 >= 6 && costume_box_02 <= 20){
+			set .maxitemsquest,getarraysize(.@costume_box_02);
+			set .@costume_box_02,(.@costume_box_02[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_02,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+		}
+
+		if(costume_box_02 >= 21){
+			set .maxitemsquest,getarraysize(.@costume_box_02);
+			set .@costume_box_02,(.@costume_box_02[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_02,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+		}
+		delitem 8110002,1;
+		#CASHPOINTS -= .@costumecash;
+		end;
+	}
+
+	mes "Costume Box 2";
+	mes "รายละเอียดในการเปิด";
+	mes "ต้องใช้ Cash Point : "+.@costumecash+"";
+	mes "คุณต้องการเปิดหรือไม่?";
+	next;
+	switch(select("ทำการเปิด","ปิดข้อความนี้ก่อนเปิด", "ยกเลิก")){
+		case 1:
+			if (#CASHPOINTS < .@costumecash){
+				dispbottom "ต้องใช้ "+.@costumecash+" Cash Point ในการเปิด";
+				end;
+			}
+
+			set costume_box_02,rand(1,100);
+
+			if(costume_box_02 <= 1){
+				set .maxitemsquest,getarraysize(.@costume_box_02);
+				set .@costume_box_02,(.@costume_box_02[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_02,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box II แล้วได้รับ '[A] " + getitemname(.@costume_box_02)+"' 1%",bc_all,0xFFFFFF;
+			}
+
+			if(costume_box_02 >= 2 && costume_box_02 <= 5){
+				set .maxitemsquest,getarraysize(.@costume_box_02);
+				set .@costume_box_02,(.@costume_box_02[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_02,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box II แล้วได้รับ '[B] " + getitemname(.@costume_box_02)+"' 3%",bc_all,0xFFFFFF;
+			}
+
+			if(costume_box_02 >= 6 && costume_box_02 <= 20){
+				set .maxitemsquest,getarraysize(.@costume_box_02);
+				set .@costume_box_02,(.@costume_box_02[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_02,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+			}
+
+			if(costume_box_02 >= 21){
+				set .maxitemsquest,getarraysize(.@costume_box_02);
+				set .@costume_box_02,(.@costume_box_02[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_02,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+			}
+			delitem 8110002,1;
+			#CASHPOINTS -= .@costumecash;
+			end;
+		case 2:
+			mes "ข้อความนี้จะไม่แจ้งเตือนในระหว่าง";
+			mes "เปิด Costume Box ครั้งต่อไป";
+			mes "คุณต้องการปิดหรือไม่?";
+			next;
+			switch(select("ปิดข้อความ", "ยกเลิก")){
+				case 1:
+					mes "คุณทำการปิดข้อความแล้ว";
+					#DisabledMessageCB2 = 1;
+					close;
+				case 2:
+					close;
+			}
+			end;
+		case 3:
+			close;
+	}
+	end;
+}
+
+function	script	costume_box_03	{
+
+	set .@costumecash,10; // จำนวน Cash ที่ใช้เปิด
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@costume_box_03[0],400163,410068,20448,20579,20283,20463,20290,31138,410048,410095,410056,410219,31729,420046,31093,420047,420152,480221,480126,480118;
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	if (#DisabledMessageCB3 == 1){
+		if (#CASHPOINTS < .@costumecash){
+			dispbottom "ต้องใช้ "+.@costumecash+" Cash Point ในการเปิด";
+			end;
+		}
+
+		set costume_box_03,rand(1,100);
+	
+		if(costume_box_03 <= 1){
+			set .maxitemsquest,getarraysize(.@costume_box_03);
+			set .@costume_box_03,(.@costume_box_03[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_03,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box III แล้วได้รับ '[A] " + getitemname(.@costume_box_03)+"' 1%",bc_all,0xFFFFFF;
+		}
+	
+		if(costume_box_03 >= 2 && costume_box_03 <= 5){
+			set .maxitemsquest,getarraysize(.@costume_box_03);
+			set .@costume_box_03,(.@costume_box_03[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_03,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box III แล้วได้รับ '[B] " + getitemname(.@costume_box_03)+"' 3%",bc_all,0xFFFFFF;
+		}
+	
+		if(costume_box_03 >= 6 && costume_box_03 <= 20){
+			set .maxitemsquest,getarraysize(.@costume_box_03);
+			set .@costume_box_03,(.@costume_box_03[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_03,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+		}
+	
+		if(costume_box_03 >= 21){
+			set .maxitemsquest,getarraysize(.@costume_box_03);
+			set .@costume_box_03,(.@costume_box_03[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_03,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+		}
+		delitem 8110003,1;
+		#CASHPOINTS -= .@costumecash;
+		end;
+	}
+
+	mes "Costume Box 3";
+	mes "รายละเอียดในการเปิด";
+	mes "ต้องใช้ Cash Point : "+.@costumecash+"";
+	mes "คุณต้องการเปิดหรือไม่?";
+	next;
+	switch(select("ทำการเปิด","ปิดข้อความนี้ก่อนเปิด", "ยกเลิก")){
+		case 1:
+			if (#CASHPOINTS < .@costumecash){
+				dispbottom "ต้องใช้ "+.@costumecash+" Cash Point ในการเปิด";
+				end;
+			}
+
+			set costume_box_03,rand(1,100);
+
+			if(costume_box_03 <= 1){
+				set .maxitemsquest,getarraysize(.@costume_box_03);
+				set .@costume_box_03,(.@costume_box_03[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_03,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box III แล้วได้รับ '[A] " + getitemname(.@costume_box_03)+"' 1%",bc_all,0xFFFFFF;
+			}
+
+			if(costume_box_03 >= 2 && costume_box_03 <= 5){
+				set .maxitemsquest,getarraysize(.@costume_box_03);
+				set .@costume_box_03,(.@costume_box_03[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_03,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box III แล้วได้รับ '[B] " + getitemname(.@costume_box_03)+"' 3%",bc_all,0xFFFFFF;
+			}
+
+			if(costume_box_03 >= 6 && costume_box_03 <= 20){
+				set .maxitemsquest,getarraysize(.@costume_box_03);
+				set .@costume_box_03,(.@costume_box_03[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_03,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+			}
+
+			if(costume_box_03 >= 21){
+				set .maxitemsquest,getarraysize(.@costume_box_03);
+				set .@costume_box_03,(.@costume_box_03[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_03,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+			}
+			delitem 8110003,1;
+			#CASHPOINTS -= .@costumecash;
+			end;
+		case 2:
+			mes "ข้อความนี้จะไม่แจ้งเตือนในระหว่าง";
+			mes "เปิด Costume Box ครั้งต่อไป";
+			mes "คุณต้องการปิดหรือไม่?";
+			next;
+			switch(select("ปิดข้อความ", "ยกเลิก")){
+				case 1:
+					mes "คุณทำการปิดข้อความแล้ว";
+					#DisabledMessageCB3 = 1;
+					close;
+				case 2:
+					close;
+			}
+			end;
+		case 3:
+			close;
+	}
+	end;
+}
+
+function	script	costume_box_04	{
+
+	set .@costumecash,60000; // จำนวน Cash ที่ใช้เปิด
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ITEM ID
+	setarray .@costume_box_04[0],3115,3116,3117,3118,31299,19540,19875,31300,31028,31517,31251,31509,19992,31161,3119,3120;
+
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	if (#DisabledMessageCB3 == 1){
+		if (Zeny < .@costumecash){
+			dispbottom "ต้องใช้ "+.@costumecash+" Zeny ในการเปิด";
+			end;
+		}
+
+		set costume_box_04,rand(1,100);
+	
+		if(costume_box_04 <= 1){
+			set .maxitemsquest,getarraysize(.@costume_box_04);
+			set .@costume_box_04,(.@costume_box_04[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_04,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box III แล้วได้รับ '[A] " + getitemname(.@costume_box_04)+"' 1%",bc_all,0xFFFFFF;
+		}
+	
+		if(costume_box_04 >= 2 && costume_box_04 <= 5){
+			set .maxitemsquest,getarraysize(.@costume_box_04);
+			set .@costume_box_04,(.@costume_box_04[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_04,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box III แล้วได้รับ '[B] " + getitemname(.@costume_box_04)+"' 3%",bc_all,0xFFFFFF;
+		}
+	
+		if(costume_box_04 >= 6 && costume_box_04 <= 20){
+			set .maxitemsquest,getarraysize(.@costume_box_04);
+			set .@costume_box_04,(.@costume_box_04[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_04,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+		}
+	
+		if(costume_box_04 >= 21){
+			set .maxitemsquest,getarraysize(.@costume_box_04);
+			set .@costume_box_04,(.@costume_box_04[rand(.maxitemsquest)]);
+			getitem4 .@costume_box_04,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+		}
+		delitem 8110004,1;
+		Zeny -= .@costumecash;
+		end;
+	}
+
+	mes "Costume Box 4";
+	mes "รายละเอียดในการเปิด";
+	mes "ต้องใช้ Zeny : "+.@costumecash+"";
+	mes "คุณต้องการเปิดหรือไม่?";
+	next;
+	switch(select("ทำการเปิด","ปิดข้อความนี้ก่อนเปิด", "ยกเลิก")){
+		case 1:
+			if (Zeny < .@costumecash){
+				dispbottom "ต้องใช้ "+.@costumecash+" Zeny ในการเปิด";
+				end;
+			}
+
+			set costume_box_04,rand(1,100);
+
+			if(costume_box_04 <= 1){
+				set .maxitemsquest,getarraysize(.@costume_box_04);
+				set .@costume_box_04,(.@costume_box_04[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_04,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box III แล้วได้รับ '[A] " + getitemname(.@costume_box_04)+"' 1%",bc_all,0xFFFFFF;
+			}
+
+			if(costume_box_04 >= 2 && costume_box_04 <= 5){
+				set .maxitemsquest,getarraysize(.@costume_box_04);
+				set .@costume_box_04,(.@costume_box_04[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_04,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] ทำการเปิด Costume Box III แล้วได้รับ '[B] " + getitemname(.@costume_box_04)+"' 3%",bc_all,0xFFFFFF;
+			}
+
+			if(costume_box_04 >= 6 && costume_box_04 <= 20){
+				set .maxitemsquest,getarraysize(.@costume_box_04);
+				set .@costume_box_04,(.@costume_box_04[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_04,1,1,0,0,0,0,0,0,ENCHANTGRADE_C,.@optid,.@optval,.@param;
+			}
+
+			if(costume_box_04 >= 21){
+				set .maxitemsquest,getarraysize(.@costume_box_04);
+				set .@costume_box_04,(.@costume_box_04[rand(.maxitemsquest)]);
+				getitem4 .@costume_box_04,1,1,0,0,0,0,0,0,ENCHANTGRADE_D,.@optid,.@optval,.@param;
+			}
+			delitem 8110004,1;
+			Zeny -= .@costumecash;
+			end;
+		case 2:
+			mes "ข้อความนี้จะไม่แจ้งเตือนในระหว่าง";
+			mes "เปิด Costume Box ครั้งต่อไป";
+			mes "คุณต้องการปิดหรือไม่?";
+			next;
+			switch(select("ปิดข้อความ", "ยกเลิก")){
+				case 1:
+					mes "คุณทำการปิดข้อความแล้ว";
+					#DisabledMessageCB3 = 1;
+					close;
+				case 2:
+					close;
+			}
+			end;
+		case 3:
+			close;
+	}
+	end;
+}
+
+
+
+
+function	script	Fishing_box_01	{
+
+	set .@costumecash,10;
+	setarray .@optid[0],0;
+	setarray .@optval[0],0;
+	setarray .@param[0],0;
+
+	// ไอเทมมีเกรด (10%)
+	setarray .GradeItems[0],400163,410068,20448,20579;
+
+	// ไอเทมปกติ (90%)
+	setarray .NormalItems[0],6316,502,12501,12502,12503,12504,12505,12506,12264,12263,12265,23048,7059,7060,23340,14844;
+
+	if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 3000)) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	if (#DisabledMessageCB3 == 1){
+		if (#CASHPOINTS < .@costumecash){
+			dispbottom "ต้องใช้ "+.@costumecash+" Cash Point ในการเปิด";
+			end;
+		}
+		callsub L_OpenBox;
+		delitem 8110005,1;
+		#CASHPOINTS -= .@costumecash;
+		end;
+	}
+
+	mes "Costume Box 3";
+	mes "รายละเอียดในการเปิด";
+	mes "ต้องใช้ Cash Point : "+.@costumecash+"";
+	next;
+	mes "Item ที่คุณอาจจะได้รับ";
+	mes " ^i[400163]^FFFFFF_^000000";
+	mes " ^i[410068]^FFFFFF_^000000";
+	mes " ^i[20448]^FFFFFF_^000000";
+	mes " ^i[20579]^FFFFFF_^000000";
+	next;
+	mes "คุณต้องการเปิดหรือไม่?";
+	next;
+	switch(select("ทำการเปิด","ปิดข้อความนี้ก่อนเปิด", "ยกเลิก")){
+		case 1:
+			if (#CASHPOINTS < .@costumecash){
+				dispbottom "ต้องใช้ "+.@costumecash+" Cash Point ในการเปิด";
+				end;
+			}
+			callsub L_OpenBox;
+			delitem 8110005,1;
+			#CASHPOINTS -= .@costumecash;
+			end;
+		case 2:
+			mes "ข้อความนี้จะไม่แจ้งเตือนในระหว่างเปิด Costume Box ครั้งต่อไป";
+			next;
+			switch(select("ปิดข้อความ", "ยกเลิก")){
+				case 1:
+					mes "คุณทำการปิดข้อความแล้ว";
+					#DisabledMessageCB3 = 1;
+					close;
+				case 2:
+					close;
+			}
+			end;
+		case 3:
+			close;
+	}
+	end;
+
+L_OpenBox:
+	set .@randomGroupChance, rand(1,100);
+	if (.@randomGroupChance <= 10) {
+		// กลุ่มมีเกรด
+		set .@max, getarraysize(.GradeItems);
+		if (.@max <= 0) {
+			dispbottom "ไม่พบไอเทมกลุ่มเกรด กรุณาติดต่อทีมงาน";
+			return;
+		}
+		set .@item, .GradeItems[rand(.@max)];
+		set .@gradeRoll, rand(1,100);
+		if (.@gradeRoll <= 1) {
+			getitem4 .@item,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] เปิด Fish Egg I ได้ '[A] "+getitemname(.@item)+"'",bc_all,0xFFFFFF;
+		} else if (.@gradeRoll <= 5) {
+			getitem4 .@item,1,1,0,0,0,0,0,0,ENCHANTGRADE_B,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] เปิด Fish Egg I ได้ '[B] "+getitemname(.@item)+"'",bc_all,0xFFFFFF;
+		} else if (.@gradeRoll <= 20) {
+			rentitem4 .@item, (3 * 24 * 60 * 60), 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_C,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] เปิด Fish Egg I ได้ '[C] "+getitemname(.@item)+"' Item จะหายไปใน 3 วัน;", bc_all, 0xFFFFFF;
+		} else {
+			rentitem4 .@item, (3 * 24 * 60 * 60), 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_D,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] เปิด Fish Egg I ได้ '[D] "+getitemname(.@item)+"' Item จะหายไปใน 3 วัน;", bc_all, 0xFFFFFF;
+		}
+	} else {
+		// กลุ่มธรรมดา
+		set .@max, getarraysize(.NormalItems);
+		if (.@max <= 0) {
+			dispbottom "ไม่พบไอเทมกลุ่มธรรมดา กรุณาติดต่อทีมงาน";
+			return;
+		}
+		set .@item, .NormalItems[rand(.@max)];
+		getitem .@item, 1;
+		dispbottom "คุณได้รับไอเทม: "+getitemname(.@item);
+	}
+	return;
+}

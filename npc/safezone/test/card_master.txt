@@ -1,0 +1,293 @@
+//============================================================
+// Card Master (แบบใช้คำสั่ง @setcard ป้องกันออปชั่นหาย 100%)
+// เพิ่มระบบสุ่ม/ค่าบริการ และระบบใช้ไอเท็มเพิ่ม % ความสำเร็จ
+// - จำกัดการเพิ่ม % สูงสุด (เช่น 10%)
+// - คิดเงินเพิ่มตาม % ที่เพิ่มขึ้น
+// - ป้องกันผู้เล่นกรอกเลข 0, เลขติดลบ หรือเลขเกิน (อุดรอยรั่ว)
+//============================================================
+morocc,155,69,4	script	Card Master::Card_Master_NPC	65,{
+
+	// ระบบเช็กแมพเพื่อส่งรหัสฝ่ายไปฟังก์ชันตรวจสอบ
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1;
+	} else if (strcharinfo(3) == "prontera") {
+		callfunc "Check_Faction", 2; 
+	}
+
+	//============================
+	// CONFIG (ปรับตรงนี้)
+	//============================
+	.@need_cards = 1;     // ใช้การ์ดกี่ใบต่อ 1 ครั้ง
+	.@rate       = 25;    // % สำเร็จเริ่มต้น (0-100)
+	.@cost       = 50000; // zeny ค่าบริการพื้นฐานต่อ 1 ครั้ง
+	
+	// ระบบไอเท็มเพิ่ม %
+	.@bonus_item = 6632;  // ไอดีไอเท็มเพิ่มโอกาสสำเร็จ 
+	.@bonus_rate = 1;     // 1 ชิ้น เพิ่มกี่ %
+	.@max_bonus_cap = 10; // เพิ่ม % จากไอเท็มได้สูงสุดไม่เกินกี่ % (เช่น 10%)
+	.@extra_cost = 10000; // ค่าใช้จ่ายที่เพิ่มขึ้น "ต่อ 1%" ที่เพิ่มมา (เช่น 10,000 zeny)
+
+	// เอฟเฟกต์ (ใส่ 0 เพื่อปิด)
+	.@effS = 463; // success effect id
+	.@effF = 624; // fail effect id
+
+	.@cm_selected_item = -1;
+	.@cm_selected_card = -1;
+
+	mes "[Card Master]";
+	mes "บริการฝังการ์ดลงในอุปกรณ์ ^FF0000(ต้องสวมใส่อุปกรณ์ชิ้นนั้นอยู่เท่านั้น)^000000";
+	mes "^777777เงื่อนไข^000000";
+	mes " - ใช้การ์ด ^0055FF"+.@need_cards+" ใบ^000000 ต่อครั้ง";
+	mes " - โอกาสสำเร็จเริ่มต้น ^00AA00"+.@rate+"%^000000";
+	mes " - ค่าบริการพื้นฐาน ^FF9900"+.@cost+" zeny^000000 ต่อครั้ง";
+	mes " - สามารถใช้ ^0055FF"+getitemname(.@bonus_item)+"^000000 เพื่อเพิ่มโอกาสสำเร็จได้";
+	mes "   (1 ชิ้น = +"+.@bonus_rate+"% | ใช้เพิ่มได้สูงสุด "+.@max_bonus_cap+"%)";
+	mes "   ^FF0000* ทุกๆ 1% ที่เพิ่ม จะเสียค่าบริการเพิ่ม "+.@extra_cost+" Zeny^000000";
+	mes " - ไม่สำเร็จ: ^FF0000การ์ดหาย^000000 (เงินและไอเท็มเสริมหายด้วย)";
+	next;
+
+	if (select("เริ่มทำรายการ:ยกเลิก") == 2) close;
+
+	//--------------------------------------------
+	// 1) เลือกไอเท็ม (อุปกรณ์) จาก Inventory เฉพาะ "ของที่กำลังสวมใส่"
+	//--------------------------------------------
+	getinventorylist();
+	.@cm_count = 0;
+	deletearray(.@cm_item_idx[0], getarraysize(.@cm_item_idx));
+
+	for (.@cm_i = 0; .@cm_i < @inventorylist_count; .@cm_i++) {
+		if (@inventorylist_equip[.@cm_i] == 0) continue;
+
+		.@cm_id = @inventorylist_id[.@cm_i];
+		.@cm_slots = getitemslots(.@cm_id);
+		if (.@cm_slots <= 0) continue;
+		if (.@cm_slots > 4) .@cm_slots = 4;
+
+		.@cm_empty = 0;
+		if (.@cm_slots >= 1 && @inventorylist_card1[.@cm_i] == 0) .@cm_empty++;
+		if (.@cm_slots >= 2 && @inventorylist_card2[.@cm_i] == 0) .@cm_empty++;
+		if (.@cm_slots >= 3 && @inventorylist_card3[.@cm_i] == 0) .@cm_empty++;
+		if (.@cm_slots >= 4 && @inventorylist_card4[.@cm_i] == 0) .@cm_empty++;
+
+		if (.@cm_empty <= 0) continue;
+
+		.@cm_item_idx[.@cm_count] = .@cm_i;
+		.@cm_count++;
+		if (.@cm_count >= 120) break; // กันเมนูยาวเกิน
+	}
+
+	if (.@cm_count == 0) {
+		mes "[Card Master]";
+		mes "ไม่พบอุปกรณ์ 'ที่กำลังสวมใส่' และมีสล็อตว่าง";
+		mes "^777777หมายเหตุ:^000000 คุณต้องสวมใส่อุปกรณ์ชิ้นนั้นเข้าที่ตัวละครก่อนครับ";
+		close;
+	}
+
+	.@cm_menu$ = "";
+	for (.@cm_m = 0; .@cm_m < .@cm_count; .@cm_m++) {
+		.@cm_i = .@cm_item_idx[.@cm_m];
+		.@cm_id = @inventorylist_id[.@cm_i];
+		.@cm_ref = @inventorylist_refine[.@cm_i];
+		.@cm_slots = getitemslots(.@cm_id);
+		if (.@cm_slots > 4) .@cm_slots = 4;
+
+		.@cm_empty = 0;
+		if (.@cm_slots >= 1 && @inventorylist_card1[.@cm_i] == 0) .@cm_empty++;
+		if (.@cm_slots >= 2 && @inventorylist_card2[.@cm_i] == 0) .@cm_empty++;
+		if (.@cm_slots >= 3 && @inventorylist_card3[.@cm_i] == 0) .@cm_empty++;
+		if (.@cm_slots >= 4 && @inventorylist_card4[.@cm_i] == 0) .@cm_empty++;
+
+		.@cm_menu$ += ( ( .@cm_ref > 0 ) ? ("+" + .@cm_ref + " ") : "" )
+				   + getitemname(.@cm_id)
+				   + " ^777777(สล็อต "+.@cm_slots+" | ว่าง "+.@cm_empty+")^000000:";
+	}
+
+	next;
+	mes "[Card Master]";
+	mes "เลือกอุปกรณ์ (ที่กำลังสวมใส่):";
+	.@cm_pick = select(.@cm_menu$) - 1;
+	.@cm_selected_item = .@cm_item_idx[.@cm_pick];
+
+	.@cm_item_id   = @inventorylist_id[.@cm_selected_item];
+	.@cm_c1        = @inventorylist_card1[.@cm_selected_item];
+	.@cm_c2        = @inventorylist_card2[.@cm_selected_item];
+	.@cm_c3        = @inventorylist_card3[.@cm_selected_item];
+	.@cm_c4        = @inventorylist_card4[.@cm_selected_item];
+	.@cm_equip_pos = @inventorylist_equip[.@cm_selected_item]; 
+
+	.@cm_slots = getitemslots(.@cm_item_id);
+	if (.@cm_slots > 4) .@cm_slots = 4;
+
+	.@cm_item_loc = getiteminfo(.@cm_item_id, ITEMINFO_LOCATIONS);
+
+	//--------------------------------------------
+	// 2) เลือกการ์ดจาก Inventory (เฉพาะที่ loc ตรงกับอุปกรณ์)
+	//--------------------------------------------
+	.@cm_card_count = 0;
+	deletearray(.@cm_card_idx[0], getarraysize(.@cm_card_idx));
+
+	for (.@cm_i = 0; .@cm_i < @inventorylist_count; .@cm_i++) {
+		if (@inventorylist_equip[.@cm_i]) continue; 
+
+		.@cm_cid = @inventorylist_id[.@cm_i];
+		if (getiteminfo(.@cm_cid, ITEMINFO_TYPE) != IT_CARD) continue;
+
+		.@cm_card_loc = getiteminfo(.@cm_cid, ITEMINFO_LOCATIONS);
+		if (.@cm_card_loc == 0 || .@cm_item_loc == 0) continue;
+		if ((.@cm_card_loc & .@cm_item_loc) == 0) continue;
+
+		.@cm_card_idx[.@cm_card_count] = .@cm_i;
+		.@cm_card_count++;
+		if (.@cm_card_count >= 120) break;
+	}
+
+	if (.@cm_card_count == 0) {
+		mes "[Card Master]";
+		mes "ไม่พบการ์ดในตัวที่ใส่กับอุปกรณ์นี้ได้";
+		close;
+	}
+
+	.@cm_menu$ = "";
+	for (.@cm_m = 0; .@cm_m < .@cm_card_count; .@cm_m++) {
+		.@cm_i = .@cm_card_idx[.@cm_m];
+		.@cm_menu$ += getitemname(@inventorylist_id[.@cm_i]) + " x" + @inventorylist_amount[.@cm_i] + ":";
+	}
+
+	next;
+	mes "[Card Master]";
+	mes "เลือกการ์ดที่จะฝัง (เฉพาะที่ใส่ได้):";
+	.@cm_pick = select(.@cm_menu$) - 1;
+	.@cm_selected_card = .@cm_card_idx[.@cm_pick];
+	.@cm_card_id = @inventorylist_id[.@cm_selected_card];
+
+	if (@inventorylist_amount[.@cm_selected_card] < .@need_cards) {
+		mes "[Card Master]";
+		mes "การ์ด ^0055FF"+getitemname(.@cm_card_id)+"^000000 ไม่พอ";
+		close;
+	}
+
+	//--------------------------------------------
+	// 3) เลือกสล็อตที่จะใส่
+	//--------------------------------------------
+	.@cm_slot_menu$ = "";
+	deletearray(.@cm_slot_pos[0], getarraysize(.@cm_slot_pos));
+	.@cm_slot_count = 0;
+
+	if (.@cm_slots >= 1 && .@cm_c1 == 0) { .@cm_slot_pos[.@cm_slot_count] = 1; .@cm_slot_count++; .@cm_slot_menu$ += "สล็อต 1:"; }
+	if (.@cm_slots >= 2 && .@cm_c2 == 0) { .@cm_slot_pos[.@cm_slot_count] = 2; .@cm_slot_count++; .@cm_slot_menu$ += "สล็อต 2:"; }
+	if (.@cm_slots >= 3 && .@cm_c3 == 0) { .@cm_slot_pos[.@cm_slot_count] = 3; .@cm_slot_count++; .@cm_slot_menu$ += "สล็อต 3:"; }
+	if (.@cm_slots >= 4 && .@cm_c4 == 0) { .@cm_slot_pos[.@cm_slot_count] = 4; .@cm_slot_count++; .@cm_slot_menu$ += "สล็อต 4:"; }
+
+	next;
+	mes "[Card Master]";
+	mes "เลือกสล็อตที่จะฝังการ์ด:";
+	.@cm_pick = select(.@cm_slot_menu$) - 1;
+	.@cm_slot = .@cm_slot_pos[.@cm_pick];
+
+	//--------------------------------------------
+	// 3.5) ระบบไอเท็มเพิ่มโอกาสสำเร็จ (แบบรัดกุม)
+	//--------------------------------------------
+	.@final_rate = .@rate;
+	.@has_bonus = countitem(.@bonus_item);
+	.@use_bonus = 0;
+
+	if (.@has_bonus > 0 && .@final_rate < 100 && .@max_bonus_cap > 0) {
+		next;
+		mes "[Card Master]";
+		mes "คุณมีไอเท็ม ^0055FF"+getitemname(.@bonus_item)+"^000000 จำนวน "+.@has_bonus+" ชิ้น";
+		mes "ต้องการใช้เพื่อเพิ่มโอกาสสำเร็จหรือไม่?";
+		mes "(1 ชิ้น = +"+.@bonus_rate+"% | จำกัดเพิ่มสูงสุด "+.@max_bonus_cap+"%)";
+		
+		if (select("ใช้:ไม่ใช้") == 1) {
+			// คำนวณจำนวนชิ้นสูงสุดที่อนุญาตให้ใช้ได้
+			.@max_can_use = .@max_bonus_cap / .@bonus_rate;
+			.@cap_100 = (100 - .@final_rate) / .@bonus_rate;
+			if (.@max_can_use > .@cap_100) .@max_can_use = .@cap_100;
+			if (.@has_bonus < .@max_can_use) .@max_can_use = .@has_bonus;
+
+			mes "[Card Master]";
+			mes "ระบุจำนวนที่ต้องการใช้ ^0055FF(ใส่ได้ 1 ถึง "+.@max_can_use+" ชิ้น):^000000";
+			input .@use_bonus;
+
+			// [ระบบตรวจสอบความปลอดภัยขั้นสูง]
+			if (.@use_bonus <= 0) {
+				mes "[Card Master]";
+				mes "^FF0000คุณระบุจำนวนไม่ถูกต้อง (น้อยกว่า 1 ชิ้น)^000000";
+				mes "เพื่อป้องกันความผิดพลาด ระบบขอยกเลิกการทำรายการครับ";
+				close;
+			}
+			if (.@use_bonus > .@max_can_use) {
+				mes "[Card Master]";
+				mes "^FF0000คุณระบุเกินจำนวนที่ระบบอนุญาต (สูงสุด "+.@max_can_use+" ชิ้น)^000000";
+				mes "เพื่อป้องกันความผิดพลาด ระบบขอยกเลิกการทำรายการครับ";
+				close;
+			}
+
+			// ผ่านการตรวจสอบ
+			.@final_rate += (.@use_bonus * .@bonus_rate);
+		}
+	}
+
+	//--------------------------------------------
+	// 4) ยืนยัน + คิดเงินทั้งหมด/ลบไอเท็ม + สุ่มผล
+	//--------------------------------------------
+	// คำนวณเงินทั้งหมดที่ต้องจ่าย
+	.@added_percent = (.@use_bonus * .@bonus_rate);
+	.@total_cost = .@cost + (.@added_percent * .@extra_cost);
+
+	next;
+	mes "[Card Master]";
+	mes "รายการที่จะทำ";
+	mes "อุปกรณ์: ^0055FF"+getitemname(.@cm_item_id)+"^000000 (สล็อต "+.@cm_slot+"/"+.@cm_slots+")";
+	mes "การ์ด: ^0055FF"+getitemname(.@cm_card_id)+"^000000";
+	mes "ใช้การ์ด: ^FF9900"+.@need_cards+" ใบ^000000";
+	
+	if (.@use_bonus > 0) {
+		mes "ใช้ไอเท็มเสริม: ^FF9900"+getitemname(.@bonus_item)+" "+.@use_bonus+" ชิ้น (+"+.@added_percent+"%)^000000";
+	}
+	
+	mes "ค่าบริการรวม: ^FF9900"+.@total_cost+" zeny^000000";
+	mes "โอกาสสำเร็จรวม: ^00AA00"+.@final_rate+"%^000000";
+	
+	if (select("ยืนยันทำรายการ:ยกเลิก") == 2) close;
+
+	if (Zeny < .@total_cost) {
+		mes "[Card Master]";
+		mes "Zeny ไม่พอ (ต้องใช้ "+.@total_cost+" zeny)";
+		close;
+	}
+
+	// หักค่าใช้จ่ายทั้งหมด
+	Zeny -= .@total_cost;
+	delitem .@cm_card_id, .@need_cards;
+	if (.@use_bonus > 0) delitem .@bonus_item, .@use_bonus;
+
+	// สุ่ม % 
+	if (rand(100) >= .@final_rate) {
+		if (.@effF) specialeffect2 .@effF;
+		emotion ET_SWEAT;
+		mes "[Card Master]";
+		mes "^FF0000ล้มเหลว!^000000 การฝังการ์ดไม่สำเร็จ ไอเท็มและเงินที่ใช้ไปสูญหายทั้งหมด";
+		close;
+	}
+
+	// SUCCESS
+	if (.@effS) specialeffect2 .@effS;
+	emotion ET_OK;
+
+	.@cmd_slot = .@cm_slot - 1;
+	atcommand "@setcard " + .@cm_equip_pos + " " + .@cmd_slot + " " + .@cm_card_id;
+	
+	mes "[Card Master]";
+	mes "^00AA00สำเร็จ!^000000 ฝังการ์ดเรียบร้อย";
+	mes "อุปกรณ์: ^0055FF"+getitemname(.@cm_item_id)+"^000000";
+	mes "การ์ด: ^0055FF"+getitemname(.@cm_card_id)+"^000000";
+	close;
+
+OnInit:
+	delwaitingroom;
+	waitingroom "Card Master - ฝังการ์ด", 0;
+	end;
+}
+
+prontera,149,131,5	duplicate(Card_Master_NPC)	Card Master#prontera	65

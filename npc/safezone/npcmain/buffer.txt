@@ -1,0 +1,1276 @@
+/*
+prontera,117,73,5	script	prontera#01	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(115,123);
+		set .@runy,rand(68,78);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	end;
+}
+
+prontera,34,211,5	script	Buff prontera#02	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(27,34);
+		set .@runy,rand(204,211);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	end;
+}
+
+prontera,159,329,5	script	Buff prontera#03	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(155,158);
+		set .@runy,rand(322,329);
+		npcwalkto .@runx,.@runy;
+		initnpctimer;
+
+OnInit:
+	initnpctimer;
+	end;
+}
+prontera,284,210,5	script	Buff prontera#06	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(278,284);
+		set .@runy,rand(208,210);
+		npcwalkto .@runx,.@runy;
+		initnpctimer;
+
+OnInit:
+	initnpctimer;
+	end;
+}
+
+prontera,155,192,5	script	Buff prontera#04	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(155,160);
+		set .@runy,rand(188,192);
+		npcwalkto .@runx,.@runy;
+		initnpctimer;
+
+OnInit:
+	initnpctimer;
+	end;
+}
+
+
+*/
+
+morocc_in,77,101,5	script	Buff#001	66,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+}
+
+
+morocc,139,31,5	script	Buff#002	66,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+}
+
+
+morocc,180,31,5	script	Buff#003	66,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+}
+
+morocc,162,97,5	script	Buff#004	66,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+}
+
+morocc,126,102,5	script	Buff#110	66,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+}
+
+
+//morocc,186,48,5	script	Buff#01	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(156,164);
+//		set .@runy,rand(49,60);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+//
+//morocc,159,53,5	script	Buff2	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(154,162);
+//		set .@runy,rand(44,54);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+//
+//morocc,158,97,5	script	Buff3	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(150,166);
+//		set .@runy,rand(92,101);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+//
+//morocc,171,38,5	script	Buff4	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(167,183);
+//		set .@runy,rand(26,38);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+//
+//morocc,207,67,5	script	Buff5	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(201,219);
+//		set .@runy,rand(58,67);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+//
+//morocc,235,53,5	script	Buff6	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(224,239);
+//		set .@runy,rand(45,53);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+//
+//morocc,191,93,5	script	Buff7	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(182,192);
+//		set .@runy,rand(88,93);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+//
+//morocc,164,258,5	script	Buff8	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(153,165);
+//		set .@runy,rand(250,267);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+//
+//morocc,149,187,5	script	Buff9	2489,{
+//
+//	set .@delay, 30;
+//
+//	if ( gettimetick(2)-@delay_heal < .@delay ){
+//		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+//		end;
+//	}
+//	
+//	set @delay_heal, gettimetick(2);
+//
+//	if (getbrokenid(1) > 0){
+//		atcommand "@repairall";
+//	}
+//	atcommand "@identifyall";
+//			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Blessing !!", "", bc_self;
+//			sc_start SC_BLESSING,900000,5;
+//			specialeffect2 EF_BLESSING;
+//			sleep2 2000;
+//			npctalk "Increase Agility !!", "", bc_self;
+//			sc_start SC_INCREASEAGI,900000,5;
+//			specialeffect2 EF_INCAGILITY;
+//			sleep2 2000;
+//			npctalk "Gloria !!", "", bc_self;
+//			sc_start SC_GLORIA,900000,5;
+//			specialeffect2 EF_GLORIA;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Heal !!", "", bc_self;
+//			percentheal 25,0;
+//			specialeffect2 EF_HEAL2;
+//			sleep2 2000;
+//			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+//			sleep2 2000;
+//			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+//			sleep2 2000;
+//	end;
+//
+//OnTimer15000:
+//		npcspeed 170;
+//		set .@runx,rand(144,153);
+//		set .@runy,rand(184,189);
+//		npcwalkto .@runx,.@runy;
+//
+//OnInit:
+//	initnpctimer;
+//	end;
+//}
+
+izlude,128,147,5	script	Buff10	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(123,131);
+		set .@runy,rand(147,150);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	end;
+}
+
+prontera,147,93,5	script	Buff prontera#10	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(145,147);
+		set .@runy,rand(90,95);
+		npcwalkto .@runx,.@runy;
+		initnpctimer;
+
+OnInit:
+	initnpctimer;
+	end;
+}
+
+morocc,92,49,5	script	Buff#11	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(87,98);
+		set .@runy,rand(48,50);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	end;
+}
+
+prt_fild08,337,219,3	script	Buff#00	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	switch(select("ขอความช่วยเหลือ","ยกเลิก")){
+		case 1:
+			sc_start SC_BLESSING,180000,10;
+			sc_start SC_INCREASEAGI,180000,10;
+			specialeffect2 EF_INCAGILITY;
+			specialeffect2 EF_BLESSING;
+			percentheal 100,100;
+			end;
+		case 2:
+			close;
+			end;
+	}
+	end;
+}
+
+izlude,128,147,5	script	Buff11	2489,{
+
+	set .@delay, 30;
+
+	if ( gettimetick(2)-@delay_heal < .@delay ){
+		message strcharinfo(0),"สามารถขอ Heal ได้อีกครั้งในอีก "+(.@delay-(gettimetick(2)-@delay_heal))+" วินาที";
+		end;
+	}
+	
+	set @delay_heal, gettimetick(2);
+
+	if (getbrokenid(1) > 0){
+		atcommand "@repairall";
+	}
+	atcommand "@identifyall";
+			unittalk getcharid(3), "" + strcharinfo(0) + " : ขอฮีล AB ทีจ้า", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ขอเหี้ยไรนักหนาวะ", "", bc_self;
+			sleep2 2000;
+			npctalk "Blessing !!", "", bc_self;
+			sc_start SC_BLESSING,900000,5;
+			specialeffect2 EF_BLESSING;
+			sleep2 2000;
+			npctalk "Increase Agility !!", "", bc_self;
+			sc_start SC_INCREASEAGI,900000,5;
+			specialeffect2 EF_INCAGILITY;
+			sleep2 2000;
+			npctalk "Gloria !!", "", bc_self;
+			sc_start SC_GLORIA,900000,5;
+			specialeffect2 EF_GLORIA;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Heal !!", "", bc_self;
+			percentheal 25,0;
+			specialeffect2 EF_HEAL2;
+			sleep2 2000;
+			npctalk "Buff : ขอเก่งไอ้สัส ไม่ปั้นไว้ใช้เองมั่ง", "", bc_self;
+			sleep2 2000;
+			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
+			sleep2 2000;
+	end;
+
+OnTimer15000:
+		npcspeed 170;
+		set .@runx,rand(123,131);
+		set .@runy,rand(147,150);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	end;
+}

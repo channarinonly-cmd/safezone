@@ -1,0 +1,98 @@
+// =======================================================
+// NPC: รับรางวัลกิจกรรม Like & Share (OBT) - รองรับหลายเมือง
+// =======================================================
+
+// --- 1. ตัวหลัก (Master NPC) ---
+morocc,138,101,4	script	CBT Reward Claim	119,{
+	
+	// --- ตั้งค่าของรางวัลตรงนี้ ---
+	.@reward_id = 3208; 
+	.@reward_amount = 1;
+	// -----------------------------
+	
+	
+	
+	.@NPCName$ = "[ ^0000FFผู้ดูแลกิจกรรม Like & Share^000000 ]";
+
+	mes .@NPCName$;
+	mes "สวัสดีจ้า! ยินดีต้อนรับเข้าสู่ช่วง OBT นะ";
+	mes "มารับของรางวัลจากกิจกรรม Like & Share หน้าแฟนเพจใช่ไหม?";
+	next;
+
+	switch(select("ใช่ ฉันมารับรางวัล:ยังก่อน แค่แวะมาทักทาย")) {
+		case 1:
+			// 1. ดึงข้อมูลสถานะจากฐานข้อมูล (ปรับ Syntax ให้อ่านง่ายขึ้น)
+			query_sql "SELECT `status`, `claimed` FROM `event_like_share` WHERE `account_id` = " + getcharid(3) + " LIMIT 1", .@status$, .@claimed;
+
+			// 2. เช็คว่ามีข้อมูลในระบบไหม (เผื่อคนไม่เคยร่วมกิจกรรมมากดคุย)
+			if (getarraysize(.@status$) == 0) {
+				mes .@NPCName$;
+				mes "เอ๊ะ... ฉันไม่พบข้อมูลของคุณในระบบเลยนะ";
+				mes "คุณน่าจะยังไม่ได้ส่งรูปเข้าร่วมกิจกรรม หรืออาจจะใช้ผิดไอดีมารับของจ้า";
+				close;
+			}
+
+			// 3. เช็คว่าเคยรับไปแล้วหรือยัง (claimed = 1 คือรับแล้ว)
+			if (.@claimed[0] == 1) {
+				mes .@NPCName$;
+				mes "คุณได้รับรางวัลกิจกรรมนี้ไปเรียบร้อยแล้วจ้า!";
+				mes "ขอบคุณที่ให้การสนับสนุนเซิร์ฟเวอร์ของเราน้าา~";
+				close;
+			}
+
+			// 4. เช็คว่า Admin อนุมัติหรือยัง
+			if (.@status$[0] == "approved") {
+				
+				// เช็คน้ำหนักและช่องเก็บของ (ป้องกันของตกพื้น)
+				if (checkweight(.@reward_id, .@reward_amount) == 0) {
+					mes "[ ^FF0000ระบบแจ้งเตือน^000000 ]";
+					mes "น้ำหนักหรือช่องเก็บของของคุณเต็มครับ";
+					mes "กรุณาเคลียร์ช่องเก็บของก่อนมารับรางวัลนะครับ!";
+					close;
+				}
+
+				// อัปเดตข้อมูลในฐานข้อมูลว่า "รับของแล้วนะ" (claimed = 1)
+				query_sql "UPDATE `event_like_share` SET `claimed` = 1 WHERE `account_id` = " + getcharid(3);
+				
+				// แจกไอเทม
+				getitem .@reward_id, .@reward_amount; 
+				
+				// เอฟเฟคพิเศษตอนรับของ (เสียงพลุ+เหรียญทอง)
+				specialeffect2 EF_COIN;
+				specialeffect2 EF_SUCESS;
+				
+				mes .@NPCName$;
+				mes "สุดยอดไปเลย! ข้อมูลถูกต้องครบถ้วน";
+				mes "นี่คือของรางวัลของคุณจ้า ขอให้สนุกกับการเล่นนะ!";
+				close;
+			} 
+			else if (.@status$[0] == "pending") {
+				mes .@NPCName$;
+				mes "ทีมงานกำลังตรวจสอบรูปภาพของคุณอยู่จ้า";
+				mes "ใจเย็นๆ น้า โปรดรอแอดมินตรวจสักพักแล้วค่อยมาคุยใหม่นะ";
+				close;
+			}
+			else if (.@status$[0] == "rejected") {
+				mes .@NPCName$;
+				mes "^FF0000น่าเสียดายจัง... ทีมงานปฏิเสธการเข้าร่วมกิจกรรมของคุณ^000000";
+				mes "อาจเป็นเพราะส่งรูปไม่ถูกต้อง หรือทำผิดกติกาจ้า";
+				close;
+			}
+
+		case 2:
+			mes .@NPCName$;
+			mes "จ้าาา ขอให้สนุกน้า ไว้มารับของได้ตลอดเลยนะ";
+			close;
+	}
+	end;
+
+OnInit:
+	waitingroom "รับรางวัล Like&Share", 0;
+	end;
+}
+
+// --- 2. การเพิ่ม NPC แจกรางวัล เมืองอื่นๆ (Duplicate) ---
+// รูปแบบ: Map,X,Y,Dir  duplicate(ชื่อตัวหลัก)  ชื่อNPCใหม่#id  ViewID
+prontera,115,61,4	duplicate(CBT Reward Claim)	CBT Reward Claim#pro	119
+//payon,165,123,4	duplicate(CBT Reward Claim)	CBT Reward Claim#pay	119
+//alberta,115,68,4	duplicate(CBT Reward Claim)	CBT Reward Claim#alb	119

@@ -1,0 +1,294 @@
+function	script	sphinx_hunt_npc	{
+	.@npc$ = getarg(0);
+	.@monster_name$ = getarg(1);
+	.@mob_id = getarg(2);
+	.@prefix$ = getarg(3);
+
+	.@hunt_var$ = .@prefix$ + "_hunt";
+	.@kill_var$ = .@prefix$ + "_kill";
+	.@count_var$ = .@prefix$ + "_count";
+
+	// Costume reward list - แสดงรูปไอเทมด้วย i[]
+	setarray .costume_list[0], 19500, 19501, 19502;
+	setarray .costume_name$[0], 
+		"i[19500] หน้ากากนักรบโบราณ", 
+		"i[19501] หน้ากากนักบวชโบราณ", 
+		"i[19502] หน้ากากนักเวทย์โบราณ";
+
+
+	// Separate reward lists for each NPC
+	if (.@npc$ == "Glavis") {
+		setarray .reward_list[0], 607, 12214, 12215; // Matyr rewards
+	} else if (.@npc$ == "Gladiator") {
+		setarray .reward_list[0], 608, 12216, 12217; // Marduk rewards
+	} else if (.@npc$ == "Gladius") {
+		setarray .reward_list[0], 609, 12218, 12219; // Requiem rewards
+	}
+
+	mes "[" + .@npc$ + "]";
+
+	// บทพูดเฉพาะ NPC
+	if (.@npc$ == "Glavis") {
+		mes "สวัสดีผู้กล้า ข้าคือ ^0000FFGlavis^000000 ผู้คุ้มกันทางเข้าวิหารโบราณ.";
+		mes "ช่วงนี้มี ^FF0000Matyr^000000 ปรากฏตัวอย่างผิดปกติ...";
+		mes "เจ้าพร้อมจะรับภารกิจล่าพวกมันจำนวน 150 ตัวหรือไม่?";
+		next;
+		mes "^008800• เควสนี้สามารถทำได้วันละครั้ง (รีเซ็ตเวลา 04:00 น.)";
+		mes "แต่สามารถรีเซ็ตเควสด้วย ^i[6417]^FFFFFF_^000000 ^ff0000 Silvervine 1 ea ^000000";
+		next;
+		mes "^008800• สามารถทำเควสเป็นกลุ่มปาร์ตี้ได้";
+		mes "• สมาชิกปาร์ตี้ที่อยู่ในแผนที่เดียวกันจะนับจำนวนการฆ่าเพิ่มให้กันเองอัตโนมัติ^000000";
+		mes "• ระบบจะแสดงชื่อผู้ฆ่ามอนสเตอร์ในข้อความแจ้งเตือน^000000";
+		next;
+		mes "• ทำเควสนี้สำเร็จ ^FF9900ครบ 30 รอบ^000000 จะนับเป็น 1 ความสำเร็จ";
+		mes "• หากทำครบทั้ง ^FF00003 เควส^000000 (Glavis, Gladiator, Gladius)";
+		mes "  และแต่ละเควสครบ 30 รอบ   รับ ^FF0000Costume แบบสุ่ม 1 ชิ้น^000000!";
+		mes " ";
+		next;
+		mes "^FF0000รางวัลประจำเควส Matyr:^000000";
+		for (.@i = 0; .@i < getarraysize(.reward_list); .@i++) {
+			mes "^i[" + .reward_list[.@i] + "]^FFFFFF_^000000" + getitemname(.reward_list[.@i]);
+		}
+		next;
+		mes "^FF0000รางวัล Costume ที่อาจได้รับ:^000000";
+			for (.@i = 0; .@i < getarraysize(.costume_list); .@i++) {
+				mes "^i[" + .costume_list[.@i] + "]^FFFFFF_^000000" + getitemname(.costume_list[.@i]);
+			}
+		mes " ";
+		next;
+	} 
+	else if (.@npc$ == "Gladiator") {
+		mes "ข้าคือ ^0000FFGladiator^000000, อดีตนักรบในสงครามศักดิ์สิทธิ์.";
+		mes "ตอนนี้ ^FF0000Marduk^000000 ได้หลุดออกมาจากผนึกและอาละวาด.";
+		mes "ข้าต้องการให้เจ้าล่ามัน 150 ตัว!";
+		next;
+		mes "^008800• เควสนี้สามารถทำได้วันละครั้ง (รีเซ็ตเวลา 04:00 น.)";
+		mes "แต่สามารถรีเซ็ตเควสด้วย ^i[6417]^FFFFFF_^000000 ^ff0000 Silvervine 1 ea ^000000";
+		next;
+		mes "^008800• สามารถทำเควสเป็นกลุ่มปาร์ตี้ได้";
+		mes "• สมาชิกปาร์ตี้ที่อยู่ในแผนที่เดียวกันจะนับจำนวนการฆ่าเพิ่มให้กันเองอัตโนมัติ^000000";
+		mes "• ระบบจะแสดงชื่อผู้ฆ่ามอนสเตอร์ในข้อความแจ้งเตือน^000000";
+		next;
+		mes "• ทำเควสนี้สำเร็จ ^FF9900ครบ 30 รอบ^000000 จะนับเป็น 1 ความสำเร็จ";
+		mes "• หากทำครบทั้ง ^FF00003 เควส^000000 (Glavis, Gladiator, Gladius)";
+		mes "  และแต่ละเควสครบ 30 รอบ   รับ ^FF0000Costume แบบสุ่ม 1 ชิ้น^000000!";
+		mes " ";
+		next;
+		mes "^FF0000รางวัลประจำเควส Marduk:^000000";
+		for (.@i = 0; .@i < getarraysize(.reward_list); .@i++) {
+			mes "^i[" + .reward_list[.@i] + "]^FFFFFF_^000000" + getitemname(.reward_list[.@i]);
+		}
+		next;
+		mes "^FF0000รางวัล Costume ที่อาจได้รับ:^000000";
+			for (.@i = 0; .@i < getarraysize(.costume_list); .@i++) {
+				mes "^i[" + .costume_list[.@i] + "]^FFFFFF_^000000" + getitemname(.costume_list[.@i]);
+			}
+		mes " ";
+		next;
+	} 
+	else if (.@npc$ == "Gladius") {
+		mes "เจ้ามาเพื่อพิสูจน์ตัวเองในวิหารแห่งนี้ใช่หรือไม่?";
+		mes "เหล่า ^FF0000Requiem^000000 คือวิญญาณพเนจรที่ไม่ยอมสงบ.";
+		mes "จงช่วยข้าทำลายมัน 150 ตัว เพื่อคืนสมดุล.";
+		next;
+		mes "^008800• เควสนี้สามารถทำได้วันละครั้ง (รีเซ็ตเวลา 04:00 น.)";
+		mes "แต่สามารถรีเซ็ตเควสด้วย ^i[6417]^FFFFFF_^000000 ^ff0000 Silvervine 1 ea ^000000";
+		next;
+		mes "^008800• สามารถทำเควสเป็นกลุ่มปาร์ตี้ได้";
+		mes "• สมาชิกปาร์ตี้ที่อยู่ในแผนที่เดียวกันจะนับจำนวนการฆ่าเพิ่มให้กันเองอัตโนมัติ^000000";
+		mes "• ระบบจะแสดงชื่อผู้ฆ่ามอนสเตอร์ในข้อความแจ้งเตือน^000000";
+		next;
+		mes "• ทำเควสนี้สำเร็จ ^FF9900ครบ 30 รอบ^000000 จะนับเป็น 1 ความสำเร็จ";
+		mes "• หากทำครบทั้ง ^FF00003 เควส^000000 (Glavis, Gladiator, Gladius)";
+		mes "  และแต่ละเควสครบ 30 รอบ   รับ ^FF0000Costume แบบสุ่ม 1 ชิ้น^000000!";
+		mes " ";
+		next;
+		mes "^FF0000รางวัลประจำเควส Requiem:^000000";
+		for (.@i = 0; .@i < getarraysize(.reward_list); .@i++) {
+			mes "^i[" + .reward_list[.@i] + "]^FFFFFF_^000000" + getitemname(.reward_list[.@i]);
+		}
+		next;
+		mes "^FF0000รางวัล Costume ที่อาจได้รับ:^000000";
+			for (.@i = 0; .@i < getarraysize(.costume_list); .@i++) {
+				mes "^i[" + .costume_list[.@i] + "]^FFFFFF_^000000" + getitemname(.costume_list[.@i]);
+			}
+		mes " ";
+		next;
+	}
+
+	if (BaseLevel < 50) {
+		mes "^FF0000เจ้าต้องมี Base Level อย่างน้อย 50 เพื่อทำเควสนี้.";
+		close;
+	}
+
+	// เควสสำเร็จแล้ว
+	if (getd(.@hunt_var$) == 2) {
+		mes "เจ้าสำเร็จเควสนี้แล้ว!";
+		// ตรวจสอบว่าครบ 30 รอบแล้วหรือไม่
+		if (getd(.@count_var$) >= 30) {
+			mes "^FF0000เจ้าทำเควสนี้ครบ 30 รอบแล้ว! ไม่สามารถรีเซ็ตได้อีก^000000";
+			mes "^00AA00กรุณาทำเควสอื่นที่เหลือให้ครบ 30 รอบเพื่อรับรางวัลพิเศษ^000000";
+			close;
+		}
+		if (select("รีเซ็ตเควสด้วย Silvervine 1 ea:ไม่ล่ะ") == 1) {
+			if (countitem(6417) < 1) {
+				mes "^FF0000เจ้ามี Silvervine ไม่เพียงพอ.";
+				close;
+			}
+			delitem 6417, 1;
+			mes "^00AA00รีเซ็ตเควสเรียบร้อยแล้ว.";
+			setd .@hunt_var$, 0;
+			setd .@kill_var$, 0;
+			close;
+		}
+		close;
+	}
+
+	// กำลังทำเควส
+	if (getd(.@hunt_var$) == 1) {
+		mes "^0000FF" + .@monster_name$ + " ที่เจ้าต้องล่า:^000000";
+		mes getd(.@kill_var$) + " / 150 ตัว";
+		mes "รอบที่ทำสำเร็จ: ^00AA00" + getd(.@count_var$) + " / 30 รอบ^000000";
+
+		if (getd(.@kill_var$) >= 150) {
+			mes "^00AA00ยอดเยี่ยม! เจ้ากำจัดครบแล้ว!";
+			mes "รับรางวัลของเจ้าตามสัญญา.";
+			getexp 100000, 50000;
+			// Give quest-specific rewards
+			for (.@i = 0; .@i < getarraysize(.reward_list); .@i++) {
+				getitem .reward_list[.@i], 1;
+			}
+			setd .@hunt_var$, 2;
+			setd(.@count_var$, getd(.@count_var$) + 1);
+
+			// แจ้งครบ 30 รอบ
+			if (getd(.@count_var$) == 30) {
+				mes "^00AA00เจ้าทำเควสนี้ครบ 30 รอบแล้ว!";
+				mes "^FFD700กรุณาทำเควสอื่นที่เหลือให้ครบ 30 รอบเพื่อรับรางวัลพิเศษ^000000";
+			}
+
+			// เช็คครบทั้ง 3 ภารกิจ
+		if (glavis_count >= 30 && gladiator_count >= 30 && gladius_count >= 30) {
+				mes "^FFD700เจ้าทำครบทั้ง 3 ภารกิจแล้ว!";
+				mes "ได้รับรางวัลพิเศษ Costume แบบสุ่ม 1 ชิ้น!";
+				.@rand = rand(getarraysize(.costume_list));
+				.@item_id = .costume_list[.@rand];
+				getitem .@item_id, 1;
+				mes "ได้รับ ^i[" + .@item_id + "]^FFFFFF_^000000" + getitemname(.@item_id) + " เรียบร้อย!";
+				set glavis_count, 0;
+				set gladiator_count, 0;
+				set gladius_count, 0;
+			}
+		
+			close;
+		}
+		close;
+	}
+
+	// เสนอเริ่มภารกิจ
+	if (select("ตกลง:ไม่ล่ะ") == 1) {
+		setd .@hunt_var$, 1;
+		setd .@kill_var$, 0;
+		mes "ภารกิจเริ่มต้นแล้ว! ขอให้โชคดี!";
+	}
+	close;
+	return;
+}
+
+
+-	script	sphinx_hunt_counter	-1,{
+	OnNPCKillEvent:
+	// [SF] ANTIBLOAT_BEGIN
+	if (killedrid) {
+		if (#SF_KC_LAST_RID == killedrid && (#SF_KC_LAST_MS + 350) > gettimetick(2)) end;
+		set #SF_KC_LAST_RID, killedrid;
+		set #SF_KC_LAST_MS, gettimetick(2);
+	}
+	// [SF] ANTIBLOAT_END
+		if (!getcharid(1)) {
+			// กรณีเล่นคนเดียว
+			if (glavis_hunt == 1 && killedrid == 1146 && glavis_kill < 150) {
+				set glavis_kill, glavis_kill + 1;
+				dispbottom "[Sphinx Hunt] Matyr: " + glavis_kill + "/150 (ฆ่าโดย: " + strcharinfo(0) + ")", 0x00AAFF;
+			}
+			if (gladiator_hunt == 1 && killedrid == 1140 && gladiator_kill < 150) {
+				set gladiator_kill, gladiator_kill + 1;
+				dispbottom "[Sphinx Hunt] Marduk: " + gladiator_kill + "/150 (ฆ่าโดย: " + strcharinfo(0) + ")", 0x00AAFF;
+			}
+			if (gladius_hunt == 1 && killedrid == 1164 && gladius_kill < 150) {
+				set gladius_kill, gladius_kill + 1;
+				dispbottom "[Sphinx Hunt] Requiem: " + gladius_kill + "/150 (ฆ่าโดย: " + strcharinfo(0) + ")", 0x00AAFF;
+			}
+			end;
+		}
+		
+		// ระบบปาร์ตี้
+		.@mob = killedrid;
+		.@killer_name$ = strcharinfo(0); // ชื่อผู้ฆ่า
+		getmapxy(.@map1$, .@x1, .@y1);
+		
+		// ดึงสมาชิกปาร์ตี้ทั้งหมด
+		getpartymember getcharid(1), 1;
+		getpartymember getcharid(1), 2;
+		
+		for (.@i = 0; .@i < $@partymembercount; .@i++) {
+			if (isloggedin($@partymemberaid[.@i], $@partymembercid[.@i])) {
+				// ตรวจสอบว่าอยู่แผนที่เดียวกัน
+				getmapxy(.@map2$, .@x2, .@y2, BL_PC, rid2name($@partymemberaid[.@i]));
+				if (.@map1$ != .@map2$) continue;
+				
+				// ตรวจสอบสถานะภารกิจ
+				.@glavis_hunt = getvar(glavis_hunt, $@partymembercid[.@i]);
+				.@gladiator_hunt = getvar(gladiator_hunt, $@partymembercid[.@i]);
+				.@gladius_hunt = getvar(gladius_hunt, $@partymembercid[.@i]);
+				.@HP = readparam(HP, $@partymembercid[.@i]);
+
+				if (.@HP > 0) {
+					// Matyr
+					if (.@glavis_hunt == 1 && .@mob == 1146) {
+						.@kill_count = getvar(glavis_kill, $@partymembercid[.@i]);
+						if (.@kill_count < 150) {
+							set glavis_kill, (.@kill_count + 1), $@partymembercid[.@i];
+							dispbottom "[Sphinx Hunt] Matyr: " + (.@kill_count + 1) + "/150 (ฆ่าโดย: " + .@killer_name$ + ")", 0x00AAFF, $@partymembercid[.@i];
+						}
+					}
+					// Marduk
+					if (.@gladiator_hunt == 1 && .@mob == 1140) {
+						.@kill_count = getvar(gladiator_kill, $@partymembercid[.@i]);
+						if (.@kill_count < 150) {
+							set gladiator_kill, (.@kill_count + 1), $@partymembercid[.@i];
+							dispbottom "[Sphinx Hunt] Marduk: " + (.@kill_count + 1) + "/150 (ฆ่าโดย: " + .@killer_name$ + ")", 0x00AAFF, $@partymembercid[.@i];
+						}
+					}
+					// Requiem
+					if (.@gladius_hunt == 1 && .@mob == 1164) {
+						.@kill_count = getvar(gladius_kill, $@partymembercid[.@i]);
+						if (.@kill_count < 150) {
+							set gladius_kill, (.@kill_count + 1), $@partymembercid[.@i];
+							dispbottom "[Sphinx Hunt] Requiem: " + (.@kill_count + 1) + "/150 (ฆ่าโดย: " + .@killer_name$ + ")", 0x00AAFF, $@partymembercid[.@i];
+						}
+					}
+				}
+			}
+		}
+		end;
+}
+
+
+// 📍 NPC Glavis - เควส Matyr
+moc_fild19,111,98,4	script	Glavis	4_M_KY_SOLD,{
+	callfunc("sphinx_hunt_npc", "Glavis", "Matyr", 1146, "glavis");
+	end;
+}
+
+// 📍 NPC Gladiator - เควส Marduk
+moc_fild19,114,98,4	script	Gladiator	4_M_KY_KNT,{
+	callfunc("sphinx_hunt_npc", "Gladiator", "Marduk", 1140, "gladiator");
+	end;
+}
+
+// 📍 NPC Gladius - เควส Requiem
+moc_fild19,117,98,4	script	Gladius	4_M_KY_HEAD,{
+	callfunc("sphinx_hunt_npc", "Gladius", "Requiem", 1164, "gladius");
+	end;
+}

@@ -1,0 +1,483 @@
+# This file is a part of rAthena.
+#   Copyright(C) 2021 rAthena Development Team
+#   https://rathena.org - https://github.com/rathena
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+###########################################################################
+# Item Database
+###########################################################################
+#
+# Item Settings
+#
+###########################################################################
+# - Id                      Item ID.
+#   AegisName               Server name to reference the item in scripts and lookups, should use no spaces.
+#   Name                    Name in English for displaying as output.
+#   Type                    Item type. (Default: Etc)
+#   SubType                 Weapon or Ammo type. (Default: 0)
+#   Buy                     Buying price. When not specified, becomes double the sell price. (Default: 0)
+#   Sell                    Selling price. When not specified, becomes half the buy price. (Default: 0)
+#   Weight                  Item weight. Each 10 is 1 weight. (Default: 0)
+#   Attack                  Weapon's attack. (Default: 0)
+#   MagicAttack             Weapon's magic attack. (Default: 0)
+#   Defense                 Armor's defense. (Default: 0)
+#   Range                   Weapon's attack range. (Default: 0)
+#   Slots                   Available slots in item. (Default: 0)
+#   Jobs                    Jobs that can equip the item. (Map default is 'All: true')
+#   Classes                 Upper class types that can equip the item. (Map default is 'All: true')
+#   Gender                  Gender that can equip the item. (Default: Both)
+#   Locations               Equipment's placement. (Default: None)
+#   WeaponLevel             Weapon level. (Default: 0)
+#   EquipLevelMin           Minimum required level to equip. (Default: 0)
+#   EquipLevelMax           Maximum level that can equip. (Default: 0)
+#   Refineable              If the item can be refined. (Default: false)
+#   View                    View sprite of an item. (Default: 0)
+#   AliasName               Another item's AegisName that will be sent to the client instead of this item's AegisName. (Default: null)
+#   Flags:                  Item flags. (Default: null)
+#     BuyingStore           If the item is available for Buyingstores. (Default: false)
+#     DeadBranch            If the item is a Dead Branch. (Default: false)
+#     Container             If the item is part of a container. (Default: false)
+#     UniqueId              If the item is a unique stack. (Default: false)
+#     BindOnEquip           If the item is bound to the character upon equipping. (Default: false)
+#     DropAnnounce          If the item has a special announcement to self on drop. (Default: false)
+#     NoConsume             If the item is consumed on use. (Default: false)
+#     DropEffect            If the item has a special effect on the ground when dropped by a monster. (Default: None)
+#   Delay:                  Item use delay. (Default: null)
+#     Duration              Duration of delay in seconds.
+#     Status                Status Change used to track delay. (Default: None)
+#   Stack:                  Item stack amount. (Default: null)
+#     Amount                Maximum amount that can be stacked.
+#     Inventory             If the stack is applied to player's inventory. (Default: true)
+#     Cart                  If the stack is applied to the player's cart. (Default: false)
+#     Storage               If the stack is applied to the player's storage. (Default: false)
+#     GuildStorage          If the stack is applied to the player's guild storage. (Default: false)
+#   NoUse:                  Conditions when the item is unusable. (Default: null)
+#     Override              Group level to override these conditions.
+#     Sitting               If the item can not be used while sitting. (Default: false)
+#   Trade:                  Trade restrictions. (Default: null)
+#     Override              Group level to override these conditions.
+#     NoDrop                If the item can not be dropped. (Default: false)
+#     NoTrade               If the item can not be traded. (Default: false)
+#     TradePartner          If the item can not be traded to the player's partner. (Default: false)
+#     NoSell                If the item can not be sold. (Default: false)
+#     NoCart                If the item can not be put in a cart. (Default: false)
+#     NoStorage             If the item can not be put in a storage. (Default: false)
+#     NoGuildStorage        If the item can not be put in a guild storage. (Default: false)
+#     NoMail                If the item can not be put in a mail. (Default: false)
+#     NoAuction             If the item can not be put in an auction. (Default: false)
+#   Script                  Script to execute when the item is used/equipped. (Default: null)
+#   EquipScript             Script to execute when the item is equipped. (Default: null)
+#   UnEquipScript           Script to execute when the item is unequipped or when a rental item expires. (Default: null)
+###########################################################################
+
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+  - Id: 1700000
+    AegisName: "Costume_ENCH_MARBLEEDGE_BLU_[Axe]"
+    Name: "Costume ENCH_MARBLEEDGE_BLU [Axe]"
+    Type: Shadowgear
+    Jobs:
+      Blacksmith: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 1700000
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;
+  - Id: 700001
+    AegisName: "Costume_Eaglehorn_[Bow]"
+    Name: "Costume Eaglehorn [Bow]"
+    Type: Shadowgear
+    Jobs:
+      Hunter: true    
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700001
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;
+  - Id: 700002
+    AegisName: "Costume_Deathdance_[Katar]"
+    Name: "Costume Deathdance [Katar]"
+    Type: Shadowgear
+    Jobs:
+      Assassin: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700002
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;
+  - Id: 700003
+    AegisName: "Costume_Arch_Bishop_[Mace]"
+    Name: "Costume Arch Bishop [Mace]"
+    Type: Shadowgear
+    Jobs:
+      Priest: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700003
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;
+  - Id: 700004
+    AegisName: "Costume_Dragonbane_[Spear]"
+    Name: "Costume Dragonbane [Spear]"
+    Type: Shadowgear
+    Jobs:
+      Knight: true    
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700004
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;
+  - Id: 700005
+    AegisName: "Costume_Arcane_Staff_[Staff]"
+    Name: "Costume Arcane Staff [Staff]"
+    Type: Shadowgear
+    Jobs:
+      Wizard: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700005
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;
+  - Id: 700006
+    AegisName: "Costume_Azure_Guitar_[Musical]"
+    Name: "Costume Azure Guitar [Musical]"
+    Type: Shadowgear
+    Jobs:
+      BardDancer: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700006
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;  
+  - Id: 700007
+    AegisName: "Costume_Bayonet_[Dagger]"
+    Name: "Costume Bayonet [Dagger]"
+    Type: Shadowgear
+    Jobs:
+      Rogue: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700007
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;       
+  - Id: 700008
+    AegisName: "Costume_Bright_Killer_[Sword]"
+    Name: "Costume Bright Killer [Sword]"
+    Type: Shadowgear
+    Jobs:
+      Knight: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700008
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;  
+  - Id: 700009
+    AegisName: "Costume_Dragon_Bane_[Spear]"
+    Name: "Costume Dragon Bane [Spear]"
+    Type: Shadowgear
+    Jobs:
+      Knight: true
+      Crusader: true      
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700009
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;  
+  - Id: 700010
+    AegisName: "Costume_Elder_Scroll_[Book]"
+    Name: "Costume Elder Scroll [Book]"
+    Type: Shadowgear
+    Jobs:
+      Sage: true      
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700010
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;  
+  - Id: 700011
+    AegisName: "Costume_Elder_Scroll_Black_[Book]"
+    Name: "Costume Elder Scroll Black [Book]"
+    Type: Shadowgear
+    Jobs:
+      Sage: true      
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700011
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;    
+  - Id: 700013
+    AegisName: "Costume_Eletro_Guitar_[Musical]"
+    Name: "Costume Eletro Guitar [Musical]"
+    Type: Shadowgear
+    Jobs:
+      BardDancer: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700013
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;        
+  - Id: 700014
+    AegisName: "Costume_Marble_Edge_Purple_[Axe]"
+    Name: "Costume Marble Edge Purple [Axe]"
+    Type: Shadowgear
+    Jobs:
+      Blacksmith: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700014
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;      
+  - Id: 700015
+    AegisName: "Costume_Marble_Edge_Red_[Axe]"
+    Name: "Costume Marble Edge Red [Axe]"
+    Type: Shadowgear
+    Jobs:
+      Blacksmith: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700015
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;      
+  - Id: 700016
+    AegisName: "Costume_Marble_Edge_Tel_[Axe]"
+    Name: "Costume Marble Edge Tel [Axe]"
+    Type: Shadowgear
+    Jobs:
+      Blacksmith: true
+      Alchemist: true      
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700016
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;         
+  - Id: 700017
+    AegisName: "Costume_Flare_[Whip]"
+    Name: "Costume Flare [Whip]"
+    Type: Shadowgear
+    Jobs:
+      BardDancer: true     
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700017
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;         
+  - Id: 700018
+    AegisName: "Costume_Flare_Whip_Red_[Whip]"
+    Name: "Costume Flare Whip Red [Whip]"
+    Type: Shadowgear
+    Jobs:
+      BardDancer: true     
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700018
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;      
+  - Id: 700019
+    AegisName: "Costume_Marble_Edge_[Axe]"
+    Name: "Costume Marble Edge [Axe]"
+    Type: Shadowgear
+    Jobs:
+      Blacksmith: true
+      Alchemist: true      
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700019
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;        
+  - Id: 700020
+    AegisName: "Costume_Mjolnir_Bow_[Axe]"
+    Name: "Costume Mjolnir Bow [Axe]"
+    Type: Shadowgear
+    Jobs:
+      Blacksmith: true     
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700020
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;       
+  - Id: 700021
+    AegisName: "Costume_Mjolnir_Bow_Red_[Axe]"
+    Name: "Costume Mjolnir Bow Red [Axe]"
+    Type: Shadowgear
+    Jobs:
+      Blacksmith: true     
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700021
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;           
+  - Id: 700022
+    AegisName: "Costume_Overlord_Staff_[Staff]"
+    Name: "Costume Overlord Staff [Staff]"
+    Type: Shadowgear
+    Jobs:
+      Wizard: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700022
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;      
+  - Id: 700023
+    AegisName: "Costume_Perun_[Axe]"
+    Name: "Costume Perun [Axe]"
+    Type: Shadowgear
+    Jobs:
+      Alchemist: true      
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700023
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;        
+  - Id: 700024
+    AegisName: "Costume_Bayonet_Green_[Dagger]"
+    Name: "Costume Bayonet Green [Dagger]"
+    Type: Shadowgear
+    Jobs:
+      Rogue: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700024
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;       
+  - Id: 700025
+    AegisName: "Costume_Bayonet_Purple_[Dagger]"
+    Name: "Costume Bayonet Purple [Dagger]"
+    Type: Shadowgear
+    Jobs:
+      Rogue: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700025
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;            
+  - Id: 700026
+    AegisName: "Costume_Sacred_[Shield]"
+    Name: "Costume Sacred [Shield]"
+    Type: Shadowgear
+    Jobs:
+      Knight: true
+      Crusader: true      
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700026
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;        
+  - Id: 700027
+    AegisName: "Costume_Scorpion_High_[Bow]"
+    Name: "Costume Scorpion High [Bow]"
+    Type: Shadowgear
+    Jobs:
+      Hunter: true    
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700027
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;      
+  - Id: 700028
+    AegisName: "Costume_Shining_Claws_[Knuckle]"
+    Name: "Costume Shining Claws [Knuckle]"
+    Type: Shadowgear
+    Jobs:
+      Monk: true    
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700028
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;           
+  - Id: 700029
+    AegisName: "Costume_Twin_Slicers_[Katar]"
+    Name: "Costume Twin Slicers [Katar]"
+    Type: Shadowgear
+    Jobs:
+      Assassin: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700029
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;      
+  - Id: 700030
+    AegisName: "Costume_Yoyo_[Bow]"
+    Name: "Costume Yoyo [Bow]"
+    Type: Shadowgear
+    Jobs:
+      Novice: true
+    Locations:
+      Shadow_Weapon: true
+    EquipLevelMin: 1
+    View: 700030
+    Script: |
+      bonus2 bDropAddRace,RC_All,5;
+      bonus bAddMaxWeight,2000;            

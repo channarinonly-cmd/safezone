@@ -1,0 +1,904 @@
+// ==========================================================
+// Script: Super Bot Manager (Shop & Citizen Edition) - ไฟล์เต็ม 100%
+// ==========================================================
+morocc,150,90,4	script	Super Bot Manager	110,{
+	
+	if (getgmlevel() < 99) end;
+OnMenu:
+	mes "[ Super Bot Manager ]";
+	mes "ศูนย์ควบคุมบอทตลาดมืดและชาวเมือง";
+	mes "กรุณาเลือกหมวดหมู่ที่ต้องการครับ";
+	next;
+	switch(select(
+		"[ หมวดร้านค้า ] ตลาดมืด/ขายยา",
+		"[ หมวดชาวเมือง ] & หน้าม้า 1-1",
+		"ล้างบอท [ ทั้งหมด ]",
+		"ยกเลิก"
+	)) {
+		case 1: goto OnMenuShop;
+		case 2: goto OnMenuCitizen;
+		case 3: goto OnClearAll;
+		case 4: close;
+	}
+
+// ==========================================================
+// หมวดร้านค้า
+// ==========================================================
+OnMenuShop:
+	mes "[ หมวดร้านค้า ]";
+	mes "เลือกคำสั่งที่ต้องการเลยครับ";
+	next;
+	switch(select(
+		"เสกบอท >> ตลาดมืด (รับซื้อ)",
+		"เสกบอท >> ตลาดมืด (ตั้งขาย)",
+		"เสกบอท >> ร้านขายยา (Tool Dealer)",
+		"จัดการ DB [ ฝั่งรับซื้อ ]",
+		"จัดการ DB [ ฝั่งตั้งขาย ]",
+		"กลับเมนูหลัก"
+	)) {
+		case 1: set .@force_trade_type, 1; goto OnSelectCityShop;
+		case 2: set .@force_trade_type, 0; goto OnSelectCityShop;
+		case 3: goto OnSelectCityTool;
+		case 4: goto OnManageBuy;
+		case 5: goto OnManageSell;
+		case 6: goto OnMenu;
+	}
+
+OnSelectCityShop:
+	mes "[ ตลาดมืด ]";
+	mes "ต้องการให้บอทตั้งร้านที่เมืองไหนครับ?";
+	next;
+	switch(select("เฉพาะเมือง Prontera","เฉพาะเมือง Morocc","ลงทั้ง 2 เมืองพร้อมกันเลย!")) {
+		case 1: setarray .@target_maps$[0], "prontera"; break;
+		case 2: setarray .@target_maps$[0], "morocc"; break;
+		case 3: setarray .@target_maps$[0], "prontera", "morocc"; break;
+	}
+	goto OnGenerateMarket;
+
+OnSelectCityTool:
+	mes "[ Tool Dealer ]";
+	mes "ต้องการให้บอทขายยาที่เมืองไหนครับ?";
+	next;
+	switch(select("เฉพาะเมือง Prontera","เฉพาะเมือง Morocc","ลงทั้ง 2 เมืองพร้อมกันเลย!")) {
+		case 1: setarray .@target_maps$[0], "prontera"; break;
+		case 2: setarray .@target_maps$[0], "morocc"; break;
+		case 3: setarray .@target_maps$[0], "prontera", "morocc"; break;
+	}
+	goto OnGenerateTools;
+
+// ==========================================================
+// หมวดชาวเมือง & หน้าม้า
+// ==========================================================
+OnMenuCitizen:
+	mes "[ หมวดชาวเมือง & หน้าม้า ]";
+	mes "เลือกรูปแบบที่ต้องการปล่อยครับ";
+	next;
+	switch(select(
+		"ปล่อยชาวเมืองเดิน/นั่ง/แชท",
+		"ปล่อยหน้าม้า Novice (แมพ new_1-1)",
+		"ปล่อยหน้าม้า Novice (แมพ new_1-3 นั่ง/ยืน)", 
+		"ปั๊มตัวละครปลอมลง DB (เซิร์ฟเปิดใหม่)",
+		"กลับเมนูหลัก"
+	)) {
+		case 1: goto OnSelectCityCitizen;
+		case 2: goto OnGenerateNovice;
+		case 3: goto OnGenerateNovice1_3; 
+		case 4: goto OnGenerateDummyDB;
+		case 5: goto OnMenu;
+	}
+
+OnSelectCityCitizen:
+	mes "[ ชาวเมืองทั่วไป ]";
+	mes "ต้องการปล่อยชาวเมืองไปเดินเล่นที่ไหน?";
+	next;
+	switch(select("เฉพาะเมือง Prontera","เฉพาะเมือง Morocc","ลงทั้ง 2 เมืองพร้อมกันเลย!")) {
+		case 1: setarray .@target_maps$[0], "prontera"; break;
+		case 2: setarray .@target_maps$[0], "morocc"; break;
+		case 3: setarray .@target_maps$[0], "prontera", "morocc"; break;
+	}
+	goto OnGenerateCitizen;
+
+// ==========================================================
+// ระบบปั๊มข้อมูลตัวละครปลอมลง Database อัตโนมัติ (ฉบับแก้บัคเครื่องหมายคำพูด)
+// ==========================================================
+OnGenerateDummyDB:
+	mes "[ โรงงานโคลนนิ่ง ]";
+	mes "ระบบนี้จะทำการสุ่มสร้างตัวละคร Novice";
+	mes "หน้าตา ทรงผม และชื่อแบบสุ่ม จำนวน 50 ตัว";
+	mes "ยัดลง Database เพื่อใช้เป็นร่างต้นให้บอทครับ";
+	next;
+	if (select("ลุยเลย! ยัดลง DB 50 ตัว","ยกเลิก") == 2) goto OnMenuCitizen;
+	
+	close2; 
+	if (playerattached()) dispbottom "กำลังดำเนินการปั๊มข้อมูลลง DB...";
+	setarray .@prefix$[0], "เทพ", "น้อง", "พี่", "สาย", "เซียน", "มาร", "Kito", "Zeed", "Alice", "Miku", "Kira", "Dark", "Light";
+	setarray .@suffix$[0], "ซ่า", "โหด", "บิน", "พริ้ว", "ตึง", "เทพ", "รวย", "อินดี้", "ชิลๆ", "มึน", "Bot", "AI", "X";
+	
+	.@acc_id = 2000000;
+	.@success = 0;
+	
+	for (.@i = 0; .@i < 50; .@i++) {
+		sleep2 1;
+		if (getarraysize(.@prefix$) > 1) { .@idx1 = rand(0, getarraysize(.@prefix$) - 1); } else { .@idx1 = 0; }
+		if (getarraysize(.@suffix$) > 1) { .@idx2 = rand(0, getarraysize(.@suffix$) - 1); } else { .@idx2 = 0; }
+		
+		.@name$ = .@prefix$[.@idx1] + .@suffix$[.@idx2] + rand(10, 999);
+		.@hair = rand(1, 20);      
+		.@hair_color = rand(0, 8);
+		.@sex$ = (rand(0, 1) == 1) ? "M" : "F"; 
+		
+		query_sql("INSERT IGNORE INTO `char` (`account_id`, `name`, `class`, `hair`, `hair_color`, `sex`, `base_level`, `job_level`) VALUES ("+.@acc_id+", '"+.@name$+"', 0, "+.@hair+", "+.@hair_color+", '"+.@sex$+"', 1, 1)");
+		.@success++;
+	}
+	
+	if (playerattached()) dispbottom "[ สำเร็จ ] ปั๊มข้อมูลสำเร็จ! ร่างต้นพร้อมใช้งานแล้ว!";
+	end;
+
+// ==========================================================
+// ระบบเสกหน้าม้า แมพ new_1-1 (แก้ไขเอา Waitroom บล็อกแชทออกถาวร)
+// ==========================================================	
+OnGenerateNovice:
+	close2;
+	if (playerattached()) dispbottom "กำลังดำเนินการเสกหน้าม้า Novice...";
+	
+	set .@target_map$, "new_1-1"; 
+	set .@amount, 50;
+	.@count = query_sql("SELECT `char_id`, `name` FROM `char` WHERE `class` = 0 AND `char_id` NOT IN (SELECT `char_id` FROM `inventory` WHERE `equip` & 769 > 0) ORDER BY RAND() LIMIT " + .@amount, .@cid, .@name$);
+	if (.@count == 0) {
+		if (playerattached()) dispbottom "ล้มเหลว: ไม่มีตัวละคร Novice แบบไม่ใส่หมวกใน Database เลยครับ!";
+		end;
+	}
+	
+	.@spawned = 0;
+	for (.@i = 0; .@i < .@count; .@i++) {
+		.@valid_cell = 0; .@loop_timeout = 0;
+		while (.@valid_cell == 0 && .@loop_timeout < 100) {
+			sleep2 1; 
+			.@spawn_x = 56 + rand(-15, 15);
+			.@spawn_y = 113 + rand(-15, 15);
+			.@loop_timeout++;
+			if (checkcell(.@target_map$, .@spawn_x, .@spawn_y, cell_chkpass)) {
+				.@valid_cell = 1;
+				for (.@c = 0; .@c < .@spawned; .@c++) {
+					if (.@used_x[.@c] == .@spawn_x && .@used_y[.@c] == .@spawn_y) { .@valid_cell = 0; break; }
+				}
+			}
+		}
+		
+		if (.@valid_cell == 0) continue;
+		.@used_x[.@spawned] = .@spawn_x; .@used_y[.@spawned] = .@spawn_y; .@spawned++;
+		
+		.@gid = spawn_fakeplayer(.@cid[.@i], .@target_map$, .@spawn_x, .@spawn_y, .@name$[.@i]);
+		if (.@gid > 0) {
+			$@Fake_Novice_GID[$@Fake_Novice_Count] = .@gid;
+			$@Fake_Novice_Name$[$@Fake_Novice_Count] = .@name$[.@i]; 
+			$@Fake_Novice_Count++;
+			
+			// ?? สุ่มใส่หมวกธรรมดาคลาสสิคติดดิน ป้องกันหัวส้มคาเมือง
+			setarray .@novice_hats[0], 2226, 5015, 2211, 0;
+			// ?? ใช้คำสั่งมาตรฐานดั้งเดิม ดักสลับหมวกส่วนบน (LOOK_HEAD_TOP = 2) โดยเกาะที่ GID ของบอท
+			setlook 2, .@novice_hats[rand(0, getarraysize(.@novice_hats) - 1)], .@gid;
+		}
+		sleep2 50;
+	}
+	
+	if (playerattached()) dispbottom "[ สำเร็จ ] เสก Novice ลงแมพเรียบร้อย (" + .@spawned + " ตัว)!";
+	end;
+
+// ==========================================================
+// ระบบเสกหน้าม้า แมพ new_1-3 (สุ่มนั่ง/ยืน - แก้ไขเอา Waitroom ออกถาวร)
+// ==========================================================
+OnGenerateNovice1_3:
+	close2; 
+	if (playerattached()) dispbottom "กำลังดำเนินการเสกหน้าม้าแมพ 1-3...";
+	
+	set .@target_map$, "new_1-3"; 
+	set .@amount, 50;
+	set .@center_x, 102;
+	set .@center_y, 45;
+	
+	.@count = query_sql("SELECT `char_id`, `name` FROM `char` WHERE `class` = 0 AND `char_id` NOT IN (SELECT `char_id` FROM `inventory` WHERE `equip` & 769 > 0) ORDER BY RAND() LIMIT " + .@amount, .@cid, .@name$);
+	if (.@count == 0) {
+		if (playerattached()) dispbottom "ล้มเหลว: ไม่มีตัวละคร Novice แบบไม่ใส่หมวกใน Database!";
+		end;
+	}
+	
+	.@spawned = 0;
+	for (.@i = 0; .@i < .@count; .@i++) {
+		.@valid_cell = 0; .@loop_timeout = 0;
+		while (.@valid_cell == 0 && .@loop_timeout < 100) {
+			sleep2 1; 
+			.@spawn_x = .@center_x + rand(-15, 15);
+			.@spawn_y = .@center_y + rand(-15, 15);
+			.@loop_timeout++;
+			if (checkcell(.@target_map$, .@spawn_x, .@spawn_y, cell_chkpass)) {
+				.@valid_cell = 1;
+				for (.@c = 0; .@c < .@spawned; .@c++) {
+					if (.@used_x[.@c] == .@spawn_x && .@used_y[.@c] == .@spawn_y) { .@valid_cell = 0; break; }
+				}
+			}
+		}
+		
+		if (.@valid_cell == 0) continue;
+		.@used_x[.@spawned] = .@spawn_x; .@used_y[.@spawned] = .@spawn_y; .@spawned++;
+		
+		.@gid = spawn_fakeplayer(.@cid[.@i], .@target_map$, .@spawn_x, .@spawn_y, .@name$[.@i]);
+		if (.@gid > 0) {
+			$@Fake_Novice_GID[$@Fake_Novice_Count] = .@gid;
+			$@Fake_Novice_Name$[$@Fake_Novice_Count] = .@name$[.@i]; 
+			$@Fake_Novice_Count++;
+			
+			// ?? บังคับหมวกแฟชั่นเริ่มต้นแบบคนเล่นจริง
+			setarray .@novice_hats2[0], 2226, 5015, 2211, 0;
+			// ?? เปลี่ยนมาใช้คำสั่งมาตรฐานดั้งเดิม เกาะที่ GID ของบอท Novice แมพ 1-3
+			setlook 2, .@novice_hats2[rand(0, getarraysize(.@novice_hats2) - 1)], .@gid;
+			
+			if (rand(1, 100) <= 50) {
+				sleep2 100;
+				fakeplayer_action(.@gid, 1);
+			}
+		}
+		sleep2 50; 
+	}
+	
+	if (playerattached()) dispbottom "[ สำเร็จ ] เสก Novice นั่งๆ ยืนๆ เรียบร้อย (" + .@spawned + " ตัว)!";
+	end;
+
+// ==========================================================
+// ระบบล้างบอท [ร้านค้าและชาวเมือง] - เวอร์ชันหน่วงเวลาเซฟหน่วยความจำ 100%
+// ==========================================================
+OnClearAll:
+	if (playerattached()) {
+		close2; 
+		dispbottom "กำลังดำเนินการกวาดล้างบอททุกระบบแบบปลอดภัย...";
+	}
+	
+	clear_offline_stall;
+	sleep2 300; 
+	
+	deletearray $FakeBot_Map$[0], getarraysize($FakeBot_Map$);
+	deletearray $FakeBot_X[0], getarraysize($FakeBot_X);
+	deletearray $FakeBot_Y[0], getarraysize($FakeBot_Y);
+	$FakeBot_Count = 0;
+	sleep2 200;
+
+	if ($Fake_Citizens_Count > 0) {
+		for (.@i = 0; .@i < $Fake_Citizens_Count; .@i++) {
+			if ($Fake_Citizens_GID[.@i] > 0 && unitexists($Fake_Citizens_GID[.@i])) { 
+				despawn_fakeplayer($Fake_Citizens_GID[.@i]);
+				sleep2 20; 
+			}
+		}
+	}
+	deletearray $Fake_Citizens_GID[0], getarraysize($Fake_Citizens_GID);
+	$Fake_Citizens_Count = 0;
+	sleep2 200;
+
+	if ($@Fake_Novice_Count > 0) {
+		for (.@i = 0; .@i < $@Fake_Novice_Count; .@i++) {
+			if ($@Fake_Novice_GID[.@i] > 0 && unitexists($@Fake_Novice_GID[.@i])) {
+				despawn_fakeplayer($@Fake_Novice_GID[.@i]);
+				sleep2 20; 
+			}
+		}
+	}
+	deletearray $@Fake_Novice_GID[0], getarraysize($@Fake_Novice_GID);
+	deletearray $@Fake_Novice_Name$[0], getarraysize($@Fake_Novice_Name$);
+	$@Fake_Novice_Count = 0;
+
+	if (playerattached()) dispbottom "[ สำเร็จ ] กวาดล้างบอทร้านค้าและชาวเมืองเรียบร้อย!";
+	end;
+
+// ==========================================================
+// ระบบจัดการ Database ตลาดมืด (Buy/Sell)
+// ==========================================================
+OnManageBuy:
+	mes "[ จัดการไอเทมรับซื้อ ]";
+	next;
+	switch(select("เพิ่ม/แก้ไข ไอเทมรับซื้อ","ลบไอเทมรับซื้อ","ดูรายการที่รับซื้ออยู่","กลับไปหมวดร้านค้า")) {
+		case 1:
+			mes "ใส่ รหัสไอเทม (Item ID)";
+			input .@item_id;
+			if (getitemname(.@item_id) == "null") goto OnManageBuy;
+			mes "ใส่ ราคาเพดานสูงสุด (Max Price)";
+			input .@price;
+			mes "ใส่ โควต้ารวมทั้งเซิร์ฟ (Server Quota)";
+			input .@quota;
+			query_sql("INSERT INTO `stock_market_data` (`item_id`, `price`, `server_quota`, `sold_count`, `status`) VALUES ("+.@item_id+", "+.@price+", "+.@quota+", 0, 1) ON DUPLICATE KEY UPDATE `price`="+.@price+", `server_quota`="+.@quota+", `status`=1");
+			mes "[ สำเร็จ ] บันทึกข้อมูลเรียบร้อย!";
+			next; goto OnManageBuy;
+		case 2:
+			mes "ใส่ รหัสไอเทม (Item ID) ที่ต้องการลบ";
+			input .@item_id;
+			query_sql("DELETE FROM `stock_market_data` WHERE `item_id` = " + .@item_id);
+			mes "[ สำเร็จ ] ลบข้อมูลเรียบร้อย!";
+			next; goto OnManageBuy;
+		case 3:
+			.@count = query_sql("SELECT `item_id`, `price`, (`server_quota` - `sold_count`) FROM `stock_market_data` WHERE `status` = 1 AND `server_quota` > `sold_count`", .@db_id, .@db_prc, .@db_q);
+			if (.@count == 0) mes "ไม่มีรายการเลยครับ";
+			for(.@i = 0; .@i < .@count; .@i++) mes getitemname(.@db_id[.@i]) + " | สูงสุด: " + .@db_prc[.@i] + "z | ขาดอีก: " + .@db_q[.@i] + " ea";
+			next; goto OnManageBuy;
+		case 4:
+			goto OnMenuShop;
+	}
+
+OnManageSell:
+	mes "[ จัดการไอเทมตั้งขาย ]";
+	next;
+	switch(select("เพิ่ม/แก้ไข ไอเทมตั้งขาย","ลบไอเทมตั้งขาย","ดูรายการที่ตั้งขายอยู่","กลับไปหมวดร้านค้า")) {
+		case 1:
+			mes "ใส่ รหัสไอเทม (Item ID)";
+			input .@item_id;
+			if (getitemname(.@item_id) == "null") goto OnManageSell;
+			mes "ใส่ ราคาขายมาตรฐาน (Base Price)";
+			input .@price;
+			mes "ใส่ จำนวนชิ้นสูงสุดต่อ 1 ร้าน (Max Amount)";
+			input .@amount;
+			query_sql("REPLACE INTO `black_market_sell_data` (`item_id`, `price`, `amount`) VALUES ("+.@item_id+", "+.@price+", "+.@amount+")");
+			mes "[ สำเร็จ ] บันทึกข้อมูลเรียบร้อย!";
+			next; goto OnManageSell;
+		case 2:
+			mes "ใส่ รหัสไอเทม (Item ID) ที่ต้องการลบ";
+			input .@item_id;
+			query_sql("DELETE FROM `black_market_sell_data` WHERE `item_id` = " + .@item_id);
+			mes "[ สำเร็จ ] ลบข้อมูลเรียบร้อย!";
+			next; goto OnManageSell;
+		case 3:
+			.@count = query_sql("SELECT `item_id`, `price`, `amount` FROM `black_market_sell_data`", .@db_id, .@db_prc, .@db_q);
+			if (.@count == 0) mes "ไม่มีรายการเลยครับ";
+			for(.@i = 0; .@i < .@count; .@i++) mes getitemname(.@db_id[.@i]) + " | ราคาฐาน: " + .@db_prc[.@i] + "z | ร้านละ: " + .@db_q[.@i] + " ea";
+			next; goto OnManageSell;
+		case 4:
+			goto OnMenuShop;
+	}
+
+// ==========================================================
+// Logic ภายใน: สร้างร้านตลาดมืด (Buy/Sell) - เวอร์ชันคลีนขยะ ปลอดภัย 100%
+// ==========================================================
+OnGenerateMarket:
+	if (playerattached()) {
+		close2;
+		dispbottom "กำลังเตรียมบอทตลาดมืด...";
+		sleep2 2000;
+	}
+	
+	if (.@force_trade_type == 1) {
+		.@db_count = query_sql("SELECT `item_id`, `price`, (`server_quota` - `sold_count`) FROM `stock_market_data` WHERE `status` = 1 AND `server_quota` > `sold_count` AND `price` > 0", .@db_id, .@db_price, .@db_amount);
+	} else {
+		.@db_count = query_sql("SELECT `item_id`, `price`, `amount` FROM `black_market_sell_data` WHERE `price` > 0 AND `amount` > 0", .@db_id, .@db_price, .@db_amount);
+	}
+	
+	if (.@db_count == 0) {
+		if (playerattached()) dispbottom "ไม่มีรายการไอเทมในระบบสำหรับตั้งร้านครับ!";
+		end;
+	}
+
+	for (.@m = 0; .@m < getarraysize(.@target_maps$); .@m++) {
+		.@market_map$ = .@target_maps$[.@m];
+		if (.@market_map$ == "prontera") { 
+			.@min_x = 98;   .@max_x = 128;
+			.@min_y = 59;   .@max_y = 89; 
+		} 
+		else { 
+			.@min_x = 145;  .@max_x = 175;
+			.@min_y = 29;   .@max_y = 59; 
+		}
+
+		.@bot_total = query_sql("SELECT `name`, `class`, `sex`, `hair`, `hair_color`, `cloth_color`, `head_top` FROM `dynamic_stall_appearance` ORDER BY RAND() LIMIT 50", 
+			.@name$, .@class, .@sex, .@hair, .@h_color, .@c_color, .@h_top);
+		for (.@i = 0; .@i < .@bot_total; .@i++) {
+			
+			deletearray .@current_shop_items[0], getarraysize(.@current_shop_items);
+			.@item_data$ = ""; .@added_items = 0; .@first_item_name$ = "";
+
+			for (.@loop = 0; .@loop < 15 && .@added_items < 5 && .@added_items < .@db_count; .@loop++) {
+				if (.@db_count > 1) { .@idx = rand(0, .@db_count - 1); } else { .@idx = 0; }
+				
+				.@is_dup = 0;
+				for (.@c = 0; .@c < .@added_items; .@c++) {
+					if (.@current_shop_items[.@c] == .@db_id[.@idx]) { .@is_dup = 1; break; }
+				}
+
+				if (.@is_dup == 1) continue; 
+
+				.@item_id_add = .@db_id[.@idx];
+				.@current_shop_items[.@added_items] = .@item_id_add;
+				if (.@added_items == 0) .@first_item_name$ = getitemname(.@item_id_add);
+				if (.@force_trade_type == 1) {
+					.@min_p = .@db_price[.@idx] / 2;
+					if (.@min_p < 1) .@min_p = 1;
+					if (.@db_price[.@idx] > .@min_p) .@rand_p = rand(.@min_p, .@db_price[.@idx]);
+					else .@rand_p = .@db_price[.@idx];
+				} else {
+					.@min_p = (.@db_price[.@idx] * 80) / 100;
+					.@max_p = (.@db_price[.@idx] * 120) / 100;
+					if (.@min_p < 1) .@min_p = 1;
+					if (.@max_p < .@min_p) .@max_p = .@min_p;
+					if (.@max_p > .@min_p) .@rand_p = rand(.@min_p, .@max_p);
+					else .@rand_p = .@max_p;
+				}
+
+				.@max_q = .@db_amount[.@idx];
+				if (.@force_trade_type == 1) {
+					if (.@max_q < 100) .@rand_q = .@max_q;
+					else {
+						if (.@max_q > 300) .@max_q = 300;
+						.@rand_q = rand(100, .@max_q);
+					}
+				} else {
+					if (.@max_q > 1) .@rand_q = rand(1, .@max_q);
+					else .@rand_q = 1;
+				}
+
+				if (.@item_data$ != "") .@item_data$ += ":";
+				.@item_data$ += .@item_id_add + "," + .@rand_q + "," + .@rand_p;
+				.@added_items++;
+			}
+
+			if (.@added_items == 0) continue;
+			.@shop_title$ = (.@force_trade_type == 1 ? "รับซื้อ " : "ขาย ") + .@first_item_name$;
+			.@valid_cell = 0; .@loop_timeout = 0;
+			while (.@valid_cell == 0) { 
+				.@spawn_x = rand(.@min_x, .@max_x);
+				.@spawn_y = rand(.@min_y, .@max_y);
+				.@loop_timeout++;
+				if (.@loop_timeout > 15) { .@valid_cell = 0; break; }
+				
+				if (checkcell(.@market_map$, .@spawn_x, .@spawn_y, cell_chkpass)) {
+					.@valid_cell = 1;
+					if (.@market_map$ == "prontera" && .@spawn_x >= 146 && .@spawn_x <= 154 && .@spawn_y >= 146 && .@spawn_y <= 154) .@valid_cell = 0;
+					if (.@market_map$ == "morocc" && .@spawn_x >= 146 && .@spawn_x <= 154 && .@spawn_y >= 86 && .@spawn_y <= 94) .@valid_cell = 0;
+				}
+			}
+
+			if (.@valid_cell == 0) continue;
+			
+			$FakeBot_Map$[$FakeBot_Count] = .@market_map$;
+			$FakeBot_X[$FakeBot_Count] = .@spawn_x;
+			$FakeBot_Y[$FakeBot_Count] = .@spawn_y;
+			$FakeBot_Count++;
+
+			// ?? สุ่มปรับชุดหมวกตลาดมืดให้ติดดิน ไม่เวอร์วัง
+			setarray .@market_hats[0], 2280, 2220, 2226, 2203, 2289, 0;
+			.@h_top[.@i] = .@market_hats[rand(0, getarraysize(.@market_hats) - 1)];
+
+			spawn_offline_stall .@market_map$, .@spawn_x, .@spawn_y, .@class[.@i], .@sex[.@i], .@hair[.@i], .@h_color[.@i], .@c_color[.@i], .@h_top[.@i], .@force_trade_type, .@item_data$, .@shop_title$, .@name$[.@i];
+			sleep2 150; 
+		}
+	}
+	if (playerattached()) dispbottom "[ สำเร็จ ] เสกบอทตลาดมืดเรียบร้อย!";
+	end;
+
+// ==========================================================
+// Logic ภายใน: สร้างร้าน Tool Dealer
+// ==========================================================
+OnGenerateTools:
+	if (playerattached()) {
+		close2;
+		dispbottom "กำลังเตรียมบอทขายของ Tool Dealer...";
+		sleep2 2000;
+	}
+	setarray .@item_list[0], 23356, 23359, 30035, 18000, 678, 1750, 611, 501, 502, 503, 504, 506, 645, 656, 657, 3212, 601, 602, 717, 1065;
+	setarray .@price_list[0], 10000, 10000, 30000, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1;
+	.@list_size = getarraysize(.@item_list);
+
+	for (.@m = 0; .@m < getarraysize(.@target_maps$); .@m++) {
+		.@market_map$ = .@target_maps$[.@m];
+		if (.@market_map$ == "prontera") { .@min_x = 130;  .@max_x = 175; .@min_y = 130;  .@max_y = 175; } 
+		else { .@min_x = 135;  .@max_x = 175; .@min_y = 80;   .@max_y = 115; }
+
+		.@bot_total = query_sql("SELECT `name`, `class`, `sex`, `hair`, `hair_color`, `cloth_color`, `head_top` FROM `dynamic_stall_appearance` ORDER BY RAND() LIMIT 15", 
+			.@name$, .@class, .@sex, .@hair, .@h_color, .@c_color, .@h_top);
+		for (.@i = 0; .@i < .@bot_total; .@i++) {
+			deletearray .@current_shop_items[0], getarraysize(.@current_shop_items);
+			.@item_data$ = ""; .@added_items = 0; .@sell_count = rand(3, 5); .@title_item$ = "";
+
+			for (.@j = 0; .@j < .@sell_count; .@j++) {
+				if (.@list_size > 1) { .@idx = rand(0, .@list_size - 1); } else { .@idx = 0; }
+				
+				.@id = .@item_list[.@idx];
+				.@is_dup = 0;
+				for (.@c = 0; .@c < .@added_items; .@c++) { if (.@current_shop_items[.@c] == .@id) { .@is_dup = 1; break; } }
+				if (.@is_dup) continue;
+
+				.@current_shop_items[.@added_items] = .@id;
+				if (.@price_list[.@idx] == -1) {
+					.@base_price = getiteminfo(.@id, 0);
+					if (.@base_price <= 0) .@base_price = 10;
+					.@price = (.@base_price * 76) / 100;
+					if (.@price < 1) .@price = 1;
+				} else { .@price = .@price_list[.@idx]; }
+
+				.@qty = rand(500, 2000);
+				if (.@item_data$ != "") .@item_data$ += ":";
+				.@item_data$ += .@id + "," + .@qty + "," + .@price;
+				if (.@added_items == 0) .@title_item$ = getitemname(.@id);
+				.@added_items++;
+			}
+
+			if (.@added_items == 0) continue;
+			.@shop_title$ = "ขาย " + .@title_item$ + " ราคา DC!";
+
+			.@valid_cell = 0; .@loop_timeout = 0;
+			while (.@valid_cell == 0) {
+				.@spawn_x = rand(.@min_x, .@max_x);
+				.@spawn_y = rand(.@min_y, .@max_y);
+				.@loop_timeout++;
+				if (.@loop_timeout > 15) { .@valid_cell = 0; break; }
+				if (checkcell(.@market_map$, .@spawn_x, .@spawn_y, cell_chkpass)) { .@valid_cell = 1; }
+			}
+
+			if (.@valid_cell == 0) continue;
+			$FakeBot_Map$[$FakeBot_Count] = .@market_map$;
+			$FakeBot_X[$FakeBot_Count] = .@spawn_x;
+			$FakeBot_Y[$FakeBot_Count] = .@spawn_y;
+			$FakeBot_Count++;
+
+			// ?? บังคับหมวก DC ยาให้เป็นสไตล์พ่อค้าคลาสสิค
+			setarray .@tool_hats[0], 2280, 2226, 2203, 2277, 0;
+			.@h_top[.@i] = .@tool_hats[rand(0, getarraysize(.@tool_hats) - 1)];
+
+			spawn_offline_stall .@market_map$, .@spawn_x, .@spawn_y, .@class[.@i], .@sex[.@i], .@hair[.@i], .@h_color[.@i], .@c_color[.@i], .@h_top[.@i], 0, .@item_data$, .@shop_title$, .@name$[.@i];
+			sleep2 50;
+		}
+	}
+	if (playerattached()) dispbottom "[ สำเร็จ ] เสกบอท Tool Dealer เรียบร้อย!";
+	end;
+
+// ==========================================================
+// Logic ภายใน: สร้างชาวเมือง (เดิน/นั่ง/แชท - ลบ Waitroom ผีออกถาวร)
+// ==========================================================
+OnGenerateCitizen:
+	close2;
+	if (playerattached()) dispbottom "กำลังสร้างชาวเมือง เดินเล่นไปมา...";
+	
+	deletearray $Fake_Citizens_GID[0], getarraysize($Fake_Citizens_GID); $Fake_Citizens_Count = 0;
+	sleep2 500;
+	setarray .@fake_names$[0], "Kito", "Zeed", "Alice", "Miku", "Kira", "Darkness", "Zero", "เทพซ่า";
+	.@success = 0;
+	for (.@m = 0; .@m < getarraysize(.@target_maps$); .@m++) {
+		.@market_map$ = .@target_maps$[.@m];
+		.@count = query_sql("SELECT `char_id` FROM `char` WHERE `base_level` > 70 ORDER BY RAND() LIMIT 20", .@cid);
+		for(.@i = 0; .@i < .@count; .@i++) {
+			.@zone = rand(1, 4);
+			if (.@market_map$ == "prontera") {
+				if (.@zone == 1)      { .@min_x = 130; .@max_x = 145; .@min_y = 155; .@max_y = 175; }
+				else if (.@zone == 2) { .@min_x = 155; .@max_x = 175; .@min_y = 155; .@max_y = 175; }
+				else if (.@zone == 3) { .@min_x = 130; .@max_x = 145; .@min_y = 130; .@max_y = 145; }
+				else                  { .@min_x = 155; .@max_x = 175; .@min_y = 130; .@max_y = 145; }
+			} else {
+				if (.@zone == 1)      { .@min_x = 135; .@max_x = 155; .@min_y = 100; .@max_y = 115; }
+				else if (.@zone == 2) { .@min_x = 155; .@max_x = 175; .@min_y = 100; .@max_y = 115; }
+				else if (.@zone == 3) { .@min_x = 135; .@max_x = 155; .@min_y = 80;  .@max_y = 100; }
+				else                  { .@min_x = 155; .@max_x = 175; .@min_y = 80;  .@max_y = 100; }
+			}
+
+			.@spawn_x = rand(.@min_x, .@max_x);
+			.@spawn_y = rand(.@min_y, .@max_y);
+
+			.@fake_sz = getarraysize(.@fake_names$);
+			if (.@fake_sz > 1) { .@name_idx = rand(0, .@fake_sz - 1); } else { .@name_idx = 0; }
+			
+			.@gid = spawn_fakeplayer(.@cid[.@i], .@market_map$, .@spawn_x, .@spawn_y, .@fake_names$[ .@name_idx ]);
+			if (.@gid > 0) {
+				$Fake_Citizens_GID[$Fake_Citizens_Count] = .@gid;
+				$Fake_Citizens_Count++;
+				.@success++;
+				
+				// ?? บังคับ LOOK หมวกธรรมดาติดดินและลบป้ายคำพูดผีทิ้งสิ้นเชิง
+				setarray .@citizen_hats[0], 2280, 2220, 2211, 2203, 2252, 0;
+				// ?? ใช้คำสั่งมาตรฐานดั้งเดิม ดักสลับหมวกส่วนบน โดยเกาะที่ GID ของบอทชาวเมือง
+				setlook 2, .@citizen_hats[rand(0, getarraysize(.@citizen_hats) - 1)], .@gid;
+			}
+			sleep2 100;
+		}
+	}
+	if (playerattached()) dispbottom "[ สำเร็จ ] ปล่อยชาวเมืองเดินเล่นเรียบร้อย " + .@success + " คน!";
+	end;
+}
+
+prontera,150,150,4	duplicate(Super Bot Manager)	Super Bot Manager#prt	110
+
+// ==========================================================
+// AI Controller สำหรับชาวเมือง (แก๊งเปิดประเด็นคำถามลงช่องแชทขาวปกติ)
+// ==========================================================
+-	script	Citizen_Walker_AI	-1,{
+OnInit:
+	stopnpctimer; 
+	setnpctimer 0;
+	startnpctimer; 
+	$@Public_Chat_State = 0; 
+	$@Public_Chat_Topic = 0;
+	end;
+
+OnTimer7000: 
+	if ($Fake_Citizens_Count <= 0) {
+		setnpctimer 0;
+		startnpctimer;
+		end;
+	}
+
+	// บอทชาวเมืองขยับตัวทำท่าทางทั่วไปอัตโนมัติ
+	for (.@i = 0; .@i < $Fake_Citizens_Count; .@i++) {
+		.@gid = $Fake_Citizens_GID[.@i];
+		if (.@gid > 0 && unitexists(.@gid) && rand(1,100) <= 50) {
+			fakeplayer_action(.@gid, rand(0,1)); 
+		}
+	}
+
+	// ?? [โหมดตั้งคำถาม] สุ่มบอทชาวเมืองขึ้นมาอ้าปากพูดข้อความขึ้นหัว
+	if ($@Public_Chat_State == 0) { 
+		if ($Fake_Citizens_Count > 1) { .@idx = rand(0, $Fake_Citizens_Count - 1); } 
+		else { .@idx = 0; }
+		
+		.@gid = $Fake_Citizens_GID[.@idx];
+		
+		if (.@gid > 0 && unitexists(.@gid)) {
+			$@Public_Chat_Topic = rand(1, 60); 
+
+			if ($@Public_Chat_Topic == 1) .@talk$ = "มีใครรู้บ้างว่าการ์ดหมาดำราคาตลาดตอนนี้เท่าไหร่ครับ?";
+			else if ($@Public_Chat_Topic == 2) .@talk$ = "พรีสสายแม็กนัสเวลคนเดียวที่ไหนไวสุดหรอ?";
+			else if ($@Public_Chat_Topic == 3) .@talk$ = "เซิร์ฟนี้มีกิลด์ไหนเน้นสายบันเทิง วอร์ฮาๆ รับคนเพิ่มบ้างครับ";
+			else if ($@Public_Chat_Topic == 4) .@talk$ = "บวกสิบหักนาทีเดียวแตกเรียบร้อย มีใครดวงซวยกว่าผมไหม";
+			else if ($@Public_Chat_Topic == 5) .@talk$ = "ล่าบอสพยอนคืนนี้มีตี้ขาดพรีสชนแก้วบ้างไหมครับ?";
+			else if ($@Public_Chat_Topic == 6) .@talk$ = "เสื้อกล้ามรูใส่การ์ดอะไรดีสุดอ่ะไนท์สายเอจิ";
+			else if ($@Public_Chat_Topic == 7) .@talk$ = "ทำไมวันนี้ขยะราคาตกจัง หรือ GM ปรับเรทดร็อปป่ะวะ";
+			else if ($@Public_Chat_Topic == 8) .@talk$ = "มีใครใจดีแจกเงินทุนให้โนวิทตาดำๆ ไปซื้อเรดบ้างคร้าบบบ";
+			else if ($@Public_Chat_Topic == 9) .@talk$ = "ไฮออคตอนนี้น่ากลัวไหม ดาบธรรมดาจะตีเข้าป่ะ";
+			else if ($@Public_Chat_Topic == 10) .@talk$ = "เหงาจัดเลย มีใครว่างนั่งคุยเป็นเพื่อนหน้าพรอนไหม";
+			else if ($@Public_Chat_Topic == 11) .@talk$ = "เซิร์ฟนี้มีหมวกคอสเพลย์อะไรขยับได้บ้างป่ะ อยากเท่";
+			else if ($@Public_Chat_Topic == 12) .@talk$ = "ดาบกริมพอยซั่นใส่การ์ดอะไรไปสับหนอนแดงดีสุดครับ";
+			else if ($@Public_Chat_Topic == 13) .@talk$ = "ใครใจดีพาวิ่งทำเควสเปลี่ยนคลาสเหมืองพยอนทีหลงทางยับเลย";
+			else if ($@Public_Chat_Topic == 14) .@talk$ = "ถามจริง กุญแจ OBB ช่วงนี้ดร็อปจากมอนตัวไหนบ่อยสุด";
+			else if ($@Public_Chat_Topic == 15) .@talk$ = "วิซาร์ดสายหลอดไฟลงแล็บต้องอัพ Int เท่าไหร่ถึงจะสวดทีเดียวตาย";
+			else if ($@Public_Chat_Topic == 16) .@talk$ = "มีตี้ล่าการ์ดแรร์ยาวๆ ไหม คืนนี้ผมนอนเช้า พร้อมวิง";
+			else if ($@Public_Chat_Topic == 17) .@talk$ = "หาแฟนเล่น RO คอยกดเอบีให้ มีเงินเดือนให้ซิบมาคุย";
+			else if ($@Public_Chat_Topic == 18) .@talk$ = "คาฟราพรอนเทราจีบได้ป่ะ เดินผ่านทีไรส่งยิ้มหวานให้ตลอด";
+			else if ($@Public_Chat_Topic == 19) .@talk$ = "หักไม้ผีหน้าเมืองพรอนบาโฟโผล่ ใครมันมือบอนวะ กวาดเรียบ";
+			else if ($@Public_Chat_Topic == 20) .@talk$ = "จ้างไนท์ลากกาสชั่วโมงละเท่าไหร่ มีใครรับงานบ้าง";
+			else if ($@Public_Chat_Topic == 21) .@talk$ = "สตรีมเมอร์ช่องดังมาเล่นเซิร์ฟนี้ป่ะ เห็นคนมุงเต็มคาฟราเลย";
+			else if ($@Public_Chat_Topic == 22) .@talk$ = "วอร์คืนนี้กิลด์ไหนยึดบ้านอาสึได้วะ ดวลกันเดือดแน่";
+			else if ($@Public_Chat_Topic == 23) .@talk$ = "ขยะคุกชั้น 2 มีอะไรแพงๆ บ้าง นอกจากกบแดง";
+			else if ($@Public_Chat_Topic == 24) .@talk$ = "แชร์ค่าวิงค่าบลูในตี้เค้าคิดราคายังไงเหรอครับมือใหม่ฮะ";
+			else if ($@Public_Chat_Topic == 25) .@talk$ = "มีเสื้อกล้ามรูอันนึง ปล่อยเท่าไหร่ดีไม่ให้โดนกดราคา";
+			else if ($@Public_Chat_Topic == 26) .@talk$ = "ฮันเตอร์สายคอนกนกนก มันเก่งกิลด์วอร์ป่ะครับหรือเน้นเวล";
+			else if ($@Public_Chat_Topic == 27) .@talk$ = "เบื่อพรอนละ มีเมืองไหนสงบน่าไปนั่งคุยแชทมั่ง";
+			else if ($@Public_Chat_Topic == 28) .@talk$ = "ดวงซวยสัส กดคูณสี่รอบได้แต่ขยะ ขอบริจาคใบชุบที";
+			else if ($@Public_Chat_Topic == 29) .@talk$ = "ดาบสองเหมืองกับดาบสองแซนแมน เอาอันไหนไปตีไฮออคดีกว่า";
+			else if ($@Public_Chat_Topic == 30) .@talk$ = "บอสมายาเกิดยัง มีใครไปตี้ล่าบอสกันมั่งยังคืนนี้";
+			else if ($@Public_Chat_Topic == 31) .@talk$ = "รับซื้อ M เรทตอนนี้เท่าไหร่ ใครมีซิบมาด่วนร้อนเงิน";
+			else if ($@Public_Chat_Topic == 32) .@talk$ = "พรีสสายเทิร์นอานูบิส ต้องอัพสกิลไหนนำมั่งครับ";
+			else if ($@Public_Chat_Topic == 33) .@talk$ = "หมวกฟาง Sakkat หาจากไหนอ่ะ โคตรคลาสสิคอยากได้";
+			else if ($@Public_Chat_Topic == 34) .@talk$ = "โดนแจมมอนที่หนอนแดง แจ้ง GM ช่องทางไหนได้มั่ง";
+			else if ($@Public_Chat_Topic == 35) .@talk$ = "แต่งงานในเกมเสียเงินกี่ Zeny วะ อยากมีใบสมรส";
+			else if ($@Public_Chat_Topic == 36) .@talk$ = "มีตี้ไหนรับสุ่มแชร์แมวน้ำยาวๆ ไหม พรีสบัฟเต็มเปี่ยม";
+			else if ($@Public_Chat_Topic == 37) .@talk$ = "พวกขยะตีกิ๊ฟ ดร็อปจากตัวไหนมั่ง ขี้เกียจเดินหา";
+			else if ($@Public_Chat_Topic == 38) .@talk$ = "เล่นโร๊คสายกริม ปล้นขยะรวยจริงไหมเซิร์ฟนี้";
+			else if ($@Public_Chat_Topic == 39) .@talk$ = "ขอวิธีอัพสเตตัสไนท์สายวิทดาบใหญ่หน่อยจ้า";
+			else if ($@Public_Chat_Topic == 40) .@talk$ = "หิวเบียร์ว่ะ มีตี้ตั้งวงเหล้าในดิสคอร์ดป่ะ ทิ้งลิงก์ที";
+			else if ($@Public_Chat_Topic == 41) .@talk$ = "หมวกบอสโอชีริสเพิ่มไรป่ะ เห็นคนใส่เดินอวดโคตรบ่อย";
+			else if ($@Public_Chat_Topic == 42) .@talk$ = "มีดคัตเตอร์ 4 แมลงวันทอง สับไวเลือดเด้งรัวๆ จิ้มสนุกป่ะ";
+			else if ($@Public_Chat_Topic == 43) .@talk$ = "ใครเคยสอยของร้อนเรทผีได้มั่ง เอามาอวดหน่อย";
+			else if ($@Public_Chat_Topic == 44) .@talk$ = "พรีสแท้บัฟเต็ม มีตี้ไหนขาดคนลากไปกาสดันมั่งครับ";
+			else if ($@Public_Chat_Topic == 45) .@talk$ = "ตื่นมาตีบวกตอนตี 3 ดวงจะดีขึ้นจริงป่ะ หรือแหลกเหลว";
+			else if ($@Public_Chat_Topic == 46) .@talk$ = "เซิร์ฟเปิดกี่วันละเนี่ย ทำไมบางคนเลเวลจะร้อยแล้วขยันจัด";
+			else if ($@Public_Chat_Topic == 47) .@talk$ = "ใครมีวิธีหาโอริเทพมั่ง ตีมอนตัวไหนตกบ่อยสุด";
+			else if ($@Public_Chat_Topic == 48) .@talk$ = "อยากลงกิลด์วอร์แต่ไม่มีกิลด์ มีใครรับสัญจรไหมคืนนี้";
+			else if ($@Public_Chat_Topic == 49) .@talk$ = "มีคนลากมอนมาชนคนนั่งพักหน้าเมือง แย่ว่ะ นิสัยไม่ดี";
+			else if ($@Public_Chat_Topic == 50) .@talk$ = "เกมนี่เล่นแล้วหายเหงาจริงป่ะ นั่งมาสองชั่วโมงละไม่มีคนคุยด้วยเลย";
+			else if ($@Public_Chat_Topic == 51) .@talk$ = "มีใครสอย OBB มาเปิดลุ้นดวงมั่งยัง ได้ไรกันมั่ง";
+			else if ($@Public_Chat_Topic == 52) .@talk$ = "ไนท์สายโบลิ่งแบช แป้กบ่อยป่ะเซิร์ฟนี้ ระบบตรงไหม";
+			else if ($@Public_Chat_Topic == 53) .@talk$ = "ผ้าคลุมวิสเปอร์ลดดาเมจไรมั่ง ป้องกันไรได้บ้าง";
+			else if ($@Public_Chat_Topic == 54) .@talk$ = "อยากหาตี้เดินเล่นนากาชั้นล่าง มีพรีสใจดีพาไปไหม";
+			else if ($@Public_Chat_Topic == 55) .@talk$ = "มีวิธีแก้เวลจนนิ้วล็อคไหม ลากมอนจนมือหงิกละ";
+			else if ($@Public_Chat_Topic == 56) .@talk$ = "ถามจริงการ์ดเรดิกเซิร์ฟนี่ราคาจะทะลุ 5M ไหมวะ คนหาเยอะจัด";
+			else if ($@Public_Chat_Topic == 57) .@talk$ = "ใครเป็นคนคิดสูตรตีบวกติดกิ๊ฟวะ โคตรอัจฉริยะลากมันส์มาก";
+			else if ($@Public_Chat_Topic == 58) .@talk$ = "เสื้อกล้ามกางเกงในคอมโบเอจิ แภชั่นยอดฮิตตลอดกาล";
+			else if ($@Public_Chat_Topic == 59) .@talk$ = "คลังแตกจัด ขยะล้นช่องเก็บของ ขอบริจาคร้านรับซื้อด่วน";
+			else if ($@Public_Chat_Topic == 60) .@talk$ = "จบกิลด์วอร์คืนนี้ นัดเจอหลังร่องสวนพรอนเทราไหม 1-1";
+
+			// ?? [ดึงชื่อมาประกอบร่าง] ดึงชื่อจริงของยูนิตบอทผีมาต่อสายอักษร แปะหน้าบทพูดตรงตัว
+			.@bot_name$ = getunitname(.@gid);
+			.@final_text$ = .@bot_name$ + " : " + .@talk$;
+
+			// ?? สั่ง unittalk แบบเพียวๆ ไร้พารามิเตอร์ประกาศ บังคับขึ้นเป็นบอลลูนใสบนหัวเท่านั้น
+			unittalk .@gid, .@final_text$; 
+			
+			$@Public_Chat_Asker = .@gid; 
+			$@Public_Chat_State = 1; 
+			$@Public_Chat_Asker_GID = .@gid; // ฝากค่า GID ตัวถามไว้ให้ AI สวนตอบดึงชื่อเทียบ
+		}
+	}
+	setnpctimer 0;
+	startnpctimer;
+	end;
+}
+
+// ==========================================================
+// AI Controller สำหรับ Novice หน้าม้า (แก๊งรอรับลูกคู่ ตบคำตอบสวนทันควัน)
+// ==========================================================
+-	script	Novice_Chat_AI	-1,{
+OnInit:
+	stopnpctimer;
+	setnpctimer 0;
+	startnpctimer; 
+	end;
+
+OnTimer1500: 
+	if ($@Fake_Novice_Count <= 0) {
+		setnpctimer 0;
+		startnpctimer;
+		end;
+	}
+
+	if ($@Public_Chat_State == 1) {
+		.@loop_guard = 0;
+		while (.@loop_guard < 10) {
+			if ($@Fake_Novice_Count > 1) { .@idx = rand(0, $@Fake_Novice_Count - 1); } 
+			else { .@idx = 0; }
+			
+			.@gid = $@Fake_Novice_GID[.@idx];
+			if (.@gid != $@Public_Chat_Asker_GID && .@gid > 0 && unitexists(.@gid)) {
+				break;
+			}
+			.@loop_guard++;
+		}
+		
+		if (.@gid > 0 && unitexists(.@gid) && .@gid != $@Public_Chat_Asker_GID) {
+			if ($@Public_Chat_Topic == 1) {
+				setarray .@reply$[0], "เห็นห้องแชทข้างๆ ตั้งรับอยู่ 2.5M นะลองเดินไปดูดิ", "ราคาตกยับๆ เลยพี่ ยุคนี้คนใช้หมาดำน้อยลงละ", "ผมเพิ่งปล่อยไปเมื่อวาน 2.3M ครับร้อนเงิน";
+			} else if ($@Public_Chat_Topic == 2) {
+				setarray .@reply$[0], "ดันกาสเลยพี่ ลากสาดแสงตูมเดียวสว่างคาตา", "คุกคุกขังวิงตีกบครับ มอนเกิดเรื่อยๆ ปลอดภัยด้วย", "ไปหนอนแดงก็นะพี่ สฟิงซ์ชั้น 5 ก็เด็ด ดึงตี้ไปแชร์ไหม";
+			} else if ($@Public_Chat_Topic == 3) {
+				setarray .@reply$[0], "ซิบหาหัวกิลด์ห้องแชทมุมนู้นเลยพี่ แกสายฮาเปิดเพลงในดิสทั้งวัน", "มาอยู่กิลด์ผมไหม เน้นสังคมไม่เน้นเก่ง สกิลบัคยกกิลด์ 55+", "เห็นกิลด์เปิดใหม่รับคนตรงคาฟรานะ ลองไปทักดู";
+			} else if ($@Public_Chat_Topic == 4) {
+				setarray .@reply$[0], "ยินดีด้วยพี่ ของมันต้องแตก ถือว่าล้างซวย", "ผมหมดโอริไปสิบก้อนยัง +0 อยู่เลยพี่ ร้องไห้แปบ", "ดวงเก่าแต่วันใหม่ แจกความพินาศชิบหายร่วมกันครับ";
+			} else if ($@Public_Chat_Topic == 5) {
+				setarray .@reply$[0], "ตี้ผมเลยพี่ พกบลูมาเยอะๆ นะเดี๋ยวพาวิ่งดึงบอส", "ขาดพรีสพอดี ซิบด่วนๆ คืนนี้บาโฟต้องร่วง!", "เดินไปตี้ข้างๆ เลย เห็นเค้านั่งรับพรีสสายชนอยู่น่ะ";
+			} else if ($@Public_Chat_Topic == 6) {
+				setarray .@reply$[0], "วิสเปอร์ดิพี่ หลบพริ้วๆ ลากสบาย", "ถ้าตังค์หนาจัดเรดิกไปเลย ชนแรงๆ เจ็บน้อยลงเยอะ", "การ์ดแมลงวันทองไหม เทีเลือดออโต้ประหยัดเรด";
+			} else if ($@Public_Chat_Topic == 7) {
+				setarray .@reply$[0], "มโนไปเองป่ะพี่ ผมดึงขยะขายราคาเดิมนะ มอรอคเคลียร์คลังอยู่เนี่ย", "คิดเหมือนกันเลย วิงหาตั้งนานขยะแทบไม่ตก", "ใจเย็นๆ พี่ ดวงล้วนๆ ดวงดีตกดวงซวยบ๋อท่า";
+			} else if ($@Public_Chat_Topic == 8) {
+				setarray .@reply$[0], "ไม่มีเงินเหมือนกันพี่ เล่นขำๆ แต่ขำไม่ออก เงินหมดตัวแล้ว", "ไปขอพรีสใจดีนู้ แอบเห็นเค้าแจกเงินซับโนวิทอยู่", "ตังค์ไม่มี มีแต่ขยะเน่าๆ เอาไปโยนร้าน NPC แทนไหม";
+			} else if ($@Public_Chat_Topic == 9) {
+				setarray .@reply$[0], "ดาบธรรมดาอย่าไปเลยพี่ ไนท์ลากกันทีสยองเอวเคล็ดแน่", "หาตี้ไฮออคสลับลากชนด่วนๆ ตัวคนเดียวโดนทุบหลังหัก", "เวลยาวๆ ยันสว่างอ่ะแมพนั้น ถ้าไหวก็ลุยเลยพี่";
+			} else if ($@Public_Chat_Topic == 10) {
+				setarray .@reply$[0], "ทักดิสคอร์ดมาเลยพี่ แอดมาเหงาเหมือนกัน พากันเวลยันแก่", "ตั้งห้องแชทสิ เดี๋ยวเดินไปนั่งข้างๆ เฝ้าพรอน", "เกมดี สังคมดี เดียวนั่งคุยชิลๆ น้ำชาซักแก้วนะ";
+			} else if ($@Public_Chat_Topic == 11) {
+				setarray .@reply$[0], "เห็นหมวกกระต่ายขยับหูตรงกลางพรอนนะ โคตรน่ารัก", "หมวกปิโป้ขยับพ่นไฟดิพี่ เท่ระเบิดคลัง", "หมวกเป็ดเหลืองหัวโยกก็ขยับได้นะ เดินดึ๋งๆ เลย";
+			} else if ($@Public_Chat_Topic == 12) {
+				setarray .@reply$[0], "ดาบกริมพอยซั่นใส่การ์ดอะไรไปสับหนอนแดงดีสุดครับ", "สองมดแดงสับหน้าสั่นพี่ ดาเมจเสถียรสุด", "ค้างคาวแดงสับธาตุไฟแรงๆ เลยพี่ หนอนแดงแพ้ทาง";
+			} else if ($@Public_Chat_Topic == 13) {
+				setarray .@reply$[0], "เดินตามผมมาเลยพี่ ผมกำลังจะไปเปลี่ยนคลาสพอดี", "มุดเข้าวาร์ปซ้ายล่างในถ้ำพยอนเลยพี่ หาไม่ยากลองดู", "เปิดแผนที่นากาดูเอาดิ ในดิสคอร์ดกิลด์มีบอกทางละเอียดเลย";
+			} else if ($@Public_Chat_Topic == 14) {
+				setarray .@reply$[0], "กล่องของขวัญดันของเล่นตกบ่อยจัด เปิดจนรวย", "ไปตีไข่ดาวหน้าเมืองพรอนดิ ตกขำๆ วันละสองกล่อง", "บอสพยอนเลยพี่ ตกชัวร์ๆ ถ้าแย่งเค้าทันนะ 55+";
+			} else if ($@Public_Chat_Topic == 15) {
+				setarray .@reply$[0], "อัด Int 99 ไปเลยพี่ สวดวิงกวาดเรียบทั้งห้องแล็บ", "ซัก 80 แล้วใส่หมวกเพิ่มพลังเวทก็เหลือๆ ละพี่", "มีพรีสชนแก้วเอบีให้ Int 70 ก็ตู้มเดียวหายละครับ";
+			} else if ($@Public_Chat_Topic == 16) {
+				setarray .@reply$[0], "ตี้ผมเลยพี่ ขาดคนวิงหาการ์ดแรร์อยู่พอดี ทักซิบมาด่วน", "เห็นตี้สฟิงซ์ชั้น 5 เค้าตุนบลูพร้อมวิงยาวๆ นะ", "ลุยดันของเล่นมะ สุ่มกล่องของขวัญยันแจ้ง ลุยป่ะ";
+			} else if ($@Public_Chat_Topic == 17) {
+				setarray .@reply$[0], "โปรไฟล์ดีจัด มีเงินเดือนให้ด้วย สมัครด่วนเลยจ้า", "เป็นพรีสสายชน บัฟโหดกระโดดตบ รับสมัครไหมพี่", "ระวังเจอพรีสสาวดุ้นนะพี่ 555+ จ้างพรีสเดินตามชั่วโมงละคุยกันดีกว่า";
+			} else if ($@Public_Chat_Topic == 18) {
+				setarray .@reply$[0], "คิดไปเองป่ะพี่ เค้าบริการตามหน้าที่ ยิ้มให้ทุกคนแแหละ", "ลองกดคุยบ่อยๆ ดิ เผื่อมีเควสลับจีบคาฟรา 55+", "ไปจีบพรีสสาวข้างๆ นู่น คาฟราเค้าหยิ่งจะตาย";
+			} else if ($@Public_Chat_Topic == 19) {
+				setarray .@reply$[0], "พวกกวนตีนหักไม้ผีป่วนเมือง ขัดขวางคนนั่งคุย แย่ว่ะ", "วิ่งหนีบาโฟตัวสั่น รอดมาหน้าคาฟราได้ไงสะท้านเลย", "สนุกดีออกพี่ เมืองคึกคักดี ศพพินาศนอนวัดกันเพียบ";
+			} else if ($@Public_Chat_Topic == 20) {
+				setarray .@reply$[0], "เรทมาตรฐานชั่วโมงละ 50kพี่ วิงลากสับไม่หยุด", "ซิบหาไนท์ห้องนู้นเลย เห็นแกตั้งห้องรับจ้างลากกาสอยู่", "มาเวลตี้ผมฟรีไหม สลับกันลากสลับกันชน ไม่คิดตังค์";
+			} else if ($@Public_Chat_Topic == 21) {
+				setarray .@reply$[0], "ใช่ๆ พี่ ช่องดังเปิดสตรีมสดล่าบอสอยู่ แฟนคลับมุงเพียบ", "เซิร์ฟนี้สังคมดีสตรีมเมอร์เลยมาลงเยอะ มอคึกคักจัด", "เล่นขำๆ อย่าไปสนกระแสเลยพี่ เวลของเราไปดีกว่า";
+			} else if ($@Public_Chat_Topic == 22) {
+				setarray .@reply$[0], "กิลดับหนึ่งของเซิร์ฟจองแล้วพี่ บ้านหินใหญ่ตีแตกยาก", "คืนนี้เดือดแน่ ไนท์สายชนบ้านเตรียมยาปั๊มคลังแตกละ", "กิลด์ผมสายบันเทิงเน้นป่วนวอร์ บุกหลังบ้านหนุกๆพอ";
+			} else if ($@Public_Chat_Topic == 23) {
+				setarray .@reply$[0], "เสื้อคุกรูดร็อปง่ายพี่ ปล่อยร้านได้ราคาดีอยู่", "การ์ดหมาดำดิพี่ ล่ารอบที่ร้อยละ เผื่อดวงแตกตกมั่ง", "ขยะเหล็กเน่าๆ โยน NPC ก็ได้หลายหมื่นเซนี่นะ";
+			} else if ($@Public_Chat_Topic == 24) {
+				setarray .@reply$[0], "หารเท่ากันท้ายตี้พี่ สุภาพชนคนแชร์บลูแชร์วิง", "ตี้ผมสุ่มแชร์ยาวๆ ใครกดคูณบวกเพิ่มขำๆ", "แล้วแต่ตี้คุยกันพี่ บางตี้หัวตี้ใจดีเปย์ค่าวิงให้หมดเลย";
+			} else if ($@Public_Chat_Topic == 25) {
+				setarray .@reply$[0], "ตั้งห้องขาย 1.2M เลยพี่ ของยอดฮิตคอมโบกางเกงใน", "ร้อนเงินซิบผมมาด่วน ให้ราคาดีกว่าร้าน NPC แน่นอน", "เก็บไว้ใส่เองเหอะพี่ ไนท์สายเอจิใส่แล้วหลบพริ้วๆ เลย";
+			} else if ($@Public_Chat_Topic == 26) {
+				setarray .@reply$[0], "เน้นเวลไวพี่ นกบินรัวๆ ตีมอนหน้าสั่น แต่ในวอร์นกไม่ค่อยออก", "กิลด์วอร์เอาไว้กวนตีนสไนเปอร์ฝั่งตรงข้าม ยิงสกัดวาร์ปดีจัด", "สายบันเทิงนกบินเสียงดังชวนปวดหัว ยิงเพลินๆ รวยขยะ";
+			} else if ($@Public_Chat_Topic == 27) {
+				setarray .@reply$[0], "ไปเมืองอาย็อธเลยพี่ เงียบสงบ บรรยากาศน้ำชาชาดีงาม", "เมืองเพยอนก็ร่มรื่นนะ นั่งพักใต้ต้นไม้เคลียร์ใจชิลๆ", "นากาชั้นบนเลยพี่ นั่งดูวิซาร์ดร่ายเวทไฟ สวยงามระยิบระยับ";
+			} else if ($@Public_Chat_Topic == 28) {
+				setarray .@reply$[0], "ดวงซวยสัสพี่ 55+ มานอนข้างๆ ผมนี่ พรีสชุบช้าจนรากงอกละ", "โยนใบชุบให้ละพี่ ลุกขึ้นมาลุยต่อ อย่าเพิ่งท้อดวงกำลังมา", "กดคูณสี่แต่ของไม่ตก ซวยจริงเคลียร์ดวงแปบ";
+			} else if ($@Public_Chat_Topic == 29) {
+				setarray .@reply$[0], "ดาบสองเหมืองกับดาบสองแซนแมน เอาอันไหนไปตีไฮออคดีกว่า", "ดาบสองเหมืองสับแรงกว่าพี่ ดาเมจทะลุเกราะไฮออคชัวร์ๆ", "ดาบสองมดแดงสับเสถียรสุด ลากสับมันส์มือสะท้านทรวงตลอดกาล";
+			} else if ($@Public_Chat_Topic == 30) {
+				setarray .@reply$[0], "บอสมายาเกิดยัง มีใครไปตี้ล่าบอสกันมั่งยังคืนนี้", "ตี้ล่าบอสเมืองพยอนกำลังตั้งรับพรีสชนแก้วอยู่ ไปแจมดิ", "เกิดอีกทีชั่วโมงหน้าพี่ เตรียมวิงตุนบลูรอคิวล่าได้เลย";
+			} else if ($@Public_Chat_Topic == 31) {
+				setarray .@reply$[0], "รับซื้อ M เรทตอนนี้เท่าไหร่ ใครมีซิบมาด่วนร้อนเงิน", "มีแบ่งขายให้ 1M ขำๆ ซิบมาคุยราคามิตรภาพ RO", "ปล่อยของคลังแตกหมดตัวละพี่ ไม่มี M เหลือเลย 55+";
+			} else if ($@Public_Chat_Topic == 32) {
+				setarray .@reply$[0], "อัพ Turn Undead ให้เต็ม 10 พี่ โอกาสติดคริตายคาที่สูงจัด", "เน้นอัพดีเลย์ร่ายเวทไวๆ วิงเทิร์นรัวๆ อานูบิสร้องไห้แน่", "บัฟเอบีกับลดพลังป้องกันมอนนำพี่ สวดทีเดียวร่วงชัวร์";
+			} else if ($@Public_Chat_Topic == 33) {
+				setarray .@reply$[0], "ทำเควสแลกของเมืองพยอนเลยพี่ ขยะหาไม่ยาก หมวกฟางสุดเท่", "มีห้องแชทตั้งขายอยู่ตรงมุมคาฟรานะ ราคาไม่แพงดึงเลย", "ดร็อปจากมอนป่าไผ่พยอนพี่ วิงหาตีขำๆ เดี๋ยวก็ตก";
+			} else if ($@Public_Chat_Topic == 34) {
+				setarray .@reply$[0], "แคปจอส่งซัพพอร์ตในดิสคอร์ดเซิร์ฟเลยพี่ GM แบนไวจัด", "พวกนิสัยแย่แจมมอนขัดจังหวะเวล ดักตีหัวหลังร่องสวนแม่ง", "เปิดโหมดตั้งรับแจมมอนคืนเลยพี่ สลับลากมาชนมันคืน 55+";
+			} else if ($@Public_Chat_Topic == 35) {
+				setarray .@reply$[0], "ค่าน้ำยาแต่งงานกะค่าชุดประมาณ 1.2M เซนี่พี่ แพงเอาเรื่อง", "หาแฟนให้ได้ก่อนเหอะพี่ ค่อยคิดเรื่องเงินแต่งงาน 555+", "ไปแต่งเมืองอามัทสึดิ บรรยากาศซากุระโรแมนติกจัด";
+			} else if ($@Public_Chat_Topic == 36) {
+				setarray .@reply$[0], "ตี้แมวน้ำมุมซ้ายล่างว่างอยู่พี่ พกไวท์มาเยอะๆ บัฟสุ่มแชร์ยาวๆ", "ดึงเข้าตี้ละจ้า พรีสสายซับมาโปรดแท้ๆ บัฟเต็มเหนี่ยวเลย", "ตี้แมวน้ำคนแน่นจัด วิงไปแยกร่างตีหนอนแดงดีกว่าพี่";
+			} else if ($@Public_Chat_Topic == 37) {
+				setarray .@reply$[0], "ตีคุกขังวิงตีกบเลยพี่ ขยะตีกิ๊ฟเพียบ รวยแน่นอน", "มอนดันกาสชั้น 1 ดร็อปขยะพวกนี้เยอะจัด เดินสับแปบเดียวเต็มคลัง", "ดึงเอาร้านรับซื้อของร้อนดิพี่ เรทผีราคาถูก ขี้เกียจหาเอง";
+			} else if ($@Public_Chat_Topic == 38) {
+				setarray .@reply$[0], "รวยจริงพี่ สกิลขโมยของออโต้ทำงานถี่ ปล้นขยะคลังแตกฮะ", "โร๊คสายมีดสับไวปล้นของเพลินๆ เอาขยะมาเคลียร์คลังมอรอคได้เงินไว", "เวลอาจช้าหน่อยแต่เงินหนาชัวร์พี่ ดีกว่าไนท์เปลืองปั๊มเรด";
+			} else if ($@Public_Chat_Topic == 39) {
+				setarray .@reply$[0], "เน้นลง Vit 80 ยาวๆ พี่ ถือดาบสองมือโบลิ่งแบชชนบอสหนาๆ", "ลง Str 70 เอาดาเมจ แล้วอัด Vit ตามอึดๆ ชนกิลด์วอร์สบาย", "อัพ Dex ไว้ซัก 40 พี่ จะได้โบมอนโดนไม่วืด ลากมันส์เอวไม่เคล็ด";
+			} else if ($@Public_Chat_Topic == 40) {
+				setarray .@reply$[0], "เข้าดิสคอร์ดกิลด์สายฮานู่นเลยพี่ นั่งชนแก้วคุยเวลยันสว่าง", "ตั้งวงเหล้าหน้าพรอนเทรานี่แหละ เปิดเพลงสตรีมเมอร์ฟังชิลๆ", "เหงาจัดอยากกินเบียร์ ทักมาดิผมมาเลย คุยกันยาวๆ";
+			} else if ($@Public_Chat_Topic == 41) {
+				setarray .@reply$[0], "เพิ่ม Max HP กะต้านสถานะมึนพี่ ออปชั่นดีแถมใส่แล้วหล่อเท่", "หมวกแฟชั่นล่าบอสอวดรวยเฉยๆ พี่ คุณสมบัติงั้นๆ ปล่อยต่อได้ราคาดี", "เห็นปล่อยขายอยู่ตลาดมืด 8M แหน่ะ ทุนหนาค่อยจัดพี่";
+			} else if ($@Public_Chat_Topic == 42) {
+				setarray .@reply$[0], "จิ้มรัวๆ ดึงเลือดเอด้าออโต้ประหยัดค่าเรดไปได้เยอะ โคตรคุ้ม", "ดาเมจอาจเบาหน่อยแต่สายถึกสายขยันเวลไม่พักชอบใช้กัน", "ใส่คัตเตอร์สี่แมลงวันทองสับหนอนแดงชิลๆ สบายใจไม่เปลืองขวด";
+			} else if ($@Public_Chat_Topic == 43) {
+				setarray .@reply$[0], "ผมเพิ่งสอยดาบไนท์สองเหมืองมาราคา 500k โคตรฟลุ๊ค เรทผีจัด", "ดวงดีเจอพ่อค้าตั้งราคาตกหล่น กดดึงทันทีอิ่มไปสามวัน", "ไม่เคยทันกะเค้าเลย วิงหาของร้อนทีไรเจอแต่ห้องว่าง";
+			} else if ($@Public_Chat_Topic == 44) {
+				setarray .@reply$[0], "มาตี้ผมเลยพรีสใจดี กำลังขาดคนชนแก้วลดดาเมจกาสดันพอดี", "วิซาร์ดพร้อมหลอดไฟรอพรีสเอบีอยู่ ทักซิบหัวตี้ด่วนๆ", "ตี้คุกขังวิงตีกบว่างนะพี่ เดินบัฟชิลๆ ปลอดภัยไม่เปลืองบลู";
+			} else if ($@Public_Chat_Topic == 45) {
+				setarray .@reply$[0], "ความเชื่อล้วนๆ พี่ ตีตอนไหนก็แตกถ้าดวงจะซวย 55+", "ผมเคยลองตอนตี 3 บวกสิบดาบหักนาทีเดียวพินาศคามือ ร้องไห้ยับ", "ตีบวกติดกิ๊ฟตอนเช้าๆ สมองโล่งๆ ดวงดีกว่าเยอะพี่";
+			} else if ($@Public_Chat_Topic == 46) {
+				setarray .@reply$[0], "พวกแก๊งนอนเช้าเวลไม่พักพี่ กดคูณสี่แชร์ตี้ไฮออคยันแจ้ง ขยันจัด", "เกมดี สังคมดี คนเลยติดเวลยาวๆ ยันสว่างเอวเคล็ดไม่ยอมนอน", "ผมเล่นวันละสองชั่วโมง นั่งแชทดูคนเดินผ่านไปมาก็สนุกละ";
+			} else if ($@Public_Chat_Topic == 47) {
+				setarray .@reply$[0], "ล่ามอนเหมืองพยอนชั้นล่างเลยพี่ ดร็อปโอริเทพขำๆ วันละก้อน", "กล่อง OBB มีสุ่มได้นะพี่ เผื่อดวงดีเปิดเจอโอริเทพมั่ง", "ดึงเอาร้านรับซื้อของร้อนดิพี่ เรทดีไม่ต้องเหนื่อยวิ่งหาเอง";
+			} else if ($@Public_Chat_Topic == 48) {
+				setarray .@reply$[0], "มาเข้ากิลด์วอร์บันเทิงกะพวกผมมะ เน้นฮาไม่เน้นบ้าน ซิบมาเลย", "มีกิลด์เปิดใหม่รับคนสัญจรอยู่ตรงคาฟราพรอนนะ ลองไปทักดู", "ไนท์สายชนบ้านขาดคนรับวอร์ ทักซิบหัวกิลด์ห้องแชทนู่นเลย";
+			} else if ($@Public_Chat_Topic == 49) {
+				setarray .@reply$[0], "พวกนิสัยไม่ดีลากมอนมาแจมคนนั่งพัก หน้าเมืองพรอนศพพินาศเพียบ", "แจ้ง GM ด่วนเลยพี่ พวกป่วนเมืองทำสังคมเกมพัง", "วิงหนีเอาตัวรอดด่วนพี่ บาโฟหักไม้ผีกวาดเรียบหน้าเมืองละ";
+			} else if ($@Public_Chat_Topic == 50) {
+				setarray .@reply$[0], "มานั่งข้างๆ ผมนี่พี่ ชวนคุยยาวๆ หาเพื่อนคุยเวล ดึงเข้าดิสที", "ตั้งห้องแชทสิพี่ 'เหงาจัง ทักได้' แปบเดียวคนซิบมาเพียบ", "RO สังคมดีพี่ เดินทักคนอื่นก่อนเดี๋ยวก็ได้เพื่อนคุยยาวๆ";
+			} else if ($@Public_Chat_Topic == 51) {
+				setarray .@reply$[0], "เปิดไป 5 กล่อง ได้แต่ขยะเน่าๆ ขาดทุนยับเยิน ดวงซวยจัด", "เพื่อนผมเปิดได้หมวกคอสแฟชั่นขยับหู โคตรฟลุ๊ครวยเละเลย", "ซื้อกล่อง OBB มาตุนขายเก็งกำไรดีกว่าพี่ อย่าเปิดเองเจ็บหนัก";
+			} else if ($@Public_Chat_Topic == 52) {
+				setarray .@reply$[0], "ระบบโบลิ่งแบชเซิร์ฟนี้ตรงเป๊ะพี่ ไม่มีแป้ก ลากมอนมาโบหน้าสั่น", "ต้องระเวงเรื่องเส้นกริดแผนที่หน่อยพี่ โบลงล็อคดาเมจเด้งสองเท่า", "ดาบสองมือบวกห้าสับโบลิ่งแบชที ไฮออคร่วงเป็นใบไม้ร่วงเลย";
+			} else if ($@Public_Chat_Topic == 53) {
+				setarray .@reply$[0], "เพิ่มอัตราการหลบหลีก (Flee) สูงจัดพี่ ไนท์สายเอจิใส่แล้วพริ้วมาก", "ลดดาเมจไร้ธาตุไร้สถานะลงเยอะพี่ ป้องกันพวกสกิลโจมตีธรรมดาดีจัด", "ผ้าคลุมวิสเปอร์ราคาแพงจัด ปล่อยคลังแตกหาทุนตีบวกดีกว่า";
+			} else if ($@Public_Chat_Topic == 54) {
+				setarray .@reply$[0], "ตี้ผมกำลังจะไปนากาชั้นล่างพอดีพี่ มาแจมสุ่มแชร์ยาวๆ กัน", "พรีสสายซับพร้อมเอบีพาไปเวลนากา ซิบมาด่วนเลยจ้า", "เวลคนเดียวระวังเจอไฮดร้าพ่นพิษใส่หน้าหงายนะพี่ หาตี้เซฟสุด";
+			} else if ($@Public_Chat_Topic == 55) {
+				setarray .@reply$[0], "พักแชทนั่งคุยชิลๆ น้ำชาซักแก้วหน้าพรอนพี่ แก้เหนื่อยนิ้วล็อค", "ใช้ระบบตั้งค่าปุ่มคีย์ลัดช่วยกดดิพี่ นิ้วจะได้ไม่หงิกตอนลากมอน", "เวลจนเอวเคล็ดเหมือนกัน ขอนั่งพักยาวๆ ดูคนเดินผ่านไปมาละ";
+			} else if ($@Public_Chat_Topic == 56) {
+				setarray .@reply$[0], "ทะลุแน่นอนพี่ การ์ดเรดิกเพิ่มพลังป้องกันหนาจัด ของต้องมีทุกตัว", "ตอนนี้ในตลาดมืดตั้งรับกัน 4.5M ละ อีกไม่กี่วันทะลุ 5M ชัวร์", "รีบหามาตุนไว้เลยพี่ ปล่อยขายช่วงกิลด์วอร์เดือดๆ กำไรงาม";
+			} else if ($@Public_Chat_Topic == 57) {
+				setarray .@reply$[0], "อาวุธตีบวกติดกิ๊ฟดร็อปเลือดมันส์มาก ลากมอนสับไม่พักประหยัดเรด", "โร๊คสายมีดสับติดกิ๊ฟรัวๆ ปล้นขยะคลังแตกฮะ รวยทางลัดเลย", "สูตรคลาสสิค RO ดั้งเดิม ลากสับมันส์มือสะท้านทรวงตลอดกาล";
+			} else if ($@Public_Chat_Topic == 58) {
+				setarray .@reply$[0], "ชุดเซ็ตประหยัดงบแต่คุ้มค่าเอจิพุ่งทะลุหลอด หลบพริ้วๆ", "ใส่เดินอวดหน้าพรอนโคตรเท่ แภชั่นเด็กเวลขยันขวัญใจมหาชน", "เสื้อกล้ามรูใส่การ์ดวิสเปอร์นี่คอมโบเทพสายเอจิชัดๆ ต้องมี";
+			} else if ($@Public_Chat_Topic == 59) {
+				setarray .@reply$[0], "แวะมาโยนขยะขายที่ร้านรับซื้อของร้อนมุมนู้นดิพี่ เรทดีเคลียร์คลัง", "ขนขยะไปขาย NPC เมืองกิฟเฟนเลยพี่ ได้เงินเซนี่มาสมทบทุนตีบวก", "ขยะเยอะแบ่งผมมั่งดิ จะเอาไปทำเควสแลกหมวกฟางเน่าๆ 55+";
+			} else if ($@Public_Chat_Topic == 60) {
+				setarray .@reply$[0], "จัดมาเลยพี่ พร้อมบวกตลอด ดาบสองเหมืองผมลับคมรอละ", "มา 1-1 หลังร่องสวนได้นะฮะ ขำๆ ท้าดวลสายบันเทิง ทักดิสมา", "จบกิลด์วอร์คืนนี้ไปตี้กินเบียร์ในดิสคอร์ดดีกว่าพี่ ไม่ต้องตีกัน 55+";
+			}
+
+			.@ans_sz = getarraysize(.@reply$);
+			.@rand_ans = rand(0, .@ans_sz - 1);
+			
+			// ?? [ดึงชื่อมาต่อสายสตริงฝั่งตอบ] ดึงชื่อของหน้าม้า Novice ตัวที่ต้องรับมุกสวนกลับ มาต่อข้อความเข้าคู่
+			.@replier_name$ = getunitname(.@gid);
+			.@final_reply$ = .@replier_name$ + " : " + .@reply$[.@rand_ans];
+
+			// ?? ดีดบอลลูนขึ้นหัวเจาะจงรายตัว ไร้พารามิเตอร์แปลกปลอม
+			unittalk .@gid, .@final_reply$;
+		}
+		
+		$@Public_Chat_State = 0;
+		$@Public_Chat_Topic = 0;
+		$@Public_Chat_Asker_GID = 0;
+	}
+
+	setnpctimer 0;
+	startnpctimer;
+	end;
+}
+
+// ==========================================================
+// ?? [ระบบควบคุมเวลาจริง] สั่งหมุนเวียนบอทตลาดมืด "ทุกๆ ต้นชั่วโมง" ทั่วทั้งวัน
+// ==========================================================
+-	script	Market_Rotation_Clock_AI	-1,{
+
+OnMinute00:
+	debugmes "[Market Rotation] ถึงเวลาต้นชั่วโมง ทำการสุ่มสลับหมุนเวียนสินค้าบอทตลาดมืด...";
+	
+	setarray .@target_maps$[0], "prontera", "morocc";
+	set .@force_trade_type, rand(0, 1); 
+	
+	donpcevent "Super Bot Manager::OnGenerateMarket";
+	end;
+}

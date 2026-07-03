@@ -1,0 +1,216 @@
+
+# This file is a part of rAthena.
+#   Copyright(C) 2021 rAthena Development Team
+#   https://rathena.org - https://github.com/rathena
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+###########################################################################
+# Title Bonus Database
+###########################################################################
+#
+# Title Bonus Settings
+#
+###########################################################################
+# - Id      Title Id.
+#   Icon    Icon id to display.
+#   Script  Script to execute when the title is used/equipped. (Default: null)
+###########################################################################
+
+Header:
+  Type: TITLE_BONUS_DB
+  Version: 1
+
+Body:
+  - Id: 1000 # Junction of life
+    Icon: 3700
+    Script: |
+      bonus bLuk,1;
+      bonus bMaxHP,50;
+  - Id: 1001 # Specialist
+    Icon: 3701
+    Script: |
+      bonus bAspd,2;
+  - Id: 1002 # Expert
+    Icon: 3702
+    Script: |
+      bonus bCritical,10;
+  - Id: 1003 # Master
+    Icon: 3703
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1004 # Grand Master
+    Icon: 3704
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1005 # Novice Adventurer
+    Icon: 3705
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1006 # Veteran Adventurer
+    Icon: 3706
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1007 # Master Adventurer
+    Icon: 3707
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1008 # of Dragon
+    Icon: 3708
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1009 # of Madness
+    Icon: 3709
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1010 # Steel Body
+    Icon: 3710
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1011 # The Yellow Flash
+    Icon: 3711
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1012 # Keen
+    Icon: 3712
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1013 # Lucky
+    Icon: 3713
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1014 # Incarnation of Love and Hatred
+    Icon: 3714
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1015 # Maniac
+    Icon: 3715
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1016 # Reborn
+    Icon: 3716
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1017 # Bloody Red
+    Icon: 3717
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1018 # Novice Teleporter
+    Icon: 3718
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1019 # Mock me yoyo
+    Icon: 3719
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1020 # Gambler
+    Icon: 3720
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1021 # Battle Manual Master
+    Icon: 3721
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1022 # Married Person
+    Icon: 3722
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1023 # Persistent
+    Icon: 3723
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1024 # Hard Worker
+    Icon: 3724
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1025 # Poring Mania
+    Icon: 3725
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1026 # Back Opener
+    Icon: 3726
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1027 # Animal Lover
+    Icon: 3727
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1028 # Devil Contractor
+    Icon: 3728
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1029 # Monster Girls
+    Icon: 3729
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1030 # Monster Boys
+    Icon: 3730
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1031 # Visionary
+    Icon: 3731
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1032 # Growing Bud
+    Icon: 3732
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1033 # Family Maker
+    Icon: 3733
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1034 # VIP
+    Icon: 3734
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1035 # Orc Slayer
+    Icon: 3735
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1036 # Orc Hero
+    Icon: 3736
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1037 # Turtle Slayer
+    Icon: 3737
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1038 # Dryad Slayer
+    Icon: 3738
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1039 # Time Slayer
+    Icon: 3739
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1040 # Raydric Slayer
+    Icon: 3740
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1041 # Death Slayer
+    Icon: 3741
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1042 # Undead Slayer
+    Icon: 3742
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1043 # Strouf Slayer
+    Icon: 3743
+    Script: |
+      bonus bAllStats,1;
+  - Id: 1044 # Sting Slayer
+    Icon: 3744
+    Script: |
+      bonus bAllStats,1;

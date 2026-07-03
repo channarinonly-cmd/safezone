@@ -1,0 +1,32 @@
+###########################################################################
+# Whispering Rain
+###########################################################################
+#
+#
+#
+###########################################################################
+
+Header:
+  Type: NO_EQUIP_DB
+  Version: 1
+
+Body:
+  - GroupId: 1
+    Type: Equip # ให้ใส่เฉพาะ
+    MapLists:
+      - Map: prontera
+    ItemLists:
+      - Item: Blade
+
+  - GroupId: 2
+    Type: NoEquip # ห้ามใส่
+    MapLists:
+      - Map: morocc
+    ItemLists:
+      - Item: Blade
+  - GroupId: 3
+    Type: NoEquip # ห้ามใส่
+    MapLists:
+      - Map: payg_cas05
+    ItemLists:
+      - Item: C_qq0013

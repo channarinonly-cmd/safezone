@@ -1,0 +1,43 @@
+//===== No Grade Drop List Configulation Files =======================================
+//  Whispering Rain
+//= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+// Structure of Database:
+// aegisname
+//= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+An_Eye_Of_Dullahan
+Safety_Ring
+Hyper_Changer
+Shinobi's_Sash
+Cursed_Lucky_Brooch
+Novice_Armlet
+Belt
+Rosary_
+Brooch_
+Glove_
+Necklace_
+Earring_
+Ring_
+Matyr's_Flea_Guard
+Mitten_Of_Presbyter
+Diamond_Ring
+Flower_Ring
+Silver_Ring
+Gold_Ring
+//Skul_Ring
+Rosary
+Clip
+Brooch
+Glove
+Necklace
+Thimble_Of_Archer
+Bloody_Iron_Ball
+Costume_Rika_Lower
+Costume_Rika_Upper
+Costume_Rika_Middle
+Costume_Rika_Sword
+
+C_Giant_Shark
+C_Little_Aquarium
+C_Cons_Of_Water
+C_Giant_Shark
+

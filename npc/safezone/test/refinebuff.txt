@@ -1,0 +1,699 @@
+//======================================================
+// Item Buff Master (DB + BONUS_SCRIPT / RE)
+// - Cost: 10,000 zeny
+// - Duration: 4 Hours (real time, stored in DB; no reset on relog)
+// - Multi-slot buffs simultaneously (Armor/Head/Shield/Shoes/Garment/Weapon)
+// - Unequip/Swap -> buff removed immediately (HARD FIX: heartbeat check)
+// - Re-roll same slot allowed (replaces old slot buff)
+// - Shows floating message what buff you got
+// Map: morocc 178 48
+//
+// REQUIRED SQL (run in your rAthena MySQL DB):
+// -------------------------------------------------------
+// 1) ถ้ายังไม่มีตาราง ให้สร้างใหม่แบบนี้ (แนะนำ)
+// CREATE TABLE IF NOT EXISTS `char_itembuff` (
+//   `char_id`   INT(11) UNSIGNED NOT NULL,
+//   `slot_idx`  TINYINT(3) UNSIGNED NOT NULL,  -- 0..5
+//   `item_id`   INT(11) UNSIGNED NOT NULL,
+//   `refine`    SMALLINT(6) NOT NULL DEFAULT 0,
+//   `script`    TEXT NOT NULL,
+//   `buff_name` VARCHAR(255) NOT NULL DEFAULT '',
+//   `expire_ts` INT(11) UNSIGNED NOT NULL,
+//   PRIMARY KEY (`char_id`,`slot_idx`),
+//   KEY `expire_ts` (`expire_ts`)
+// ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+//
+// 2) ถ้ามีตารางอยู่แล้ว (ไม่มี refine) ให้รันเพิ่มคอลัมน์นี้:
+// ALTER TABLE `char_itembuff` ADD COLUMN `refine` SMALLINT(6) NOT NULL DEFAULT 0 AFTER `item_id`;
+//======================================================
+
+morocc,178,48,5	script	Item Buff Master	4_F_KAFRA1,{
+
+	// ---------------- CONFIG ----------------
+	.cost = 10000;
+	.buff_sec = 4 * 60 * 60; // 4 ชั่วโมง (seconds)
+
+	mes "[Item Buff Master]";
+	mes "ไอเทมของคุณน่าเบื่ออยู่หรือเปล่า?? !";
+	mes "มาคุยกับข้า ข้าจะรับไอเทมของคุณบางชนิดที่จะได้รับบัฟเพิ่ม!";
+	mes "แต่ว่าอาจจะอยู่ได้ชั่วคราวนะ";
+	mes "";
+	mes "^FF0000เมื่อเสีย 10,000z จะสุ่มรับบัฟ 1 บัฟ และจะอยู่ 4 ชั่วโมง^000000";
+	mes "หากท่านไม่พอใจก็สุ่มกับข้าใหม่ได้นะ !";
+	next;
+
+	// แสดงบัฟทั้งหมดที่มีอยู่ก่อน (ทุกชิ้น)
+	callsub S_ShowAllBuffs;
+
+	if (Zeny < .cost) { mes "เงินเจ้าไม่พอ!"; close; }
+
+	mes "[Item Buff Master]";
+	mes "เลือกชนิดอุปกรณ์ที่ต้องการสุ่มบัฟ";
+	next;
+
+	.@slot = callsub(S_SelectEquipSlot);
+	if (.@slot < 0) { mes "เจ้าต้องสวมใส่อุปกรณ์ก่อน!"; close; }
+
+	.@iid = getequipid(.@slot);
+	.@ref = getequiprefinerycnt(.@slot);
+
+	if (.@ref < 6) {
+		mes "[Item Buff Master]";
+		mes "ต้องเป็นไอเทมตีบวก +6 ขึ้นไป!";
+		close;
+	}
+
+	// ตรวจว่าไอเท็มอยู่ในลิสต์ที่รับหรือไม่
+	if (!callsub(S_IsAllowedItem, .@slot, .@iid)) {
+		mes "[Item Buff Master]";
+		mes "ข้าไม่รับไอเทมชิ้นนี้...";
+		mes "กรุณาใส่ไอเทมที่อยู่ในรายการที่เปิดรับบัฟเท่านั้น";
+		close;
+	}
+
+	.@idx = callfunc("F_IBUFF_SlotToIdx", .@slot);
+	if (.@idx < 0) { mes "ช่องอุปกรณ์ไม่รองรับ"; close; }
+
+	mes "[Item Buff Master]";
+	mes "เมื่อสุ่มใหม่ บัฟเดิมของช่อง ^00AAFF"+callfunc("F_IBUFF_SlotName$", .@idx)+"^000000 จะหายทันที";
+	mes "ต้องการสุ่มหรือไม่?";
+	next;
+	if (select("สุ่มบัฟ:ยกเลิก") == 2) close;
+
+	Zeny -= .cost;
+
+	// ล้างบัฟของ "สล็อตนี้" ใน DB ก่อน (กันค้าง)
+	callsub S_DB_DeleteSlot, .@idx;
+
+	// ตัดสิน tier ตาม refine
+	if (.@ref >= 9) .@tier = 9;
+	else if (.@ref >= 8) .@tier = 8;
+	else if (.@ref >= 7) .@tier = 7;
+	else .@tier = 6;
+
+	// เก็บ context ให้ S_Apply ใช้
+	@IBUFF_SLOT = .@slot;
+	@IBUFF_IID  = .@iid;
+	@IBUFF_REF  = .@ref;
+
+	// สุ่มบัฟตามไอเทม + tier => จะเขียนลง DB + rebuild ให้ทันที
+	callsub S_RollAndApply, .@slot, .@iid, .@tier;
+
+	mes "[Item Buff Master]";
+	mes "? บัฟถูกผนึกเรียบร้อย! (4 ชั่วโมง)";
+	next;
+
+	// แสดงบัฟทั้งหมดหลังสุ่ม
+	callsub S_ShowAllBuffs;
+	close;
+
+	//==================================================
+	// เลือกสล็อตจากของที่ใส่อยู่ (ชัวร์ทุกเวอร์ชัน)
+	//==================================================
+S_SelectEquipSlot:
+	.@menu$ = "";
+	.@idx2 = 0;
+
+	if (getequipid(EQI_ARMOR)    != -1) { .@opt[.@idx2]=EQI_ARMOR;    .@name$[.@idx2]="Armor";   .@idx2++; }
+	if (getequipid(EQI_HEAD_TOP) != -1) { .@opt[.@idx2]=EQI_HEAD_TOP; .@name$[.@idx2]="Headgear";.@idx2++; }
+	if (getequipid(EQI_HAND_L)   != -1) { .@opt[.@idx2]=EQI_HAND_L;   .@name$[.@idx2]="Shield";  .@idx2++; }
+	if (getequipid(EQI_SHOES)    != -1) { .@opt[.@idx2]=EQI_SHOES;    .@name$[.@idx2]="Footgear";.@idx2++; }
+	if (getequipid(EQI_GARMENT)  != -1) { .@opt[.@idx2]=EQI_GARMENT;  .@name$[.@idx2]="Garment"; .@idx2++; }
+	if (getequipid(EQI_HAND_R)   != -1) { .@opt[.@idx2]=EQI_HAND_R;   .@name$[.@idx2]="Weapon";  .@idx2++; }
+
+	if (.@idx2 <= 0) return -1;
+
+	for (.@i=0; .@i<.@idx2; .@i++)
+		.@menu$ += .@name$[.@i] + " (+"+getequiprefinerycnt(.@opt[.@i])+"):";
+
+	.@pick = select(.@menu$) - 1;
+	return .@opt[.@pick];
+
+	//==================================================
+	// เช็คไอเทมอยู่ในรายการที่เปิดรับบัฟหรือไม่
+	//==================================================
+S_IsAllowedItem:
+	.@slot = getarg(0);
+	.@iid  = getarg(1);
+
+	switch (.@slot) {
+
+		case EQI_ARMOR:
+			if (.@iid==2317 || .@iid==2315 || .@iid==2331 || .@iid==2322 || .@iid==2336 || .@iid==2326 || .@iid==2318) return 1;
+			break;
+
+		case EQI_HEAD_TOP:
+			if (.@iid==2285 || .@iid==2280 || .@iid==5017 || .@iid==2229 || .@iid==2274 || .@iid==2254
+			||  .@iid==2258 || .@iid==2235 || .@iid==5016 || .@iid==5019 || .@iid==2256 || .@iid==2233) return 1;
+			break;
+
+		case EQI_HAND_L:
+			if (.@iid==2102 || .@iid==2104 || .@iid==2106) return 1;
+			break;
+
+		case EQI_SHOES:
+			if (.@iid==2404 || .@iid==2406) return 1;
+			break;
+
+		case EQI_GARMENT:
+			if (.@iid==2504 || .@iid==2506) return 1;
+			break;
+
+		case EQI_HAND_R:
+			// กลุ่มดาบ/ธาตุ + กลุ่ม Element(คริ/atk/long) + bow + wand
+			if (.@iid==1119 || .@iid==1127 || .@iid==1220 || .@iid==1226 || .@iid==1522 || .@iid==1532 || .@iid==1162 || .@iid==1164
+			||  .@iid==1716 || .@iid==1714 || .@iid==1713 || .@iid==1715
+			||  .@iid==1611 || .@iid==1615) return 1;
+			break;
+	}
+	return 0;
+
+	//==================================================
+	// ลบ DB ของสล็อต
+	//==================================================
+S_DB_DeleteSlot:
+	.@idx = getarg(0);
+	query_sql "DELETE FROM `char_itembuff` WHERE `char_id`="+getcharid(0)+" AND `slot_idx`="+.@idx;
+	// ให้รีบิลด์ทันที (กันค้าง)
+	callfunc "F_IBUFF_SyncAndRebuild";
+	return;
+
+	//==================================================
+	// แสดงบัฟทั้งหมด (ทุกสล็อต)
+	//==================================================
+S_ShowAllBuffs:
+	// sync + rebuild ก่อน เพื่อให้เวลาถูก และถอดของแล้วหาย
+	callfunc "F_IBUFF_SyncAndRebuild";
+
+	.@cid = getcharid(0);
+	.@now = gettimetick(2);
+
+	.@rows = query_sql("SELECT `slot_idx`,`item_id`,`buff_name`,`expire_ts` FROM `char_itembuff` WHERE `char_id`="+.@cid+" ORDER BY `slot_idx` ASC",
+		.@sidx, .@iid, .@bname$, .@exp);
+
+	if (.@rows <= 0) {
+		mes "[บัฟที่ใช้อยู่ตอนนี้]";
+		mes "- ไม่มีบัฟจากระบบนี้";
+		next;
+		return;
+	}
+
+	mes "[บัฟที่ใช้อยู่ตอนนี้]";
+	for (.@i=0; .@i<.@rows; .@i++) {
+		.@rem = .@exp[.@i] - .@now;
+		if (.@rem < 0) .@rem = 0;
+		.@min = .@rem / 60;
+		.@hr  = .@min / 60;
+		.@min = .@min % 60;
+
+		mes "^00AAFF"+callfunc("F_IBUFF_SlotName$", .@sidx[.@i])+"^000000 : ^FFFF00"+getitemname(.@iid[.@i])+"^000000";
+		mes "  - ^55FF55"+.@bname$[.@i]+"^000000";
+		mes "  - เหลือเวลา: ^FFD700"+.@hr+" ชม "+.@min+" นาที^000000";
+		mes " ";
+	}
+	next;
+	return;
+
+	//==================================================
+	// สุ่มและใส่บัฟ (slot + item + tier) => เขียน DB + rebuild
+	//==================================================
+S_RollAndApply:
+	.@slot = getarg(0);
+	.@iid  = getarg(1);
+	.@tier = getarg(2);
+
+	.@r = rand(5);
+
+	// ---------------- ARMOR ----------------
+	if (.@slot == EQI_ARMOR) {
+
+		if (.@iid==2317 || .@iid==2315) {
+			if (.@tier==6) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }";
+				else callsub S_Apply, "{ bonus bUseSPrate,-10; bonus2 bDropAddRace,RC_All,2; }";
+			} else if (.@tier==7) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,8; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+				else callsub S_Apply, "{ bonus bUseSPrate,-15; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }";
+			} else if (.@tier==8) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,12; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+				else callsub S_Apply, "{ bonus bUseSPrate,-20; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }";
+			} else {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,15; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+				else callsub S_Apply, "{ bonus bUseSPrate,-30; bonus bAtk,10; bonus2 bDropAddRace,RC_All,15; }";
+			}
+			return;
+		}
+
+		if (.@iid==2331) {
+			if (.@tier==6) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }";
+				else callsub S_Apply, "{ bonus bSPrecovRate,5; bonus2 bDropAddRace,RC_All,2; }";
+			} else if (.@tier==7) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,8; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }";
+				else callsub S_Apply, "{ bonus bSPrecovRate,10; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }";
+			} else if (.@tier==8) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,12; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }";
+				else callsub S_Apply, "{ bonus bSPrecovRate,15; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }";
+			} else {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus bAtk,10; bonus2 bDropAddRace,RC_All,15; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,15; bonus bAtk,10; bonus2 bDropAddRace,RC_All,15; }";
+				else callsub S_Apply, "{ bonus bSPrecovRate,20; bonus bFlee,13; bonus2 bDropAddRace,RC_All,15; }";
+			}
+			return;
+		}
+
+		if (.@iid==2322) {
+			if (.@tier==6) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bDelayrate,-5; bonus2 bDropAddRace,RC_All,2; }";
+				else callsub S_Apply, "{ bonus bCastrate,-5; bonus2 bDropAddRace,RC_All,2; }";
+			} else if (.@tier==7) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bDelayrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }";
+				else callsub S_Apply, "{ bonus bCastrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }";
+			} else if (.@tier==8) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bDelayrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }";
+				else callsub S_Apply, "{ bonus bCastrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }";
+			} else {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bDelayrate,-20; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }";
+				else callsub S_Apply, "{ bonus bCastrate,-20; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }";
+			}
+			return;
+		}
+
+		if (.@iid==2336) {
+			if (.@tier==6) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }";
+				else callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }";
+			} else if (.@tier==7) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+				else callsub S_Apply, "{ bonus bCritical,8; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+			} else if (.@tier==8) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+				else callsub S_Apply, "{ bonus bCritical,12; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+			} else {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+				else callsub S_Apply, "{ bonus bCritical,15; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+			}
+			return;
+		}
+
+		if (.@iid==2326) {
+			if (.@tier==6) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bAspdRate,6; bonus2 bDropAddRace,RC_All,2; }";
+				else callsub S_Apply, "{ bonus bCritical,6; bonus2 bDropAddRace,RC_All,2; }";
+			} else if (.@tier==7) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bAspdRate,10; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+				else callsub S_Apply, "{ bonus bCritical,10; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+			} else if (.@tier==8) {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bAspdRate,14; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+				else callsub S_Apply, "{ bonus bCritical,14; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+			} else {
+				if (.@r%2==0) callsub S_Apply, "{ bonus bAspdRate,18; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+				else callsub S_Apply, "{ bonus bCritical,18; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+			}
+			return;
+		}
+
+		if (.@iid==2318) {
+			if (.@tier==6) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }";
+				else callsub S_Apply, "{ bonus2 bIgnoreDefRaceRate,RC_All,15; bonus2 bDropAddRace,RC_All,2; }";
+			} else if (.@tier==7) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,8; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+				else callsub S_Apply, "{ bonus2 bIgnoreDefRaceRate,RC_All,20; bonus bHit,10; bonus2 bDropAddRace,RC_All,5; }";
+			} else if (.@tier==8) {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,12; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+				else callsub S_Apply, "{ bonus2 bIgnoreDefRaceRate,RC_All,30; bonus bHit,15; bonus2 bDropAddRace,RC_All,10; }";
+			} else {
+				if (.@r%3==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+				else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,15; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+				else callsub S_Apply, "{ bonus2 bIgnoreDefRaceRate,RC_All,40; bonus bHit,20; bonus2 bDropAddRace,RC_All,15; }";
+			}
+			return;
+		}
+	}
+
+	// ---------------- HEADGEAR ----------------
+	if (.@slot == EQI_HEAD_TOP) {
+		if (.@tier==6) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }";
+			else callsub S_Apply, "{ bonus bUseSPrate,-10; bonus2 bDropAddRace,RC_All,2; }";
+		} else if (.@tier==7) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bCritical,8; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bAspdRate,8; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+			else callsub S_Apply, "{ bonus bUseSPrate,-15; bonus bHit,10; bonus2 bDropAddRace,RC_All,5; }";
+		} else if (.@tier==8) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bCritical,12; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bAspdRate,12; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+			else callsub S_Apply, "{ bonus bUseSPrate,-20; bonus bHit,15; bonus2 bDropAddRace,RC_All,10; }";
+		} else {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bCritical,15; bonus bAtk,10; bonus2 bDropAddRace,RC_All,15; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bAspdRate,15; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+			else callsub S_Apply, "{ bonus bUseSPrate,-30; bonus bHit,20; bonus2 bDropAddRace,RC_All,15; }";
+		}
+		return;
+	}
+
+	// ---------------- SHIELD ----------------
+	if (.@slot == EQI_HAND_L) {
+		if (.@tier==6) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bDef,10; bonus2 bDropAddRace,RC_All,2; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bMdef,5; bonus2 bDropAddRace,RC_All,2; }";
+			else callsub S_Apply, "{ bonus bMaxHP,300; bonus2 bDropAddRace,RC_All,2; }";
+		} else if (.@tier==7) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bDef,15; bonus bMaxHP,500; bonus2 bDropAddRace,RC_All,5; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bMdef,8; bonus bMaxSP,100; bonus2 bDropAddRace,RC_All,5; }";
+			else callsub S_Apply, "{ bonus bFlee,8; bonus bHit,8; bonus2 bDropAddRace,RC_All,5; }";
+		} else if (.@tier==8) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bDef,20; bonus bMaxHP,800; bonus2 bDropAddRace,RC_All,10; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bMdef,12; bonus bMaxSP,200; bonus2 bDropAddRace,RC_All,10; }";
+			else callsub S_Apply, "{ bonus bFlee,12; bonus bHit,12; bonus2 bDropAddRace,RC_All,10; }";
+		} else {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bDef,25; bonus bMaxHP,1200; bonus2 bDropAddRace,RC_All,15; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bMdef,15; bonus bMaxSP,300; bonus2 bDropAddRace,RC_All,15; }";
+			else callsub S_Apply, "{ bonus bFlee,18; bonus bHit,18; bonus2 bDropAddRace,RC_All,15; }";
+		}
+		return;
+	}
+
+	// ---------------- SHOES ----------------
+	if (.@slot == EQI_SHOES) {
+		if (.@tier==6) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bAgi,2; bonus2 bDropAddRace,RC_All,2; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bMaxHP,300; bonus2 bDropAddRace,RC_All,2; }";
+			else callsub S_Apply, "{ bonus bFlee,5; bonus2 bDropAddRace,RC_All,2; }";
+		} else if (.@tier==7) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bAgi,3; bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,5; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bMaxHP,600; bonus bMaxSP,100; bonus2 bDropAddRace,RC_All,5; }";
+			else callsub S_Apply, "{ bonus bFlee,10; bonus bHit,5; bonus2 bDropAddRace,RC_All,5; }";
+		} else if (.@tier==8) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bAgi,4; bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,10; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bMaxHP,900; bonus bMaxSP,200; bonus2 bDropAddRace,RC_All,10; }";
+			else callsub S_Apply, "{ bonus bFlee,15; bonus bHit,8; bonus2 bDropAddRace,RC_All,10; }";
+		} else {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bAgi,5; bonus bAspdRate,10; bonus2 bDropAddRace,RC_All,15; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bMaxHP,1500; bonus bMaxSP,300; bonus2 bDropAddRace,RC_All,15; }";
+			else callsub S_Apply, "{ bonus bFlee,20; bonus bHit,12; bonus2 bDropAddRace,RC_All,15; }";
+		}
+		return;
+	}
+
+	// ---------------- GARMENT ----------------
+	if (.@slot == EQI_GARMENT) {
+		if (.@tier==6) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bFlee,5; bonus2 bDropAddRace,RC_All,2; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bAspdRate,4; bonus2 bDropAddRace,RC_All,2; }";
+			else callsub S_Apply, "{ bonus bCritical,4; bonus2 bDropAddRace,RC_All,2; }";
+		} else if (.@tier==7) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bFlee,10; bonus bHit,5; bonus2 bDropAddRace,RC_All,5; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bAspdRate,7; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+			else callsub S_Apply, "{ bonus bCritical,7; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }";
+		} else if (.@tier==8) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bFlee,15; bonus bHit,8; bonus2 bDropAddRace,RC_All,10; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bAspdRate,10; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+			else callsub S_Apply, "{ bonus bCritical,10; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }";
+		} else {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bFlee,20; bonus bHit,12; bonus2 bDropAddRace,RC_All,15; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bAspdRate,12; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+			else callsub S_Apply, "{ bonus bCritical,12; bonus bAtk,10; bonus2 bDropAddRace,RC_All,15; }";
+		}
+		return;
+	}
+
+	// ---------------- WEAPON ----------------
+	if (.@slot == EQI_HAND_R) {
+		if (.@tier==6) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bAtk,5; bonus2 bDropAddRace,RC_All,2; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }";
+			else callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }";
+		} else if (.@tier==7) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bAtk,10; bonus bDoubleRate,5; bonus2 bDropAddRace,RC_All,5; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,10; bonus bAtk,5; bonus2 bDropAddRace,RC_All,5; }";
+			else callsub S_Apply, "{ bonus bAspdRate,10; bonus bHit,10; bonus2 bDropAddRace,RC_All,5; }";
+		} else if (.@tier==8) {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bAtk,15; bonus bDoubleRate,7; bonus2 bDropAddRace,RC_All,10; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,15; bonus bAtk,10; bonus2 bDropAddRace,RC_All,10; }";
+			else callsub S_Apply, "{ bonus bAspdRate,12; bonus bHit,15; bonus2 bDropAddRace,RC_All,10; }";
+		} else {
+			if (.@r%3==0) callsub S_Apply, "{ bonus bAtk,25; bonus bDoubleRate,10; bonus2 bDropAddRace,RC_All,15; }";
+			else if (.@r%3==1) callsub S_Apply, "{ bonus bCritical,20; bonus bAtk,15; bonus2 bDropAddRace,RC_All,15; }";
+			else callsub S_Apply, "{ bonus bAspdRate,15; bonus bHit,20; bonus2 bDropAddRace,RC_All,15; }";
+		}
+		return;
+	}
+	return;
+
+	//==================================================
+	// APPLY: เขียน DB + sync/rebuild + แจ้งว่าบัฟอะไร
+	//==================================================
+S_Apply:
+	.@script$ = callfunc("F_IBUFF_NormalizeScript$", getarg(0));
+
+	.@slot = @IBUFF_SLOT;
+	.@iid  = @IBUFF_IID;
+	.@ref  = @IBUFF_REF;
+
+	.@idx = callfunc("F_IBUFF_SlotToIdx", .@slot);
+	if (.@idx < 0) return;
+
+	.@now = gettimetick(2);
+	.@exp = .@now + .buff_sec;
+
+	.@name$ = callfunc("F_IBUFF_FormatName$", .@script$);
+
+	// ให้บัฟทันที (กันกรณี DB fail)
+	bonus_script .@script$, (.buff_sec * 1000);
+
+	// เขียนลง DB แบบชัวร์
+	.@scr_esc$  = callfunc("F_IBUFF_EscapeSQL$", .@script$);
+	.@name_esc$ = callfunc("F_IBUFF_EscapeSQL$", .@name$);
+
+	.@ok = query_sql("REPLACE INTO `char_itembuff` (`char_id`,`slot_idx`,`item_id`,`refine`,`script`,`buff_name`,`expire_ts`) VALUES ("+
+		getcharid(0)+","+.@idx+","+.@iid+","+.@ref+",'"+.@scr_esc$+"','"+.@name_esc$+"',"+.@exp+")");
+
+	// ถ้า DB เขียนได้ ค่อย sync/rebuild ให้สถานะตรง DB
+	if (.@ok > 0) callfunc "F_IBUFF_SyncAndRebuild";
+
+	specialeffect2 EF_BLESSING;
+	dispbottom "[Item Buff] "+callfunc("F_IBUFF_SlotName$", .@idx)+" ได้บัฟ: "+.@name$;
+
+	return;
+}
+
+//======================================================
+// SYSTEM CORE (DB Sync + Rebuild) - HARD FIX (Heartbeat)
+// - บางแพ็ค OnPCEquip/Unequip/StatCalc ไม่ชัวร์
+// - ใช้ Timer ต่อคน เช็ค signature item+refine 6 ช่องทุก 1 วินาที
+//======================================================
+-	script	ItemBuffSystem	-1,{
+
+OnPCLoginEvent:
+	// sync ตอนเข้าครั้งแรก
+	callfunc "F_IBUFF_SyncAndRebuild";
+
+	// ตั้งค่า signature เริ่มต้น แล้วเริ่ม heartbeat
+	@IBUFF_SIG$ = callfunc("F_IBUFF_MakeEquipSig$");
+	addtimer 1000, strnpcinfo(3)+"::OnIBUFF_Tick";
+	end;
+
+OnIBUFF_Tick:
+	// ถ้า RID หลุด (logout) timer จะหยุดเองโดยระบบอยู่แล้ว แต่กันไว้
+	if (!playerattached()) end;
+
+	.@sig$ = callfunc("F_IBUFF_MakeEquipSig$");
+	if (.@sig$ != @IBUFF_SIG$) {
+		@IBUFF_SIG$ = .@sig$;
+		callfunc "F_IBUFF_SyncAndRebuild";
+	}
+
+	// loop
+	addtimer 1000, strnpcinfo(3)+"::OnIBUFF_Tick";
+	end;
+}
+
+//======================================================
+// FUNCTIONS (global)
+//======================================================
+
+function	script	F_IBUFF_SlotToIdx	{
+	.@s = getarg(0);
+	if (.@s == EQI_ARMOR)    return 0;
+	if (.@s == EQI_HEAD_TOP) return 1;
+	if (.@s == EQI_HAND_L)   return 2;
+	if (.@s == EQI_SHOES)    return 3;
+	if (.@s == EQI_GARMENT)  return 4;
+	if (.@s == EQI_HAND_R)   return 5;
+	return -1;
+}
+
+function	script	F_IBUFF_IdxToSlot	{
+	.@idx = getarg(0);
+	switch (.@idx) {
+		case 0: return EQI_ARMOR;
+		case 1: return EQI_HEAD_TOP;
+		case 2: return EQI_HAND_L;
+		case 3: return EQI_SHOES;
+		case 4: return EQI_GARMENT;
+		case 5: return EQI_HAND_R;
+	}
+	return -1;
+}
+
+function	script	F_IBUFF_SlotName$	{
+	.@idx = getarg(0);
+	switch (.@idx) {
+		case 0: return "Armor";
+		case 1: return "Headgear";
+		case 2: return "Shield";
+		case 3: return "Footgear";
+		case 4: return "Garment";
+		case 5: return "Weapon";
+	}
+	return "Unknown";
+}
+
+// ทำ signature อุปกรณ์ปัจจุบัน (item_id + refine) 6 ช่อง
+function	script	F_IBUFF_MakeEquipSig$	{
+	.@s$ = "";
+
+	// 0 Armor
+	.@id = getequipid(EQI_ARMOR);
+	.@rf = getequiprefinerycnt(EQI_ARMOR);
+	.@s$ += .@id+":"+.@rf+"|";
+
+	// 1 Head
+	.@id = getequipid(EQI_HEAD_TOP);
+	.@rf = getequiprefinerycnt(EQI_HEAD_TOP);
+	.@s$ += .@id+":"+.@rf+"|";
+
+	// 2 Shield
+	.@id = getequipid(EQI_HAND_L);
+	.@rf = getequiprefinerycnt(EQI_HAND_L);
+	.@s$ += .@id+":"+.@rf+"|";
+
+	// 3 Shoes
+	.@id = getequipid(EQI_SHOES);
+	.@rf = getequiprefinerycnt(EQI_SHOES);
+	.@s$ += .@id+":"+.@rf+"|";
+
+	// 4 Garment
+	.@id = getequipid(EQI_GARMENT);
+	.@rf = getequiprefinerycnt(EQI_GARMENT);
+	.@s$ += .@id+":"+.@rf+"|";
+
+	// 5 Weapon
+	.@id = getequipid(EQI_HAND_R);
+	.@rf = getequiprefinerycnt(EQI_HAND_R);
+	.@s$ += .@id+":"+.@rf;
+
+	return .@s$;
+}
+
+function	script	F_IBUFF_FormatName$	{
+	.@s$ = getarg(0);
+
+	.@s$ = replacestr(.@s$, "{", "");
+	.@s$ = replacestr(.@s$, "}", "");
+	.@s$ = replacestr(.@s$, "\t", " ");
+	.@s$ = replacestr(.@s$, ";", "; ");
+
+	.@s$ = replacestr(.@s$, "  ", " ");
+	.@s$ = replacestr(.@s$, "  ", " ");
+	.@s$ = replacestr(.@s$, "  ", " ");
+
+	while (getstrlen(.@s$) > 0 && substr(.@s$, 0, 1) == " ") {
+		.@len = getstrlen(.@s$);
+		if (.@len <= 1) .@s$ = "";
+		else .@s$ = substr(.@s$, 1, .@len - 1);
+	}
+
+	while (getstrlen(.@s$) > 0 && substr(.@s$, getstrlen(.@s$) - 1, 1) == " ") {
+		.@len = getstrlen(.@s$);
+		if (.@len <= 1) .@s$ = "";
+		else .@s$ = substr(.@s$, 0, .@len - 1);
+	}
+
+	if (getstrlen(.@s$) > 90) {
+		.@s$ = substr(.@s$, 0, 90) + "...";
+	}
+	return .@s$;
+}
+
+function	script	F_IBUFF_NormalizeScript$	{
+	.@s$ = getarg(0);
+	.@len = getstrlen(.@s$);
+	if (.@len <= 0) return "{ }";
+
+	if (substr(.@s$, 0, 1) != "{") .@s$ = "{ " + .@s$;
+
+	.@len = getstrlen(.@s$);
+	if (.@len > 0 && substr(.@s$, .@len-1, 1) != "}") .@s$ = .@s$ + " }";
+
+	return .@s$;
+}
+
+function	script	F_IBUFF_EscapeSQL$	{
+	.@s$ = getarg(0);
+	.@s$ = replacestr(.@s$, "\\", "\\\\");
+	.@s$ = replacestr(.@s$, "'", "''");
+	return .@s$;
+}
+
+function	script	F_IBUFF_SyncAndRebuild	{
+	.@cid = getcharid(0);
+	.@now = gettimetick(2);
+
+	// ลบของหมดอายุ
+	query_sql "DELETE FROM `char_itembuff` WHERE `char_id`="+.@cid+" AND `expire_ts` <= "+.@now;
+
+	// ถอด/สลับของ -> ลบ record ของสล็อตนั้น (กันโกง +0/+7 ด้วย refine)
+	for (.@i = 0; .@i < 6; .@i++) {
+		.@slot = callfunc("F_IBUFF_IdxToSlot", .@i);
+		.@eqid = getequipid(.@slot);
+		.@eqref = getequiprefinerycnt(.@slot);
+
+		.@rows = query_sql("SELECT `item_id`,`refine` FROM `char_itembuff` WHERE `char_id`="+.@cid+" AND `slot_idx`="+.@i+" LIMIT 1",
+			.@db_itemid, .@db_ref);
+
+		if (.@rows > 0) {
+			if (.@eqid < 0 || .@eqid != .@db_itemid || .@eqref != .@db_ref) {
+				query_sql "DELETE FROM `char_itembuff` WHERE `char_id`="+.@cid+" AND `slot_idx`="+.@i;
+			}
+		}
+	}
+
+	// rebuild bonus_script (เคลียร์แล้วใส่ใหม่จาก DB)
+	bonus_script_clear;
+
+	.@rows2 = query_sql("SELECT `slot_idx`,`item_id`,`refine`,`script`,`expire_ts` FROM `char_itembuff` WHERE `char_id`="+.@cid,
+		.@sidx, .@iid, .@ref, .@scr$, .@exp);
+
+	if (.@rows2 <= 0) return;
+
+	for (.@k = 0; .@k < .@rows2; .@k++) {
+		.@slot = callfunc("F_IBUFF_IdxToSlot", .@sidx[.@k]);
+		.@eqid = getequipid(.@slot);
+		.@eqref = getequiprefinerycnt(.@slot);
+
+		// ต้องตรงทั้ง item และ refine
+		if (.@eqid != .@iid[.@k]) continue;
+		if (.@eqref != .@ref[.@k]) continue;
+
+		.@rem = .@exp[.@k] - .@now;
+		if (.@rem <= 0) continue;
+
+		.@tmp$ = callfunc("F_IBUFF_NormalizeScript$", .@scr$[.@k]);
+		bonus_script .@tmp$, (.@rem * 1000);
+	}
+	return;
+}

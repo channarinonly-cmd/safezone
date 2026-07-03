@@ -1,0 +1,555 @@
+//====================================================
+// Bitcoin Center: V2 Market + Dynamic Tokenomics
+// - V2 Market Boards
+// - Legacy Claim Menu for Old Orders
+// - Real-time Price Sign
+// - Mutex Lock (Anti WPE Dupe)
+//====================================================
+
+function	script	F_BTC_GetFloor	{
+	return 5000 + (($BTC_TOTAL_MINTED / 500) * 500);
+}
+
+function	script	F_BTC_Get	{
+	.@cid = getcharid(0); .@bal = 0;
+	if (!query_sql("SELECT amount FROM `tharakan_bitcoin` WHERE char_id="+.@cid, .@bal)) {
+		query_sql("INSERT IGNORE INTO `tharakan_bitcoin` (char_id, amount) VALUES ("+.@cid+", 0)");
+		.@bal = 0;
+	}
+	return .@bal;
+}
+
+function	script	F_BTC_Add	{
+	.@add = getarg(0,0);
+	.@is_mint = getarg(1,0); 
+	if (.@add <= 0) return;
+	.@cid = getcharid(0);
+	
+	// [แก้ไขบัค] บังคับสร้างกระเป๋าเงินให้ก่อน ถ้ายังไม่มี
+	query_sql("INSERT IGNORE INTO `tharakan_bitcoin` (char_id, amount) VALUES ("+.@cid+", 0)");
+	
+	// จากนั้นค่อยเพิ่มเหรียญเข้ากระเป๋า
+	query_sql("UPDATE `tharakan_bitcoin` SET amount = amount + "+.@add+" WHERE char_id="+.@cid);
+	
+	if (.@is_mint) {
+		.@old_block = $BTC_TOTAL_MINTED / 500;
+		$BTC_TOTAL_MINTED += .@add;
+		$BTC_CIRCULATING += .@add;
+		.@new_block = $BTC_TOTAL_MINTED / 500;
+		
+		if (.@new_block > .@old_block) {
+			.@floor = callfunc("F_BTC_GetFloor");
+			announce "[BTC Market] ราคาประเมินพื้นฐานปรับขึ้นเป็น "+.@floor+" Zeny ตามความยากของเซิร์ฟเวอร์!", bc_all|bc_blue;
+			
+			// [LOG] จดประวัติออเดอร์ที่ถูกระบบเตะกลับ
+			query_sql("INSERT INTO `btc_market_logs` (char_id, action, price, qty) SELECT char_id, 'SYSTEM_REFUND', price, qty FROM `btc_market_asks_v2` WHERE price < "+.@floor);
+			
+			// [แก้ไขบัค] ให้ SUM ผลรวมของออเดอร์ทั้งหมดก่อน ค่อยโอนคืนเข้ากระเป๋า
+			query_sql("UPDATE `tharakan_bitcoin` b INNER JOIN (SELECT char_id, SUM(qty) as total_qty FROM `btc_market_asks_v2` WHERE price < "+.@floor+" GROUP BY char_id) a ON b.char_id = a.char_id SET b.amount = b.amount + a.total_qty");
+			query_sql("DELETE FROM `btc_market_asks_v2` WHERE price < "+.@floor);
+			
+			// [LOG] จดประวัติเงิน Zeny ที่ถูกระบบเตะกลับเข้าตู้เซฟ
+			query_sql("INSERT INTO `btc_market_logs` (char_id, action, price, qty) SELECT char_id, 'SYSTEM_REFUND_ZENY', price, locked_zeny FROM `btc_market_bids_v2` WHERE price < "+.@floor);
+			
+			query_sql("INSERT INTO `btc_offline_payouts` (char_id, zeny) SELECT char_id, locked_zeny FROM `btc_market_bids_v2` WHERE price < "+.@floor);
+			query_sql("DELETE FROM `btc_market_bids_v2` WHERE price < "+.@floor);
+		}
+	}
+	return;
+}
+
+function	script	F_BTC_Sub	{
+	.@sub = getarg(0,0);
+	.@is_burn = getarg(1,0); 
+	if (.@sub <= 0) return 1;
+	.@cid = getcharid(0);
+	if (callfunc("F_BTC_Get") < .@sub) return 0;
+	query_sql("UPDATE `tharakan_bitcoin` SET amount = amount - "+.@sub+" WHERE char_id="+.@cid);
+	if (.@is_burn) {
+		$BTC_CIRCULATING -= .@sub;
+		if ($BTC_CIRCULATING < 0) $BTC_CIRCULATING = 0;
+	}
+	return 1;
+}
+
+function	script	F_BTC_TryPay	{
+	.@cost = getarg(0,0);
+	if (.@cost <= 0) return 1;
+	if (callfunc("F_BTC_Get") < .@cost) {
+		dispbottom "Bitcoin ไม่พอสำหรับการชำระ (ต้องการ "+.@cost+" BTC)"; return 0;
+	}
+	callfunc "F_BTC_Sub", .@cost, 1; 
+	return 1;
+}
+
+function	script	F_Zeny_AddSafe	{
+	.@delta = getarg(0,0); .@cap = getarg(1,2000000000);
+	if (.@delta == 0) return Zeny;
+	if (.@delta > 0) {
+		if (Zeny >= .@cap) { Zeny = .@cap; return Zeny; }
+		.@room = .@cap - Zeny;
+		if (.@delta > .@room) Zeny = .@cap; else Zeny += .@delta;
+		return Zeny;
+	} else {
+		.@abs = -.@delta;
+		if (Zeny < .@abs) Zeny = 0; else Zeny -= .@abs;
+		return Zeny;
+	}
+}
+
+function	script	LB_ColorRank	{
+	.@r = getarg(0,1);
+	if (.@r == 1) return "^0000FF[Rank 1]^000000";
+	if (.@r == 2) return "[Rank 2]";
+	if (.@r == 3) return "[Rank 3]";
+	return "[Rank "+.@r+"]";
+}
+
+//-------------------------------------------
+// Main NPC Exchange
+//-------------------------------------------
+-	shop	BTC_ShopUI	-1,909:-1
+
+morocc,134,47,3	script	Bitcoin Center	20642,{
+
+	.@bal = callfunc("F_BTC_Get");
+	.@floor = callfunc("F_BTC_GetFloor");
+
+	mes "^0000FF=======================^000000";
+	mes "^0000FF[    BITCOIN EXCHANGE    ]^000000";
+	mes "^0000FF=======================^000000";
+	mes "เหรียญหมุนเวียนในระบบ : ^00CCFF"+$BTC_CIRCULATING+" BTC^000000";
+	mes "ราคาประเมินขั้นต่ำ : ^FF0000"+.@floor+" Zeny^000000";
+	mes "----------------------------------";
+	mes "เหรียญที่คุณถืออยู่ : ^0000FF" + .@bal + " / 500 BTC^000000";
+	if (.@bal >= 500) mes "^FF0000(กระเป๋าเต็มลิมิต 500 ห้ามรับเพิ่ม!)^000000";
+	mes "----------------------------------";
+	next;
+
+main_menu:
+	.@bal = callfunc("F_BTC_Get");
+	mes "^0000FF[ เมนูการซื้อขาย ]^000000";
+	.@sel = select(
+		"ดูประกาศ [รับซื้อ] (ขายเหรียญให้คนอื่น)",
+		"ดูประกาศ [ตั้งขาย] (ซื้อเหรียญจากคนอื่น)",
+		"ตั้งโต๊ะ [รับซื้อ BTC]",
+		"ประกาศ [ตั้งขาย BTC]",
+		"จัดการออเดอร์ของฉัน (รับเงิน/กู้คืนระบบเก่า)",
+		"ตู้สุ่มกาชาพรีเมียม (เผาเหรียญ)",
+		"ร้านค้า BTC Shop (เผาเหรียญ)",
+		"กระดานมหาเศรษฐี (Leaderboard)",
+		(getgmlevel() >= .AdminMinGroup) ? "Admin Panel" : "::ปิด",
+		"ปิดหน้าต่าง"
+	);
+
+	if (.@sel == 1) goto Menu_ViewBids;
+	if (.@sel == 2) goto Menu_ViewAsks;
+	if (.@sel == 3) goto Menu_PostBid;
+	if (.@sel == 4) goto Menu_PostAsk;
+	if (.@sel == 5) goto Menu_Manage;
+	if (.@sel == 6) goto Gacha_Menu;
+	if (.@sel == 7) goto S_OpenShop;
+	if (.@sel == 8) goto LB_Menu;
+	if (.@sel == 9 && getgmlevel() >= .AdminMinGroup) goto A_Panel;
+	close;
+
+Menu_ViewBids:
+	mes "^0000FF[ ผู้เล่นที่ตั้งรับซื้อ BTC ]^000000";
+	deletearray .@oid[0]; deletearray .@name$[0]; deletearray .@price[0]; deletearray .@qty[0];
+	.@rc = query_sql("SELECT id, name, price, qty FROM `btc_market_bids_v2` WHERE qty > 0 AND char_id != "+getcharid(0)+" ORDER BY price DESC LIMIT 10", .@oid, .@name$, .@price, .@qty);
+	if (.@rc <= 0) { mes "ยังไม่มีคนตั้งรับซื้อครับ"; next; goto main_menu; }
+	mes "พิมพ์หมายเลขคิว ที่ต้องการขายให้ (0=กลับ)";
+	for(.@i=0; .@i<.@rc; .@i++) { mes "^FF0000["+.@oid[.@i]+"]^000000 รับ ^0000FF"+.@qty[.@i]+" BTC^000000 | ราคา ^009900"+.@price[.@i]+" Z^000000 ("+.@name$[.@i]+")"; }
+	input .@target_id; if (.@target_id <= 0) goto main_menu;
+
+	.@t_id=0; .@t_price=0; .@t_qty=0; .@t_cid=0;
+	query_sql("SELECT id, char_id, price, qty FROM `btc_market_bids_v2` WHERE id="+.@target_id+" AND qty>0", .@t_id, .@t_cid, .@t_price, .@t_qty);
+	if (.@t_id <= 0) { mes "^FF0000คิวนี้หายไปแล้ว!^000000"; next; goto Menu_ViewBids; }
+	if (.@bal <= 0) { mes "^FF0000คุณไม่มี BTC!^000000"; next; goto main_menu; }
+	mes "เขารับซื้อ: ^0000FF"+.@t_qty+" BTC^000000";
+	mes "ระบุจำนวน BTC ที่ต้องการขายให้เขา:";
+	input .@sell_amt;
+	if (.@sell_amt <= 0 || .@sell_amt > .@bal || .@sell_amt > .@t_qty) { mes "^FF0000จำนวนผิด!^000000"; next; goto Menu_ViewBids; }
+
+	.@buyer_bal = 0; query_sql("SELECT amount FROM `tharakan_bitcoin` WHERE char_id="+.@t_cid, .@buyer_bal);
+	if (.@buyer_bal + .@sell_amt > 500) { mes "^FF0000ผู้รับซื้อมีเหรียญเต็มลิมิต (500) แล้ว ไม่สามารถขายให้เขาได้!^000000"; next; goto Menu_ViewBids; }
+
+	.@lock = rand(100000, 999999);
+	query_sql("UPDATE `btc_market_bids_v2` SET qty=" + (-.@lock) + " WHERE id="+.@t_id+" AND qty="+.@t_qty);
+	.@check_lock = 0; query_sql("SELECT qty FROM `btc_market_bids_v2` WHERE id="+.@t_id, .@check_lock);
+	if (.@check_lock != (-.@lock)) { mes "^FF0000ถูกคนอื่นแย่งขายไปแล้ว หรือข้อมูลไม่ถูกต้อง!^000000"; next; goto Menu_ViewBids; }
+
+	callfunc "F_BTC_Sub", .@sell_amt, 0; 
+	if (.@sell_amt == .@t_qty) { query_sql("DELETE FROM `btc_market_bids_v2` WHERE id="+.@t_id); } 
+	else { query_sql("UPDATE `btc_market_bids_v2` SET qty = "+(.@t_qty - .@sell_amt)+" WHERE id="+.@t_id); }
+
+	.@gross = .@sell_amt * .@t_price; .@net = .@gross - ((.@gross * 5) / 100);
+	callfunc "F_Zeny_AddSafe", .@net, 2000000000;
+	query_sql("INSERT IGNORE INTO `tharakan_bitcoin` (char_id, amount) VALUES ("+.@t_cid+", 0)");
+	query_sql("UPDATE `tharakan_bitcoin` SET amount = amount + "+.@sell_amt+" WHERE char_id="+.@t_cid);
+
+	mes "^0000FFขายสำเร็จ! ได้รับ ^009900"+.@net+" Zeny^000000 (หักภาษี 5%)"; next; goto main_menu;
+
+Menu_ViewAsks:
+	if (.@bal >= 500) { mes "^FF0000กระเป๋าคุณมี BTC ทะลุลิมิตแล้ว (ห้ามซื้อเพิ่ม!)^000000"; next; goto main_menu; }
+	mes "^0000FF[ ผู้เล่นที่ตั้งขาย BTC ]^000000";
+	deletearray .@oid[0]; deletearray .@name$[0]; deletearray .@price[0]; deletearray .@qty[0];
+	.@rc = query_sql("SELECT id, name, price, qty FROM `btc_market_asks_v2` WHERE qty > 0 AND char_id != "+getcharid(0)+" ORDER BY price ASC LIMIT 10", .@oid, .@name$, .@price, .@qty);
+	if (.@rc <= 0) { mes "ยังไม่มีคนตั้งขายครับ"; next; goto main_menu; }
+	mes "พิมพ์หมายเลขคิว ที่ต้องการซื้อ (0=กลับ)";
+	for(.@i=0; .@i<.@rc; .@i++) { mes "^FF0000["+.@oid[.@i]+"]^000000 ขาย ^0000FF"+.@qty[.@i]+" BTC^000000 | ราคา ^FF0000"+.@price[.@i]+" Z^000000 ("+.@name$[.@i]+")"; }
+	input .@target_id; if (.@target_id <= 0) goto main_menu;
+
+	.@t_id=0; .@t_price=0; .@t_qty=0; .@t_cid=0;
+	query_sql("SELECT id, char_id, price, qty FROM `btc_market_asks_v2` WHERE id="+.@target_id+" AND qty>0", .@t_id, .@t_cid, .@t_price, .@t_qty);
+	if (.@t_id <= 0) { mes "^FF0000คิวนี้หายไปแล้ว!^000000"; next; goto Menu_ViewAsks; }
+	mes "เขาขายอยู่: ^0000FF"+.@t_qty+" BTC^000000";
+	mes "ระบุจำนวนที่ต้องการซื้อ:";
+	input .@buy_amt;
+	if (.@buy_amt <= 0 || .@buy_amt > .@t_qty || .@bal + .@buy_amt > 500) { mes "^FF0000จำนวนผิด หรือซื้อแล้วจะล้นลิมิต 500!^000000"; next; goto Menu_ViewAsks; }
+
+	.@gross = .@buy_amt * .@t_price;
+	if (Zeny < .@gross) { mes "^FF0000Zeny ไม่พอ!^000000"; next; goto main_menu; }
+
+	.@lock = rand(100000, 999999);
+	query_sql("UPDATE `btc_market_asks_v2` SET qty=" + (-.@lock) + " WHERE id="+.@t_id+" AND qty="+.@t_qty);
+	.@check_lock = 0; query_sql("SELECT qty FROM `btc_market_asks_v2` WHERE id="+.@t_id, .@check_lock);
+	if (.@check_lock != (-.@lock)) { mes "^FF0000ถูกคนอื่นแย่งดึงไปแล้ว หรือข้อมูลไม่ถูกต้อง!^000000"; next; goto Menu_ViewAsks; }
+
+	callfunc "F_Zeny_AddSafe", -.@gross, 2000000000;
+	callfunc "F_BTC_Add", .@buy_amt, 0; 
+	if (.@buy_amt == .@t_qty) { query_sql("DELETE FROM `btc_market_asks_v2` WHERE id="+.@t_id); } 
+	else { query_sql("UPDATE `btc_market_asks_v2` SET qty = "+(.@t_qty - .@buy_amt)+" WHERE id="+.@t_id); }
+	
+	// [LOG] จดประวัติว่าขายออกให้ใคร
+	query_sql("INSERT INTO `btc_market_logs` (char_id, action, price, qty) VALUES ("+.@t_cid+", 'SOLD_OUT', "+.@t_price+", "+.@buy_amt+")");
+	
+	.@net = .@gross - ((.@gross * 5) / 100);
+	query_sql("INSERT INTO `btc_offline_payouts` (char_id, zeny) VALUES ("+.@t_cid+", "+.@net+")");
+	mes "^0000FFซื้อสำเร็จ! ได้รับ "+.@buy_amt+" BTC^000000"; next; goto main_menu;
+
+Menu_PostBid:
+	if (.@bal >= 500) { mes "^FF0000กระเป๋าคุณมี BTC ทะลุลิมิตแล้ว (ห้ามรับซื้อเพิ่ม!)^000000"; next; goto main_menu; }
+	.@floor = callfunc("F_BTC_GetFloor");
+	mes "^0000FF[ ตั้งโต๊ะรับซื้อ BTC ]^000000";
+	mes "ระบุราคารับซื้อต่อ 1 BTC";
+	mes "(ขั้นต่ำ "+.@floor+" Z | ^FF0000พิมพ์ 0 เพื่อยกเลิก^000000):";
+	input .@p_price;
+	if (.@p_price == 0) goto main_menu;
+	if (.@p_price < .@floor) { mes "^FF0000ตั้งต่ำกว่าราคาขั้นต่ำไม่ได้!^000000"; next; goto Menu_PostBid; }
+	
+	mes "ระบุจำนวน BTC ที่ต้องการรับซื้อ";
+	mes "(^FF0000พิมพ์ 0 เพื่อยกเลิก^000000):";
+	input .@p_qty;
+	if (.@p_qty == 0) goto main_menu;
+	if (.@p_qty < 0 || .@bal + .@p_qty > 500) { mes "^FF0000จำนวนผิด หรือซื้อแล้วจะล้นลิมิต 500!^000000"; next; goto main_menu; }
+
+	.@total_cost = .@p_price * .@p_qty;
+	if (Zeny < .@total_cost) { mes "^FF0000Zeny ไม่พอ!^000000"; next; goto main_menu; }
+	callfunc "F_Zeny_AddSafe", -.@total_cost, 2000000000;
+	query_sql("INSERT INTO `btc_market_bids_v2` (char_id, name, price, qty, locked_zeny) VALUES ("+getcharid(0)+", '"+escape_sql(strcharinfo(0))+"', "+.@p_price+", "+.@p_qty+", "+.@total_cost+")");
+	mes "^0000FFตั้งรับซื้อเรียบร้อย! หักเงินมัดจำแล้ว^000000"; next; goto main_menu;
+
+Menu_PostAsk:
+	if (.@bal <= 0) { mes "คุณไม่มี BTC เลยครับ"; next; goto main_menu; }
+	.@floor = callfunc("F_BTC_GetFloor");
+	mes "^0000FF[ ตั้งโต๊ะขาย BTC ]^000000";
+	mes "ระบุจำนวนที่ต้องการลงขาย";
+	mes "(^FF0000พิมพ์ 0 เพื่อยกเลิก^000000):";
+	input .@p_qty;
+	if (.@p_qty == 0) goto main_menu;
+	if (.@p_qty < 0 || .@p_qty > .@bal) { mes "^FF0000จำนวนไม่ถูกต้อง!^000000"; next; goto main_menu; }
+	
+	mes "ระบุราคาที่ต้องการขายต่อ 1 BTC";
+	mes "(ขั้นต่ำ "+.@floor+" Z | ^FF0000พิมพ์ 0 เพื่อยกเลิก^000000):";
+	input .@p_price;
+	if (.@p_price == 0) goto main_menu;
+	if (.@p_price < .@floor) { mes "^FF0000ตั้งต่ำกว่าราคาขั้นต่ำไม่ได้!^000000"; next; goto Menu_PostAsk; }
+	
+	callfunc "F_BTC_Sub", .@p_qty, 0;
+	query_sql("INSERT INTO `btc_market_asks_v2` (char_id, name, price, qty) VALUES ("+getcharid(0)+", '"+escape_sql(strcharinfo(0))+"', "+.@p_price+", "+.@p_qty+")");
+	
+	// [LOG] จดประวัติการตั้งขาย
+	query_sql("INSERT INTO `btc_market_logs` (char_id, action, price, qty) VALUES ("+getcharid(0)+", 'POST_SELL', "+.@p_price+", "+.@p_qty+")");
+	
+	mes "^0000FFนำขึ้นกระดานขายเรียบร้อย!^000000"; next; goto main_menu;
+
+Menu_Manage:
+	mes "^0000FF[ จัดการออเดอร์ ]^000000";
+	
+	.@pid=0; .@pzeny=0;
+	query_sql("SELECT id, zeny FROM `btc_offline_payouts` WHERE char_id="+getcharid(0)+" AND zeny>0 LIMIT 1", .@pid, .@pzeny);
+	
+	// แก้ไขตรงนี้: ชี้ไปที่ตารางระบบเก่าของแอดมินโดยตรง
+	.@old_ask_id=0; .@old_ask_qty=0; 
+	query_sql("SELECT id, qty_remain FROM `tharakan_bitcoin_sell_orders` WHERE char_id="+getcharid(0)+" LIMIT 1", .@old_ask_id, .@old_ask_qty);
+
+	if (.@old_ask_id > 0) {
+		mes "^FF0000[!] ตรวจพบออเดอร์ตกค้างในระบบเก่า^000000";
+		mes "มีเหรียญรอการกู้คืน: ^0000FF" + .@old_ask_qty + " BTC^000000";
+		mes "----------------------------------";
+	}
+
+	// สร้างเมนู
+	.@menu$ = "";
+	if (.@pid > 0) .@menu$ += "รับเงิน Zeny (Payout):"; else .@menu$ += "^777777รับเงิน Zeny (ว่าง)^000000:";
+	.@menu$ += "ยกเลิกโต๊ะรับซื้อ:ยกเลิกโต๊ะขาย:";
+	
+	if (.@old_ask_id > 0) .@menu$ += "^FF0000[กู้คืน] ดึงเหรียญระบบเก่าเข้าตัว^000000:";
+	else .@menu$ += "^777777[กู้คืน] ไม่มีเหรียญเก่าตกค้าง^000000:";
+	
+	.@menu$ += "กลับ";
+
+	.@sel = select(.@menu$);
+	
+	if (.@sel == 1) {
+		if (.@pid > 0) {
+			.@lock = rand(100000, 999999);
+			query_sql("UPDATE `btc_offline_payouts` SET zeny=" + (-.@lock) + " WHERE id="+.@pid+" AND zeny="+.@pzeny);
+			.@check_lock = 0; query_sql("SELECT zeny FROM `btc_offline_payouts` WHERE id="+.@pid, .@check_lock);
+			if (.@check_lock == (-.@lock)) {
+				query_sql("DELETE FROM `btc_offline_payouts` WHERE id="+.@pid);
+				callfunc "F_Zeny_AddSafe", .@pzeny, 2000000000;
+				mes "^009900ได้รับเงินจากการขายเหรียญ: "+.@pzeny+" Zeny!^000000"; specialeffect2 211; next; goto main_menu;
+			}
+		}
+	} 
+	else if (.@sel == 2) {
+		.@t_id=0; .@t_zeny=0; query_sql("SELECT id, locked_zeny FROM `btc_market_bids_v2` WHERE char_id="+getcharid(0)+" LIMIT 1", .@t_id, .@t_zeny);
+		if (.@t_id > 0) { 
+			.@lock = rand(100000, 999999);
+			query_sql("UPDATE `btc_market_bids_v2` SET locked_zeny=" + (-.@lock) + " WHERE id="+.@t_id+" AND locked_zeny="+.@t_zeny);
+			.@check_lock = 0; query_sql("SELECT locked_zeny FROM `btc_market_bids_v2` WHERE id="+.@t_id, .@check_lock);
+			if (.@check_lock == (-.@lock)) {
+				query_sql("DELETE FROM `btc_market_bids_v2` WHERE id="+.@t_id); 
+				callfunc "F_Zeny_AddSafe", .@t_zeny, 2000000000; 
+				mes "ยกเลิกสำเร็จ! ได้เงินคืน: "+.@t_zeny+" Zeny"; 
+			} else { mes "^FF0000ยกเลิกล้มเหลว ข้อมูลไม่ถูกต้อง!^000000"; }
+		} else { mes "ไม่พบออเดอร์ตั้งรับซื้อ"; }
+	}
+	else if (.@sel == 3) {
+		.@t_id=0; .@t_qty=0; query_sql("SELECT id, qty FROM `btc_market_asks_v2` WHERE char_id="+getcharid(0)+" LIMIT 1", .@t_id, .@t_qty);
+		if (.@t_id > 0) { 
+			.@lock = rand(100000, 999999);
+			query_sql("UPDATE `btc_market_asks_v2` SET qty=" + (-.@lock) + " WHERE id="+.@t_id+" AND qty="+.@t_qty);
+			.@check_lock = 0; query_sql("SELECT qty FROM `btc_market_asks_v2` WHERE id="+.@t_id, .@check_lock);
+			if (.@check_lock == (-.@lock)) {
+				query_sql("DELETE FROM `btc_market_asks_v2` WHERE id="+.@t_id); 
+				callfunc "F_BTC_Add", .@t_qty, 0; 
+				
+				// [LOG] จดประวัติการดึงกลับเอง
+				query_sql("INSERT INTO `btc_market_logs` (char_id, action, price, qty) VALUES ("+getcharid(0)+", 'MANUAL_CANCEL', 0, "+.@t_qty+")");
+				
+				mes "ยกเลิกสำเร็จ! ได้เหรียญคืน: "+.@t_qty+" BTC"; 
+			} else { mes "^FF0000ยกเลิกล้มเหลว อาจจะถูกดึงซื้อไปแล้ว!^000000"; }
+		} else { mes "ไม่พบออเดอร์ตั้งขาย"; }
+	}
+	else if (.@sel == 4) {
+		if (.@old_ask_id > 0) {
+			.@lock = rand(100000, 999999);
+			// แก้ไขตรงนี้: คืนของและลบข้อมูลจากตารางเก่าให้ถูกต้อง
+			query_sql("UPDATE `tharakan_bitcoin_sell_orders` SET qty_remain=" + (-.@lock) + " WHERE id="+.@old_ask_id+" AND qty_remain="+.@old_ask_qty);
+			.@check_lock = 0; query_sql("SELECT qty_remain FROM `tharakan_bitcoin_sell_orders` WHERE id="+.@old_ask_id, .@check_lock);
+			if (.@check_lock == (-.@lock)) {
+				query_sql("DELETE FROM `tharakan_bitcoin_sell_orders` WHERE id="+.@old_ask_id); 
+				callfunc "F_BTC_Add", .@old_ask_qty, 0; 
+				mes "^009900กู้คืนเหรียญระบบเก่าสำเร็จ! ได้รับกลับเข้าตัว: "+.@old_ask_qty+" BTC^000000"; 
+			} else { mes "^FF0000การกู้คืนล้มเหลว!^000000"; }
+		} else {
+			mes "คุณไม่มีเหรียญตกค้างในระบบเก่าครับ";
+		}
+	}
+	
+	next; goto main_menu;
+
+// ==========================================
+// 6. VIP GACHA (Burn System)
+// ==========================================
+Gacha_Menu:
+	set .GachaName$, "[ VIP Bitcoin Gacha ]";
+	.@gacha_cost = 10; 
+
+	query_sql("SELECT COUNT(*) FROM `btc_gacha_data` WHERE `claim_amount` < `claim_limit`", .@itemrare);
+checkitemrare:
+	if (!.@itemrare) { mes "สถานะตู้: ^FF0000สินค้าแรร์หมดชั่วคราว^000000"; next; if(select("ย้อนกลับ") == 1) goto main_menu; end; }
+
+	mes "^0000FF" + .GachaName$ + "^000000";
+	mes "ค่าธรรมเนียม: ^0000FF" + .@gacha_cost + " BTC^000000 / ครั้ง";
+	mes "(เหรียญที่ใช้จะถูกเผาทิ้ง เพื่อลดความยากเซิร์ฟเวอร์)";
+	next;
+	switch(select("สุ่มไอเทม ("+.@gacha_cost+" BTC)", "ดูของรางวัล", "ดูอันดับ", "ย้อนกลับ")){
+		case 1:
+		jackpotrare:
+			if (callfunc("F_BTC_Get") < .@gacha_cost) { mes "^FF0000BTC ไม่เพียงพอ!^000000"; next; goto Gacha_Menu; }
+			if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 3000)) { mes "^FF0000กระเป๋าเต็ม!^000000"; next; goto Gacha_Menu; }
+
+			deletearray .@itemid[0]; deletearray .@itemamt[0]; deletearray .@itemrate[0]; deletearray .@ann[0];
+			query_sql("SELECT item_id, item_amt, item_rate, item_announce FROM `btc_gacha_data` WHERE `claim_amount` < `claim_limit`", .@itemid, .@itemamt, .@itemrate, .@ann);
+			
+			.@count = getarraysize(.@itemid); if (.@count <= 0) goto checkitemrare;
+
+			progressbar "0000ff", 2; specialeffect2 568;
+			
+			if (!callfunc("F_BTC_Sub", .@gacha_cost, 1)) goto main_menu;
+
+			query_sql("SELECT COUNT(*) FROM `btc_gacha_ranking` WHERE char_id = "+getcharid(0), .@rankingrare);
+			if (!.@rankingrare) { query_sql("INSERT INTO `btc_gacha_ranking` (char_id,name,score) VALUES ("+getcharid(0)+",'"+escape_sql(strcharinfo(0))+"',1)"); } 
+			else { query_sql("UPDATE `btc_gacha_ranking` SET `score` = `score` + 1 WHERE char_id = "+getcharid(0)); }
+
+			.@total_weight = 0; for(.@i = 0; .@i < .@count; .@i++) { .@total_weight += .@itemrate[.@i]; }
+			.@fail_weight = 100; .@max_roll = .@total_weight + .@fail_weight; .@roll = rand(1, .@max_roll);
+			
+			if (.@roll > .@total_weight) {
+				specialeffect2 817; mes "^FF0000เสียใจด้วย! รอบนี้ไม่ได้ของแรร์^000000";
+				getitem 501, 5; next;
+				if(select("สุ่มอีก ("+.@gacha_cost+" BTC):กลับ") == 1) goto jackpotrare;
+				goto main_menu;
+			} else {
+				.@current_weight = 0; .@win_idx = 0;
+				for(.@i = 0; .@i < .@count; .@i++) { .@current_weight += .@itemrate[.@i]; if (.@roll <= .@current_weight) { .@win_idx = .@i; break; } }
+				specialeffect2 EF_COIN;
+				query_sql("UPDATE `btc_gacha_data` SET `claim_amount` = `claim_amount`+1 WHERE item_id = "+.@itemid[.@win_idx]);
+				getitem .@itemid[.@win_idx], .@itemamt[.@win_idx];
+				mes "^0000FFยินดีด้วย! คุณได้รับไอเทมแรร์^000000";
+				mes "ได้รับ: ^0000FF" + getitemname(.@itemid[.@win_idx]) + " " + .@itemamt[.@win_idx] + " ชิ้น^000000";
+				if (.@ann[.@win_idx]) announce "[BTC Gacha] แจ็คพอตแตก! "+strcharinfo(0)+" สุ่มได้ "+getitemname(.@itemid[.@win_idx])+"!!", bc_all; 
+				next; if(select("สุ่มอีก ("+.@gacha_cost+" BTC):กลับ") == 1) goto jackpotrare;
+				goto main_menu;
+			}
+		case 2:
+			mes "^0000FF[ ของรางวัลที่เหลือ ]^000000";
+			query_sql("SELECT item_id, item_amt, claim_amount, claim_limit FROM `btc_gacha_data` ORDER BY id ASC", .@ids, .@iamt, .@ca, .@cl);
+			for (.@i = 0; .@i < getarraysize(.@ids); ++.@i) {
+				.@rem = .@cl[.@i] - .@ca[.@i];
+				if (.@rem > 0) mes "^i[" + .@ids[.@i] + "]^ ^0055FF" + getitemname(.@ids[.@i]) + " " + .@iamt[.@i] + " ea^000000 (เหลือ " + .@rem + ")";
+			}
+			next; goto Gacha_Menu;
+		case 3:
+			mes "^0000FF[ อันดับการสุ่มกาชา ]^000000";
+			.@rc = query_sql("SELECT name, score FROM `btc_gacha_ranking` ORDER BY score DESC LIMIT 10", .@rn_name$, .@rn_score);
+			for (.@i = 0; .@i < .@rc; .@i++) mes callfunc("LB_ColorRank", .@i+1) + " " + .@rn_name$[.@i] + " - สุ่มไป ^0000FF" + .@rn_score[.@i] + "^000000 ครั้ง";
+			next; goto Gacha_Menu;
+		case 0: goto main_menu;
+	}
+
+// ==========================================
+// 7. BTC Shop, 8. Leaderboard, 9. Admin
+// ==========================================
+S_OpenShop:
+	callsub S_LoadCatalogFromSQL;
+	npcshopattach "BTC_ShopUI";
+	for (.@k = 0; .@k < getarraysize(@BTC_last_ids); .@k++) if (@BTC_last_ids[.@k] > 0) npcshopdelitem "BTC_ShopUI", @BTC_last_ids[.@k];
+	deletearray @BTC_last_ids[0]; npcshopdelitem "BTC_ShopUI", 909;
+	deletearray @BTC_map_ids[0]; deletearray @BTC_map_price[0]; deletearray @BTC_map_idx[0];
+	.@u = 0;
+	for (.@i = 0; .@i < .CatalogCount; .@i++) {
+		.@id = .ItemIDs[.@i]; if (.@id <= 0) continue; .@pos = -1;
+		for (.@t = 0; .@t < .@u; .@t++) if (.@uniq_id[.@t] == .@id) { .@pos = .@t; break; }
+		if (.@pos < 0) { .@uniq_id[.@u] = .@id; .@uniq_idx[.@u] = .@i; .@u++; } else { .@uniq_idx[.@pos] = .@i; }
+	}
+	for (.@t = 0; .@t < .@u; .@t++) {
+		.@idx = .@uniq_idx[.@t]; .@id = .ItemIDs[.@idx]; .@price = .Prices[.@idx];
+		npcshopadditem "BTC_ShopUI", .@id, .@price;
+		@BTC_last_ids[.@t] = .@id; @BTC_map_ids[.@t] = .@id; @BTC_map_price[.@t] = .@price; @BTC_map_idx[.@t] = .@idx;
+	}
+	mes "ตัวเลขราคาคือ ^0000FFหน่วย BTC^000000";
+	mes "(เหรียญที่ใช้จะถูกเผาทิ้ง เพื่อลดความยากเซิร์ฟเวอร์)";
+	next; callshop "BTC_ShopUI", 1; end;
+
+OnBuyItem:
+	.@n = getarraysize(@bought_nameid); if (.@n <= 0) end;
+	.@total = 0;
+	for (.@i = 0; .@i < .@n; .@i++) {
+		.@id = @bought_nameid[.@i]; .@qty = @bought_quantity[.@i]; .@pos = -1; 
+		for (.@k = 0; .@k < getarraysize(@BTC_map_ids); .@k++) if (@BTC_map_ids[.@k] == .@id) { .@pos = .@k; break; }
+		if (.@pos < 0) end;
+		.@idx = @BTC_map_idx[.@pos]; .@price = @BTC_map_price[.@pos];
+		if (.Stock[.@idx] >= 0 && .@qty > .Stock[.@idx]) { dispbottom "^FF0000สต็อกไม่พอ^000000"; end; }
+		if (!checkweight2(.@id, .@qty)) { dispbottom "^FF0000กระเป๋าเต็ม^000000"; end; }
+		.@need_id[.@i] = .@id; .@need_qty[.@i] = .@qty; .@need_idx[.@i] = .@idx; .@need_unit[.@i] = .@price;
+		.@need_sum[.@i] = .@price * .@qty; 
+		.@total += .@need_sum[.@i];
+	}
+	if (!callfunc("F_BTC_TryPay", .@total)) end; 
+	for (.@i = 0; .@i < .@n; .@i++) {
+		getitem .@need_id[.@i], .@need_qty[.@i];
+		if (.Stock[.@need_idx[.@i]] >= 0) .Stock[.@need_idx[.@i]] -= .@need_qty[.@i];
+	}
+	dispbottom "^0000FFซื้อสำเร็จ หักไป "+.@total+" BTC^000000"; callsub S_SaveCatalogToSQL; end;
+
+LB_Menu:
+	mes "^0000FF[ Top 10 BTC Holders ]^000000";
+	.@rc = query_sql("SELECT b.char_id, c.name, b.amount FROM `tharakan_bitcoin` b LEFT JOIN `char` c ON c.char_id = b.char_id ORDER BY b.amount DESC LIMIT 10", .@cidA, .@nameA$, .@amtA);
+	for (.@i = 0; .@i < .@rc; .@i++) mes callfunc("LB_ColorRank", .@i+1) + " " + .@nameA$[.@i] + " - ^0000FF" + .@amtA[.@i] + "^000000 BTC";
+	next; goto main_menu;
+
+A_Panel:
+	mes "^0000FF[ Admin Panel (Shop) ]^000000";
+	.@scmd = select("เพิ่มไอเทม", "ลบไอเทม", "กลับ");
+	if (.@scmd == 1) { 
+		mes "กรอก ID:"; input .@new_id; mes "กรอกราคา BTC:"; input .@new_price; mes "กรอกสต็อก (-1=ไม่จำกัด):"; input .@new_stock;
+		.ItemIDs[.CatalogCount] = .@new_id; .Prices[.CatalogCount] = .@new_price; .Stock[.CatalogCount] = .@new_stock; .CatalogCount++;
+		callsub S_SaveCatalogToSQL; mes "สำเร็จ"; next; goto A_Panel;
+	}
+	if (.@scmd == 2) { 
+		for(.@i=0; .@i<.CatalogCount; .@i++) mes "["+.@i+"] : "+getitemname(.ItemIDs[.@i]);
+		mes "พิมพ์ Index ที่ต้องการลบ (-1 ยกเลิก):"; input .@del_idx;
+		if (.@del_idx >= 0 && .@del_idx < .CatalogCount) {
+			for (.@j = .@del_idx; .@j < .CatalogCount - 1; .@j++) { .ItemIDs[.@j] = .ItemIDs[.@j+1]; .Prices[.@j] = .Prices[.@j+1]; .Stock[.@j] = .Stock[.@j+1]; }
+			.CatalogCount--; callsub S_SaveCatalogToSQL; mes "ลบสำเร็จ";
+		}
+		next; goto A_Panel;
+	}
+	goto main_menu;
+
+// ==========================================
+// ระบบอัปเดตป้ายราคาบนหัว NPC
+// ==========================================
+OnTimer60000:
+	callsub UpdateSign;
+	stopnpctimer;
+	initnpctimer;
+	end;
+
+UpdateSign:
+	.@price = callfunc("F_BTC_GetFloor");
+	delwaitingroom;
+	waitingroom "1 BTC = " + .@price + " Z", 0;
+	return;
+
+// --- DB Subroutines ---
+S_SaveCatalogToSQL:
+	query_sql("DELETE FROM `tharakan_bitcoin_catalog` text");
+	for (.@i=0; .@i<.CatalogCount; .@i++) query_sql("INSERT INTO `tharakan_bitcoin_catalog` (idx,category,item_id,price_btc,stock,daily_limit) VALUES ("+.@i+",0,"+.ItemIDs[.@i]+","+.Prices[.@i]+","+.Stock[.@i]+",0)");
+	return;
+
+S_LoadCatalogFromSQL:
+	deletearray .ItemIDs[0]; deletearray .Prices[0]; deletearray .Stock[0];
+	.@cnt = query_sql("SELECT item_id,price_btc,stock FROM `tharakan_bitcoin_catalog` ORDER BY idx ASC", .ItemIDs, .Prices, .Stock);
+	.CatalogCount = .@cnt; 
+	return;
+
+OnInit:
+	.AdminMinGroup = 60;
+	if ($BTC_TOTAL_MINTED < 0) $BTC_TOTAL_MINTED = 0;
+	if ($BTC_CIRCULATING < 0) $BTC_CIRCULATING = 0;
+	callsub S_LoadCatalogFromSQL;
+	
+	callsub UpdateSign;
+	initnpctimer;
+	end;
+}
+
+prontera,148,139,4	duplicate(Bitcoin Center)	Bitcoin Center#pron	20642
+/*
+// ==========================================
+// NPC เสกเหรียญ Bitcoin (สำหรับ GM เท่านั้น)
+// ==========================================
+morocc,140,48,4	script	GM_เสกเหรียญBTC	110,{
+	if (getgmlevel() < 60) end;
+	mes "[ เสกเหรียญ BTC ]"; input .@amount;
+	if (.@amount <= 0) close;
+	callfunc "F_BTC_Add", .@amount, 1; 
+	mes "เสกสำเร็จ!"; close;
+}
+*/

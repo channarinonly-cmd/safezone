@@ -1,0 +1,264 @@
+//= Scripts Enchant Costume Upper, Middie, Lower, Garment By [SPY]
+//= 1.0.14 - The Absolute Aegis Edition (Added Stone Extraction System)
+//= Custom Item Array Updated
+
+-	script	#enchant_costume_uml	HIDDEN_NPC,{
+	disable_items;
+	if (checkweight(1301,1) == 0) { mes "คุณมีไอเท็มมากเกินไป"; end; }
+	if (MaxWeight - Weight < 1000) { mes "คุณมีน้ำหนักมากเกินไป"; end; }
+
+	mes "[Enchant Costume]";
+	mes "ยินดีต้อนรับ!";
+	mes "นี่คือบริการติดตั้งหินออฟชั่นคอสตูม";
+	mes "และบริการสกัดหิน Exchange Stone ครับ";
+	next;
+	switch(select("ยกเลิก","Enchant Stone Costume","Enchant Effect Costume","สกัดหิน Exchange Stone (โอกาส 50%)")){
+		case 1:
+			mes "[Enchant Costume]";
+			mes "ไว้เจอกัน!";
+			close;
+		case 2:
+			setarray .@parts[0], EQI_COSTUME_HEAD_TOP, EQI_COSTUME_HEAD_MID, EQI_COSTUME_HEAD_LOW, EQI_COSTUME_GARMENT;
+			for(.@i = 0; .@i < 4; .@i++) {
+				if (!getequipisequiped(.@parts[.@i])) {
+					switch(.@i) {
+						case 0: .@enchantstone$[.@i] = "^999999Upper(ว่าง)^000000"; break;
+						case 1: .@enchantstone$[.@i] = "^999999Middie(ว่าง)^000000"; break;
+						case 2: .@enchantstone$[.@i] = "^999999Lower(ว่าง)^000000"; break;
+						case 3: .@enchantstone$[.@i] = "^999999Garment(ว่าง)^000000"; break;
+					}
+				} else {
+					switch(.@i) {
+						case 0: .@enchantstone$[.@i] = "Upper"; break;
+						case 1: .@enchantstone$[.@i] = "Middie"; break;
+						case 2: .@enchantstone$[.@i] = "Lower"; break;
+						case 3: .@enchantstone$[.@i] = "Garment"; break;
+					}
+				}
+			}
+			switch(select("ยกเลิก", .@enchantstone$[0], .@enchantstone$[1], .@enchantstone$[2], .@enchantstone$[3])) {
+				case 1: mes "[Enchant Costume]"; mes "ไว้เจอกัน!"; close;
+				case 2: .@part = EQI_COSTUME_HEAD_TOP; .@target_slot = 0; .@mode = 1; break;
+				case 3: .@part = EQI_COSTUME_HEAD_MID; .@target_slot = 0; .@mode = 1; break;
+				case 4: .@part = EQI_COSTUME_HEAD_LOW; .@target_slot = 0; .@mode = 1; break;
+				case 5: .@part = EQI_COSTUME_GARMENT; .@target_slot = 0; .@mode = 1; break;
+			}
+			break;
+		case 3:
+			setarray .@parts_eff[0], EQI_COSTUME_HEAD_TOP, EQI_COSTUME_HEAD_MID, EQI_COSTUME_HEAD_LOW;
+			for(.@i = 0; .@i < 3; .@i++) {
+				if (!getequipisequiped(.@parts_eff[.@i])) {
+					switch(.@i) {
+						case 0: .@enchanteffect$[.@i] = "^999999Upper(ว่าง)^000000"; break;
+						case 1: .@enchanteffect$[.@i] = "^999999Middie(ว่าง)^000000"; break;
+						case 2: .@enchanteffect$[.@i] = "^999999Lower(ว่าง)^000000"; break;
+					}
+				} else {
+					switch(.@i) {
+						case 0: .@enchanteffect$[.@i] = "Upper"; break;
+						case 1: .@enchanteffect$[.@i] = "Middie"; break;
+						case 2: .@enchanteffect$[.@i] = "Lower"; break;
+					}
+				}
+			}
+			switch(select("ยกเลิก", .@enchanteffect$[0], .@enchanteffect$[1], .@enchanteffect$[2])) {
+				case 1: mes "[Enchant Costume]"; mes "ลองดูบริการอื่นๆอีกมากมายไปด้วยเลยสิ~"; close;
+				case 2: .@part = EQI_COSTUME_HEAD_TOP; .@target_slot = 2; .@mode = 2; break; // Slot Effect
+				case 3: .@part = EQI_COSTUME_HEAD_MID; .@target_slot = 3; .@mode = 2; break;
+				case 4: .@part = EQI_COSTUME_HEAD_LOW; .@target_slot = 3; .@mode = 2; break;
+			}
+			break;
+		case 4:
+			// ==========================================
+			// ระบบสกัดหิน (Exchange Stone System)
+			// ==========================================
+			mes "[Enchant Costume]";
+			mes "บริการสกัดหิน Exchange Stone ยินดีต้อนรับครับ!";
+			mes " ";
+			mes "^0000FF[ เงื่อนไขการสกัด ]^000000";
+			mes "ใช้ ^0000FF"+getitemname(3113)+"^000000 จำนวน ^FF000010 ก้อน^000000";
+			mes "สกัดเป็น ^FF0000"+getitemname(3400)+"^000000 จำนวน 1 กล่อง";
+			mes "โอกาสสำเร็จ: ^00FF0050%^000000";
+			mes " ";
+			mes "^FF0000*หากล้มเหลว หินจะสลายหายไปทั้งหมด*^000000";
+			next;
+			if (select("ยกเลิก", "ดำเนินการสกัดหิน") == 1) {
+				mes "[Enchant Costume]";
+				mes "ไว้โอกาสหน้านะครับ!";
+				close;
+			}
+
+			// ตรวจสอบจำนวนหิน
+			if (countitem(3113) < 10) {
+				mes "[Enchant Costume]";
+				mes "ท่านมี ^0000FF"+getitemname(3113)+"^000000 ไม่พอครับ";
+				mes "ต้องใช้จำนวน 10 ก้อน ต่อการสกัด 1 ครั้ง";
+				close;
+			}
+
+			// หักหิน 10 ก้อน
+			delitem 3113, 10;
+
+			// สุ่มโอกาสติด 50%
+			if (rand(1, 100) <= 50) {
+				specialeffect2 21; // เอฟเฟคแสงตีบวกติดสีทอง
+				mes "[Enchant Costume]";
+				mes "^00FF00ยินดีด้วย! การสกัดสำเร็จ!^000000";
+				mes "ท่านได้รับ ^FF0000"+getitemname(3400)+"^000000 จำนวน 1 กล่อง";
+				getitem 3400, 1;
+			} else {
+				specialeffect2 22; // เอฟเฟคตีบวกล้มเหลว (แสงแตก)
+				mes "[Enchant Costume]";
+				mes "น่าเสียดาย... การสกัดล้มเหลว";
+				mes "หินสลายไปกับสายลมหมดเลยครับ...";
+			}
+			close;
+	}
+
+	if (!getequipisequiped(.@part)) {
+		mes "[Enchant Costume]";
+		mes "หืม? อุปกรณ์หายไปไหนแล้ว?";
+		mes "จะไม่สามารถดำเนินการได้ถ้ายังไม่สวมใส่อุปกรณ์ Costume";
+		close;
+	}
+
+	.@equip_id = getequipid(.@part);
+	
+	if(rentalcountitem(.@equip_id) > 0){
+		mes "[Enchant Costume]";
+		mes "โปรดเก็บ "+getitemname(.@equip_id)+" แบบเช่าก่อน";
+		close;
+	}
+	
+	// Check Whitelist
+	.@is_valid = 0;
+	if (.@part == EQI_COSTUME_HEAD_TOP && inarray(.AllowedTop, .@equip_id) != -1) .@is_valid = 1;
+	else if (.@part == EQI_COSTUME_HEAD_MID && inarray(.AllowedMid, .@equip_id) != -1) .@is_valid = 1;
+	else if (.@part == EQI_COSTUME_HEAD_LOW && inarray(.AllowedLow, .@equip_id) != -1) .@is_valid = 1;
+	else if (.@part == EQI_COSTUME_GARMENT && inarray(.AllowedGarment, .@equip_id) != -1 && .@mode == 1) .@is_valid = 1;
+
+	if (!.@is_valid) {
+		mes "[Enchant Costume]";
+		mes "Costume ชิ้นนี้ไม่สามารถทำรายการได้";
+		close;
+	}
+
+	// Backup Item Data
+	.@equip_refine = getequiprefinerycnt(.@part);
+	.@checkgrade = getenchantgrade(.@part);
+	setarray .@opt[0], getequiprandomoption(.@part,0,ROA_ID), getequiprandomoption(.@part,1,ROA_ID), getequiprandomoption(.@part,2,ROA_ID), getequiprandomoption(.@part,3,ROA_ID), getequiprandomoption(.@part,4,ROA_ID);
+	setarray .@val[0], getequiprandomoption(.@part,0,ROA_VALUE), getequiprandomoption(.@part,1,ROA_VALUE), getequiprandomoption(.@part,2,ROA_VALUE), getequiprandomoption(.@part,3,ROA_VALUE), getequiprandomoption(.@part,4,ROA_VALUE);
+	setarray .@param[0], getequiprandomoption(.@part,0,ROA_PARAM), getequiprandomoption(.@part,1,ROA_PARAM), getequiprandomoption(.@part,2,ROA_PARAM), getequiprandomoption(.@part,3,ROA_PARAM), getequiprandomoption(.@part,4,ROA_PARAM);
+	setarray .@card[0], getequipcardid(.@part, 0), getequipcardid(.@part, 1), getequipcardid(.@part, 2), getequipcardid(.@part, 3);
+
+	mes "[Enchant Costume]";
+	mes "โอะ~ ^0000FF" + getitemname(.@equip_id) + "^000000!!!";
+	mes "ถ้าอย่างนั้นอยากใช้ Stone อันไหน?";
+	next;
+	
+	// Load Stone Array
+	if (.@mode == 1) { // Normal Stone
+		if (.@part == EQI_COSTUME_HEAD_TOP) setarray .@stone_id[0], 6636,4700, 6637,4710, 6638,4730, 6639,4720, 6640,4740, 6641,4750, 6716,4926, 6740,4930, 6741,4805, 6790,4936, 6791,4937, 6792,4938, 6943,29028, 6944,29030, 6999,29013, 25000,29032, 25068,4807, 25069,29053, 25171,29159, 25172,29156, 25304,29359;
+		else if (.@part == EQI_COSTUME_HEAD_MID) setarray .@stone_id[0], 6642,4882, 6643,4883, 6717,4927, 6742,4931, 6743,4861, 6744,4929, 6945,4700, 6946,4710, 6947,4730, 6948,4720, 6949,4740, 6950,4750, 25001,29026, 25002,29024, 25003,29014, 25004,29022, 25005,29016, 25006,29020, 25007,29018, 25060,29047, 25061,29048, 25070,29054, 25141,29145, 25173,29157, 25175,29155;
+		else if (.@part == EQI_COSTUME_HEAD_LOW) setarray .@stone_id[0], 6644,4884, 6645,4859, 6718,4928, 6745,4932, 6951,4861, 25008,29021, 25009,29023, 25010,29019, 25011,29025, 25012,29015, 25013,29017, 25014,29033, 25015,29027, 25016,29029, 25017,29031, 25062,29046, 25063,29049, 25064,29050, 25065,29051, 25066,29052, 25071,29055, 25072,29057, 25139,29146, 25174,29158, 25227,29227, 25228,29229, 25229,29228, 25305,29360;
+		else if (.@part == EQI_COSTUME_GARMENT) setarray .@stone_id[0], 6908,4807, 6963,4992, 6964,4993, 25067,29056, 25170,29154, 25302,29362, 25303,29361, 25306,29358;
+	} else { // Effect Stone
+		if (.@part == EQI_COSTUME_HEAD_TOP) setarray .@stone_id[0], 1000305, 310266;
+		else if (.@part == EQI_COSTUME_HEAD_MID) setarray .@stone_id[0], 25138, 29144;
+		else if (.@part == EQI_COSTUME_HEAD_LOW) setarray .@stone_id[0], 1000307, 310268;
+	}
+
+	.@size = getarraysize(.@stone_id);
+	.@i = 0; .@menu$ = ""; .@offset = 0;
+
+	do {
+		.@offset += .@i;
+		for ( .@i = .@offset; .@i < .@size; .@i += 2 ) {
+			if (countitem(.@stone_id[.@i]))
+				.@menu$ = .@menu$ + getitemname(.@stone_id[.@i]) + " ("+ countitem(.@stone_id[.@i]) +"ea ที่มีอยู่)";
+			set .@menu$, .@menu$ + ":";
+		}
+		.@menu$ += "ยกเลิก";
+		.@s = (select(.@menu$) - 1) * 2;
+	} while(.@i < .@size && .@i == .@s);
+
+	.@s += .@offset;
+
+	if (.@s >= .@size) close;
+
+	.@stone = .@stone_id[.@s];
+	.@enchant = .@stone_id[.@s+1];
+
+	if (countitem(.@stone) < 1) {
+		mes "[Enchant Costume]"; mes "หืม? ท่านไม่มี Stone"; close;
+	}
+
+	if (.@mode == 1 && Zeny < 500000){
+		mes "[Enchant Costume]"; mes "หืม? ท่านมี Zeny ไม่พอครับ (ต้องใช้ 500,000 Zeny)"; close;
+	}
+
+	mes "^FF0000   * คำเตือน *^000000";
+	mes "^ff0000การดำเนินการดังกล่าวมีโอกาสที่จะล้มเหลว^000000";
+	if (.@mode == 1) {
+		mes "^0000FF*ระบบเซฟโซน: หากล้มเหลว อุปกรณ์และออฟชั่นเดิมจะไม่หายไป เสียแค่หิน และเงินจำนวน 500,000 Zeny*^000000";
+	} else {
+		mes "^0000FF*ระบบเซฟโซน: หากล้มเหลว อุปกรณ์และออฟชั่นเดิมจะไม่หายไป เสียแค่หิน*^000000";
+	}
+	mes "^FF0000ท่านแน่ใจนะที่จะทำรายการ ?^000000";
+	next;
+	if (select("ยกเลิก", "ตกลง") == 1) close;
+
+	// เช็คความชัวร์เรื่องการสลับของ
+	if (getequipid(.@part) != .@equip_id) {
+		mes "[Enchant Costume]";
+		mes "ตรวจพบการเปลี่ยนแปลงของอุปกรณ์ กรุณาทำรายการใหม่ครับ";
+		close;
+	}
+
+	// ถอดหมวกลงกระเป๋า
+	delequip .@part;
+	
+	// หักแค่หินและเงิน
+	delitem .@stone, 1;
+	if (.@mode == 1) Zeny -= 500000;
+
+	// ==============================================================
+	// โหมดสุ่มดวง & แสดงเอฟเฟค
+	// ==============================================================
+	if (rand(1,100) < 31) {
+		specialeffect2 21; // แสดงเอฟเฟคแสงตีบวกติดสีทองวาบๆ ที่ตัวละคร
+		mes "[Enchant Costume]";
+		mes "E... Elegance!!";
+		mes "ว้าววว ช่าง Perfect...";
+		.@card[.@target_slot] = .@enchant;
+		// ประกาศอวดคนทั้งเซิร์ฟเวอร์แบบจัดเต็ม
+		announce "ยินดีด้วย! คุณ ["+strcharinfo(0)+"] ทำการ Enchant ออฟชั่นลงบน ["+getitemname(.@equip_id)+"] ได้สำเร็จ!!",bc_all,0x00FF00;
+	} else {
+		specialeffect2 22; // แสดงเอฟเฟคตีบวกล้มเหลว (แสงแตก) ที่ตัวละคร
+		mes "[Enchant Costume]";
+		mes "ไม่ว่าจะในประวัติศาสตร์ไหนก็ย่อม";
+		mes "มีความล้มเหลวและความสิ้นหวังอยู่ ...";
+		mes "ประวัติศาสตร์ของแฟชั่นก็ด้วย... โทษทีนะ";
+		mes "^0000FFแต่โชคดีนะที่ Costume ของคุณยังปลอดภัย!^000000";
+	}
+
+	// สร้างไอเทมใหม่คืนให้ผู้เล่น
+	getitem4 .@equip_id, 1, 1, .@equip_refine, 0, .@card[0], .@card[1], .@card[2], .@card[3], .@checkgrade, .@opt, .@val, .@param;
+	
+	// บังคับสวมใส่กลับขึ้นหัว
+	equip .@equip_id;
+	end;
+
+OnInit:
+	waitingroom "Enchant Costume", 0;
+
+	// Database
+	setarray .AllowedTop[0], 19859,31165,31406,20011,31177,19677,31240,19751,35006,20249,31165,19678,35100,3105,35202,35213;
+	setarray .AllowedMid[0], 18744,420016,20147,20255,31308,35007,35102,3106,35204,35214,35201;
+	setarray .AllowedLow[0], 20132,31315,31719,31055,35101,3107,35203,35215;
+	setarray .AllowedGarment[0], 20571,20988,480107,20590,20591,20593,35103,3103,35204,35216;
+	end;
+}
+
+
+morocc,105,54,3	duplicate(#enchant_costume_uml)	Costume Enchant#enchant_costume_uml_0	4_F_JOB_BLACKSMITH

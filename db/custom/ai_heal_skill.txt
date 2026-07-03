@@ -1,0 +1,8 @@
+//===== AI Heal SKill List Configulation Files =======================================
+//  Whispering Rain
+//= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+// Structure of Database:
+// skillname
+// EX. SM_BASH
+//= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
+AL_HEAL

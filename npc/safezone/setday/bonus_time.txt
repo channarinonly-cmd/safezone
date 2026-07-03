@@ -1,0 +1,365 @@
+// ========================================================
+// ระบบ Global Server Fever (Crowdfunding Zeny)
+// ระดมทุนคูณทั้งเซิร์ฟเวอร์ + แจ้งจำนวนประชากร
+// ========================================================
+-	script	Global_Fever_System	-1,{
+OnInit:
+	bindatcmd "fever", strnpcinfo(3)+"::OnMenu", 0, 99;
+	
+	if ($Fever_ZenyMin <= 0) $Fever_ZenyMin = 10000;
+	if ($Fever_ZenyMax <= $Fever_ZenyMin) $Fever_ZenyMax = 100000;
+	if ($Fever_RateMin <= 0) $Fever_RateMin = 10;
+	if ($Fever_RateMax <= $Fever_RateMin) $Fever_RateMax = 200;
+	if ($Fever_Duration <= 0) $Fever_Duration = 7200; 
+	if ($Fever_Cooldown <= 0) $Fever_Cooldown = 28800; 
+	if (!$Fever_StepPercent) $Fever_StepPercent = 10; 
+	if (!$GlobalFever_Round) $GlobalFever_Round = 0; 
+
+	if (.base_exp == 0) {
+		.base_exp 		= getbattleflag("base_exp_rate");
+		.job_exp 		= getbattleflag("job_exp_rate");
+		.drop_common 	= getbattleflag("item_rate_common");
+		.drop_heal 		= getbattleflag("item_rate_heal");
+		.drop_use 		= getbattleflag("item_rate_use");
+		.drop_equip 	= getbattleflag("item_rate_equip");
+		.drop_card 		= getbattleflag("item_rate_card");
+		.drop_mvp 		= getbattleflag("item_rate_mvp");
+	}
+
+	if ($GlobalFever_State == 2) {
+		.@remain = $GlobalFever_EndTime - gettimetick(2);
+		if (.@remain > 0) {
+			callsub S_ApplyRates;
+			// [แก้ไข] เปลี่ยนจาก addtimer เป็น Thread แยก เพื่อไม่ให้ผูกกับตัวละคร
+			donpcevent strnpcinfo(3)+"::OnFeverWait";
+		} else {
+			donpcevent strnpcinfo(3)+"::OnFeverEnd";
+		}
+	}
+	end;
+
+OnMinute00:
+OnMinute10:
+OnMinute20:
+OnMinute30:
+OnMinute40:
+OnMinute50:
+	if ($GlobalFever_State != 0) end;
+	if (gettimetick(2) < $GlobalFever_CooldownTime) end;
+
+	if ($Fever_ZenyMin <= 0) $Fever_ZenyMin = 2000;
+	if ($Fever_ZenyMax <= $Fever_ZenyMin) $Fever_ZenyMax = $Fever_ZenyMin + 1000;
+	if ($Fever_RateMin <= 0) $Fever_RateMin = 50;
+	if ($Fever_RateMax <= $Fever_RateMin) $Fever_RateMax = $Fever_RateMin + 50;
+
+	$GlobalFever_Round++; 
+
+	.@users = getusers(1);
+	if (.@users < 1) .@users = 1;
+	
+	// [ใหม่] บันทึกจำนวนประชากรไว้โชว์
+	$GlobalFever_Users = .@users; 
+
+	.@base_zeny = ($GlobalFever_Users * rand($Fever_ZenyMin, $Fever_ZenyMax)) / 2;
+	.@round_mult = 100 + ($Fever_StepPercent * ($GlobalFever_Round - 1));
+	$GlobalFever_TargetZeny = (.@base_zeny * .@round_mult) / 100;
+
+	$GlobalFever_CurrentZeny = 0;
+	$GlobalFever_EventID++;
+
+	$GlobalFever_BonusRate = rand($Fever_RateMin, $Fever_RateMax); 
+	$GlobalFever_MaxDonate = $GlobalFever_TargetZeny / 2;
+	$GlobalFever_State = 1; 
+
+	// [ใหม่] เพิ่มข้อความแจ้งประชากรในประกาศ
+	announce "[Server Fever] : เปิดระดมทุน [รอบที่ " + $GlobalFever_Round + "] (อิงจากประชากร " + $GlobalFever_Users + " คน)", bc_all, 0xFFCE00;
+	announce "[Server Fever] : ยอดเป้าหมายคือ " + callfunc("F_InsertComma", $GlobalFever_TargetZeny) + " Zeny! (พิมพ์ @fever เพื่อบริจาค)", bc_all, 0xFFCE00;
+	end;
+
+OnMenu:
+	mes "^FF3300[ กองทุน Server Fever ]^000000";
+	
+	.@menu$ = "- ตรวจสอบกองทุน / บริจาค:- คำอธิบายกิจกรรม";
+	if (getgmlevel() >= 60) {
+		.@menu$ += ":^FF0000[GM] ตั้งค่าและจัดการระบบ^000000";
+	}
+	
+	.@sel = select(.@menu$);
+	if (.@sel == 2) {
+		mes "^FF3300[ Server Fever คืออะไร? ]^000000";
+		mes "กิจกรรมระดมทุนพลังมวลชน!";
+		mes "หากผู้เล่นทั้งเซิร์ฟเวอร์ช่วยกันบริจาค Zeny จนครบตามเป้าหมาย ระบบจะเปิด ^0000FFBonus Time คูณค่าประสบการณ์และอัตราดรอป^000000 ให้กับทุกคนในเซิร์ฟเวอร์ทันที!";
+		mes " ";
+		mes "^777777(เป้าหมาย Zeny จะแปรผันตามคนออนไลน์ และจะแพงขึ้นเรื่อยๆ ยิ่งเปิดกิจกรรมบ่อย ยิ่งใช้เงินเยอะขึ้น!)^000000";
+		close;
+	}
+	if (.@sel == 3) goto OnAdminMenu;
+
+	if ($GlobalFever_State == 0) {
+		.@remain_cd = $GlobalFever_CooldownTime - gettimetick(2);
+		if (.@remain_cd > 0) {
+			mes "กิจกรรมจบรอบไปแล้วครับ";
+			mes "ต้องรอระบบชาร์จพลังงานอีก ^FF0000" + (.@remain_cd / 3600) + " ชม. " + ((.@remain_cd % 3600)/60) + " นาที^000000";
+		} else {
+			mes "กิจกรรมพร้อมเปิดรอบใหม่แล้ว!";
+			mes "รอระบบประกาศเริ่มรอบระดมทุนสักครู่นะครับ!";
+		}
+		close;
+	}
+	
+	if ($GlobalFever_State == 2) {
+		// เช็กว่าเวลาปัจจุบันเลยเวลาสิ้นสุดไปแล้วหรือยัง
+		if (gettimetick(2) >= $GlobalFever_EndTime) {
+			// ถ้าเลยแล้ว ให้บังคับรัน OnFeverEnd เพื่อปิดรอบและรีเซ็ตค่า
+			donpcevent strnpcinfo(3)+"::OnFeverEnd";
+			mes "กิจกรรมคูณเซิร์ฟเวอร์ของรอบที่แล้วได้สิ้นสุดลงแล้วครับ!";
+			close;
+		}
+		
+		mes "ยอดระดมทุนครบแล้ว! กิจกรรมคูณเซิร์ฟเวอร์กำลังดำเนินอยู่ครับ!";
+		mes "อัตราคูณ: ^0000FFเพิ่มขึ้น " + $GlobalFever_BonusRate + "% (ทุกอย่าง)^000000";
+		mes "หมดเวลาในอีก: ^FF0000" + (($GlobalFever_EndTime - gettimetick(2)) / 60) + " นาที^000000";
+		close;
+	}
+
+	if (#Fever_MyEventID != $GlobalFever_EventID) {
+		#Fever_MyEventID = $GlobalFever_EventID;
+		#Fever_MyDonate = 0;
+	}
+
+	mes "เป้าหมาย: ^0000FFคูณเพิ่ม " + $GlobalFever_BonusRate + "% ("+($Fever_Duration/3600)+" ชม.)^000000";
+	// [ใหม่] เพิ่มจำนวนประชากรโชว์ในเมนู NPC
+	mes "สถานะรอบ: ^008800รอบที่ " + $GlobalFever_Round + " (ประชากร " + $GlobalFever_Users + " คน)^000000";
+	mes "--------------------------------";
+	mes "ยอดที่ต้องการ: ^FF0000" + callfunc("F_InsertComma", $GlobalFever_TargetZeny) + " z^000000";
+	mes "ยอดปัจจุบัน: ^0000FF" + callfunc("F_InsertComma", $GlobalFever_CurrentZeny) + " z^000000";
+	
+	.@percent = ($GlobalFever_CurrentZeny * 100) / $GlobalFever_TargetZeny;
+	mes "ความคืบหน้า: ^00AA00" + .@percent + "%^000000";
+	mes "--------------------------------";
+	mes "บริจาคได้สูงสุด: ^FF8800" + callfunc("F_InsertComma", $GlobalFever_MaxDonate) + " z / คน^000000";
+	mes "คุณบริจาคไปแล้ว: ^008800" + callfunc("F_InsertComma", #Fever_MyDonate) + " z^000000";
+	next;
+
+	.@can_donate = $GlobalFever_MaxDonate - #Fever_MyDonate;
+	if (.@can_donate <= 0) {
+		mes "คุณบริจาคถึงขีดจำกัดของรอบนี้แล้วครับ!";
+		mes "แบ่งให้คนอื่นมาช่วยจ่ายบ้างนะครับ สุลต่าน! 555";
+		close;
+	}
+
+	mes "ต้องการบริจาคเท่าไหร่?";
+	mes "(บริจาคได้อีกสูงสุด " + callfunc("F_InsertComma", .@can_donate) + " z)";
+	input .@amt;
+	
+	if (.@amt <= 0) close;
+	if (.@amt > .@can_donate) {
+		mes "^FF0000คุณบริจาคเกินโควต้าสูงสุดต่อคนครับ!^000000";
+		close;
+	}
+	if (Zeny < .@amt) {
+		mes "^FF0000คุณมี Zeny ไม่พอครับ^000000";
+		close;
+	}
+
+	.@needed = $GlobalFever_TargetZeny - $GlobalFever_CurrentZeny;
+	if (.@amt > .@needed) .@amt = .@needed;
+
+	Zeny -= .@amt;
+	#Fever_MyDonate += .@amt;
+	$GlobalFever_CurrentZeny += .@amt;
+
+	specialeffect2 EF_COIN;
+	mes "ขอบคุณที่ร่วมสมทบทุน ^0000FF" + callfunc("F_InsertComma", .@amt) + " Zeny^000000 ครับ!";
+
+	if ($GlobalFever_CurrentZeny >= $GlobalFever_TargetZeny) {
+		$GlobalFever_State = 2; 
+		$GlobalFever_EndTime = gettimetick(2) + $Fever_Duration; 
+		
+		callsub S_ApplyRates;
+		
+		announce "[Server Fever] : ยอดบริจาคครบแล้ว! เปิดโบนัสเพิ่ม " + $GlobalFever_BonusRate + "% ทั้งเซิร์ฟเวอร์!!", bc_all, 0x00FF00;
+		announce "[Server Fever] : กิจกรรมจะสิ้นสุดในอีก " + ($Fever_Duration / 3600) + " ชั่วโมง ลุยเลย!!", bc_all, 0x00FF00;
+		
+		// [แก้ไข] เปลี่ยนจาก addtimer เป็น Thread แยก ป้องกันบั๊กเวลาคนเล่นออกเกม
+		donpcevent strnpcinfo(3)+"::OnFeverWait";
+	}
+	close;
+
+OnAdminMenu:
+	mes "^FF0000[ แผงควบคุม Server Fever ]^000000";
+	mes "สถานะกิจกรรม: " + ($GlobalFever_State == 0 ? "ปิด (อยู่ในคูลดาวน์)" : ($GlobalFever_State == 1 ? "^FF9900กำลังระดมทุน^000000" : "^00AA00กำลังคูณเซิร์ฟเวอร์^000000"));
+	mes "นับรอบสะสม: ^0000FFรอบที่ " + $GlobalFever_Round + "^000000";
+	next;
+	.@opt = select(
+		"? บังคับเริ่มรอบระดมทุนใหม่ (ล้างคูลดาวน์)",
+		"? บังคับปิดกิจกรรมฉุกเฉิน (ยกเลิกคูณ/ระดมทุน)",
+		"? รีเซ็ตตัวนับรอบ (กลับไปรอบที่ 1)",
+		"?? ตั้งค่าสูตรคำนวณเป้าหมาย Zeny",
+		"?? ตั้งค่าเรทสุ่มโบนัส (%)",
+		"?? ตั้งค่าระยะเวลากิจกรรมและคูลดาวน์",
+		"?? ตั้งค่าความยาก (เพิ่มยอด % ตามรอบ)",
+		"ออก"
+	);
+
+	if (.@opt == 1) {
+		mes "[ เริ่มกิจกรรมใหม่ ]";
+		mes "ระบบจะทำการล้างคูลดาวน์และเปิดรอบใหม่ทันที ยืนยันไหม?";
+		next;
+		if (select("ยืนยัน!:ยกเลิก") == 1) {
+			$GlobalFever_State = 0;
+			$GlobalFever_CooldownTime = 0;
+			donpcevent strnpcinfo(3)+"::OnMinute00";
+			mes "ส่งคำสั่งเปิดกิจกรรมเรียบร้อยแล้ว!";
+		}
+		close;
+	}
+	else if (.@opt == 2) {
+		mes "[ ปิดกิจกรรมฉุกเฉิน ]";
+		mes "จะทำการตัดจบกิจกรรมที่กำลังทำงานอยู่ ยืนยันไหม?";
+		next;
+		if (select("ยืนยัน!:ยกเลิก") == 1) {
+			// [แก้ไข] เอา deltimer ออก (ไม่จำเป็นแล้ว) บังคับรันจบกิจกรรมได้เลย
+			donpcevent strnpcinfo(3)+"::OnFeverEnd";
+			mes "เคลียร์คูณ และปิดกิจกรรมเรียบร้อย!";
+		}
+		close;
+	}
+	else if (.@opt == 3) {
+		mes "[ รีเซ็ตตัวนับรอบสะสม ]";
+		mes "ปัจจุบันเซิร์ฟเวอร์อยู่รอบที่: ^FF0000" + $GlobalFever_Round + "^000000";
+		mes "ต้องการรีเซ็ตตัวนับกลับไปเป็นรอบที่ 1 หรือไม่?";
+		mes "(จะทำให้ยอดระดมทุนกลับมาถูกเหมือนตอนเปิดใหม่)";
+		next;
+		if (select("ยืนยันการรีเซ็ต!:ยกเลิก") == 1) {
+			$GlobalFever_Round = 1;
+			if ($GlobalFever_State == 1) {
+				.@users = getusers(1);
+				if (.@users < 1) .@users = 1;
+				$GlobalFever_Users = .@users; // [อัปเดต] ประชากรตอนรีเซ็ต
+				.@base_zeny = ($GlobalFever_Users * rand($Fever_ZenyMin, $Fever_ZenyMax)) / 2;
+				$GlobalFever_TargetZeny = .@base_zeny;
+				$GlobalFever_MaxDonate = $GlobalFever_TargetZeny / 2;
+			}
+			mes "รีเซ็ตตัวนับกลับเป็นรอบที่ 1 เรียบร้อยแล้ว!";
+		}
+		close;
+	}
+	else if (.@opt == 4) {
+		mes "[ ตั้งค่าสูตรคำนวณ Zeny ]";
+		mes "สูตรปัจจุบัน: (จำนวนคน x สุ่ม ^0000FF" + $Fever_ZenyMin + "^000000 ถึง ^FF0000" + $Fever_ZenyMax + "^000000) / 2";
+		mes "กรอกค่า ^0000FFต่ำสุด (Min)^000000 ที่ต้องการ:";
+		input .@min;
+		mes "กรอกค่า ^FF0000สูงสุด (Max)^000000 ที่ต้องการ:";
+		input .@max;
+		if (.@min <= 0) { mes "^FF0000ค่าต่ำสุดต้องมากกว่า 0!^000000"; close; }
+		if (.@min >= .@max) { mes "^FF0000ค่าต่ำสุด ต้องน้อยกว่า ค่าสูงสุด!^000000"; close; }
+		$Fever_ZenyMin = .@min;
+		$Fever_ZenyMax = .@max;
+		mes "บันทึกค่า Zeny เรียบร้อยแล้ว!";
+		close;
+	}
+	else if (.@opt == 5) {
+		mes "[ ตั้งค่าเรทโบนัส ]";
+		mes "เรทปัจจุบัน: สุ่มคูณเพิ่ม ^0000FF" + $Fever_RateMin + "%^000000 ถึง ^FF0000" + $Fever_RateMax + "%^000000";
+		mes "กรอกค่าโบนัส ^0000FFต่ำสุด (Min)^000000 ที่ต้องการ:";
+		input .@min;
+		mes "กรอกค่าโบนัส ^FF0000สูงสุด (Max)^000000 ที่ต้องการ:";
+		input .@max;
+		if (.@min <= 0) { mes "^FF0000ค่าต่ำสุดต้องมากกว่า 0!^000000"; close; }
+		if (.@min >= .@max) { mes "^FF0000ค่าต่ำสุด ต้องน้อยกว่า ค่าสูงสุด!^000000"; close; }
+		$Fever_RateMin = .@min;
+		$Fever_RateMax = .@max;
+		mes "บันทึกค่าโบนัสเรียบร้อยแล้ว!";
+		close;
+	}
+	else if (.@opt == 6) {
+		mes "[ ระยะเวลาและคูลดาวน์ ]";
+		mes "ระยะเวลาคูณ: ^0000FF" + ($Fever_Duration / 3600) + " ชั่วโมง^000000 (" + $Fever_Duration + " วินาที)";
+		mes "เวลาคูลดาวน์: ^FF0000" + ($Fever_Cooldown / 3600) + " ชั่วโมง^000000 (" + $Fever_Cooldown + " วินาที)";
+		next;
+		mes "กรอกระยะเวลา ^0000FFตอนคูณ^000000 (ใส่หน่วยเป็น วินาที):";
+		input .@dur;
+		mes "กรอกระยะเวลา ^FF0000คูลดาวน์^000000 รอรอบถัดไป (ใส่หน่วยเป็น วินาที):";
+		input .@cd;
+		if (.@dur <= 0 || .@cd <= 0) { mes "^FF0000ค่าต้องมากกว่า 0!^000000"; close; }
+		$Fever_Duration = .@dur;
+		$Fever_Cooldown = .@cd;
+		mes "บันทึกเวลาเรียบร้อยแล้ว!";
+		close;
+	}
+	else if (.@opt == 7) {
+		mes "[ ความยากประจำรอบ ]";
+		mes "ยิ่งระดมทุนไปหลายรอบ ยอดเป้าหมาย Zeny ก็จะแพงขึ้นเรื่อยๆ แบบไม่มีรีเซ็ต!";
+		mes "อัตราปัจจุบัน: เป้าหมายแพงขึ้นรอบละ ^0000FF" + $Fever_StepPercent + "%^000000";
+		next;
+		mes "กรอก % ความยากที่ต้องการให้เพิ่มขึ้นต่อรอบ (แนะนำ 10% - 20%):";
+		input .@step;
+		if (.@step < 0) { mes "^FF0000เปอร์เซ็นต์ห้ามติดลบครับ!^000000"; close; }
+		$Fever_StepPercent = .@step;
+		mes "บันทึกค่าความยากใหม่เป็นเพิ่มรอบละ " + .@step + "% เรียบร้อยแล้ว!";
+		close;
+	}
+	close;
+
+// [แก้ไข] เพิ่มระบบ Thread แยกในการนับเวลาคูณ (ไม่มีบั๊กตัวละครล็อคเอาท์)
+OnFeverWait:
+	.@remain = $GlobalFever_EndTime - gettimetick(2);
+	if (.@remain > 0) {
+		sleep .@remain * 1000;
+	}
+	// เช็คซ้ำอีกรอบเผื่อ GM กดปิดฉุกเฉินไปแล้ว จะได้ไม่รันซ้อน
+	if ($GlobalFever_State == 2 && gettimetick(2) >= $GlobalFever_EndTime) {
+		goto OnFeverEnd;
+	}
+	end;
+
+OnFeverEnd:
+	setbattleflag("base_exp_rate", .base_exp, true);
+	setbattleflag("job_exp_rate", .job_exp, true);
+	setbattleflag("item_rate_common", .drop_common, true);
+	setbattleflag("item_rate_heal", .drop_heal, true);
+	setbattleflag("item_rate_use", .drop_use, true);
+	setbattleflag("item_rate_equip", .drop_equip, true);
+	setbattleflag("item_rate_card", .drop_card, true);
+	setbattleflag("item_rate_mvp", .drop_mvp, true);
+
+	$GlobalFever_State = 0; 
+	$GlobalFever_CooldownTime = gettimetick(2) + $Fever_Cooldown; 
+	
+	announce "[Server Fever] : หมดเวลาคูณพิเศษแล้วครับ ขอบคุณผู้ร่วมสมทบทุนทุกคน!", bc_all, 0xFFCE00;
+	announce "[Server Fever] : ระบบจะพักเครื่อง " + ($Fever_Cooldown / 3600) + " ชั่วโมง ก่อนจะเปิดระดมทุนในรอบถัดไป", bc_all, 0xFFCE00;
+	end;
+
+S_ApplyRates:
+	.@mult = 100 + $GlobalFever_BonusRate;
+	
+	setbattleflag("base_exp_rate", (.base_exp * .@mult) / 100, true);
+	setbattleflag("job_exp_rate", (.job_exp * .@mult) / 100, true);
+	setbattleflag("item_rate_common", (.drop_common * .@mult) / 100, true);
+	setbattleflag("item_rate_heal", (.drop_heal * .@mult) / 100, true);
+	setbattleflag("item_rate_use", (.drop_use * .@mult) / 100, true);
+	setbattleflag("item_rate_equip", (.drop_equip * .@mult) / 100, true);
+	setbattleflag("item_rate_card", (.drop_card * .@mult) / 100, true);
+	setbattleflag("item_rate_mvp", (.drop_mvp * .@mult) / 100, true);
+	return;
+}
+
+// ========================================================
+// NPC ตัวแทนตามเมืองต่างๆ
+// ========================================================
+prontera,130,94,4	script	กองทุน Server Fever#prt	114,{
+	doevent "Global_Fever_System::OnMenu";
+	end;
+OnInit:
+	waitingroom "กองทุน Server Fever", 0;
+	end;
+}
+
+morocc,169,106,4	script	กองทุน Server Fever#moc	114,{
+	doevent "Global_Fever_System::OnMenu";
+	end;
+OnInit:
+	waitingroom "กองทุน Server Fever", 0;
+	end;
+}

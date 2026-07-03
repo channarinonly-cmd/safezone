@@ -1,0 +1,39 @@
+-	script	Hotweek_Control	-1,{
+	end;
+	
+OnAtcommand1:
+	if (getgmlevel() < 99) { end; }
+	mes .Name$;
+	mes " ";
+	mes "^FF0000ท่านแอดมินต้องการปิดHotweekใช่หรือไม่?^000000";
+	next;
+	if (select("- ยกเลิก:- ยืนยันการปิด") == 1) {
+		close;
+	}
+	disablenpc "Gacha";
+	mes .Name$;
+	mes " ";
+	mes "ทำการปิดHotweekเรียบร้อยแล้ว";
+	close;
+	
+OnAtcommand2:
+	if (getgmlevel() < 99) { end; }
+	mes .Name$;
+	mes " ";
+	mes "^FF0000ท่านแอดมินต้องการเปิดHotweekใช่หรือไม่?^000000";
+	next;
+	if (select("- ยกเลิก:- ยืนยันการเปิด") == 1) {
+		close;
+	}
+	enablenpc "Gacha";
+	mes .Name$;
+	mes " ";
+	mes "ทำการเปิดHotweekเรียบร้อยแล้ว";
+	close;
+	
+OnInit:
+	.Name$ = "[ Hotweek Control ]";
+	bindatcmd "Hotweekjackoff",strnpcinfo(3) + "::OnAtcommand1";
+	bindatcmd "Hotweekjackon",strnpcinfo(3) + "::OnAtcommand2";
+	end;
+}

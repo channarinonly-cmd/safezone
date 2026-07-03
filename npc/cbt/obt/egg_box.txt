@@ -1,0 +1,446 @@
+function	script	costume_box_01	{
+
+	set .@costumecash, 10; // จำนวน Cash ที่ใช้เปิด
+	set .@rental_time, 604800; // เวลาเช่า 7 วัน (หน่วยเป็นวินาที)
+	set .@box_id, 8110001; // <--- ประกาศ ID กล่องไว้ตรงนี้เลย จะได้แก้ง่ายๆ
+
+	setarray .@optid[0],0,0,0,0,0; // <--- getitem4 บังคับใส่ 5 ช่อง
+	setarray .@optval[0],0,0,0,0,0;
+	setarray .@param[0],0,0,0,0,0;
+
+	// ITEM ID - Costume
+	setarray .@costume_list[0],20571,20988,480107,18744,20132,19859,31165,31406,420016,31315,20147,20011,31177,20255,19677,31240,31308,19751,35006,35007,20590,20591,20593,31719,20249,31055,31165,19678;
+	
+	// ITEM ID - ขยะเกลือ
+	setarray .@junk_items[0], 909, 914, 938, 949, 611, 501, 502, 503, 504, 23038, 30035, 3502, 6635, 12210, 14592, 12208;
+	setarray .@junk_amount[0], 5,   5,   5,   5,   1,   10,  10,  10,  10,  1,     1,     10,    10,    1,     1,     1;
+
+	// เช็คกระเป๋าและน้ำหนัก
+	if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 3000)) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	// ==========================================
+	// โหมดเปิดแบบ Fast (ข้ามข้อความ)
+	// ==========================================
+	if (#DisabledMessageCB1 == 1){
+		// 1. เช็คของและ Cash
+		if (countitem(.@box_id) < 1 || #CASHPOINTS < .@costumecash){
+			dispbottom "ไอเทมกล่อง หรือ Cash Point ของคุณไม่เพียงพอ";
+			end;
+		}
+
+		// 2. หักของและเงิน "ทันที" เพื่อป้องกันบั๊ก
+		delitem .@box_id, 1; 
+		#CASHPOINTS -= .@costumecash;
+
+		// 3. ทำการสุ่มแจกของ
+		set .@rand_rate, rand(1,100);
+
+		if(.@rand_rate <= 1){ // 1%
+			set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+			getitem4 .@reward,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] เปิด Costume Box I ได้รับ '[A] " + getitemname(.@reward)+"' (ถาวร) 1%",bc_all,0xFFFFFF;
+		}
+		else if(.@rand_rate >= 2 && .@rand_rate <= 5){ // 4%
+			set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+			rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_B, .@optid, .@optval, .@param;
+			announce "["+strcharinfo(0)+"] เปิด Costume Box I ได้รับ '[B] " + getitemname(.@reward)+"' (เช่า 7 วัน) 3%",bc_all,0xFFFFFF;
+		}
+		else if(.@rand_rate >= 6 && .@rand_rate <= 20){ // 15%
+			set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+			rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_C, .@optid, .@optval, .@param;
+		}
+		else if(.@rand_rate >= 21 && .@rand_rate <= 50){ // 30%
+			set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+			rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_D, .@optid, .@optval, .@param;
+		}
+		else { // 50%
+			set .@rand_index, rand(getarraysize(.@junk_items)); 
+			getitem .@junk_items[.@rand_index], .@junk_amount[.@rand_index]; 
+		}
+		end;
+	}
+
+	// ==========================================
+	// โหมดเปิดแบบปกติ (แสดงข้อความ)
+	// ==========================================
+	mes "Costume Box I";
+	mes "รายละเอียดในการเปิด";
+	mes "ต้องใช้ Cash Point : "+.@costumecash+"";
+	mes "คุณต้องการเปิดหรือไม่?";
+	next;
+	switch(select("ทำการเปิด","ปิดข้อความนี้ก่อนเปิด", "ยกเลิก")){
+		case 1:
+			// 1. เช็คของและ Cash "อีกครั้ง" หลังกด Select (อุดช่องโหว่โยนของทิ้ง)
+			if (countitem(.@box_id) < 1 || #CASHPOINTS < .@costumecash){
+				dispbottom "ไอเทมกล่อง หรือ Cash Point ของคุณไม่เพียงพอ";
+				close;
+			}
+
+			// 2. หักของและเงิน "ทันที"
+			delitem .@box_id, 1; 
+			#CASHPOINTS -= .@costumecash;
+
+			// 3. ทำการสุ่มแจกของ
+			set .@rand_rate, rand(1,100);
+
+			if(.@rand_rate <= 1){
+				set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+				getitem4 .@reward,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] เปิด Costume Box I ได้รับ '[A] " + getitemname(.@reward)+"' (ถาวร) 1%",bc_all,0xFFFFFF;
+			}
+			else if(.@rand_rate >= 2 && .@rand_rate <= 5){
+				set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+				rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_B, .@optid, .@optval, .@param;
+				announce "["+strcharinfo(0)+"] เปิด Costume Box I ได้รับ '[B] " + getitemname(.@reward)+"' (เช่า 7 วัน) 3%",bc_all,0xFFFFFF;
+			}
+			else if(.@rand_rate >= 6 && .@rand_rate <= 20){
+				set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+				rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_C, .@optid, .@optval, .@param;
+			}
+			else if(.@rand_rate >= 21 && .@rand_rate <= 50){
+				set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+				rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_D, .@optid, .@optval, .@param;
+			}
+			else {
+				set .@rand_index, rand(getarraysize(.@junk_items)); 
+				getitem .@junk_items[.@rand_index], .@junk_amount[.@rand_index]; 
+			}
+			close;
+
+		case 2:
+			mes "ข้อความนี้จะไม่แจ้งเตือนในระหว่าง";
+			mes "เปิด Costume Box ครั้งต่อไป";
+			mes "คุณต้องการปิดหรือไม่?";
+			next;
+			if(select("ปิดข้อความ", "ยกเลิก") == 1){
+				mes "คุณทำการปิดข้อความแล้ว";
+				#DisabledMessageCB1 = 1;
+			}
+			close;
+			
+		case 3:
+			close;
+	}
+	end;
+}
+
+function	script	Fishing_box_01	{
+
+	set .@costumecash, 10; // จำนวน Cash ที่ใช้เปิด
+	set .@rental_time, 604800; // เวลาเช่า 7 วัน (หน่วยเป็นวินาที)
+	set .@box_id, 8110005; // <--- ประกาศ ID กล่องไว้ตรงนี้เลย จะได้แก้ง่ายๆ
+
+	setarray .@optid[0],0,0,0,0,0; // <--- getitem4 บังคับใส่ 5 ช่อง
+	setarray .@optval[0],0,0,0,0,0;
+	setarray .@param[0],0,0,0,0,0;
+
+	// ITEM ID - Costume
+	setarray .@costume_list[0],400163,20325,20448,480126;
+	
+	// ITEM ID - ขยะเกลือ
+	setarray .@junk_items[0], 23038, 30035, 3502, 6635, 12210, 14592, 12208;
+	setarray .@junk_amount[0], 1,     1,     10,    10,    1,     1,     1;
+
+	// เช็คกระเป๋าและน้ำหนัก
+	if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 3000)) {
+		dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ",0xFF0000;
+		end;
+	}
+
+	// ==========================================
+	// โหมดเปิดแบบ Fast (ข้ามข้อความ)
+	// ==========================================
+	if (#DisabledMessageCB1 == 1){
+		// 1. เช็คของและ Cash
+		if (countitem(.@box_id) < 1 || #CASHPOINTS < .@costumecash){
+			dispbottom "ไอเทมกล่อง หรือ Cash Point ของคุณไม่เพียงพอ";
+			end;
+		}
+
+		// 2. หักของและเงิน "ทันที" เพื่อป้องกันบั๊ก
+		delitem .@box_id, 1; 
+		#CASHPOINTS -= .@costumecash;
+
+		// 3. ทำการสุ่มแจกของ
+		set .@rand_rate, rand(1,100);
+
+		if(.@rand_rate <= 1){ // 1%
+			set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+			getitem4 .@reward,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+			announce "["+strcharinfo(0)+"] เปิด Costume Box I ได้รับ '[A] " + getitemname(.@reward)+"' (ถาวร) 1%",bc_all,0xFFFFFF;
+		}
+		else if(.@rand_rate >= 2 && .@rand_rate <= 5){ // 4%
+			set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+			rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_B, .@optid, .@optval, .@param;
+			announce "["+strcharinfo(0)+"] เปิด Costume Box I ได้รับ '[B] " + getitemname(.@reward)+"' (เช่า 7 วัน) 3%",bc_all,0xFFFFFF;
+		}
+		else if(.@rand_rate >= 6 && .@rand_rate <= 20){ // 15%
+			set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+			rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_C, .@optid, .@optval, .@param;
+		}
+		else if(.@rand_rate >= 21 && .@rand_rate <= 50){ // 30%
+			set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+			rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_D, .@optid, .@optval, .@param;
+		}
+		else { // 50%
+			set .@rand_index, rand(getarraysize(.@junk_items)); 
+			getitem .@junk_items[.@rand_index], .@junk_amount[.@rand_index]; 
+		}
+		end;
+	}
+
+	// ==========================================
+	// โหมดเปิดแบบปกติ (แสดงข้อความ)
+	// ==========================================
+	mes "Fishing box 01";
+	mes "รายละเอียดในการเปิด";
+	mes "ต้องใช้ Cash Point : "+.@costumecash+"";
+	mes "คุณต้องการเปิดหรือไม่?";
+	next;
+	switch(select("ทำการเปิด","ปิดข้อความนี้ก่อนเปิด", "ยกเลิก")){
+		case 1:
+			// 1. เช็คของและ Cash "อีกครั้ง" หลังกด Select (อุดช่องโหว่โยนของทิ้ง)
+			if (countitem(.@box_id) < 1 || #CASHPOINTS < .@costumecash){
+				dispbottom "ไอเทมกล่อง หรือ Cash Point ของคุณไม่เพียงพอ";
+				close;
+			}
+
+			// 2. หักของและเงิน "ทันที"
+			delitem .@box_id, 1; 
+			#CASHPOINTS -= .@costumecash;
+
+			// 3. ทำการสุ่มแจกของ
+			set .@rand_rate, rand(1,100);
+
+			if(.@rand_rate <= 1){
+				set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+				getitem4 .@reward,1,1,0,0,0,0,0,0,ENCHANTGRADE_A,.@optid,.@optval,.@param;
+				announce "["+strcharinfo(0)+"] เปิด Costume Box I ได้รับ '[A] " + getitemname(.@reward)+"' (ถาวร) 1%",bc_all,0xFFFFFF;
+			}
+			else if(.@rand_rate >= 2 && .@rand_rate <= 5){
+				set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+				rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_B, .@optid, .@optval, .@param;
+				announce "["+strcharinfo(0)+"] เปิด Costume Box I ได้รับ '[B] " + getitemname(.@reward)+"' (เช่า 7 วัน) 3%",bc_all,0xFFFFFF;
+			}
+			else if(.@rand_rate >= 6 && .@rand_rate <= 20){
+				set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+				rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_C, .@optid, .@optval, .@param;
+			}
+			else if(.@rand_rate >= 21 && .@rand_rate <= 50){
+				set .@reward, .@costume_list[rand(getarraysize(.@costume_list))];
+				rentitem4 .@reward, .@rental_time, 1, 0, 0, 0, 0, 0, 0, ENCHANTGRADE_D, .@optid, .@optval, .@param;
+			}
+			else {
+				set .@rand_index, rand(getarraysize(.@junk_items)); 
+				getitem .@junk_items[.@rand_index], .@junk_amount[.@rand_index]; 
+			}
+			close;
+
+		case 2:
+			mes "ข้อความนี้จะไม่แจ้งเตือนในระหว่าง";
+			mes "เปิด Costume Box ครั้งต่อไป";
+			mes "คุณต้องการปิดหรือไม่?";
+			next;
+			if(select("ปิดข้อความ", "ยกเลิก") == 1){
+				mes "คุณทำการปิดข้อความแล้ว";
+				#DisabledMessageCB1 = 1;
+			}
+			close;
+			
+		case 3:
+			close;
+	}
+	end;
+}
+
+// ==============================================================================
+// NPC Name : Costume Preview
+// Description : ระบบให้ผู้เล่นทดลองสวมใส่ Costume และดูรูปไอเทมก่อนตัดสินใจ
+// ==============================================================================
+morocc,132,63,4	script	Costume Preview	114,{
+
+	// โหลดรายการไอเทมเข้า Array
+	setarray .@costume_box_01[0], 20571,20988,480107,18744,20132,19859,31165,31406,420016,31315,20147,20011,31177,20255,19677,31240,31308,19751,35006,35007,20590,20591,20593,31719,20249,31055,31165,19678;
+	set .@size, getarraysize(.@costume_box_01);
+
+	// ลบ Timer เก่าทิ้งก่อน (ถ้าเผลอมีค้างไว้)
+	deltimer strnpcinfo(0)+"::OnRevertLook";
+
+	// คืนค่าชุดดั้งเดิมทุกครั้งที่เริ่มคุย
+	changelook 4, getlook(4);
+	changelook 5, getlook(5);
+	changelook 3, getlook(3);
+	changelook 12, getlook(12);
+	set .@last_id, 0;
+
+L_Main:
+	mes "[Costume Preview]";
+	mes "ยินดีต้อนรับครับบอส!";
+	mes "สนใจจะดูรายการคอสตูมทั้งหมด";
+	mes "หรือจะทดลองสวมใส่ดีครับ?";
+	next;
+	
+	set .@main_s, select("ดูรายการคอสตูมทั้งหมด:ทดลองสวมใส่:ยกเลิก");
+	
+	// ถ้ากดยกเลิก หรือ กด ESC (ค่าจะเป็น 255)
+	if (.@main_s == 3 || .@main_s == 255) {
+		close;
+	}
+
+	if (.@main_s == 1) {
+		mes "[Costume Preview]";
+		mes "นี่คือคอสตูมทั้งหมดที่มีให้ลองครับ:";
+		mes "--------------------------------";
+		for(set .@i, 0; .@i < .@size; .@i++) {
+			mes "^i[" + .@costume_box_01[.@i] + "]^FFFFFF_^000000 " + getitemname(.@costume_box_01[.@i]);
+		}
+		mes "--------------------------------";
+		next;
+		goto L_Main;
+	}
+
+L_Menu:
+	mes "[Costume Preview]";
+	mes "อยากลองสวมคอสตูมชิ้นไหน เลือกได้เลยครับบอส!";
+	mes "^FF0000* คำเตือน: กรุณาถอด Costume ที่ใส่อยู่ออกก่อน *^000000";
+	mes "^0000FF* ภาพจำลองจะหายไปเองใน 60 วินาที *^000000";
+	mes "^009900* บอสสามารถเดินออกไปโชว์ตัวได้เลยนะครับ! *^000000";
+	mes " ";
+	
+	// โชว์รูปไอเทมล่าสุดที่กำลังลองใส่
+	if (.@last_id > 0) {
+		mes "ชุดที่กำลังลองสวม:";
+		mes "^i[" + .@last_id + "]^FFFFFF_^000000 " + getitemname(.@last_id);
+		mes " ";
+	}
+
+	// สร้างเมนูอัตโนมัติจาก Array
+	set .@menu$, "";
+	for(set .@i, 0; .@i < .@size; .@i++) {
+		set .@name$, getitemname(.@costume_box_01[.@i]);
+		set .@name$, replacestr(.@name$, ":", "-");
+		set .@menu$, .@menu$ + .@name$ + ":";
+	}
+	set .@menu$, .@menu$ + "^FF0000ล้างการลองชุด^000000:^0000FFกลับเมนูหลัก^000000:^777777ยกเลิก^000000";
+
+	set .@s, select(.@menu$) - 1;
+
+	// ??? ป้องกันบั๊กกรณีเลือก "ยกเลิก" หรือ "กด ESC กะทันหัน"
+	if (.@s == .@size + 2 || .@s < 0 || .@s >= 254) {
+		deltimer strnpcinfo(0)+"::OnRevertLook"; // ยกเลิกตัวจับเวลา
+		changelook 4, getlook(4);
+		changelook 5, getlook(5);
+		changelook 3, getlook(3);
+		changelook 12, getlook(12);
+		close;
+	}
+
+	// กรณีเลือก: ล้างการลองชุด (คืนสภาพเดิม)
+	if (.@s == .@size) {
+		deltimer strnpcinfo(0)+"::OnRevertLook"; // ยกเลิกตัวจับเวลา
+		changelook 4, getlook(4);   
+		changelook 5, getlook(5);   
+		changelook 3, getlook(3);   
+		changelook 12, getlook(12); 
+		set .@last_id, 0;
+		
+		mes " ";
+		mes "ล้างภาพจำลองเรียบร้อยแล้วครับ!";
+		next;
+		goto L_Menu;
+	}
+	
+	// กรณีเลือก: กลับเมนูหลัก (คืนสภาพเดิมก่อนกลับ)
+	if (.@s == .@size + 1) {
+		deltimer strnpcinfo(0)+"::OnRevertLook"; // ยกเลิกตัวจับเวลา
+		changelook 4, getlook(4);
+		changelook 5, getlook(5);
+		changelook 3, getlook(3);
+		changelook 12, getlook(12);
+		set .@last_id, 0;
+		goto L_Main;
+	}
+
+	// === ดึงข้อมูลไอเทมที่เลือก ===
+	set .@id, .@costume_box_01[.@s];
+	set .@view, getiteminfo(.@id, 11); 
+	set .@loc,  getiteminfo(.@id, 5);  
+
+	// ยกเลิกเวลาเก่า (ถ้ามี) แล้วสั่งจับเวลาใหม่ 60 วินาที (60000 ms)
+	deltimer strnpcinfo(0)+"::OnRevertLook";
+	addtimer 60000, strnpcinfo(0)+"::OnRevertLook";
+
+	// === เปลี่ยนรูปลักษณ์ชั่วคราว (Client-Side) ===
+	if (.@loc & 256 || .@loc & 1024) changelook 4, .@view;  
+	if (.@loc & 512 || .@loc & 2048) changelook 5, .@view;  
+	if (.@loc & 1   || .@loc & 4096) changelook 3, .@view;  
+	if (.@loc & 4   || .@loc & 8192) changelook 12, .@view; 
+
+	set .@last_id, .@id;
+	
+	mes " ";
+	mes "เปลี่ยนชุดให้ดูเรียบร้อยครับ!";
+	mes "สามารถเดินออกไปโชว์ตัวได้เลย เดี๋ยวครบ 60 วิภาพจะหายไปเองครับ";
+	next;
+	goto L_Menu;
+
+// ========================================================
+// Label สำหรับจัดการเมื่อหมดเวลา 60 วินาที (ทำงานเบื้องหลัง)
+// ========================================================
+OnRevertLook:
+	// คืนร่างเดิมแบบเงียบๆ
+	changelook 4, getlook(4);
+	changelook 5, getlook(5);
+	changelook 3, getlook(3);
+	changelook 12, getlook(12);
+	
+	// เด้งข้อความสีเหลืองตรงมุมซ้ายล่าง ว่าหมดเวลาแล้ว
+	dispbottom "หมดเวลาทดลองสวมใส่คอสตูมแล้ว ระบบคืนสภาพชุดให้ตามปกติครับ";
+	end;
+
+// ========================================================
+// ทำงานเมื่อตอนโหลดสคริปต์
+// ========================================================
+OnInit:
+	// ใส่ป้ายชื่อร้านสวยๆ ลิมิต 0 คนคือเข้าห้องไม่ได้ ได้แต่ยืนมองป้าย
+	waitingroom " ทดลองใส่คอสตูมฟรี! ", 0;
+	end;
+}
+
+// ==========================================
+// สคริปต์กล่องเลือกอาวุธ Fire Weapon Box
+// ==========================================
+function	script	F_FireWeaponBox	{
+	mes "[ ^FF0000Fire Weapon Box^000000 ]";
+	mes "ยินดีต้อนรับ! โปรดเลือกCostume Weapon";
+	mes "ที่คุณต้องการรับ 1 ชิ้นค่ะ";
+	next;
+	
+	// สร้างเมนูให้ผู้เล่นกดเลือก
+	.@choice = select("Acolyte Fire:Archer Fire:Mage Fire:Merchant Fire:Swordman Fire:Thief Fire");
+	
+	// กำหนดรหัสไอเทมตามลำดับเมนู (35070 - 35075)
+	setarray .@items[1], 35070, 35071, 35072, 35073, 35074, 35075;
+	
+	// ดึงรหัสไอเทมที่ผู้เล่นเลือกมาเก็บไว้ในตัวแปร
+	.@get_item = .@items[.@choice];
+	
+	// ระบบเซฟตี้: เช็กน้ำหนักและช่องเก็บของ
+	if (checkweight(.@get_item, 1) == 0) {
+		mes "[ ^FF0000Fire Weapon Box^000000 ]";
+		mes "^FF0000น้ำหนักของคุณเกิน หรือช่องเก็บของเต็มค่ะ^000000";
+		mes "ระบบได้ทำการคืนกล่องกลับเข้ากระเป๋าให้แล้ว";
+		getitem 35076, 1; // คืนกล่องรหัส 35076 กลับไป
+		close;
+	}
+	
+	// ถ้าช่องว่างพอ ก็แจกของตามที่เลือก!
+	getitem .@get_item, 1;
+	
+	// ประกาศข้อความสีฟ้าโชว์ตัวละครคนนั้นเบาๆ
+	announce "คุณได้รับ [" + getitemname(.@get_item) + "] จากกล่องเรียบร้อยแล้ว!", bc_blue | bc_self;
+	close;
+}

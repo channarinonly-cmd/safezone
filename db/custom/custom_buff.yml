@@ -1,0 +1,25 @@
+###########################################################################
+# Whispering Rain
+###########################################################################
+# 
+###########################################################################
+
+Header:
+  Type: CUSTOM_BUFF_DB
+  Version: 1
+
+Body:
+  - Status: SC_REDHEADPK
+    Script: |
+      bonus bAllStats,5;
+      bonus2 bExpAddRace,RC_All,5;
+      bonus2 bDropAddRace,RC_All,5;
+  - Status: SC_GREENHEADPK
+    Script: |
+      bonus bAllStats,2;
+      bonus2 bExpAddRace,RC_All,2;
+      bonus2 bDropAddRace,RC_All,2;
+  - Status: SC_FACTION_BUFF
+    Script: |
+      bonus2 bExpAddRace,RC_All,10;
+      bonus2 bDropAddRace,RC_All,10;

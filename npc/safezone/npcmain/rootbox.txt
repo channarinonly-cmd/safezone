@@ -1,0 +1,1266 @@
+function	script	Open_Monster_Box_120	{
+//   // ตรวจสอบเลเวลของผู้เล่น
+//    if (baselevel < 1 || baselevel > 20) {
+//        mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 1-20 เท่านั้น!";
+//        close;
+//    }
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3402) < .@input) {
+        mes "คุณมี Monster Box Lv 1-20 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3402) < 1) {
+                close;
+            }
+
+            delitem(3402, 1);
+            getgroupitem(IG_CUSTOME_BOX3);
+
+            .@zeny1 = (baselevel * 2 + (rand(1,20) * 8)) / 4;
+            .@zeny2 = (baselevel * 2 + (rand(1,20) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+
+function	script	Open_Monster_Box_2140	{
+//	if (baselevel < 21 || baselevel > 40) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 21-40 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3403) < .@input) {
+        mes "คุณมี Monster Box Lv 1-20 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3403) < 1) {
+                close;
+            }
+
+            delitem(3403, 1);
+            getgroupitem(IG_CUSTOME_BOX3);
+
+            .@zeny1 = (baselevel * 2 + (rand(1,20) * 8)) / 4;
+            .@zeny2 = (baselevel * 2 + (rand(1,20) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_4160	{
+//	if (baselevel < 41 || baselevel > 60) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 41-60 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3404) < .@input) {
+        mes "คุณมี Monster Box Lv 41-60 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3404) < 1) {
+                close;
+            }
+
+            delitem(3404, 1);
+            getgroupitem(IG_CUSTOME_BOX5);
+
+			.@zeny1 = (baselevel * 2 + (rand(41,60) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(41,60) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_6180	{
+//	if (baselevel < 61 || baselevel > 80) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 61-80 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3405) < .@input) {
+        mes "คุณมี Monster Box Lv 61-80 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3405) < 1) {
+                close;
+            }
+
+            delitem(3405, 1);
+            getgroupitem(IG_CUSTOME_BOX5);
+
+			.@zeny1 = (baselevel * 2 + (rand(61,80) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(61,80) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_8199	{
+//	if (baselevel < 81 || baselevel > 99) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 81-99 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3406) < .@input) {
+        mes "คุณมี Monster Box Lv 81-99 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3406) < 1) {
+                close;
+            }
+
+            delitem(3406, 1);
+            getgroupitem(IG_CUSTOME_BOX7);
+
+			.@zeny1 = (baselevel * 2 + (rand(81,99) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(81,99) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_100120	{
+//	if (baselevel < 81 || baselevel > 99) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 81-99 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3409) < .@input) {
+        mes "คุณมี Monster Box Lv 100-120 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3409) < 1) {
+                close;
+            }
+
+            delitem(3409, 1);
+            getgroupitem(IG_CUSTOME_BOX7);
+
+			.@zeny1 = (baselevel * 2 + (rand(100,120) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(100,120) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_121140	{
+//	if (baselevel < 81 || baselevel > 99) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 81-99 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3410) < .@input) {
+        mes "คุณมี Monster Box Lv 121-140 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3410) < 1) {
+                close;
+            }
+
+            delitem(3410, 1);
+            getgroupitem(IG_CUSTOME_BOX7);
+
+			.@zeny1 = (baselevel * 2 + (rand(121,140) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(121,140) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_141160	{
+//	if (baselevel < 81 || baselevel > 99) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 81-99 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3411) < .@input) {
+        mes "คุณมี Monster Box Lv 141-160 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3411) < 1) {
+                close;
+            }
+
+            delitem(3411, 1);
+            getgroupitem(IG_CUSTOME_BOX7);
+
+			.@zeny1 = (baselevel * 2 + (rand(141,160) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(141,160) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_161180	{
+//	if (baselevel < 81 || baselevel > 99) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 81-99 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3412) < .@input) {
+        mes "คุณมี Monster Box Lv 161-180 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3412) < 1) {
+                close;
+            }
+
+            delitem(3412, 1);
+            getgroupitem(IG_CUSTOME_BOX7);
+
+			.@zeny1 = (baselevel * 2 + (rand(161,180) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(161,180) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_181199	{
+//	if (baselevel < 81 || baselevel > 99) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 81-99 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3413) < .@input) {
+        mes "คุณมี Monster Box Lv 181-199 ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3413) < 1) {
+                close;
+            }
+
+            delitem(3413, 1);
+            getgroupitem(IG_CUSTOME_BOX7);
+
+			.@zeny1 = (baselevel * 2 + (rand(161,180) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(161,180) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}
+
+function	script	Open_Monster_Box_Limited	{
+//	if (baselevel < 81 || baselevel > 99) {
+//		mes "คุณสามารถเปิดกล่องนี้ได้เฉพาะตัวละครที่มีเลเวล 81-99 เท่านั้น!";
+//		close;
+//	}
+
+    // ดึงค่า Box Stamina จากฐานข้อมูล
+    query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@box_stamina;
+    mes "คุณมี Box Stamina จำนวน: " + .@box_stamina + " แต้ม";  // เพิ่มการแสดงค่า Box Stamina
+
+    mes "กรุณาระบุจำนวนกล่องที่ต้องการเปิด (1 ~ 500)";
+    next;
+
+    while (1) {
+        input .@input;
+        if (.@input == 0) {
+            close;
+        } else if (.@input < 1 || .@input > 500) {
+            mes "กรุณาระบุจำนวนเปิดให้ถูกต้อง! (1 ~ 500)";
+            next;
+        } else {
+            .@stamina_needed = .@input * 10;
+            mes "จำนวน Box Stamina ที่คุณต้องใช้: " + .@stamina_needed + " แต้ม";
+            mes "คุณต้องการใช้ Box Stamina จำนวนนี้เพื่อเปิดกล่องหรือไม่?";
+            next;
+
+            if (select("ใช่", "ไม่ใช่") == 2) {
+                close;
+            }
+
+            if (.@box_stamina < .@stamina_needed) {
+                mes "คุณไม่มี Box Stamina เพียงพอในการเปิดกล่อง";
+                close;
+            }
+            break;
+        }
+    }
+
+    // ตรวจสอบจำนวน Monster Box
+    if (countitem(3414) < .@input) {
+        mes "คุณมี Monster Box Limited ไม่ตรงกับที่ระบุ";
+        close;
+    } else {
+        .@total_zeny = 0;
+        .@boxes_opened = 0;
+        .@successfully_opened = 0;  // ตัวแปรสำหรับนับจำนวนกล่องที่เปิดสำเร็จ
+        .@weight_error = 0;  // ตัวแปรตรวจสอบสถานะน้ำหนักเกินหรือช่องเต็ม
+
+        for (.@i = 1; .@i <= .@input; ++.@i) {
+            progressbar "", 0;
+
+            // เช็คเงื่อนไขน้ำหนักเกินหรือช่องเต็ม
+            if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 6000)) {
+                if (.@weight_error == 0) {
+                    dispbottom "ตรวจสอบไอเท็มหรือน้ำหนักของคุณ", 0xFF0000;
+                    .@weight_error = 1;  // ตั้งค่าเป็น 1 เพื่อไม่ให้แสดงผลซ้ำ
+                }
+                continue;  // ข้ามรอบนี้ไป
+            } else {
+                .@weight_error = 0;  // รีเซ็ตการแจ้งเตือนถ้าน้ำหนักถูกต้อง
+            }
+
+            if (countitem(3414) < 1) {
+                close;
+            }
+
+            delitem(3414, 1);
+            getgroupitem(IG_CUSTOME_BOX23);
+
+			.@zeny1 = (baselevel * 2 + (rand(200,300) * 8)) / 4;
+			.@zeny2 = (baselevel * 2 + (rand(200,300) * 16)) / 2;
+
+            .@zeny_min = min(.@zeny1, .@zeny2);
+            .@zeny_max = max(.@zeny1, .@zeny2);
+
+            if (.@zeny_min == .@zeny_max) {
+                .@zeny_max += 1;
+            }
+
+            .@zeny_average = rand(.@zeny_min, .@zeny_max);
+
+            .@total_zeny += .@zeny_average;
+            Zeny += .@zeny_average;
+            .@boxes_opened += 1;
+
+            dispbottom "คุณได้รับค่าเฉลี่ย Zeny จำนวน " + .@zeny_average + " จากการเปิดกล่องรอบที่ " + .@i, 0x00FF00;
+            dispbottom "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+
+            // เพิ่มจำนวนกล่องที่เปิดสำเร็จ
+            .@successfully_opened += 1;
+        }
+
+        // เมื่อกล่องเปิดสำเร็จ จะลด Box Stamina ตามจำนวนกล่องที่เปิดสำเร็จ
+        if (.@successfully_opened > 0) {
+            .@stamina_used = .@successfully_opened * 10;
+            // อัพเดตฐานข้อมูลเพื่อลดค่า Box Stamina
+            query_sql "UPDATE `login` SET `boxstamina` = GREATEST(`boxstamina` - " + .@stamina_used + ", 0) WHERE `account_id`=" + getcharid(3);
+
+
+            // ตรวจสอบค่า Box Stamina หลังจากอัพเดต
+            query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`=" + getcharid(3), .@new_box_stamina;
+            mes "Box Stamina หลังการหัก: " + .@new_box_stamina;
+
+            mes "คุณเปิดกล่องครบ " + .@successfully_opened + " กล่องแล้ว";
+            mes "รวมยอด Zeny ที่ได้รับทั้งหมด: " + .@total_zeny;
+            mes "_____________";
+            mes "คุณใช้ Box Stamina ไปทั้งหมด: " + .@stamina_used + " แต้ม";
+            mes "Box Stamina คงเหลือ: " + .@new_box_stamina + " แต้ม";
+        } else {
+            mes "การเปิดกล่องไม่สำเร็จเนื่องจากน้ำหนักหรือช่องไม่เพียงพอ";
+        }
+    }
+    close;
+}

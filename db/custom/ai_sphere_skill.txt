@@ -1,0 +1,9 @@
+//===== AI Sphere SKill List Configulation Files =======================================
+//  Whispering Rain
+//= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+// Structure of Database:
+// skillname,MAX sphere
+// EX. AL_HEAL,10
+//= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+MO_CALLSPIRITS,5
+GS_GLITTERING,1

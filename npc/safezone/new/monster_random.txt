@@ -1,0 +1,160 @@
+-	script	Random_Mob_Event	-1,{
+// ===================[ CONFIG ]===================
+OnInit:
+	.rm_time = 60;          // ระยะเวลากิจกรรม (นาที)
+	.rm_countdown_min = 5;  // แจ้งเตือนเหลือ n นาทีสุดท้าย
+	.rm_infinite = 1;       // 1 = ฆ่าแล้วเกิดใหม่ทันที (จำนวนรวมไม่จำกัด)
+
+	// รายชื่อแผนที่
+	setarray .rm_map$[0],
+		"gl_dun01","gef_dun01","gef_dun02","gef_fild08","gl_cas02","gl_knt01",
+		"c_tower2","alde_dun02","gl_prison","gl_prison1","moc_pryd04","gl_in01",
+		"xmas_dun02","gef_fild14","iz_dun02","iz_dun03","prt_maze03","mjo_dun03",
+		"tur_dun01","tur_dun02","tur_dun03","orcsdun02","orcsdun01","gef_fild10",
+		"moc_pryd03";
+
+	// กองแร่หลัก (id/min/max) — เปลี่ยนตามต้องการ
+	setarray .rm_mobid[0],   3742; // ตัวอย่าง: Poring
+	setarray .rm_mobmin[0],    2;
+	setarray .rm_mobmax[0],    5;
+
+	// บอสโบนัส (เกิดเฉพาะรอบ 20:00)
+	setarray .rm_bonus_mobid[0], 3742; // ปรับเป็น Baphomet/Kiel-D-01 ฯลฯ
+	setarray .rm_bonus_min[0],      5;
+	setarray .rm_bonus_max[0],      10;
+
+	// ไอเทมรางวัล (id, min, max, rate%)
+	setarray .rm_itemid[0],   6635,   3502;
+	setarray .rm_itemmin[0],    1,     1;
+	setarray .rm_itemmax[0],    2,     2;
+	setarray .rm_itemrate[0],  4000,    4000;
+
+	// สถานะภายใน
+	$rm_event_map$ = "";
+	.rm_tick = 0;
+	.rm_is_bonus = 0;    // 0=ปกติ, 1=รอบพิเศษ (20:00)
+	.rm_slot = 0;        // เก็บ HH00
+	end;
+
+// ===================[ ONCLOCK TRIGGERS ]===================
+// ยิงวันละ 3 รอบ: 08:00 / 14:00 / 20:00
+OnClock0847:
+	.rm_slot = 847;
+	.rm_is_bonus = 0;
+	donpcevent strnpcinfo(3)+"::OnStartEvent";
+	end;
+
+OnClock1400:
+	.rm_slot = 1400;
+	.rm_is_bonus = 0;
+	donpcevent strnpcinfo(3)+"::OnStartEvent";
+	end;
+
+OnClock2000:
+	.rm_slot = 2000;
+	.rm_is_bonus = 1; // รอบพิเศษ
+	donpcevent strnpcinfo(3)+"::OnStartEvent";
+	end;
+
+// ===================[ HEARTBEAT: ทุก 1 นาที ]===================
+OnTimer60000:
+	.rm_tick++;
+
+	// แจ้งเตือน 5 นาทีสุดท้าย
+	.@remaining = .rm_time - .rm_tick;
+	if (.@remaining == .rm_countdown_min && $rm_event_map$ != "")
+		announce "[ Miner Ore Event ] : เหลือเวลาอีก "+.rm_countdown_min+" นาที ใน "+$rm_event_map$+" ! รีบล่าโอกาสสุดท้าย!", bc_all, 0xFFFF00;
+
+	// ครบเวลา  ปิดอีเวนต์
+	if (.rm_tick >= .rm_time) {
+		donpcevent strnpcinfo(3)+"::OnStopEvent";
+		stopnpctimer;
+		.rm_tick = 0;
+		end;
+	}
+	initnpctimer;
+	end;
+
+// ===================[ CORE LOGIC ]===================
+OnStartEvent:
+	// กันซ้อน: ปิดรอบเก่าถ้ามี
+	if ($rm_event_map$ != "")
+		donpcevent strnpcinfo(3)+"::OnStopEvent";
+
+	// สุ่มแผนที่
+	.@rmap = rand(getarraysize(.rm_map$));
+	$rm_event_map$ = .rm_map$[.@rmap];
+	if ($rm_event_map$ == "") end;
+
+	// ประกาศเริ่มรอบ
+	if (.rm_is_bonus)
+		announce "[ Miner Ore Event ] : รอบพิเศษ 20:00! กองแร่เกิดที่ "+$rm_event_map$+" พร้อมโบนัสดรอป +20% และบอสพิเศษ!", bc_all, 0xFF66CC;
+	else
+		announce "[ Miner Ore Event ] : กองแร่จำนวนมากเกิดที่ "+$rm_event_map$+" แล้ว!", bc_all, 0xFF0000;
+
+	// สปอว์นมอนหลัก (ล็อตตั้งต้น)
+	.@size = getarraysize(.rm_mobid);
+	for (.@i = 0; .@i < .@size; .@i++) {
+		.@mob_id = .rm_mobid[.@i];
+		.@mob_num = (.rm_mobmin[.@i] == .rm_mobmax[.@i]) ? .rm_mobmin[.@i] : rand(.rm_mobmin[.@i], .rm_mobmax[.@i]);
+		if (.@mob_num > 0) {
+			monster $rm_event_map$, 0,0, "--ja--", .@mob_id, .@mob_num, strnpcinfo(3)+"::OnKillMob";
+			announce "[ Miner Ore Event ] : พบ "+.@mob_num+" ตัว ของ "+getmonsterinfo(.@mob_id,0)+" ใน "+$rm_event_map$+" !!", bc_all, 0x00FF00;
+		}
+	}
+
+	// รอบพิเศษ 20:00  สปอว์นโบนัส
+	if (.rm_is_bonus) {
+		.@bsize = getarraysize(.rm_bonus_mobid);
+		for (.@j = 0; .@j < .@bsize; .@j++) {
+			.@bmob_id = .rm_bonus_mobid[.@j];
+			.@bmob_num = (.rm_bonus_min[.@j] == .rm_bonus_max[.@j]) ? .rm_bonus_min[.@j] : rand(.rm_bonus_min[.@j], .rm_bonus_max[.@j]);
+			if (.@bmob_num > 0) {
+				monster $rm_event_map$, 0,0, "--ja--", .@bmob_id, .@bmob_num, strnpcinfo(3)+"::OnKillMob";
+			}
+		}
+		announce "[ Miner Ore Event ] : บอสโบนัสปรากฏตัวใน "+$rm_event_map$+" !", bc_all, 0xCC00FF;
+	}
+
+	// เริ่มนับเวลา
+	.rm_tick = 0;
+	stopnpctimer;
+	initnpctimer; // heartbeat 1 นาที
+	end;
+
+OnStopEvent:
+	if ($rm_event_map$ != "") {
+		killmonster $rm_event_map$, strnpcinfo(3)+"::OnKillMob";
+		announce "[ Miner Ore Event ] : กองแร่พิเศษใน "+$rm_event_map$+" ได้หายไปแล้ว!", bc_all, 0xFF0000;
+		$rm_event_map$ = "";
+	}
+	stopnpctimer;
+	.rm_tick = 0;
+	end;
+
+OnKillMob:
+	// แจกของตาม rate% (+20% หากเป็นรอบพิเศษ 20:00, capped 100)
+	.@size = getarraysize(.rm_itemid);
+	if (.@size <= 0) end;
+	if (.@size != getarraysize(.rm_itemrate) || .@size != getarraysize(.rm_itemmin) || .@size != getarraysize(.rm_itemmax)) end;
+	.@r = rand(.@size);
+	.@item_id = .rm_itemid[.@r];
+	.@rate    = .rm_itemrate[.@r];
+
+	if (.rm_is_bonus) {
+		.@rate += 20;
+		if (.@rate > 100) .@rate = 100;
+	}
+
+	if (rand(100) < .@rate) {
+		.@item_num = (.rm_itemmin[.@r] == .rm_itemmax[.@r]) ? .rm_itemmin[.@r] : rand(.rm_itemmin[.@r], .rm_itemmax[.@r]);
+		getitem .@item_id, .@item_num;
+		dispbottom "[Event Reward] ได้รับ "+getitemname(.@item_id)+" x"+.@item_num+( .rm_is_bonus ? "  (Bonus +20%)" : "" )+".";
+	}
+
+	// โหมดไม่จำกัดจำนวนรวม: ฆ่าปุ๊บ เกิดทดแทนทันที
+	if (.rm_infinite && $rm_event_map$ != "" && killedrid > 0) {
+		monster $rm_event_map$, 0,0, "--ja--", killedrid, 1, strnpcinfo(3)+"::OnKillMob";
+	}
+	end;
+}

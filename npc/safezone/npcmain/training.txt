@@ -1,0 +1,182 @@
+
+new_1-1,148,112,0	script	newwarp6001a	WARPNPC,2,2,{
+    warp "new_1-2",100,9;
+    end;
+}
+
+new_1-2,100,29,4	script	Sprakki	4_F_01,{
+	mes "[Sprakki]";
+	mes "สวัสดี! ยินดีต้อนรับท่าน";
+	mes "เข้าสู่โลกแห่ง Ragnarok Online";
+	mes "ข้ามีนามว่า Sprakki";
+	next;
+	mes "[Sprakki]";
+	mes "ที่นี่คือ Trainging Center";
+	mes "ที่สำหรับให้ท่านได้เตรียมตัว";
+	mes "ท่านกำลังเข้าสู่การฝึกอบรมพื้นฐาน";
+	mes "ของการเล่นเกมและการต่อสู้";
+	next;
+	mes "[Sprakki]";
+	mes "ข้าคิดว่าท่านไม่จำเป็นต้องฝึกอบรม";
+	mes "ข้าจะส่งท่านไปฝึกการต่อสู้ที่แท้จริง";
+	mes "ท่านพร้อมแล้วหรือยัง?";
+	next;
+	switch(select("ไปยังการฝึกต่อสู้ที่แท้จริง","ยังก่อน")){
+		case 1:
+			mes "[Sprakki]";
+			mes "ข้าขอให้ท่านโชคดี";
+			mes "อาวุธและชุดเกราะ ของใช้ต่างๆ";
+			mes "อย่าลืมใช้มันต่อสู้ล่ะ!";
+			getitem 3504,1;
+			getitem 7059,30;
+			getitem 7060,30;
+			getitem 569,300;
+			getitem 12323,200;
+			getitem 12324,50;
+			getitem 12325,20;
+			getitem 1243,1;
+			getitem 2112,1;
+			getitem 5055,1;
+			getitem 2352,1;
+			getitem 2510,1;
+			getitem 2414,1;
+			close2;
+			warp "new_1-3",95,24;
+			savepoint "new_1-3",93,35;
+			mes "ก่อนโจมตีมอนสเตอร์ทุกครั้ง ต้องเปิดระบบ stamina ก่อน";
+			mes "itemกดใช้ จะอยู่ในช่องเก็บของ ที่ให้มาตอนสร้างตัวละคร";
+			next;
+			mes "ถ้าไม่กดใช้งาน จะไม่ได้รับค่า EXP และ Item";
+			close;
+			end;
+		case 2:
+			close;
+	}
+	end;
+}
+
+new_1-3,91,41,6	script	Buff	1_M_KNIGHTMASTER,{
+	switch(select("ขอความช่วยเหลือ","ยกเลิก")){
+		case 1:
+			sc_start SC_BLESSING,180000,10;
+			sc_start SC_INCREASEAGI,180000,10;
+			specialeffect2 EF_INCAGILITY;
+			specialeffect2 EF_BLESSING;
+			percentheal 100,100;
+			end;
+		case 2:
+			close;
+			end;
+	}
+	end;
+}
+
+new_1-3,95,175,6	script	ผู้เฝ้าประตู	1_M_YOUNGKNIGHT,{
+	switch(select("ไปยังเมืองหลัก","ยกเลิก")){
+		case 1:
+			if (JobLevel < 10){
+				unittalk getcharid(3), "" + strcharinfo(0) + " : ไปยังเมืองหลัก", bc_self;
+				sleep2 2000;
+				npctalk "Buff : ท่านยังมีJob lv ไม่ถึง 10!", "", bc_self;
+				sleep2 2000;
+				unittalk getcharid(3), "" + strcharinfo(0) + " : ข้าต้องทำยังไง?", bc_self;
+				sleep2 2000;
+				npctalk "Buff : กดคุยกับข้าอีกที หลังจากที่ท่านมี JobLevel 10 แล้ว", "", bc_self;
+				end;
+			}
+			warp "new_1-4",139,175;
+			savepoint "new_1-4",139,175;
+			end;
+		case 2:
+			close;
+			end;
+	}
+	end;
+}
+
+new_1-4,139,191,6	script	Ragnarok Master	4_M_CRU_CRUA,{
+	mes "[Ragnarok Master]";
+	mes "สวัสดี!";
+	mes "เจ้าเก่งมากที่มาถึงห้องนี้ได้";
+	mes "ข้ามีนามว่า Ragnarok Master";
+	next;
+	mes "[Ragnarok Master]";
+	mes "ที่นี่คือ ห้องสุดท้ายในการฝึกฝนของเจ้าแล้ว";
+	mes "ต่อไป ข้าจะพาเจ้าเข้าสู่โลกของ Ragnarok ในsv.ของ thuay-ro";
+	mes "เนื่องจากมีระบบหลายๆอย่างที่เจ้าต้องเรียนรู้";
+	next;
+	mes "[Ragnarok Master]";
+	mes "เจ้าควรศึกษาข้อมูลของเกมส์เบื้องต้นผ่านหน้าเวปไซต์";
+	mes "หรือทางfanpage และ ในกลุ่ม ของ thuay-ro เพิ่มเติม เพื่อจะได้เข้าใจระบบใหม่ๆของsvมากยิ่งขึ้น";
+	mes "ท่านพร้อมที่จะออกเดินทางเข้าสู่ thuay-ro แล้วหรือยัง?";
+	next;
+	switch(select("ข้าพร้อมแล้ว","ยังก่อน")){
+		case 1:
+			mes "[Ragnarok Master]";
+			mes "ข้าขอให้ท่านโชคดี";
+			close2;
+			warp "morocc",159,44;
+			savepoint "morocc",159,44;
+			end;
+		case 2:
+			close;
+	}
+	end;
+}
+
+// Training Ground Mobs
+new_1-3,0,0,0,0	monster	Poring	1002,50
+new_1-3,0,0,0,0	monster	Drops	1113,50
+new_1-3,0,0,0,0	monster	Lunatic	1063,50
+new_1-3,0,0,0,0	monster	ChonChon	1011,50
+new_1-3,0,0,0,0	monster	Picky	1050,50
+new_1-3,0,0,0,0	monster	Willow	1010,30
+new_1-3,0,0,0,0	monster	Roda Frog	1012,30
+new_1-3,0,0,0,0	monster	Condor	1009,20
+new_1-3,0,0,0,0	monster	Thief Bug	1053,20
+new_1-3,0,0,0,0	monster	Spore	1014,20
+
+//new_1-1,0,0,0,0	monster	Poring	1002,50
+//new_1-1,0,0,0,0	monster	Drops	1113,50
+//new_1-1,0,0,0,0	monster	Lunatic	1063,50
+//new_1-1,0,0,0,0	monster	ChonChon	1011,50
+//new_1-1,0,0,0,0	monster	Picky	1050,50
+//new_1-1,0,0,0,0	monster	Willow	1010,30
+//new_1-1,0,0,0,0	monster	Roda Frog	1012,30
+//new_1-1,0,0,0,0	monster	Condor	1009,20
+//new_1-1,0,0,0,0	monster	Thief Bug	1053,20
+//new_1-1,0,0,0,0	monster	Spore	1014,20
+
+//============================================================
+new_1-1	mapflag	loadevent
+new_1-2	mapflag	loadevent
+new_1-3	mapflag	loadevent
+new_1-4	mapflag	loadevent
+
+
+-	script	stamina_notice	-1,{
+
+	OnInit:
+		setarray .maps$, "new_1-3";
+		for (.@i = 0; .@i < getarraysize(.maps$); .@i++)
+			setmapflag .maps$[.@i], mf_loadevent;
+		end;
+
+	OnPCLoadMapEvent:
+		for (.@i = 0; .@i < getarraysize(.maps$); .@i++) {
+			if (strcharinfo(3) == .maps$[.@i]) {
+				mes "[ระบบสแตมิน่า]";
+				mes "ก่อนโจมตีมอนสเตอร์ทุกครั้ง ";
+				mes "ต้องเปิดระบบ ";
+				mes "stamina ก่อน";
+				.@item_id = 30034;
+				mes "^i["+.@item_id+"]^FFFFFF "+getitemname(.@item_id)+"^000000";
+				mes "Item จะอยู่ในช่องเก็บของใช้ทั่วไปในตัว";
+				next;
+				mes "ถ้าไม่กดใช้งาน จะไม่ได้รับค่า EXP และ Item";
+				mes "^ff0000โปรดอย่าลืม^000000";
+				close;
+			}
+		}
+		end;
+}

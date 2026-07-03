@@ -1,0 +1,9 @@
+Body:
+  - Status: AutoAttack
+    Icon: EFST_AUTOATTACK
+    Flags:
+      NoClearbuff: true
+      NoDispell: true
+      NoBanishingBuster: true
+      NoClearance: true
+      NoRemoveOnDead: true

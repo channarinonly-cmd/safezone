@@ -1,0 +1,145 @@
+prontera,0,0,4	script	Premi	4_F_PREMI,{
+
+	set .@silverine, 6417;
+	set .@buff_service, 1500;
+	set .@buff_all7, 5000;
+	setarray .@silverine_cost[0], 4, 2, 1, 6;
+
+	cutin "prm_3",2;
+	mes "[Premi]";
+	mes "สวัสดี เมี้ยว~";
+	mes "ข้าคือ ^00CC00Premi^000000 เอง!";
+	mes "ยินดีที่ได้รู้จักนะ~";
+	next;
+
+	cutin "prm_2",2;
+	mes "[Premi]";
+	mes "เอาล่ะ ถ้าอย่างนั้น วันนี้ให้ Premi";
+	mes "ช่วยบริการอะไรดีเจ้าคะ?";
+	next;
+
+	// ============================================================
+	// จัดเตรียมข้อความเมนู (ยุบโค้ดให้อ่านง่ายและทำงานไวขึ้น)
+	// ============================================================
+	
+	// 1. เพิ่มค่าประสบการณ์
+	if (getstatus(SC_AID_PERIOD_PLUSEXP)) .@m1$ = "^999999เพิ่มค่าประสบการณ์ (กำลังใช้งาน)^000000";
+	else if (countitem(.@silverine) < .@silverine_cost[0]) .@m1$ = "^999999เพิ่มค่าประสบการณ์ (วัตถุดิบไม่พอ)^000000";
+	else .@m1$ = "เพิ่มค่าประสบการณ์ (1 วัน)";
+
+	// 2. เพิ่มอัตราการดรอป
+	if (getstatus(SC_AID_PERIOD_RECEIVEITEM_ETC)) .@m2$ = "^999999เพิ่มอัตราการดรอป (กำลังใช้งาน)^000000";
+	else if (countitem(.@silverine) < .@silverine_cost[1]) .@m2$ = "^999999เพิ่มอัตราการดรอป (วัตถุดิบไม่พอ)^000000";
+	else .@m2$ = "เพิ่มอัตราการดรอป (1 วัน)";
+
+	// 3. ลดบทลงโทษตอนตาย
+	if (getstatus(SC_AID_PERIOD_DEADPENALTY)) .@m3$ = "^999999ลดบทลงโทษตอนตาย (กำลังใช้งาน)^000000";
+	else if (countitem(.@silverine) < .@silverine_cost[2]) .@m3$ = "^999999ลดบทลงโทษตอนตาย (วัตถุดิบไม่พอ)^000000";
+	else .@m3$ = "ลดบทลงโทษตอนตาย (1 วัน)";
+
+	// 4. รับบริการทั้งหมด
+	if (getstatus(SC_AID_PERIOD_PLUSEXP) || getstatus(SC_AID_PERIOD_RECEIVEITEM_ETC) || getstatus(SC_AID_PERIOD_DEADPENALTY)) 
+		.@m4$ = "^999999บริการ Buff (กำลังใช้งาน)^000000";
+	else if (countitem(.@silverine) < .@silverine_cost[3]) 
+		.@m4$ = "^999999รับบริการทั้งหมดครั้งเดียว (วัตถุดิบไม่พอ)^000000";
+	else 
+		.@m4$ = "รับบริการทั้งหมดครั้งเดียว (1 วัน)";
+
+
+	switch(select(
+		.@m1$,
+		.@m2$,
+		.@m3$,
+		.@m4$,
+		"Buff Service (" + callfunc("F_InsertComma",.@buff_service) + " Zeny)",
+		"Buff All + 7 (" + callfunc("F_InsertComma",.@buff_all7) + " Zeny)",
+		"ไม่ทำสิ่งใด"
+	)) {
+
+	//============================================================
+	// CASE 1–4 : PREMIUM BUFF
+	//============================================================
+
+	case 1:
+		if (getstatus(SC_AID_PERIOD_PLUSEXP)) close3;
+		if (countitem(.@silverine) < .@silverine_cost[0]) { mes "[Premi]"; mes "วัตถุดิบไม่พอนะเจ้าคะ!"; close3; }
+		
+		delitem .@silverine, .@silverine_cost[0];
+		sc_start SC_AID_PERIOD_PLUSEXP, 86400000, 30;
+		#PREMIUM_SERVICE_EXP = gettimetick(2) + 86400;
+		close3;
+
+	case 2:
+		if (getstatus(SC_AID_PERIOD_RECEIVEITEM_ETC)) close3;
+		if (countitem(.@silverine) < .@silverine_cost[1]) { mes "[Premi]"; mes "วัตถุดิบไม่พอนะเจ้าคะ!"; close3; }
+		
+		delitem .@silverine, .@silverine_cost[1];
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_ETC, 86400000, 30, 15;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_USABLE, 86400000, 30, 15;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_EQUIP, 86400000, 30, 15;
+		#PREMIUM_SERVICE_ITEM = gettimetick(2) + 86400;
+		close3;
+
+	case 3:
+		if (getstatus(SC_AID_PERIOD_DEADPENALTY)) close3;
+		if (countitem(.@silverine) < .@silverine_cost[2]) { mes "[Premi]"; mes "วัตถุดิบไม่พอนะเจ้าคะ!"; close3; }
+		
+		delitem .@silverine, .@silverine_cost[2];
+		sc_start SC_AID_PERIOD_DEADPENALTY, 86400000, 50;
+		#PREMIUM_SERVICE_DEAD = gettimetick(2) + 86400;
+		close3;
+
+	case 4:
+		if (getstatus(SC_AID_PERIOD_PLUSEXP) || getstatus(SC_AID_PERIOD_RECEIVEITEM_ETC) || getstatus(SC_AID_PERIOD_DEADPENALTY)) close3;
+		if (countitem(.@silverine) < .@silverine_cost[3]) { mes "[Premi]"; mes "วัตถุดิบไม่พอนะเจ้าคะ!"; close3; }
+		
+		delitem .@silverine, .@silverine_cost[3];
+		sc_start SC_AID_PERIOD_PLUSEXP, 86400000, 30;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_ETC, 86400000, 30, 15;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_USABLE, 86400000, 30, 15;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_EQUIP, 86400000, 30, 15;
+		sc_start SC_AID_PERIOD_DEADPENALTY, 86400000, 50;
+		
+		// [FIX BUG] ต้องเซ็ตเวลาให้ครบทั้ง 3 ตัวแปรด้วย ไม่งั้นรีล็อกแล้วบัฟหาย!
+		.@now_plus_1day = gettimetick(2) + 86400;
+		#PREMIUM_SERVICE_EXP = .@now_plus_1day;
+		#PREMIUM_SERVICE_ITEM = .@now_plus_1day;
+		#PREMIUM_SERVICE_DEAD = .@now_plus_1day;
+		close3;
+
+	//============================================================
+	// CASE 5 : BUFF SERVICE
+	//============================================================
+
+	case 5:
+		if (Zeny < .@buff_service) { mes "[Premi]"; mes "Zeny ไม่พอนะเจ้าคะ!"; close3; }
+		
+		Zeny -= .@buff_service;
+		sc_start SC_BLESSING, 900000, 7;
+		sc_start SC_INCREASEAGI, 900000, 7;
+		sc_start SC_ANGELUS, 900000, 7;
+		sc_start SC_GLORIA, 900000, 5;
+		sc_start SC_MAGNIFICAT, 900000, 5;
+		close3;
+
+	//============================================================
+	// CASE 6 : BUFF ALL +7
+	//============================================================
+
+	case 6:
+		if (Zeny < .@buff_all7) { mes "[Premi]"; mes "Zeny ไม่พอนะเจ้าคะ!"; close3; }
+		
+		Zeny -= .@buff_all7;
+		sc_start SC_STRFood, 1800000, 7;
+		sc_start SC_AGIFood, 1800000, 7;
+		sc_start SC_VITFood, 1800000, 7;
+		sc_start SC_INTFood, 1800000, 7;
+		sc_start SC_DEXFood, 1800000, 7;
+		sc_start SC_LUKFood, 1800000, 7;
+		close3;
+
+	case 7:
+		close3;
+	}
+	end;
+}

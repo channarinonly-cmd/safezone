@@ -1,0 +1,73 @@
+// =======================================================
+// Punching Bag Core (ระบบเสาทดสอบ DPS)
+// =======================================================
+-	script	PunchingBag_Core	-1,{
+	end;
+	
+OnMyMobDead:
+OnInit:
+	// ป้องกันตัวต้นแบบรันคำสั่ง
+	if (strnpcinfo(0) == "PunchingBag_Core") end;
+
+	// ลบมอนสเตอร์ตัวเก่าของ NPC ตัวนี้ทิ้ง (แก้บัคจากสคริปต์เดิม)
+	killmonster strnpcinfo(4), strnpcinfo(0)+"::OnMyMobDead";
+	
+	// ดึงพิกัดของ NPC ตัวนี้
+	getunitdata(getnpcid(0), .@d);
+	
+	// เสกมอนสเตอร์ทับจุดที่ NPC ยืนอยู่ (ใช้ชื่อแมพและพิกัดแบบอัตโนมัติ)
+	monster strnpcinfo(4), .@d[UNPC_X], .@d[UNPC_Y], "เสาทดสอบ DPS", 1905, 1, strnpcinfo(0)+"::OnMyMobDead";
+	
+	// บันทึกข้อมูลมอนสเตอร์แยกลง Array ตามหมายเลข Duplicate ID
+	.@dupid = atoi(strnpcinfo(2));
+	.gid[.@dupid] = $@mobid[0];
+	.mhp[.@dupid] = strmobinfo(4, 1905);
+	
+	// ตั้งค่าให้มอนสเตอร์กันสถานะผิดปกติ (ป้องกันดาเมจจากพิษ/ไฟไหม้ ที่ทำให้ DPS เพี้ยน)
+	setunitdata .gid[.@dupid], UMOB_MODE, .@d[UMOB_MODE] | 0x4000000 | 0x0200000;
+	
+	// เริ่มลูปจับเวลา
+	initnpctimer;
+	end;
+	
+OnTimer3000:
+	if (strnpcinfo(0) == "PunchingBag_Core") end;
+
+	.@dupid = atoi(strnpcinfo(2));
+	
+	// เช็กว่ามอนสเตอร์ยังมีชีวิตอยู่หรือไม่
+	if (unitexists(.gid[.@dupid])) {
+		getunitdata(.gid[.@dupid], .@d);
+		
+		// คำนวณดาเมจที่ทำได้ใน 3 วินาทีที่ผ่านมา
+		.@diff = (.mhp[.@dupid] - .@d[UMOB_HP]);
+		
+		// ถ้ามีคนตีเสา (ดาเมจมากกว่า 0)
+		if (.@diff > 0) {
+			npctalk "ระบบ : " + callfunc("F_InsertComma", .@diff) + " Damage / 3s.";
+			
+			// ฮีลเสากลับมาเลือดเต็มเหมือนเดิม
+			setunitdata .gid[.@dupid], UMOB_HP, .mhp[.@dupid];
+			specialeffect EF_HEAL;
+		}
+	}
+	// วนลูปจับเวลาใหม่ทุกๆ 3 วินาที
+	initnpctimer;
+	end;
+}
+
+// =======================================================
+// การวางเสาทดสอบ (Deployment)
+// =======================================================
+
+// --- ฝั่ง Morocc ---
+morocc,196,44,0	duplicate(PunchingBag_Core)	PunchingBag#moc1	844
+morocc,203,44,0	duplicate(PunchingBag_Core)	PunchingBag#moc2	844
+morocc,210,44,0	duplicate(PunchingBag_Core)	PunchingBag#moc3	844
+morocc,217,44,0	duplicate(PunchingBag_Core)	PunchingBag#moc4	844
+
+// --- ฝั่ง Prontera (เพิ่มให้เพื่อรองรับระบบ Faction) ---
+prontera,149,82,0	duplicate(PunchingBag_Core)	PunchingBag#prt1	844
+prontera,153,82,0	duplicate(PunchingBag_Core)	PunchingBag#prt2	844
+prontera,157,82,0	duplicate(PunchingBag_Core)	PunchingBag#prt3	844
+prontera,161,82,0	duplicate(PunchingBag_Core)	PunchingBag#prt4	844

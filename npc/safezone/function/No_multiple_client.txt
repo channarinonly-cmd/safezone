@@ -1,0 +1,32 @@
+-	script	No Multiple Client	-1,{
+    end;
+
+OnPCLoadMapEvent:
+	.@src_ip$ = getcharip();
+	.@check = 0;
+	.@num = getmapunits(BL_PC,strcharinfo(3),.@arr_accid[0]);
+	for(.@i=0;.@i<getarraysize(.@arr_accid);.@i++){
+		if(.@src_ip$ == getcharip(.@arr_accid[.@i])){
+			.@check++;
+		}
+	}
+	
+	if(.@check > .max_per_map){
+		warp "izlude",127,105;
+		end;
+	}
+	end;
+
+OnInit:
+
+	// กำหนด max ต่อแมป
+	.max_per_map = 3;
+
+	setarray .maps$[0],"quiz_02" ,"mag_dun02" ,"mag_dun01" ,"tur_dun02" ,"tur_dun03" ,"tur_dun04" ,"juperos_02" ,"ra_san02" ,"ra_san03" ,"ra_san05" ,"aldeg_cas05" ,"prtg_cas03","payg_cas05" ,"alde_dun01" ,"alde_dun02" ,"alde_dun03" ,"alde_dun04" ,"anthell01" ,"anthell02" ,"c_tower1" ,"c_tower2" ,"c_tower3" ,"c_tower4" ,"gef_dun00" ,"gef_dun01" ,"gef_dun02" ,"gef_dun03" ,"gef_fild00" ,"gef_fild01" ,"gef_fild02" ,"gef_fild03" ,"gef_fild04" ,"gef_fild05" ,"gef_fild06" ,"gef_fild07" ,"gef_fild08" ,"gef_fild09" ,"gef_fild10" ,"gef_fild11" ,"gef_fild12" ,"gef_fild13" ,"gef_fild14" ,"gl_cas01" ,"gl_cas02" ,"gl_church" ,"gl_chyard" ,"gl_dun01" ,"gl_dun02" ,"gl_in01" ,"gl_knt01" ,"gl_knt02" ,"gl_prison" ,"gl_prison1" ,"gl_sew01" ,"gl_sew02" ,"gl_sew03" ,"gl_sew04" ,"gl_step" ,"glast_01" ,"in_sphinx1" ,"in_sphinx2" ,"in_sphinx3" ,"in_sphinx4" ,"in_sphinx5","iz_dun00" ,"iz_dun01" ,"iz_dun02" ,"iz_dun03" ,"iz_dun04" ,"mjo_dun01" ,"mjo_dun02" ,"mjo_dun03" ,"mjolnir_01" ,"mjolnir_02" ,"mjolnir_03" ,"mjolnir_04","mjolnir_05" ,"mjolnir_06" ,"mjolnir_07" ,"mjolnir_08" ,"mjolnir_09" ,"mjolnir_11" ,"mjolnir_12" ,"moc_fild01" ,"moc_fild02" ,"moc_fild03" ,"moc_fild07" ,"moc_fild11" ,"moc_fild12" ,"moc_fild13" ,"moc_fild16" ,"moc_fild17" ,"moc_fild18" ,"moc_fild19" ,"moc_pryd01" ,"moc_pryd02" ,"moc_pryd03" ,"moc_pryd04" ,"moc_pryd05" ,"moc_pryd06" ,"moc_prydb1" ,"orcsdun01" ,"orcsdun02" ,"pay_dun00" ,"pay_dun01" ,"pay_dun02" ,"pay_dun03" ,"pay_dun04" ,"pay_fild01" ,"pay_fild02" ,"pay_fild03" ,"pay_fild04" ,"pay_fild05" ,"pay_fild06" ,"pay_fild07" ,"pay_fild08" ,"pay_fild09" ,"pay_fild10" ,"pay_fild11" ,"prt_fild00" ,"prt_fild01" ,"prt_fild02" ,"prt_fild03" ,"prt_fild04" ,"prt_fild05" ,"prt_fild06" ,"prt_fild07" ,"prt_fild08" ,"prt_fild09" ,"prt_fild10" ,"prt_fild11" ,"prt_maze01" ,"prt_maze02" ,"prt_maze03" ,"xmas_dun01" ,"xmas_dun02" ,"xmas_fild01" ,"beach_dun" ,"beach_dun2" ,"beach_dun3" ,"cmd_fild01" ,"cmd_fild02" ,"cmd_fild03" ,"cmd_fild04" ,"cmd_fild05" ,"cmd_fild06" ,"cmd_fild07" ,"cmd_fild08" ,"cmd_fild09" ,"tur_dun01" ,"tur_dun02" ,"tur_dun03" ,"tur_dun04" ,"tur_dun05","tur_dun06";  //เพิ่มแมพ
+	for(.a = 0;.a<getarraysize(.maps$);.a++) {
+		setmapflag .maps$[.a],mf_loadevent;
+	}
+	end;
+}
+
+

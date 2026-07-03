@@ -1,0 +1,366 @@
+###########################################################################
+# Whispering Rain
+###########################################################################
+#
+#     < Location >: < ,ACC_L,ACC_R,SHOES,GARMENT,HEAD_LOW,HEAD_MID,HEAD_TOP,ARMOR,HAND_L,HAND_R,COSTUME_HEAD_TOP,COSTUME_HEAD_MID,COSTUME_HEAD_LOW,COSTUME_GARMENT,AMMO,SHADOW_ARMOR,SHADOW_WEAPON,SHADOW_SHIELD,SHADOW_SHOES,SHADOW_ACC_R,SHADOW_ACC_L >
+#
+###########################################################################
+
+Header:
+  Type: GRADE_EFFECT_DB
+  Version: 1
+
+Body:
+  - Grade: D
+    Position:
+#      - Location: HAND_R
+#        Script: |
+#          bonus bBaseAtk,10;
+#          bonus bMatk,10;
+#          bonus bCritical,3;
+#      - Location: TWO_HAND
+#        Script: |
+#          bonus bBaseAtk,10;
+#          bonus bMatk,10;
+#          bonus bCritical,3;
+#      - Location: HAND_L
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: HEAD_TOP
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: HEAD_MID
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: HEAD_LOW
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: HEAD_TOPMID
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: HEAD_TOPLOW
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: HEAD_MIDLOW
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: HEAD_HEADFULL
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: ARMOR
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: GARMENT
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+#      - Location: SHOES
+#        Script: |
+#          bonus bBaseAtk,-3;
+#          bonus bMatk,-3;
+#          bonus bLongAtkRate,-3;
+      - Location: COSTUME_HEAD_TOP
+        Script: |
+          bonus2 bExpAddRace,RC_All,1;
+          bonus2 bDropAddRace,RC_All,1;
+          bonus bAddMaxWeight,1000;
+      - Location: COSTUME_HEAD_MID
+        Script: |
+          bonus2 bExpAddRace,RC_All,1;
+          bonus2 bDropAddRace,RC_All,1;
+          bonus bAddMaxWeight,1000;
+      - Location: COSTUME_HEAD_LOW
+        Script: |
+          bonus2 bExpAddRace,RC_All,1;
+          bonus2 bDropAddRace,RC_All,1;
+          bonus bAddMaxWeight,1000;
+      - Location: COSTUME_GARMENT
+        Script: |
+          bonus2 bExpAddRace,RC_All,1;
+          bonus2 bDropAddRace,RC_All,1;
+          bonus bAddMaxWeight,1000;
+
+  - Grade: C
+    Position:
+#      - Location: HAND_R
+#        Script: |
+#          bonus bBaseAtk,15;
+#          bonus bMatk,15;
+#          bonus bCritical,5;
+#      - Location: TWO_HAND
+#        Script: |
+#          bonus bBaseAtk,15;
+#          bonus bMatk,15;
+#          bonus bCritical,5;
+#      - Location: HAND_L
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: HEAD_TOP
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: HEAD_MID
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: HEAD_LOW
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: HEAD_TOPMID
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: HEAD_TOPLOW
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: HEAD_MIDLOW
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: HEAD_HEADFULL
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: ARMOR
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: GARMENT
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+#      - Location: SHOES
+#        Script: |
+#          bonus bBaseAtk,-1;
+#          bonus bMatk,-1;
+#          bonus bLongAtkRate,-1;
+      - Location: COSTUME_HEAD_TOP
+        Script: |
+          bonus2 bExpAddRace,RC_All,2;
+          bonus2 bDropAddRace,RC_All,2;
+          bonus bAddMaxWeight,2000;
+      - Location: COSTUME_HEAD_MID
+        Script: |
+          bonus2 bExpAddRace,RC_All,2;
+          bonus2 bDropAddRace,RC_All,2;
+          bonus bAddMaxWeight,2000;
+      - Location: COSTUME_HEAD_LOW
+        Script: |
+          bonus2 bExpAddRace,RC_All,2;
+          bonus2 bDropAddRace,RC_All,2;
+          bonus bAddMaxWeight,2000;
+      - Location: COSTUME_GARMENT
+        Script: |
+          bonus2 bExpAddRace,RC_All,2;
+          bonus2 bDropAddRace,RC_All,2;
+          bonus bAddMaxWeight,2000;
+
+  - Grade: B
+    Position:
+#      - Location: HAND_R
+#        Script: |
+#          bonus bBaseAtk,20;
+#          bonus bMatk,20;
+#          bonus bCritical,7;
+#      - Location: TWO_HAND
+#        Script: |
+#          bonus bBaseAtk,20;
+#          bonus bMatk,20;
+#          bonus bCritical,7;
+#      - Location: HAND_L
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: HEAD_TOP
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: HEAD_MID
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: HEAD_LOW
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: HEAD_TOPMID
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: HEAD_TOPLOW
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: HEAD_MIDLOW
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: HEAD_HEADFULL
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: ARMOR
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: GARMENT
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+#      - Location: SHOES
+#        Script: |
+#          bonus bBaseAtk,3;
+#          bonus bMatk,3;
+#          bonus bLongAtkRate,3;
+      - Location: COSTUME_HEAD_TOP
+        Script: |
+          bonus2 bExpAddRace,RC_All,3;
+          bonus2 bDropAddRace,RC_All,3;
+          bonus bAddMaxWeight,3000;
+      - Location: COSTUME_HEAD_MID
+        Script: |
+          bonus2 bExpAddRace,RC_All,3;
+          bonus2 bDropAddRace,RC_All,3;
+          bonus bAddMaxWeight,3000;
+      - Location: COSTUME_HEAD_LOW
+        Script: |
+          bonus2 bExpAddRace,RC_All,3;
+          bonus2 bDropAddRace,RC_All,3;
+          bonus bAddMaxWeight,3000;
+      - Location: COSTUME_GARMENT
+        Script: |
+          bonus2 bExpAddRace,RC_All,3;
+          bonus2 bDropAddRace,RC_All,3;
+          bonus bAddMaxWeight,3000;
+
+  - Grade: A
+    Position:
+#      - Location: HAND_R
+#        Script: |
+#          bonus bBaseAtk,30;
+#          bonus bMatk,30;
+#          bonus bCritical,10;
+#          bonus bAspd,2;
+#      - Location: TWO_HAND
+#        Script: |
+#          bonus bBaseAtk,30;
+#          bonus bMatk,30;
+#          bonus bCritical,10;
+#          bonus bAspd,2;
+#      - Location: HAND_L
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: HEAD_TOP
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: HEAD_MID
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: HEAD_LOW
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: HEAD_TOPMID
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: HEAD_TOPLOW
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: HEAD_MIDLOW
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: HEAD_HEADFULL
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: ARMOR
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: GARMENT
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+#      - Location: SHOES
+#        Script: |
+#          bonus bBaseAtk,5;
+#          bonus bMatk,5;
+#          bonus bLongAtkRate,5;
+      - Location: COSTUME_HEAD_TOP
+        Script: |
+          bonus2 bExpAddRace,RC_All,5;
+          bonus2 bDropAddRace,RC_All,5;
+          bonus bAddMaxWeight,5000;
+      - Location: COSTUME_HEAD_MID
+        Script: |
+          bonus2 bExpAddRace,RC_All,5;
+          bonus2 bDropAddRace,RC_All,5;
+          bonus bAddMaxWeight,5000;
+      - Location: COSTUME_HEAD_LOW
+        Script: |
+          bonus2 bExpAddRace,RC_All,5;
+          bonus2 bDropAddRace,RC_All,5;
+          bonus bAddMaxWeight,5000;
+      - Location: COSTUME_GARMENT
+        Script: |
+          bonus2 bExpAddRace,RC_All,5;
+          bonus2 bDropAddRace,RC_All,5;
+          bonus bAddMaxWeight,5000;

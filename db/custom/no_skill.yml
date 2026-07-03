@@ -1,0 +1,31 @@
+###########################################################################
+# Whispering Rain
+###########################################################################
+#
+#
+#
+###########################################################################
+
+Header:
+  Type: NO_SKILL_DB
+  Version: 1
+
+Body:
+  - GroupId: 1
+    MapLists:
+      - Map: prontera
+    SkillLists:
+      - Skill: SM_BASH
+      
+      
+
+  - GroupId: 2
+    MapLists:
+      - Map: morocc
+    SkillLists:
+      - Skill: SM_MAGNUM
+  - GroupId: 3
+    MapLists:
+      - Map: payg_cas05
+    SkillLists:
+      - Skill: AL_HOLYLIGHT

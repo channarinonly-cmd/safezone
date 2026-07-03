@@ -1,0 +1,83 @@
+function	script	F_getpositionnameX	{
+	switch( getarg(0,999) ) {
+		case EQI_ACC_L:		return "Accessory 1";
+		case EQI_ACC_R:		return "Accessory 2";
+		case EQI_SHOES:		return "Shoes";
+		case EQI_GARMENT:	return "Robe";
+		case EQI_HEAD_LOW:	return "Head 3";
+		case EQI_HEAD_MID:	return "Head 2";
+		case EQI_HEAD_TOP:	return "Head";
+		case EQI_ARMOR:		return "Body";
+		case EQI_HAND_L:	return "Left hand";
+		case EQI_HAND_R:	return "Right hand";
+		case EQI_COSTUME_HEAD_TOP:	return "Upper Costume Headgear";
+		case EQI_COSTUME_HEAD_MID:	return "Middle Costume Headgear";
+		case EQI_COSTUME_HEAD_LOW:	return "Lower Costume Headgear";
+		case EQI_COSTUME_GARMENT:	return "Costume Garment";
+		case EQI_AMMO:			return "Arrow/Ammunition";
+		case EQI_SHADOW_ARMOR:	return "Shadow Armor";
+		case EQI_SHADOW_WEAPON:	return "Shadow Weapon";
+		case EQI_SHADOW_SHIELD:	return "Shadow Shield";
+		case EQI_SHADOW_SHOES:	return "Shadow Shoes";
+		case EQI_SHADOW_ACC_R:	return "Shadow Accessory 2";
+		case EQI_SHADOW_ACC_L:	return "Shadow Accessory 1";
+		default:
+			return "Unknown";
+	}
+}
+
+function	script	F_CardRemove	{
+disable_items;
+	mes "เลือกอุปกรณ์ที่ต้องการถอดการ์ด";
+	next;
+	setarray .@indices[1], EQI_HEAD_TOP, EQI_ARMOR, EQI_HAND_L, EQI_HAND_R, EQI_GARMENT, EQI_SHOES, EQI_ACC_L, EQI_ACC_R, EQI_HEAD_MID, EQI_HEAD_LOW;
+	for( set .@i,1; .@i <= 10; set .@i,.@i+1 ) {
+		if( getequipisequiped(.@indices[.@i]) )
+			set .@menu$, .@menu$ + F_getpositionnameX(.@indices[.@i]) + " (" + getequipname(.@indices[.@i]) + ")";
+		set .@menu$, .@menu$ + ":";
+	}
+	set .@part, .@indices[ select(.@menu$) ];
+	if(!getequipisequiped(.@part)) {
+		mes "ใส่อุปกรณ์ที่ท่านต้องการถอดการ์ด";
+		close;
+	}
+	if(getequipcardcnt(.@part) == 0) {
+		mes "อุปกรณ์ของท่านไม่ได้ติดตั้งการ์ด";
+		close;
+	}
+	set .@cardcount,getequipcardcnt(.@part);
+	
+	if (!checkweight(1202,(.@cardcount+1))) {
+		mes "ท่านมีไอเท็มมากเกินไป";
+		close;
+	}
+
+	mes "อุปกรณ์ของท่าน";
+	mes "ติดตั้งการ์ด " + .@cardcount + " ใบ";
+	mes "ท่านต้องการที่จะดำเนินการต่อไหม?";
+	next;
+	if(select("ยืนยัน:ยกเลิก") == 2) {
+		close;
+	}
+	if (countitem(3213) < .@cardcount) {
+		mes "ใบถอดการ์ดไม่เพียงพอ";
+		mes "ต้องใช้ใบถอดการ์ด 1 ea";
+		mes "ต่อการ์ด 1 ใบ ที่ต้องการถอด";
+		close;
+	}
+	if (rand(1,100) < 10) {
+		specialeffect2 66;
+		delitem 3213,.@cardcount;
+		successremovecards .@part;
+		mes "ถอดการ์ดสำเร็จ!!!";
+		close;
+	} else {
+		specialeffect2 EF_SUI_EXPLOSION;
+		mes "ถอดการ์ดล้มเหลว!!!";
+		mes "โอเค.. ไอเทมของท่านยังปลอดภัย";
+		mes "เสียใจด้วยน้าาา....";
+		delitem 3213,.@cardcount;
+		close;
+	}
+	close;
+}

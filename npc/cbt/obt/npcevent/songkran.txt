@@ -1,0 +1,417 @@
+/*
+
+// =========================================================================
+// กิจกรรม: เจดีย์ทราย & ตู้กาชาสงกรานต์ 2026 
+// Author: Gemini (rAthena Script Expert)
+// Update: เพิ่มรางวัล Grand Prize (ของแรร์) เป็น 4 ชิ้น
+// =========================================================================
+
+-	script	Songkran_Event_Config	-1,{
+OnInit:
+	$SK_EvYear = 2026;
+	$SK_EvMonth = 4;
+	$SK_EvStartDay = 10;
+	$SK_EvEndDay = 15;
+
+	// ---------------------------------------------------
+	// ตั้งค่าเรทเซิร์ฟเวอร์ (100 = x1, 500 = x5)
+	// ---------------------------------------------------
+	$SK_ExpNormal = 100;	
+	$SK_DropNormal = 100;	
+	
+	$SK_ExpEvent = 150;		
+	$SK_DropEvent = 150;	
+
+	// ---------------------------------------------------
+	// ตั้งค่าเจดีย์ทราย
+	// ---------------------------------------------------
+	$SK_SandItem = 7043;
+	$SK_SandGoal = 5000;
+	$SK_BoostDuration = 3600; // 3600 วินาที = 1 ชม.
+	
+	// ---------------------------------------------------
+	// ตั้งค่าตู้กาชา
+	// ---------------------------------------------------
+	$SK_GachaCoin = 6466;
+	$SK_GachaCost = 20; 
+	$SK_GachaZeny = 5000; 
+	
+	// --- [NEW] รางวัลใหญ่ (Grand Prize) 4 ชิ้น ---
+	$SK_GrandPrize1 = 5770;		
+	$SK_GrandPrize2 = 18882;	
+	$SK_GrandPrize3 = 5325; // เปลี่ยน ID ของแรร์ชิ้นที่ 3 ที่นี่
+	$SK_GrandPrize4 = 5592; // เปลี่ยน ID ของแรร์ชิ้นที่ 4 ที่นี่
+	
+	deletearray $SK_MinorPrizes;
+	setarray $SK_MinorPrizes[0], 502, 601, 504, 505, 578, 501; 
+	
+	deletearray $SK_MobTargets;
+	setarray $SK_MobTargets[0], 1951, 1952, 1953, 1954; 
+
+	if (!$SK_SandPoints) $SK_SandPoints = 0;
+	if (!$SK_BoostActive) $SK_BoostActive = 0;
+	end;
+}
+
+function	script	SK_CheckEventTime	{
+	if (gettime(7) != $SK_EvYear) return 0;
+	if (gettime(6) != $SK_EvMonth) return 0;
+	if (gettime(5) < $SK_EvStartDay || gettime(5) > $SK_EvEndDay) return 0;
+	return 1;
+}
+
+function	script	SK_SetRates	{
+	.@exp_rate = getarg(0);
+	.@drop_rate = getarg(1);
+	setbattleflag("base_exp_rate", .@exp_rate, true);
+	setbattleflag("job_exp_rate", .@exp_rate, true);
+	setbattleflag("item_rate_common", .@drop_rate, true);
+	setbattleflag("item_rate_heal", .@drop_rate, true);
+	setbattleflag("item_rate_use", .@drop_rate, true);
+	setbattleflag("item_rate_equip", .@drop_rate, true);
+	setbattleflag("item_rate_mvp", .@drop_rate, true);
+	return;
+}
+
+// =========================================================================
+// ภารกิจส่วนรวม: ก่อเจดีย์ทราย
+// =========================================================================
+morocc,150,105,3	script	เจดีย์ทรายมหาสนุก	854,{
+	mes "[เจดีย์ทรายมหาสนุก]";
+	if (!SK_CheckEventTime()) { mes "จบกิจกรรมแล้วจ้า!"; close; }
+	
+	if ($SK_BoostActive == 1) {
+		.@left = $SK_BoostEndTime - gettimetick(2);
+		if (.@left < 0) .@left = 0;
+		.@min = .@left / 60;
+		if (.@left % 60 > 0) .@min += 1;
+		mes "^FF0000[SERVER BONUS ACTIVE]^000000";
+		mes "เหลือเวลาโบนัสอีก: ^0055FF" + .@min + " นาที^000000";
+		if (getgmlevel() >= 99) {
+			next;
+			if (select("ปิดหน้าต่าง:[GM] บังคับรีเซ็ตระบบ") == 2) goto GM_Reset;
+		}
+		close;
+	}
+	
+	mes "นำ ^i["+$SK_SandItem+"]^FFFFFF_^000000 ^0055FF"+getitemname($SK_SandItem)+"^000000 มาบริจาค";
+	mes "ยอดปัจจุบัน: ^0055FF" + $SK_SandPoints + " / " + $SK_SandGoal + "^000000";
+	next;
+	.@menu = select("บริจาคทราย:ยกเลิก" + (getgmlevel() >= 99 ? ":[GM] รีเซ็ตระบบทั้งหมด":""));
+	if (.@menu == 2) close;
+	if (.@menu == 3) goto GM_Reset;
+	
+	if (countitem($SK_SandItem) < 1) { mes "ไม่มีทรายจ้า!"; close; }
+	mes "ใส่จำนวนที่ต้องการบริจาค:";
+	input .@amount;
+	if (.@amount < 1 || .@amount > countitem($SK_SandItem)) { mes "จำนวนไม่ถูกต้อง!"; close; }
+	
+	delitem $SK_SandItem, .@amount;
+	$SK_SandPoints += .@amount;
+	specialeffect 24; 
+	if ($SK_SandPoints >= $SK_SandGoal) {
+		$SK_SandPoints = 0; 
+		donpcevent "Songkran_ServerBooster::OnStartBoost";
+	} else {
+		donpcevent "เจดีย์ทรายมหาสนุก::OnUpdateWaitroom";
+	}
+	mes "ขอบคุณจ้า!"; close;
+
+GM_Reset:
+	$SK_SandPoints = 0; $SK_BoostActive = 0; $SK_BoostEndTime = 0;
+	SK_SetRates($SK_ExpNormal, $SK_DropNormal); 
+	stopnpctimer "Songkran_ServerBooster";
+	donpcevent "เจดีย์ทรายมหาสนุก::OnUpdateWaitroom";
+	mes "รีเซ็ตเรียบร้อย!"; close;
+
+OnInit:
+OnUpdateWaitroom:
+	delwaitingroom; 
+	if ($SK_BoostActive == 1) {
+		.@left = $SK_BoostEndTime - gettimetick(2);
+		if (.@left < 0) .@left = 0;
+		.@min = (.@left / 60) + 1;
+		waitingroom "EXP*2 เหลือเวลา " + .@min + " นาที", 0;
+	} else {
+		waitingroom "ก่อเจดีย์: " + $SK_SandPoints + "/" + $SK_SandGoal, 0;
+	}
+	end;
+}
+
+// =========================================================================
+// ภารกิจส่วนตัว: ตู้กาชาสงกรานต์
+// =========================================================================
+morocc,147,105,3	script	ตู้กาชาสงกรานต์	116,{
+	if (!SK_CheckEventTime()) { mes "ตู้ปิดแล้วจ้า!"; close; }
+Gacha_Menu:
+	mes "[ตู้กาชาสงกรานต์]";
+	mes "ใช้ ^i["+$SK_GachaCoin+"]^FFFFFF_^000000 20 ea + 5,000 Zeny";
+	mes "Clean Water: ^0055FF" + countitem($SK_GachaCoin) + "^000000 | Zeny: ^FF0000" + Zeny + "^000000";
+	next;
+	.@menu = select("หมุน 1 ครั้ง:ดูรางวัล:ปิดหน้าต่าง");
+	if (.@menu == 3) close;
+	
+	if (.@menu == 2) {
+		mes "^FF0000[Grand Prize]^000000";
+		mes "- ^i["+$SK_GrandPrize1+"]^FFFFFF_^000000 " + getitemname($SK_GrandPrize1);
+		mes "- ^i["+$SK_GrandPrize2+"]^FFFFFF_^000000 " + getitemname($SK_GrandPrize2);
+		// --- [NEW] แสดงรางวัลแรร์ที่เพิ่มเข้ามา ---
+		mes "- ^i["+$SK_GrandPrize3+"]^FFFFFF_^000000 " + getitemname($SK_GrandPrize3);
+		mes "- ^i["+$SK_GrandPrize4+"]^FFFFFF_^000000 " + getitemname($SK_GrandPrize4);
+		mes " ";
+		mes "^0055FF[รางวัลทั่วไป]^000000";
+		
+		for (.@j = 0; .@j < getarraysize($SK_MinorPrizes); .@j++) {
+			mes "- ^i["+$SK_MinorPrizes[.@j]+"]^FFFFFF_^000000 " + getitemname($SK_MinorPrizes[.@j]);
+		}
+		next; goto Gacha_Menu; 
+	}
+	
+	if (countitem($SK_GachaCoin) < $SK_GachaCost || Zeny < $SK_GachaZeny) { mes "ของไม่พอจ้า!"; next; goto Gacha_Menu; }
+	delitem $SK_GachaCoin, $SK_GachaCost; set Zeny, Zeny - $SK_GachaZeny;
+	.@chance = rand(1, 10000); 
+	
+	// --- [NEW] โอกาสสุ่ม Grand Prize 4 ชิ้น (ชิ้นละ 10 หรือ 0.1%) ---
+	if (.@chance <= 10) { getitem $SK_GrandPrize1, 1; announce "แจ็คพอต! ["+strcharinfo(0)+"] ได้รับ "+getitemname($SK_GrandPrize1), bc_all|bc_blue; } 
+	else if (.@chance <= 20) { getitem $SK_GrandPrize2, 1; announce "แจ็คพอต! ["+strcharinfo(0)+"] ได้รับ "+getitemname($SK_GrandPrize2), bc_all|bc_blue; } 
+	else if (.@chance <= 30) { getitem $SK_GrandPrize3, 1; announce "แจ็คพอต! ["+strcharinfo(0)+"] ได้รับ "+getitemname($SK_GrandPrize3), bc_all|bc_blue; } 
+	else if (.@chance <= 40) { getitem $SK_GrandPrize4, 1; announce "แจ็คพอต! ["+strcharinfo(0)+"] ได้รับ "+getitemname($SK_GrandPrize4), bc_all|bc_blue; } 
+	
+	else if (.@chance <= 240) { getitem $SK_MinorPrizes[0], 1; }
+	else if (.@chance <= 440) { getitem $SK_MinorPrizes[1], 1; }
+	else if (.@chance <= 740) { getitem $SK_MinorPrizes[4], 1; }
+	else if (.@chance <= 2240) { getitem $SK_MinorPrizes[2], 5; }
+	else if (.@chance <= 3740) { getitem $SK_MinorPrizes[3], 5; }
+	else { getitem $SK_MinorPrizes[5], 10; }
+	mes "เรียบร้อย! สุ่มต่อไหม?"; next; goto Gacha_Menu;
+
+OnInit:
+	waitingroom "ตู้กาชาสงกรานต์", 0;
+	end;
+}
+
+// =========================================================================
+// ระบบควบคุมเวลา
+// =========================================================================
+-	script	Songkran_ServerBooster	-1,{
+OnInit:
+	if ($SK_BoostActive == 1) {
+		.@left = $SK_BoostEndTime - gettimetick(2);
+		if (.@left > 0) { SK_SetRates($SK_ExpEvent, $SK_DropEvent); initnpctimer; } 
+		else { $SK_BoostActive = 0; SK_SetRates($SK_ExpNormal, $SK_DropNormal); }
+	}
+	donpcevent "เจดีย์ทรายมหาสนุก::OnUpdateWaitroom";
+	end;
+
+OnStartBoost:
+	if ($SK_BoostActive == 1) end; 
+	$SK_BoostActive = 1; $SK_BoostEndTime = gettimetick(2) + $SK_BoostDuration;
+	SK_SetRates($SK_ExpEvent, $SK_DropEvent);
+	announce "[EVENT] โบนัส EXP/JOB/DROP +50% เริ่มแล้ว พิมพ์ @mi เช็คเรทได้เลย!", bc_all|bc_blue;
+	donpcevent "เจดีย์ทรายมหาสนุก::OnUpdateWaitroom";
+	initnpctimer;
+	end;
+
+OnTimer60000:
+	if ($SK_BoostActive == 0) { stopnpctimer; end; }
+	.@left = $SK_BoostEndTime - gettimetick(2);
+	if (.@left <= 0) {
+		$SK_BoostActive = 0; SK_SetRates($SK_ExpNormal, $SK_DropNormal);
+		announce "[EVENT] หมดเวลาโบนัสแล้ว!", bc_all|bc_blue;
+		donpcevent "เจดีย์ทรายมหาสนุก::OnUpdateWaitroom";
+		stopnpctimer; end;
+	}
+	donpcevent "เจดีย์ทรายมหาสนุก::OnUpdateWaitroom";
+	stopnpctimer; initnpctimer;
+	end;
+}
+
+// =========================================================================
+// ระบบ Drop ไอเทมกิจกรรม (ต้องมี SC_STAMINA)
+// =========================================================================
+-	script	Songkran_MobDrop	-1,{
+OnNPCKillEvent:
+	if (!SK_CheckEventTime()) end;
+
+	.@is_event = 0;
+	for (.@i = 0; .@i < getarraysize($SK_MobTargets); .@i++) {
+		if (killedrid == $SK_MobTargets[.@i]) { .@is_event = 1; break; }
+	}
+	
+	if (!.@is_event) end;
+	if (!getstatus(SC_STAMINA)) { end; }
+
+	if (rand(1, 100) <= 30) { getitem $SK_GachaCoin, 1; dispbottom "ได้รับ Clean Water!"; }
+	if (rand(1, 100) <= 50) { getitem $SK_SandItem, 1; dispbottom "ได้รับ Sand Clump!"; }
+	end;
+}
+
+// =========================================================================
+// จุดเกิดมอนสเตอร์ (ใช้ปุ่ม TAB คั่น 1 ครั้ง ห้ามเว้นวรรคเกิน)
+// =========================================================================
+prt_fild08,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+prt_fild08,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+prt_fild08,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+prt_fild08,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+prt_fild05,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+prt_fild05,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+prt_fild05,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+prt_fild05,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+prt_fild06,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+prt_fild06,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+prt_fild06,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+prt_fild06,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+pay_fild08,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+pay_fild08,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+pay_fild08,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+pay_fild08,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+pay_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+pay_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+pay_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+pay_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+pay_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+pay_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+pay_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+pay_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+pay_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+pay_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+pay_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+pay_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gef_fild07,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gef_fild07,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gef_fild07,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gef_fild07,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gef_fild10,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gef_fild10,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gef_fild10,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gef_fild10,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gef_fild14,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gef_fild14,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gef_fild14,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gef_fild14,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gef_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gef_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gef_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gef_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gef_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gef_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gef_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gef_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gef_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gef_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gef_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gef_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gef_dun03,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gef_dun03,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gef_dun03,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gef_dun03,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+orcsdun01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+orcsdun01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+orcsdun01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+orcsdun01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+orcsdun02,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+orcsdun02,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+orcsdun02,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+orcsdun02,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+moc_fild12,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+moc_fild12,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+moc_fild12,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+moc_fild12,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+moc_fild18,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+moc_fild18,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+moc_fild18,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+moc_fild18,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+moc_pryd01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+moc_pryd01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+moc_pryd01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+moc_pryd01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+moc_pryd02,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+moc_pryd02,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+moc_pryd02,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+moc_pryd02,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+moc_pryd03,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+moc_pryd03,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+moc_pryd03,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+moc_pryd03,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+moc_pryd04,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+moc_pryd04,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+moc_pryd04,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+moc_pryd04,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+in_sphinx1,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+in_sphinx1,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+in_sphinx1,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+in_sphinx1,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+in_sphinx2,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+in_sphinx2,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+in_sphinx2,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+in_sphinx2,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+in_sphinx3,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+in_sphinx3,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+in_sphinx3,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+in_sphinx3,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+iz_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+iz_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+iz_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+iz_dun00,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+iz_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+iz_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+iz_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+iz_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+iz_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+iz_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+iz_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+iz_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+iz_dun03,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+iz_dun03,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+iz_dun03,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+iz_dun03,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+c_tower1,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+c_tower1,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+c_tower1,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+c_tower1,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+c_tower2,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+c_tower2,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+c_tower2,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+c_tower2,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+alde_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+alde_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+alde_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+alde_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+alde_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+alde_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+alde_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+alde_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gl_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gl_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gl_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gl_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gl_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gl_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gl_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gl_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gl_prison,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gl_prison,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gl_prison,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gl_prison,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gl_prison1,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gl_prison1,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gl_prison1,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gl_prison1,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gl_in01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gl_in01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gl_in01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gl_in01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+gl_church,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+gl_church,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+gl_church,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+gl_church,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+mag_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+mag_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+mag_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+mag_dun01,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+mag_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1951,5,5000,0,0
+mag_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1952,5,5000,0,0
+mag_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1953,5,5000,0,0
+mag_dun02,0,0,0,0	monster	เด็กสาดน้ำ	1954,5,5000,0,0
+
+*/

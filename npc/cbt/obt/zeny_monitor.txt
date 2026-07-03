@@ -1,0 +1,247 @@
+// ======================================================
+// NPC: Economic Monitor & Top 10 Ranking (Freeze System - Unlocked Limit)
+// - ลบเมนูภาพรวมเศรษฐกิจออกตามคำสั่ง
+// - แก้ไขระบบอายัดเงินให้พิมพ์เลขได้ไม่จำกัด
+// ======================================================
+
+prontera,164,104,4	script	Economic Monitor#pron	79,{
+
+    .AdminGroup = 99;
+    .BankKey$ = "#BANKVAULT";
+    .CashKey$ = "#CASHPOINTS";
+    .NpcName$ = "[ ^0000FFกระดานเศรษฐกิจเซิร์ฟเวอร์^000000 ]";
+
+    mes .NpcName$;
+    if (getgroupid() >= .AdminGroup) {
+        mes "^FF0000ยินดีต้อนรับท่านผู้ดูแลระบบ (GM)^000000";
+    } else {
+        mes "ยินดีต้อนรับนักผจญภัย!";
+        mes "คุณสามารถตรวจสอบความมั่งคั่งของเซิร์ฟเวอร์ได้ที่นี่";
+    }
+    next;
+    
+main_menu:
+    mes .NpcName$;
+    mes "กรุณาเลือกรายการที่ต้องการตรวจสอบ:";
+    
+    if (getgroupid() >= .AdminGroup) {
+        set .@sel, select(
+            "1. ทำเนียบมหาเศรษฐีธนาคาร",
+            "2. ทำเนียบมหาเศรษฐี Zeny",
+            "3. ทำเนียบเศรษฐีแต้ม CC",
+            "4. [GM] จัดการจดหมายบัค (Mail Bug)",
+            "5. [GM] เช็กยอดรอรับระบบ Bitcoin",
+            "6. [GM] ตรวจสอบธุรกรรมต้องสงสัย (Log Trade/NPC)",
+            "7. [GM] ดึงเงินผู้เล่นไว้ตรวจสอบ (อายัดเงิน)",
+            "0. ปิดหน้าต่าง"
+        );
+        if (.@sel == 8) close;
+    } else {
+        set .@sel, select(
+            "1. ทำเนียบมหาเศรษฐีธนาคาร",
+            "2. ทำเนียบมหาเศรษฐี Zeny",
+            "3. ทำเนียบเศรษฐีแต้ม CC",
+            "0. ปิดหน้าต่าง"
+        );
+        if (.@sel == 4) close;
+    }
+    
+    // --- 1. เศรษฐีธนาคาร ---
+    if (.@sel == 1) {
+        deletearray .@aid[0], 10; deletearray .@aval[0], 10;
+        query_sql("SELECT account_id, CAST(value AS SIGNED) FROM `acc_reg_num` WHERE `key`='"+.BankKey$+"' ORDER BY CAST(value AS SIGNED) DESC LIMIT 10", .@aid, .@aval);
+        mes "^0000FF[ ทำเนียบ 10 อันดับ: เศรษฐีธนาคาร ]^000000";
+        for(set .@i, 0; .@i<getarraysize(.@aid); set .@i, .@i+1) {
+            set .@name$, ""; query_sql("SELECT name FROM `char` WHERE account_id="+.@aid[.@i]+" LIMIT 1", .@name$);
+            if (.@name$ == "") set .@name$, "Unknown";
+            mes (.@i+1)+". "+.@name$+" (^0000FF"+.@aval[.@i]+"^000000 z)";
+        }
+        next; goto main_menu;
+    }
+
+    // --- 2. เศรษฐี Zeny ในตัว ---
+    if (.@sel == 2) {
+        deletearray .@cn$[0], 10; deletearray .@cv[0], 10;
+        query_sql("SELECT name, zeny FROM `char` ORDER BY zeny DESC LIMIT 10", .@cn$, .@cv);
+        mes "^0000FF[ ทำเนียบ 10 อันดับ: เศรษฐี Zeny ]^000000";
+        for(set .@i, 0; .@i<getarraysize(.@cn$); set .@i, .@i+1) { mes (.@i+1)+". "+.@cn$[.@i]+" (^0000FF"+.@cv[.@i]+"^000000 z)"; }
+        next; goto main_menu;
+    }
+
+    // --- 3. เศรษฐี แต้ม CC ---
+    if (.@sel == 3) {
+        deletearray .@aid[0], 10; deletearray .@aval[0], 10;
+        query_sql("SELECT account_id, CAST(value AS SIGNED) FROM `acc_reg_num` WHERE `key`='"+.CashKey$+"' ORDER BY CAST(value AS SIGNED) DESC LIMIT 10", .@aid, .@aval);
+        mes "^0000FF[ ทำเนียบ 10 อันดับ: ผู้ถือครอง CC ]^000000";
+        for(set .@i, 0; .@i<getarraysize(.@aid); set .@i, .@i+1) {
+            set .@name$, ""; query_sql("SELECT name FROM `char` WHERE account_id="+.@aid[.@i]+" LIMIT 1", .@name$);
+            if (.@name$ == "") set .@name$, "Unknown";
+            mes (.@i+1)+". "+.@name$+" (^FF0000"+.@aval[.@i]+"^000000 P)";
+        }
+        next; goto main_menu;
+    }
+
+    // --- ตัดจบถ้าไม่ใช่ GM ---
+    if (getgroupid() < .AdminGroup) close;
+
+    // --- 4. จัดการจดหมายบัค ---
+    if (.@sel == 4) {
+        deletearray .@mid[0], 10; deletearray .@mzeny[0], 10;
+        set .@rc, query_sql("SELECT id, zeny FROM `mail` WHERE zeny > 0 AND (send_name LIKE '%<MSG>%' OR zeny > 100000000) ORDER BY zeny DESC LIMIT 10", .@mid, .@mzeny);
+        if (.@rc <= 0) { mes "ไม่พบจดหมายผิดปกติ"; } else {
+            mes "^FF0000[ ตรวจพบจดหมายต้องสงสัย! ]^000000";
+            for(set .@i, 0; .@i<.@rc; set .@i, .@i+1) { mes "Mail ID: "+.@mid[.@i]+" | ยอดเงิน: ^FF0000"+.@mzeny[.@i]+"^000000 z"; }
+            if (select("1. ลบจดหมายบัคทั้งหมด:2. ย้อนกลับ") == 1) { query_sql("DELETE FROM `mail` WHERE zeny > 0 AND send_name LIKE '%<MSG>%'"); mes "ลบเรียบร้อย!"; }
+        }
+        next; goto main_menu;
+    }
+
+    // --- 5. เช็กยอดรอรับระบบ Bitcoin ---
+    if (.@sel == 5) {
+        set .@p_total, 0; query_sql("SELECT SUM(zeny) FROM `tharakan_bitcoin_payouts` WHERE zeny > 0", .@p_total);
+        mes "^0000FF[ ระบบ Bitcoin Payouts ]^000000"; mes "ยอดค้างจ่าย: ^FF0000"+.@p_total+"^000000 z";
+        next; goto main_menu;
+    }
+
+    // --- 6. ตรวจสอบธุรกรรมต้องสงสัย ---
+    if (.@sel == 6) {
+        mes "ตรวจสอบ Log ธุรกรรมเกิน 5M";
+        mes "N = เสกจาก NPC/Script บัค";
+        mes "T = Trade, V = Vending, M = Mail";
+        set .@log, select("1. ประวัติเงินก้อนโต (แกนกลาง)","2. Jackpot (Custom)","3. Bitcoin (Custom)","0. ย้อนกลับ");
+        if (.@log == 1) {
+            deletearray .@cid[0], 15; deletearray .@amt[0], 15; deletearray .@type$[0], 15;
+            set .@rc, query_sql("SELECT char_id, amount, type FROM `zenylog` WHERE amount >= 500000 AND type IN ('T','V','M','N') ORDER BY time DESC LIMIT 15", .@cid, .@amt, .@type$);
+            if (.@rc <= 0) { mes "ไม่มีรายการในช่วงนี้"; } else {
+                for(set .@i, 0; .@i<.@rc; set .@i, .@i+1) {
+                    set .@name$, ""; query_sql("SELECT name FROM `char` WHERE char_id="+.@cid[.@i], .@name$);
+                    mes "คนรับ:"+.@name$+" | โอนผ่าน: ^FF0000"+.@type$[.@i]+"^000000 | ยอด: ^FF0000"+.@amt[.@i]+"^000000z";
+                }
+            }
+            next; goto main_menu;
+        }
+        if (.@log == 2) {
+            deletearray .@cid[0], 10; deletearray .@amt[0], 10;
+            set .@rc, query_sql("SELECT char_id, zeny FROM `jackpot_zeny_logs` WHERE zeny >= 5000000 ORDER BY id DESC LIMIT 10", .@cid, .@amt);
+            if (.@rc <= 0) { mes "ไม่มีข้อมูล"; } else {
+                for(set .@i, 0; .@i<.@rc; set .@i, .@i+1) { mes "Char ID: "+.@cid[.@i]+" | ได้เงิน: ^FF0000"+.@amt[.@i]+"^000000 z"; }
+            }
+            next; goto main_menu;
+        }
+        if (.@log == 3) {
+            deletearray .@cid[0], 10; deletearray .@amt[0], 10;
+            set .@rc, query_sql("SELECT char_id, zeny FROM `tharakan_bitcoin_log` WHERE zeny >= 5000000 ORDER BY id DESC LIMIT 10", .@cid, .@amt);
+            if (.@rc <= 0) { mes "ไม่มีข้อมูล"; } else {
+                for(set .@i, 0; .@i<.@rc; set .@i, .@i+1) { mes "Char ID: "+.@cid[.@i]+" | ยอด: ^FF0000"+.@amt[.@i]+"^000000 z"; }
+            }
+            next; goto main_menu;
+        }
+        if (.@log == 4) goto main_menu;
+    }
+
+    // --- 7. ระบบอายัดเงิน (Freeze Zeny) ---
+    if (.@sel == 7) {
+        mes "^0000FF[ ระบบอายัดเงินเพื่อตรวจสอบ ]^000000";
+        mes "โปรดพิมพ์ชื่อตัวละครที่ต้องสงสัย:";
+        input .@t_name$;
+        
+        deletearray .@tid[0], 1; deletearray .@tcid[0], 1; deletearray .@tzeny[0], 1; deletearray .@tonline[0], 1;
+        set .@rc, query_sql("SELECT account_id, char_id, zeny, online FROM `char` WHERE name = '"+escape_sql(.@t_name$)+"' LIMIT 1", .@tid, .@tcid, .@tzeny, .@tonline);
+        
+        if (.@rc == 0) {
+            mes "^FF0000ไม่พบชื่อตัวละครนี้ในระบบ!^000000";
+            next; goto main_menu;
+        }
+        
+        set .@tbank, 0; set .@tfrozen, 0;
+        query_sql("SELECT CAST(value AS SIGNED) FROM `acc_reg_num` WHERE `key`='"+.BankKey$+"' AND account_id="+.@tid[0], .@tbank);
+        query_sql("SELECT CAST(value AS SIGNED) FROM `acc_reg_num` WHERE `key`='#FROZEN_ZENY' AND account_id="+.@tid[0], .@tfrozen);
+        
+        next;
+        mes "^0000FF[ ข้อมูลเป้าหมาย ]^000000";
+        mes "ชื่อ: " + .@t_name$;
+        mes "สถานะ: " + (.@tonline[0] ? "^00FF00กำลังออนไลน์^000000" : "^FF0000ออฟไลน์^000000");
+        mes "Zeny ในตัว: ^0000FF" + .@tzeny[0] + "^000000 z";
+        mes "Zeny ธนาคาร: ^0000FF" + .@tbank + "^000000 z";
+        mes "--------------------------";
+        mes "เงินที่ถูกอายัดไว้: ^FF0000" + .@tfrozen + "^000000 z";
+        
+        set .@act, select("1. ดึงเงินในตัวมาอายัด","2. ดึงเงินธนาคารมาอายัด","3. คืนเงินอายัด (เข้าธนาคาร)","0. ย้อนกลับ");
+        if (.@act == 4) goto main_menu;
+        
+        // --- 1. ดึงเงินในตัว ---
+        if (.@act == 1) {
+            mes "ระบุจำนวน Zeny ที่ต้องการอายัด:";
+            mes "^FF0000(ห้ามพิมพ์ลูกน้ำ พิมพ์ตัวเลขล้วนเท่านั้น)^000000";
+            input .@amt$; 
+            set .@amt, atoi(.@amt$);
+            
+            if (.@amt <= 0 || .@amt > .@tzeny[0]) { mes "^FF0000จำนวนเงินไม่ถูกต้อง!^000000"; next; goto main_menu; }
+            
+            if (.@tonline[0]) {
+                if(attachrid(.@tid[0])) {
+                    set Zeny, Zeny - .@amt;
+                    dispbottom "[System]: GM ได้อายัดเงินในตัวคุณจำนวน "+.@amt+" Zeny เพื่อตรวจสอบ";
+                    detachrid;
+                }
+            } else {
+                query_sql("UPDATE `char` SET zeny = zeny - "+.@amt+" WHERE char_id="+.@tcid[0]);
+            }
+            
+            set .@exist, 0;
+            query_sql("SELECT COUNT(*) FROM `acc_reg_num` WHERE `key`='#FROZEN_ZENY' AND account_id="+.@tid[0], .@exist);
+            if (.@exist > 0) { query_sql("UPDATE `acc_reg_num` SET value = CAST(value AS SIGNED) + "+.@amt+" WHERE `key`='#FROZEN_ZENY' AND account_id="+.@tid[0]); } 
+            else { query_sql("INSERT INTO `acc_reg_num` (`account_id`, `key`, `index`, `value`) VALUES ("+.@tid[0]+", '#FROZEN_ZENY', 0, '"+.@amt+"')"); }
+            mes "อายัดสำเร็จ!"; next; goto main_menu;
+        }
+        
+        // --- 2. ดึงเงินในธนาคาร ---
+        if (.@act == 2) {
+            mes "ระบุจำนวน Zeny ที่ต้องการอายัดจากธนาคาร:";
+            mes "^FF0000(ห้ามพิมพ์ลูกน้ำ พิมพ์ตัวเลขล้วนเท่านั้น)^000000";
+            input .@amt$; 
+            set .@amt, atoi(.@amt$);
+            
+            if (.@amt <= 0 || .@amt > .@tbank) { mes "^FF0000จำนวนเงินไม่ถูกต้อง!^000000"; next; goto main_menu; }
+            
+            if (.@tonline[0]) {
+                if(attachrid(.@tid[0])) {
+                    set #BANKVAULT, #BANKVAULT - .@amt;
+                    dispbottom "[System]: GM ได้อายัดเงินในธนาคารคุณจำนวน "+.@amt+" Zeny เพื่อตรวจสอบ";
+                    detachrid;
+                }
+            } else {
+                query_sql("UPDATE `acc_reg_num` SET value = CAST(value AS SIGNED) - "+.@amt+" WHERE `key`='"+.BankKey$+"' AND account_id="+.@tid[0]);
+            }
+            
+            set .@exist, 0;
+            query_sql("SELECT COUNT(*) FROM `acc_reg_num` WHERE `key`='#FROZEN_ZENY' AND account_id="+.@tid[0], .@exist);
+            if (.@exist > 0) { query_sql("UPDATE `acc_reg_num` SET value = CAST(value AS SIGNED) + "+.@amt+" WHERE `key`='#FROZEN_ZENY' AND account_id="+.@tid[0]); } 
+            else { query_sql("INSERT INTO `acc_reg_num` (`account_id`, `key`, `index`, `value`) VALUES ("+.@tid[0]+", '#FROZEN_ZENY', 0, '"+.@amt+"')"); }
+            mes "อายัดสำเร็จ!"; next; goto main_menu;
+        }
+
+        if (.@act == 3) {
+            if (.@tfrozen <= 0) { mes "ไม่มีเงินถูกอายัดไว้ครับ"; next; goto main_menu; }
+            mes "คืนเงินจำนวน ^FF0000"+.@tfrozen+"^000000 z เข้าธนาคาร";
+            if (select("1. ยืนยัน:2. ยกเลิก") == 1) {
+                if (.@tonline[0]) {
+                    if(attachrid(.@tid[0])) {
+                        set #BANKVAULT, #BANKVAULT + .@tfrozen;
+                        dispbottom "[System]: GM คืนเงินอายัดจำนวน "+.@tfrozen+" Zeny เข้าธนาคารแล้ว";
+                        detachrid;
+                    }
+                } else {
+                    query_sql("UPDATE `acc_reg_num` SET value = CAST(value AS SIGNED) + "+.@tfrozen+" WHERE `key`='"+.BankKey$+"' AND account_id="+.@tid[0]);
+                }
+                query_sql("UPDATE `acc_reg_num` SET value = '0' WHERE `key`='#FROZEN_ZENY' AND account_id="+.@tid[0]);
+                mes "คืนเงินสำเร็จ!";
+            }
+            next; goto main_menu;
+        }
+    }
+
+    close;
+}
+
+morocc,181,99,4	duplicate(Economic Monitor#pron)	Economic Monitor#mor	79

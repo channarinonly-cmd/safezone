@@ -1,0 +1,1044 @@
+///////////////////////////////////////////////
+//                                           //
+//          Tharakan Khumtong                //
+//    + Extended Features (Casino 300k,      //
+//      Dynamic Market Quota System,         //
+//      Anti-Exploit Zeny/Weight Trade,      //
+//      Rotten Fish (Midnight Expiry),       //
+//      Real-Time Signboard, Boss,           //
+//      Top 5 Leaderboard, Fast Betting,     //
+//      Weighted Drops & Login Buffs,        //
+//      PVP Fishing Casino & History)        //
+//      *AFK Friendly (No QTE)*              //
+//                                           //
+///////////////////////////////////////////////
+
+-	script	Fish_set	-1,{
+OnInit:
+    set $Fish_rodset01, 2764; /// เบ็ด
+
+    ///////-------------------------------------///
+    setarray $fishing_bait[0], 3523, 3509, 915; 
+    setarray $fishing_bait_price[0], 100, 500, 1000; 
+    setarray $fishing_bait_rate[0], 5, 10, 15; 
+    ///////-------------------------------------///
+
+    /////////////// ค่าประสบการต่อเลเวล //////////////////
+    setarray $ratesFish_LVs[0], 20000, 40000, 80000, 160000, 240000, 480000; 
+}
+
+////////////////////////////////////////////////
+-	shop	Fishing_Shop1	-1,3523:100,3509:500
+-	shop	Fishing_Shop2	-1,2764:50000
+-	shop	Fishing_Shop3	-1,2550:50000,2443:50000
+/////////////////////////////////////////////////
+
+// ==========================================
+// ระบบจัดการตลาดปลา (Hourly Fluctuation & Daily Reset)
+// ==========================================
+-	script	FishMarket_Manager	-1,{
+OnMinute00:
+    set .@change, rand(-1, 2); 
+    set $FishMarket_PriceKG, $FishMarket_PriceKG + .@change;
+    
+    if ($FishMarket_PriceKG < 2) set $FishMarket_PriceKG, 2;
+    if ($FishMarket_PriceKG > 15) set $FishMarket_PriceKG, 15;
+    
+    announce "[พ่อค้าปลา] อัปเดตราคาตลาดชั่วโมงนี้! รับซื้ออยู่ที่กิโลกรัมละ "+$FishMarket_PriceKG+" Zeny ครับ!", bc_all, 0x00FF00;
+    donpcevent "พ่อค้าปลา#01::OnUpdate"; 
+    end;
+
+OnClock0000:
+    set $FishMarket_PriceKG, 7; 
+    set $GlobalFishSoldToday, 0; 
+    announce "[พ่อค้าปลา] เช้าวันใหม่แล้ว! กูให้ราคาเต็ม กิโลละ 7 Zeny รีบเอามาขายก่อนล้นตลาดนะวัยรุ่น!", bc_all, 0x00FF00;
+    donpcevent "พ่อค้าปลา#01::OnUpdate"; 
+    end;
+
+OnInit:
+    if ($FishMarket_PriceKG == 0) set $FishMarket_PriceKG, 7;
+    end;
+}
+
+// ==========================================
+// ระบบจัดการกองกลางคาสิโน (Bank Pool)
+// ==========================================
+-	script	FishCasino_Manager	-1,{
+OnMon0000:
+    set $FishCasino_CurrentPool, 50000000; 
+    announce "[โต๊ะพนันปลา] เสี่ยปอเติมทุนประจำสัปดาห์ 50,000,000 Zeny แล้วจ้า! ขาใหญ่เชิญมาถลุงได้เลย!", bc_all, 0xFFFF00;
+    end;
+
+OnInit:
+    if ($FishCasino_CurrentPool == 0) {
+        set $FishCasino_CurrentPool, 50000000;
+    }
+    end;
+}
+
+// ==========================================
+// ระบบรีเซ็ตบอร์ดและบันทึกแชมป์ประจำสัปดาห์
+// ==========================================
+-	script	FishLeaderboard_Manager	-1,{
+OnMon0000:
+    if ($TopFish_Name$[0] != "") {
+        announce "[เซียนเบ็ดประจำสัปดาห์] ยินดีด้วยกับ "+$TopFish_Name$[0]+" ที่คว้าอันดับ 1 ไปครอง! มารับรางวัลที่บอร์ดตกปลาเมือง Morocc ได้เลย!", bc_all, 0x00FF00;
+    }
+
+    for (set .@i, 0; .@i < 5; set .@i, .@i + 1) {
+        set $LastWeek_TopFish_Name$[.@i], $TopFish_Name$[.@i];
+        set $TopFish_Name$[.@i], "";
+        set $TopFish_Weight[.@i], 0;
+    }
+
+    set $FishingReward_Season, $FishingReward_Season + 1;
+    end;
+}
+
+// ==========================================
+// ระบบอวยยศและแจกบัฟให้แชมป์ตกปลาอันดับ 1 (ไม่มีบัฟชน)
+// ==========================================
+-	script	Fishing_Champ_Buff	-1,{
+OnPCLoginEvent:
+    if (strcharinfo(0) == $LastWeek_TopFish_Name$[0] && $LastWeek_TopFish_Name$[0] != "") {
+        announce "[เซียนเบ็ดอันดับ 1] เทพเจ้าแห่งการตกปลา ["+strcharinfo(0)+"] ได้ล็อกอินเข้าสู่เซิร์ฟเวอร์แล้ว หลีกทางให้ลูกพี่ด้วย!", bc_all, 0x00FFFF;
+        specialeffect2 154; 
+        sleep2 500;
+        specialeffect2 338; 
+        percentheal 100, 100;
+        dispbottom "======================================";
+        dispbottom "[แชมป์] ยินดีต้อนรับ แชมป์เซียนเบ็ดอันดับ 1 ประจำสัปดาห์!";
+        dispbottom "สิทธิพิเศษ: ฟื้นฟู HP/SP เต็ม 100% ทุกครั้งที่เข้าเกม";
+        dispbottom "======================================";
+    }
+    end;
+}
+
+// ==========================================
+// ฟังก์ชันการตกปลาหลัก
+// ==========================================
+function	script	Out_Item_01	{
+runing_start:	
+    setarray .Item1, 3522, 3521, 3520, 3519, 3518, 3517, 3516, 3515, 3514, 3513, 3512, 3511 ,3407,3522, 3521, 3520, 3519, 3518, 3517, 3516, 3515, 3514, 3513, 3512, 3511;
+    setarray .Item3, 756, 757;
+    setarray .Item4, 984, 985 ,3302;
+
+    if(getequipid(EQI_GARMENT) == 2550){set .@deley2, 3;}
+    if(getequipid(EQI_SHOES) == 2443){set .@deley, 3;}
+
+    if(Fish_LVs == 0){ set .@staminama,300; }
+    else if(Fish_LVs == 1){ set .@staminama,280; }
+    else if(Fish_LVs == 2){ set .@staminama,260; }
+    else if(Fish_LVs == 3){ set .@staminama,240; }
+    else if(Fish_LVs == 4){ set .@staminama,220; }
+    else if(Fish_LVs == 5){ set .@staminama,200; }
+
+    if(#fish_stamina < .@staminama){
+        announce "Stamina ไม่พอสำหรับการตกปลา",bc_self,0xff3333;
+        specialeffect2 611; cutin "",255; end;
+    }
+    set #fish_stamina, #fish_stamina - .@staminama;
+    set .@is_sellable_fish, 0; 
+
+    dispbottom "--------------------------";
+    dispbottom "ระดับตกปลา  Level : "+Fish_LVs;
+    dispbottom "ค่าประสบการณ์ EXP  : "+fish_rod+"/"+$ratesFish_LVs[(Fish_LVs)];
+    dispbottom "ใช้ Stamina: "+.@staminama;
+    dispbottom "เวลาในการตก  : "+(10-.@deley-.@deley2-LVdeley)+" วินาที";
+    dispbottom "เหยื่อที่ใช้  : "+getitemname(fishing_bait_rate);
+    dispbottom "โอกาสตกได้  : "+(fishing_bait_rate_set+LVrates)+"%";
+    dispbottom "--------------------------";
+
+runing:
+    disable_items;
+    if (checkweight(1201,1) == 0) { mes "[ระบบป้องกัน] : คุณมีไอเทมมากเกินไป เอาไปเก็บก่อน!"; end; }
+    if (MaxWeight - Weight < 10000) { mes "[ระบบป้องกัน] : คุณมีน้ำหนักมากเกินไป!"; end; }
+    if (getequipid(EQI_ACC_R) != $Fish_rodset01) { cutin "",255; dispbottom "[ระบบป้องกัน] : ไม่มีเบ็ดในมือ ใส่เบ็ดก่อน "; end; }
+
+    announce "Stamina ของคุณ : "+#fish_stamina, bc_self, 0x3399FF;
+    
+    if (countitem(fishing_bait_rate) < 1) {
+        dispbottom " !!!... ต้องมีเหยื่อปลาอย่างน้อย 1 อัน ....!!! "; 
+        cutin "",255; end; 
+    }
+
+    set .@fishdown,(10-.@deley-.@deley2-LVdeley);
+    cutin "2013_summer_fish_1",4;
+    sleep2 200;
+    cutin "2013_summer_fish_2",4;
+    progressbar "ffff00", .@fishdown;
+    cutin "2013_summer_fish_3",4;
+    sleep2 100;
+
+    if ((fishing_bait_rate_set+LVrates) >= rand(100)) goto Good;
+
+    cutin "2013_summer_fish_1",4;
+    delitem fishing_bait_rate,1;
+    sleep2 100;
+    dispbottom "-----------------------------";
+    
+    if(50 <= rand(100)) {
+        cutin "2013_summer_fish_5",4;
+        dispbottom "Etc. Item";	
+        getitem .Item1[rand(getarraysize(.Item1))],1;
+        set .@is_sellable_fish, 1;
+        goto Calculate_Weight_And_Bet;
+    } else {
+        cutin "2013_summer_fish_6",4;
+        specialeffect2 611;	
+        goto EXP_Gain;
+    }
+
+Good:
+    set .@hour, gettime(3);
+    set .@bonus_rate, 0;
+    if (.@hour >= 0 && .@hour <= 3) {
+        dispbottom "[Golden Time] กระแสน้ำปั่นป่วน โอกาสตกได้ของแรร์เพิ่มขึ้น!";
+        set .@bonus_rate, 50; 
+    }
+
+    delitem fishing_bait_rate,1;
+    sleep2 100;
+    cutin "2013_summer_fish_5",4;
+    specialeffect2 610;
+
+    set .@roll, rand(1000) + .@bonus_rate;
+
+    if (.@roll >= 995) {
+        announce "!!! ฉิบหายแล้ววว !!! ["+strcharinfo(0)+"] ตกได้พญาปลาดุก (Kraken) กลางเมือง Morocc !!!",bc_all,0xff0000;
+        monster "morocc",150,150,"พญาปลาดุกกลายพันธุ์",1086,1;
+        cutin "2013_summer_fish_6",4;
+        end; 
+    } 
+    else if (.@roll >= 930 && .@roll < 995) {
+        dispbottom "สุดยอด! คุณได้ Rare Item!";
+        getitem .Item4[rand(getarraysize(.Item4))], 1;
+        goto Calculate_Weight_And_Bet;
+    }
+    else if (.@roll >= 900 && .@roll < 930) {
+        dispbottom "Common Item!";
+        getitem .Item3[rand(getarraysize(.Item3))],1;
+        goto Calculate_Weight_And_Bet;
+    }
+    else if (.@roll >= 800 && .@roll < 900) {
+        dispbottom "Semi Rare Item!";
+        set .@sub_roll, rand(10000);
+        if (.@sub_roll < 3000) { getitem 3302, 1; dispbottom "ได้รับ (เหรียญ)  1 ea.!"; }
+        else if (.@sub_roll < 5045) { getitem 3302, 1; dispbottom "ได้รับ (เหรียญ) 1 ea.!"; }
+        else if (.@sub_roll < 7045) { getitem 984, 1; dispbottom "ได้รับ Oridecon 1 ea.!"; }
+        else if (.@sub_roll < 9045) { getitem 985, 1; dispbottom "ได้รับ Elunium 1 ea.!"; }
+        else if (.@sub_roll < 9295) { getitem 617, 1; dispbottom "ได้รับ Old Blue Box 1 ea.!"; }
+        else if (.@sub_roll < 9540) { getitem 12208, 1; dispbottom "ได้รับ Miracle Medicine 1 ea.!"; }
+        else if (.@sub_roll < 9790) { getitem 616, 1; dispbottom "ได้รับ Old Card Album 1 ea.!"; }
+        else if (.@sub_roll < 9815) { getitem 3407, 1; dispbottom "แจ็คพอตแตก! ได้รับ Gold 5 ea.!"; }
+        else { getitem 3302, 10; dispbottom "ได้รับ ปลา (เหรียญ) 10 ตัว!"; }
+        goto Calculate_Weight_And_Bet;
+    }
+    else if (.@roll >= 500 && .@roll < 800) {
+        dispbottom "ได้รับ ปลาสำหรับชั่งขาย!";
+        getitem .Item1[rand(getarraysize(.Item1))],1;
+        set .@is_sellable_fish, 1;
+        goto Calculate_Weight_And_Bet;
+    }
+    else {
+        cutin "2013_summer_fish_6",4;
+        specialeffect2 69;
+        announce "!!!... ปลาหลุด ...!!!",bc_self,0xff3333;
+        goto EXP_Gain;
+    }
+
+Calculate_Weight_And_Bet:
+    set .@today, (gettime(8)*10000) + (gettime(7)*100) + gettime(5); 
+    if (#MyFishCatchDay != .@today) {
+        if (#MyFishWeight > 0) {
+            dispbottom "[ระบบ] ปลาเก่าของคุณเน่าเสียหมดแล้ว (ข้ามวัน)! น้ำหนักถูกรีเซ็ตใหม่เป็น 0";
+            set #MyFishWeight, 0;
+            set #MyFishCount, 0;
+            setarray .@fish_del, 3511, 3512, 3513, 3514, 3515, 3516, 3517, 3518, 3519, 3520, 3521, 3522;
+            for (set .@d, 0; .@d < getarraysize(.@fish_del); .@d++) {
+                if (countitem(.@fish_del[.@d]) > 0) delitem .@fish_del[.@d], countitem(.@fish_del[.@d]);
+            }
+        }
+        set #MyFishCatchDay, .@today; 
+    }
+
+    set .@weight_chance, rand(10000); 
+    if (.@weight_chance < 6000) { set .@fish_weight, rand(10, 300); } 
+    else if (.@weight_chance < 8500) { set .@fish_weight, rand(301, 700); } 
+    else if (.@weight_chance < 9500) { set .@fish_weight, rand(701, 1000); } 
+    else if (.@weight_chance < 9950) { set .@fish_weight, rand(1001, 1350); } 
+    else { set .@fish_weight, rand(1351, 1500); }
+
+    set .@weight_str$, (.@fish_weight / 10) + "." + (.@fish_weight % 10);
+    dispbottom "ปลาตัวนี้หนัก: " + .@weight_str$ + " KG!";
+
+    if (.@is_sellable_fish == 1) {
+        set #MyFishWeight, #MyFishWeight + .@fish_weight;
+        set #MyFishCount, #MyFishCount + 1;
+    }
+
+    if (.@fish_weight > $TopFish_Weight[4]) {
+        for (set .@i, 0; .@i < 5; set .@i, .@i + 1) {
+            if (.@fish_weight > $TopFish_Weight[.@i]) {
+                for (set .@j, 4; .@j > .@i; set .@j, .@j - 1) {
+                    set $TopFish_Weight[.@j], $TopFish_Weight[.@j - 1];
+                    set $TopFish_Name$[.@j], $TopFish_Name$[.@j - 1];
+                }
+                set $TopFish_Weight[.@i], .@fish_weight;
+                set $TopFish_Name$[.@i], strcharinfo(0);
+                if (.@i == 0) announce "สถิติใหม่เซิร์ฟเวอร์! ["+strcharinfo(0)+"] ตกปลาได้น้ำหนักสูงสุด "+.@weight_str$+" KG!!",bc_all,0x00FF00;
+                else dispbottom "ยินดีด้วย! ปลาน้ำหนักของคุณติดอันดับที่ "+(.@i+1)+" ของเซิร์ฟเวอร์!";
+                break;
+            }
+        }
+    }
+
+    if (#BetFish_Zeny > 0) {
+        set .@is_odd, .@fish_weight % 2;
+        if ((.@is_odd == 1 && #BetFish_Type == 1) || (.@is_odd == 0 && #BetFish_Type == 0)) {
+            set Zeny, Zeny + (#BetFish_Zeny * 2);
+            set $FishCasino_CurrentPool, $FishCasino_CurrentPool - #BetFish_Zeny; 
+            dispbottom "[โต๊ะพนันปลา] ยินดีด้วย! ปลาน้ำหนัก "+.@weight_str$+" KG ("+((.@is_odd)?"คี่":"คู่")+") ชนะเดิมพัน รับเงิน "+(#BetFish_Zeny*2)+" Zeny!";
+            announce "[โต๊ะพนันปลา] เชี่ยยยย! ["+strcharinfo(0)+"] แม่งดวงแข็งจัด ตกได้ปลา "+.@weight_str$+" KG ("+((.@is_odd)?"คี่":"คู่")+") ปล้นเงินเสี่ยปอไป "+(#BetFish_Zeny*2)+" Zeny! พรุ่งนี้โต๊ะกูจะแดกอะไรวะเนี่ย!", bc_all, 0x00FF00;
+        } else {
+            set $FishCasino_CurrentPool, $FishCasino_CurrentPool + #BetFish_Zeny; 
+            dispbottom "[โต๊ะพนันปลา] เสียใจด้วย ปลาน้ำหนัก "+.@weight_str$+" KG ("+((.@is_odd)?"คี่":"คู่")+") โดนแดกเรียบ!";
+            set .@lose_msg, rand(1, 3);
+            if (.@lose_msg == 1) {
+                announce "[โต๊ะพนันปลา] หวานเจี๊ยบบบ! ["+strcharinfo(0)+"] แทงพลาด! ปลาออกเลข "+((.@is_odd)?"คี่":"คู่")+" เสี่ยปอแดกเรียบ "+#BetFish_Zeny+" Zeny ขอบคุณสำหรับค่าอาบอบนวดนะไอ้หนุ่ม!", bc_all, 0xFF3333;
+            } else if (.@lose_msg == 2) {
+                announce "[โต๊ะพนันปลา] 55555 โดนแดกดิครับ! ["+strcharinfo(0)+"] ปลาหนัก "+.@weight_str$+" KG ("+((.@is_odd)?"คี่":"คู่")+") บริจาคเงินให้โต๊ะไป "+#BetFish_Zeny+" Zeny อ่อนแอก็แพ้ไปนะน้องนะ!", bc_all, 0xFF3333;
+            } else {
+                announce "[โต๊ะพนันปลา] หมูตู้มาอีกแล้ว! ["+strcharinfo(0)+"] แทงผิดฝั่ง ปลาเป็นเลข "+((.@is_odd)?"คี่":"คู่")+" โดนเสี่ยปอดูดเงินไป "+#BetFish_Zeny+" Zeny กลับไปดูดนมแม่ไป๊!", bc_all, 0xFF3333;
+            }
+        }
+        set #BetFish_Zeny, 0; 
+    }
+
+EXP_Gain:
+    set fish_rod, fish_rod + rand(5);
+    dispbottom "ค่าประสบการณ์  : " + fish_rod + "/" + $ratesFish_LVs[(Fish_LVs)] + " EXP";
+
+    if(fish_rod >= $ratesFish_LVs[(Fish_LVs)]) { 
+        if (Fish_LVs == 0) { set Fish_LVs, 1; set LVdeley, 1; }
+        else if (Fish_LVs == 1) { set Fish_LVs, 2; set LVdeley, 2; }
+        else if (Fish_LVs == 2) { set Fish_LVs, 3; set LVdeley, 2; set LVrates, 1; }
+        else if (Fish_LVs == 3) { set Fish_LVs, 4; set LVdeley, 2; set LVrates, 2; }
+        else if (Fish_LVs == 4) { set Fish_LVs, 5; set LVdeley, 2; set LVrates, 3; }
+        dispbottom "ระดับตกปลา  Level : LV "+Fish_LVs;
+        dispbottom "เวลาในการตกลดลง  : "+LVdeley+" วินาที";
+        if(LVrates > 0) dispbottom "โอกาสตกได้เพิ่มขึ้น  : "+LVrates+"%";
+        specialeffect2 568; specialeffect2 518;
+    }
+
+    dispbottom "-----------------------------";
+    sleep2 300;
+    cutin "",255;
+    goto runing_start;
+}
+
+// ==========================================
+// เมนูเลือกเหยื่อ
+// ==========================================
+function	script	#Fish_1	{
+    disable_items;
+    if (checkweight(1201,1) == 0) { mes "[ระบบป้องกัน] : คุณมีไอเทมมากเกินไป เอาไปเก็บก่อน!"; end; }
+    if (MaxWeight - Weight < 10000) { mes "[ระบบป้องกัน] : คุณมีน้ำหนักมากเกินไป!"; end; }
+
+    .@menu$ = "";
+    for (.@i = 0; .@i < getarraysize($fishing_bait); .@i++) {
+        if (countitem($fishing_bait[.@i])) { 
+            .@menu$ += getitemname($fishing_bait[.@i]) + " [" + $fishing_bait_rate[.@i] +" %]:";
+            .@item_id[.@menu_size] = $fishing_bait[.@i];
+            set .@rate, $fishing_bait_rate[.@i];
+            .@item_index[.@menu_size] = .@i;
+            .@menu_size++;
+        }
+    }
+
+    if (!.@menu_size) {
+        mes " !!!... ต้องมีเหยื่อปลาอย่างน้อย 1 อัน ....!!!"; end;
+    } else {
+        mes "เลือกเหยื่อที่จะใช้"; next;
+    }
+
+    .@choice = select(.@menu$);
+    if (.@choice > .@menu_size) end;
+
+    .@selected_item[0] = .@item_id[.@choice-1];
+    .@selected_index[0] = .@item_index[.@choice-1];
+
+    mes "คุณเลือก: " + getitemname(.@selected_item[0]);
+    mes "Rate พื้นฐาน: " + .@rate +" %";
+    set .@add_item, .@selected_item[0];
+
+    mes "ต้องการทำรายการต่อหรือไม่!";
+    next;
+    switch(select("- ยืนยัน","- ยกเลิก")) {
+        case 1:
+            set fishing_bait_rate, .@add_item;
+            set fishing_bait_rate_set, .@rate;
+            if(getequipid(EQI_ACC_R) != $Fish_rodset01){cutin "",255; dispbottom "[ระบบป้องกัน] : ไม่มีเบ็ดในมือ ใส่เบ็ดก่อน "; close;}
+            close2;
+            callfunc "Out_Item_01";
+            end;
+        case 2:
+            close;
+    }
+}
+
+// ==========================================
+// จุดตกปลา NPCs (Morocc)
+// ==========================================
+morocc,152,135,3	script	จุดตกปลา#01	1158,{ callfunc "#Fish_1","morocc",152,135; }
+morocc,152,132,3	script	จุดตกปลา#02	1158,{ callfunc "#Fish_1","morocc",152,132; }
+morocc,152,129,3	script	จุดตกปลา#03	1158,{ callfunc "#Fish_1","morocc",152,129; }
+morocc,152,126,4	script	จุดตกปลา#04	1158,{ callfunc "#Fish_1","morocc",152,126; }
+morocc,152,123,4	script	จุดตกปลา#05	1158,{ callfunc "#Fish_1","morocc",152,123; }
+morocc,150,135,3	script	จุดตกปลา#06	1158,{ callfunc "#Fish_1","morocc",150,135; }
+morocc,150,132,3	script	จุดตกปลา#07	1158,{ callfunc "#Fish_1","morocc",150,132; }
+morocc,150,129,3	script	จุดตกปลา#08	1158,{ callfunc "#Fish_1","morocc",150,129; }
+morocc,150,126,4	script	จุดตกปลา#09	1158,{ callfunc "#Fish_1","morocc",150,126; }
+morocc,150,123,4	script	จุดตกปลา#10	1158,{ callfunc "#Fish_1","morocc",150,123; }
+morocc,148,135,3	script	จุดตกปลา#11	1158,{ callfunc "#Fish_1","morocc",148,135; }
+morocc,148,132,3	script	จุดตกปลา#12	1158,{ callfunc "#Fish_1","morocc",148,132; }
+morocc,148,129,3	script	จุดตกปลา#13	1158,{ callfunc "#Fish_1","morocc",148,129; }
+morocc,148,126,4	script	จุดตกปลา#14	1158,{ callfunc "#Fish_1","morocc",148,126; }
+morocc,148,123,4	script	จุดตกปลา#15	1158,{ callfunc "#Fish_1","morocc",148,123; }
+morocc,146,135,3	script	จุดตกปลา#16	1158,{ callfunc "#Fish_1","morocc",146,135; }
+morocc,146,132,3	script	จุดตกปลา#17	1158,{ callfunc "#Fish_1","morocc",146,132; }
+morocc,146,129,3	script	จุดตกปลา#18	1158,{ callfunc "#Fish_1","morocc",146,129; }
+morocc,146,126,4	script	จุดตกปลา#19	1158,{ callfunc "#Fish_1","morocc",146,126; }
+morocc,150,123,4	script	จุดตกปลา#20	1158,{ callfunc "#Fish_1","morocc",150,123; }
+
+// ==========================================
+// อุปกรณ์ตกปลา (เช่า / ซื้อ) [Anti-Exploit Zeny/Overflow]
+// ==========================================
+morocc,154,138,4	script	อุปกรณ์ตกปลา#2	700,{
+L_Main:
+    mes "เลือกบริการ"; 
+    switch(select("- เหยื่อ:- เช่าเบ็ด:- แลกอุปกรณ์:- ยกเลิก")) {
+        case 1: close2; callshop "Fishing_Shop1",1; end;
+        case 2: close2; callshop "Fishing_Shop2",1; end;
+        case 3: close2; callshop "Fishing_Shop3",1; end;
+        case 4: close;
+    }
+
+OnInit:
+    waitingroom "อุปกรณ์ตกปลา",0;
+    if(npcshopattach("Fishing_Shop1") == 0) debugmes "[Dynamic] Failed attaching shop 1";
+    if(npcshopattach("Fishing_Shop2") == 0) debugmes "[Dynamic] Failed attaching shop 2";
+    if(npcshopattach("Fishing_Shop3") == 0) debugmes "[Dynamic] Failed attaching shop 3";
+    end;
+
+OnBuyItem:
+    set .@total_cost, 0;
+    for (set @i, 0; @i < getarraysize(@bought_nameid); set @i, @i + 1) {
+        if (@bought_quantity[@i] <= 0 || @bought_quantity[@i] > 30000) {
+            dispbottom "[ระบบป้องกัน] จำนวนไอเทมผิดปกติ!";
+            end;
+        }
+
+        if (@bought_nameid[@i] == 2764 || @bought_nameid[@i] == 2443 || @bought_nameid[@i] == 2550) {
+            set .@total_cost, .@total_cost + (50000 * @bought_quantity[@i]);
+        } else {
+            if (@bought_nameid[@i] == $fishing_bait[0]) { set .@num, 0; }
+            else if (@bought_nameid[@i] == $fishing_bait[1]) { set .@num, 1; }
+            else if (@bought_nameid[@i] == $fishing_bait[2]) { set .@num, 2; }
+            set .@total_cost, .@total_cost + ($fishing_bait_price[.@num] * @bought_quantity[@i]);
+        }
+    }
+
+    if (.@total_cost <= 0 || Zeny < .@total_cost) {
+        dispbottom "[ระบบป้องกัน] คุณมีเงิน Zeny ไม่พอสำหรับการซื้อไอเทม!";
+        deletearray @bought_nameid[0], getarraysize(@bought_nameid);
+        deletearray @bought_quantity[0], getarraysize(@bought_quantity);
+        end;
+    }
+
+    set Zeny, Zeny - .@total_cost;
+
+    for (set @i, 0; @i < getarraysize(@bought_nameid); set @i, @i + 1) {
+        if (@bought_nameid[@i] == 2764 || @bought_nameid[@i] == 2443 || @bought_nameid[@i] == 2550) {
+            rentitem2 @bought_nameid[@i], 86400, 1, 0, 0, 0, 0, 0, 0;
+        } else {
+            mes "รายการ :  " + getitemname(@bought_nameid[@i]) + " " + @bought_quantity[@i] + "ea";
+            getitem @bought_nameid[@i], @bought_quantity[@i];
+        }
+    }
+    mes "รวมเป็นเงินทั้งหมด : " + .@total_cost + " Zeny";
+    deletearray @bought_nameid[0], getarraysize(@bought_nameid);
+    deletearray @bought_quantity[0], getarraysize(@bought_quantity);
+    end;
+}
+
+// ==========================================
+// พ่อค้าปลา (รับซื้อปลาแบบชั่งกิโล + ระบบโควต้า)
+// ==========================================
+morocc,139,139,3	script	พ่อค้าปลา#01	-1,{
+    set .@today, (gettime(8)*10000) + (gettime(7)*100) + gettime(5); 
+    if (#MyFishCatchDay != .@today && #MyFishWeight > 0) {
+        mes "[พ่อค้าปลา]";
+        mes "เหม็นชิบหาย! ปลาของมึงมันค้างคืนจนเน่าหมดแล้ว เอาไปทิ้งเลยไป๊ กูไม่รับซื้อ!!";
+        set #MyFishWeight, 0;
+        set #MyFishCount, 0;
+        set #MyFishCatchDay, .@today;
+        
+        setarray .@fish_del, 3511, 3512, 3513, 3514, 3515, 3516, 3517, 3518, 3519, 3520, 3521, 3522;
+        for (set .@d, 0; .@d < getarraysize(.@fish_del); .@d++) {
+            if (countitem(.@fish_del[.@d]) > 0) delitem .@fish_del[.@d], countitem(.@fish_del[.@d]);
+        }
+        close;
+    }
+
+    mes "[พ่อค้าปลา]";
+    mes "ว่าไงวัยรุ่น... วันนี้สล็อตแดกกูอีกแล้ว";
+    mes "กูรับซื้อปลาแบบชั่งกิโลรวมนะ ราคาหน้าแพตอนนี้คือ:";
+    mes "^FF0000กิโลกรัมละ " + $FishMarket_PriceKG + " Zeny^000000";
+    next;
+    
+    setarray .@fish_ids, 3511, 3512, 3513, 3514, 3515, 3516, 3517, 3518, 3519, 3520, 3521, 3522;
+    set .@total_fish_count, 0;
+
+    mes "^009900[รายการปลาที่คุณมี]^000000";
+    for (set .@i, 0; .@i < getarraysize(.@fish_ids); set .@i, .@i + 1) {
+        set .@amt, countitem(.@fish_ids[.@i]);
+        if (.@amt > 0) {
+            mes "^0000FF- " + getitemname(.@fish_ids[.@i]) + " : " + .@amt + " ตัว^000000";
+            set .@total_fish_count, .@total_fish_count + .@amt;
+        }
+    }
+    
+    if (.@total_fish_count == 0) {
+        mes "-------------------------";
+        mes "[พ่อค้าปลา]";
+        mes "มึงไม่มีปลาซักตัวเลยนี่หว่า จะเอาอะไรมาชั่งโลวะ อย่ามากวนตีนกู!";
+        close;
+    }
+
+    // --- Anti-Exploit ---
+    set .@stored_kg, #MyFishWeight / 10;
+    set .@caught_count, #MyFishCount;
+    set .@total_kg, 0;
+
+    if (.@caught_count <= 0) { 
+        set .@total_kg, .@total_fish_count * 5; 
+    } else if (.@total_fish_count < .@caught_count) {
+        set .@total_kg, (.@stored_kg * .@total_fish_count) / .@caught_count;
+    } else if (.@total_fish_count > .@caught_count) {
+        set .@total_kg, .@stored_kg + ((.@total_fish_count - .@caught_count) * 5);
+    } else {
+        set .@total_kg, .@stored_kg;
+    }
+    
+    if (.@total_kg <= 0) set .@total_kg, 1; 
+
+    mes "-------------------------";
+    mes "จำนวนปลาทั้งหมด: ^0000FF" + .@total_fish_count + " ตัว^000000";
+    mes "น้ำหนักสุทธิ: ^FF0000" + .@total_kg + " กิโลกรัม^000000";
+    mes "รวมเป็นเงิน: ^009900" + (.@total_kg * $FishMarket_PriceKG) + " Zeny^000000";
+    next;
+
+    switch(select("ขายสิรออะไร!","ไม่ขายเว้ย ราคาน้อยไป")) {
+        case 1:
+            set .@current_fish_count, 0;
+            for (set .@i, 0; .@i < getarraysize(.@fish_ids); set .@i, .@i + 1) {
+                set .@current_fish_count, .@current_fish_count + countitem(.@fish_ids[.@i]);
+            }
+            if (.@current_fish_count < .@total_fish_count) {
+                mes "[พ่อค้าปลา]";
+                mes "เฮ้ย! ปลาหายไปไหนวะ แอบเอาไปเก็บในคลังเหรอ ไอ้ขี้โกง!!";
+                close;
+            }
+
+            for (set .@i, 0; .@i < getarraysize(.@fish_ids); set .@i, .@i + 1) {
+                if (countitem(.@fish_ids[.@i]) > 0) {
+                    delitem .@fish_ids[.@i], countitem(.@fish_ids[.@i]);
+                }
+            }
+            
+            set #MyFishWeight, 0; 
+            set #MyFishCount, 0;
+            
+            set .@total_z, .@total_kg * $FishMarket_PriceKG;
+            set Zeny, Zeny + .@total_z;
+            
+            set .@PrevSold, $GlobalFishSoldToday;
+            set $GlobalFishSoldToday, $GlobalFishSoldToday + .@total_kg;
+            
+            set .@DropCount, ($GlobalFishSoldToday / 5000) - (.@PrevSold / 5000);
+            
+            if (.@DropCount > 0) {
+                set $FishMarket_PriceKG, $FishMarket_PriceKG - .@DropCount;
+                if ($FishMarket_PriceKG < 1) set $FishMarket_PriceKG, 1;
+            }
+
+            donpcevent "พ่อค้าปลา#01::OnUpdate"; 
+
+            mes "[พ่อค้าปลา]";
+            mes "แจ่มมาก! เอานี่เงินของมึง ^009900" + .@total_z + " Zeny^000000";
+            if (.@DropCount > 0) {
+                mes "โห คนเอามาขายทะลุโควต้า 5,000 โลแล้ว ราคากูต้องปรับลงหน่อยละนะ...";
+            } else {
+                mes "โชคดีวัยรุ่น...";
+            }
+            close;
+            
+        case 2:
+            mes "[พ่อค้าปลา]";
+            mes "ตามใจมึงละกัน แต่ระวังดองปลาจนข้ามคืนแล้วเน่าหมดนะเว้ย!";
+            close;
+    }
+
+OnUpdate:
+    delwaitingroom; 
+    waitingroom "ราคาปลา: "+$FishMarket_PriceKG+" Z/Kg", 0; 
+    end;
+
+OnTimer11000:
+    npcspeed 120;
+    set .@runx,rand(179,189);
+    set .@runy,rand(66,78);
+    npcwalkto .@runx,.@runy;
+    end;
+
+OnInit:
+    sleep 4000;
+    setunitdata getnpcid(0), UNPC_CLASS, 10;
+    setunitdata getnpcid(0), UNPC_SEX, 1;
+    setunitdata getnpcid(0), UNPC_HAIRCOLOR, 2;
+    setunitdata getnpcid(0), UNPC_HAIRSTYLE, 3;
+    setunitdata getnpcid(0), UNPC_HEADTOP, 41;
+    showscript "พ่อค้าปลา : รับซื้อปลาชั่งกิโลจ้า รีบมาก่อนราคาตก...";
+    donpcevent "พ่อค้าปลา#01::OnUpdate";
+    initnpctimer;
+    end;
+}
+
+// ==========================================
+// โต๊ะพนันปลา (High-Low / Even-Odd) แบบแทงเดี่ยว 10k - 300k
+// ==========================================
+morocc,157,135,3	script	โต๊ะพนันปลาเถื่อน	110,{
+    mes "[เสี่ยปอ โต๊ะพนันปลา]";
+    mes "ว่าไงวัยรุ่น อยากลุ้นเสียวๆ ระหว่างรอปลากินเบ็ดมั้ยล่ะ?";
+    mes "แทงมาเลยว่า ^ff0000ปลาตัวต่อไปที่มึงตกขึ้นมาได้^000000 น้ำหนักมันจะเป็น ^0000FFเลขคู่^000000 หรือ ^FF0000เลขคี่^000000";
+    mes "ไม่ต้องรอของแรร์ ตกได้ตัวอะไรก็ลุ้นได้เลย!";
+    next;
+
+    if (#BetFish_Zeny > 0) {
+        mes "มึงแทงค้างไว้อยู่! แทงฝั่ง: " + ((#BetFish_Type)?"^FF0000คี่^000000":"^0000FFคู่^000000");
+        mes "ยอดเงิน: " + #BetFish_Zeny + " Zeny";
+        mes "รีบไปตกปลาซะ ตกได้ตัวนึงก็รู้ผลละ!";
+        close;
+    }
+
+    mes "หน้าตักโต๊ะตอนนี้เหลือ: ^FF0000" + $FishCasino_CurrentPool + " Zeny^000000";
+    if ($FishCasino_CurrentPool < 1000) {
+        mes "แต่วันนี้โต๊ะกูโดนแดกจนทุนหมดแล้วว่ะ รออาทิตย์หน้าค่อยมาใหม่นะไอ้หนุ่ม";
+        close;
+    }
+
+    switch(select("แทงเลขคู่ (Even)","แทงเลขคี่ (Odd)","- ไม่เล่นโว้ย กลัวเสีย")) {
+        case 1: set .@bet_type, 0; break;
+        case 2: set .@bet_type, 1; break;
+        case 3: close;
+    }
+
+    mes "[เสี่ยปอ โต๊ะพนันปลา]";
+    mes "จะแทงเท่าไหร่ล่ะวัยรุ่น?";
+    mes "โต๊ะกูรับแทงตั้งแต่ ^FF000010,000^000000 ถึง ^FF0000300,000^000000 Zeny เท่านั้นนะเว้ย!";
+    next;
+    input .@bet_amount;
+
+    if (.@bet_amount < 10000 || .@bet_amount > 300000) {
+        mes "กูบอกว่า 10,000 ถึง 300,000 Zeny ไง! ตาบอดเรอะ!";
+        close;
+    }
+    
+    if (.@bet_amount > $FishCasino_CurrentPool) {
+        mes "ใจเย็นวัยรุ่น! โต๊ะกูเหลือทุนแค่ " + $FishCasino_CurrentPool + " Zeny";
+        mes "ถัามึงแทงยอดนี้แล้วถูก กูก็ไม่มีจ่ายดิ ลดเบทลงหน่อย!";
+        close;
+    }
+
+    if (Zeny < .@bet_amount) {
+        mes "เงินไม่พอไอ้สัส อย่ามาทำเนียน!";
+        close;
+    }
+
+    set Zeny, Zeny - .@bet_amount;
+    set #BetFish_Zeny, .@bet_amount;
+    set #BetFish_Type, .@bet_type;
+
+    announce "[โต๊ะพนันปลา] ขาใหญ่ ["+strcharinfo(0)+"] วางเดิมพัน "+.@bet_amount+" Zeny ทายว่าปลาจะเป็นเลข "+((#BetFish_Type)?"คี่":"คู่")+"! มารอลุ้นกัน!", bc_all, 0xFFFF00;
+
+    mes "เรียบร้อย! กูรับบิลมึงแล้ว ยอด ^009900"+.@bet_amount+" Zeny^000000";
+    mes "ทายฝั่ง: " + ((#BetFish_Type)?"^FF0000คี่^000000":"^0000FFคู่^000000");
+    mes "รีบไปตกปลาซะ ตกปลาขึ้นมาได้ปุ๊บ ระบบจะเคลียร์เงินให้มึงปั๊บ!";
+    close;
+}
+
+// ==========================================
+// บอร์ดจัดอันดับปลา (Top 5) + รับรางวัล
+// ==========================================
+morocc,155,135,4	script	บอร์ดจัดอันดับปลา	837,{
+    mes "^009900[ทำเนียบเซียนเบ็ด - ปลาใหญ่ที่สุด 5 อันดับ]^000000";
+    mes "รายละเอียดการแข่งขัน:";
+    mes "เฟ้นหาผู้ที่ตกได้ปลา ^FF0000ตัวใหญ่ที่สุด^000000 ประจำสัปดาห์!";
+    mes "ตัดรอบแจกรางวัลทุกคืนวันอาทิตย์ (เข้าเช้าวันจันทร์เวลา 00:00 น.)";
+    mes "----------------------------------";
+    mes "^0000FF[ของรางวัลสำหรับผู้ชนะ]^000000";
+    mes "อันดับ 1: ^009900" + getitemname(7619) + " 5ea^000000, ^009900" + getitemname(7620) + " 5ea^000000";
+    mes "          และ ^FF0000สิทธิพิเศษบัฟเซียนเบ็ด 24 ชม.^000000";
+    mes "อันดับ 2: ^009900" + getitemname(7619) + " 3ea^000000, ^009900" + getitemname(7620) + " 3ea^000000";
+    mes "อันดับ 3: ^009900" + getitemname(7619) + " 2ea^000000, ^009900" + getitemname(7620) + " 2ea^000000";
+    mes "----------------------------------";
+    for (set .@i, 0; .@i < 5; set .@i, .@i + 1) {
+        if ($TopFish_Weight[.@i] > 0) {
+            set .@w_str$, ($TopFish_Weight[.@i] / 10) + "." + ($TopFish_Weight[.@i] % 10);
+            mes "^0000FFอันดับ "+(.@i+1)+":^000000 " + $TopFish_Name$[.@i] + " (^FF0000" + .@w_str$ + " KG^000000)";
+        } else {
+            mes "^0000FFอันดับ "+(.@i+1)+":^000000 - ยังไม่มีผู้สร้างสถิติ -";
+        }
+    }
+    mes "----------------------------------";
+    next;
+    
+    switch(select("- ดูอันดับสัปดาห์ที่แล้ว","- รับรางวัลแชมป์สัปดาห์ที่แล้ว","- ปิดหน้าต่าง")) {
+        case 1:
+            mes "^009900[แชมป์เก่าสัปดาห์ที่แล้ว]^000000";
+            for (set .@i, 0; .@i < 5; set .@i, .@i + 1) {
+                if ($LastWeek_TopFish_Name$[.@i] != "") {
+                    mes "^0000FFอันดับ "+(.@i+1)+":^000000 " + $LastWeek_TopFish_Name$[.@i];
+                } else {
+                    mes "^0000FFอันดับ "+(.@i+1)+":^000000 - ไม่มีข้อมูล -";
+                }
+            }
+            close;
+
+        case 2:
+            set .@my_rank, -1;
+            for (set .@i, 0; .@i < 5; set .@i, .@i + 1) {
+                if (strcharinfo(0) == $LastWeek_TopFish_Name$[.@i]) {
+                    set .@my_rank, .@i;
+                    break;
+                }
+            }
+
+            if (.@my_rank == -1) {
+                mes "เสียใจด้วย! สัปดาห์ที่แล้วคุณไม่ติดอันดับ Top 5 พยายามใหม่สัปดาห์นี้นะ!";
+                close;
+            }
+
+            if (.@my_rank > 2) {
+                mes "เสียใจด้วยวัยรุ่น! ของรางวัลเขามีแจกให้แค่คนติดอันดับ 1 ถึง 3 เท่านั้นเว้ย อันดับ "+(.@my_rank + 1)+" อดนะจ๊ะ!";
+                close;
+            }
+
+            if (#FishingReward_Claimed == $FishingReward_Season) {
+                mes "คุณมารับรางวัลของรอบนี้ไปแล้วนะ จะมาเนียนรับซ้ำไม่ได้!";
+                close;
+            }
+
+            set #FishingReward_Claimed, $FishingReward_Season; 
+
+            mes "สุดยอดเซียนเบ็ด! คุณคือ ^FF0000อันดับที่ "+(.@my_rank + 1)+"^000000 ของสัปดาห์ที่แล้ว!";
+            mes "รับรางวัลของคุณไปเลย!";
+            
+            if (.@my_rank == 0) { 
+                getitem 7619, 5;
+                getitem 7620, 5;
+                announce "[บอร์ดตกปลา] "+strcharinfo(0)+" เข้ามารับรางวัลแชมป์อันดับ 1 ของสัปดาห์ที่แล้วเรียบร้อย!", bc_all, 0xFFFF00;
+            } else if (.@my_rank == 1) { 
+                getitem 7619, 3;
+                getitem 7620, 3;
+            } else if (.@my_rank == 2) { 
+                getitem 7619, 2;
+                getitem 7620, 2;
+            }
+            close;
+
+        case 3:
+            close;
+    }
+}
+
+// ==========================================
+// คนหาปลา (แอบบอกสูตรลับ)
+// ==========================================
+morocc,165,133,5	script	คนหาปลา#01	968,{
+    mes "[คนหาปลา]";
+    mes "ควยไรไอ้สัส "+strcharinfo(0)+" ?";
+    next;
+    mes "[คนหาปลา]";
+    mes "จะมาหลอกถามกูอะดิ ว่ากุใช้เหยื่ออะไร ทำไมปลามันเเดกดีใช่มั้ยละ 555 ";
+    next;
+    mes "[คนหาปลา]";
+    mes "มึงนี่มันร้าย กูจะบอกให้ก็ได้";
+    mes "มึงรู้จัก Monster ที่มีชื่อว่า ^0000FFPupa^000000 มั้ยล่ะ";
+    mes "มันจะดรอป Item ชิ้นนึง ที่มีชื่อว่า^ff0000 Chrysalis^000000";
+    mes "^i[915]^FFFFFF_^000000";
+    next;
+    mes "[คนหาปลา]";
+    mes "ถ้ามึงใช้เหยื่อที่กุบอก ปลามันจะมีโอกาสแดก^ff0000 15% ^000000";
+    mes "มึงรู้เเล้วอย่าไปบอกใครนะ ^ff0000ไอ้หน้าหมี!!^000000";
+    next;
+    switch(select("ไปกันเลย","รอก่อน")) {
+        case 1: warp "prt_fild06", 150, 150; end;
+        case 2: close;
+    }
+OnTimer15000:
+OnInit:
+    sleep 2000;
+    showscript "คนหาปลา : ตกได้อีกแล้วโว้ย";
+    sleep 4000;
+    showscript "คนหาปลา : กูให้เหยื่อแตกต่างจากพวกมึง ปลาเลยแดกดีกว่า";
+    initnpctimer;
+    end;
+}
+
+// ==========================================
+// ใช้เหรียญตกปลา (แลกของ)
+// ==========================================
+morocc,165,137,4	script	ใช้เหรียญตกปลา	100,{
+    mes "[รับแลกเหรียญตกปลา]";
+    mes "คุณต้องการแลกอะไร?";
+    next;
+    switch(select("แลกหมวกเทพ (20 ชิ้น)","- ยกเลิก")) {
+        case 1:
+            if (countitem(3302) < 20) {
+                mes "คุณมี ^i[3302]^FFFFFF_^000000 ไม่พอ (ต้องการ 20)";
+                close;
+            }
+            delitem 3302,20;
+            getitem 8110005,1; 
+            mes "คุณได้รับ ^i[8110005]^FFFFFF_^000000 เรียบร้อยแล้ว!";
+            close;
+        case 2:
+            mes "แล้วพบกันใหม่!";
+            close;
+    }
+}
+
+// ==========================================
+// ระบบบ่อนเซียนเบ็ด (แบบแทงกลุ่ม โควต้า 300k, รวมกระดานสถิติ, แก้บั๊กแสงNPC)
+// ==========================================
+morocc,159,144,3	script	เซียนเบ็ด#บ่อน	114,{
+    mes "[เซียนเบ็ด]";
+    
+    // ระบบทวงบิลเงินค้าง
+    if (#MyNpcFish_Round > 0 && #MyNpcFish_Round < $NpcFish_Round) {
+        mes "โอ้โห! เดี๋ยวก่อน มึงมีบิลค้างของรอบที่ " + #MyNpcFish_Round + " นี่หว่า!";
+        set .@result, $NpcFish_History[#MyNpcFish_Round % 1000];
+        
+        set .@win_amt, 0;
+        if (.@result == 1 && #MyNpcFish_Even > 0) {
+            set .@win_amt, #MyNpcFish_Even * 2;
+        } else if (.@result == 2 && #MyNpcFish_Odd > 0) {
+            set .@win_amt, #MyNpcFish_Odd * 2;
+        }
+
+        if (.@win_amt > 0) {
+            set Zeny, Zeny + .@win_amt;
+            soundeffect "levelup.wav", 0;
+            mes "รอบนั้นปลาออกฝั่ง " + ((.@result==1)?"^0000FFคู่^000000":"^FF0000คี่^000000") + " มึงแทงถูก!";
+            mes "รับเงินกงสีไปเลย ^009900" + .@win_amt + " Zeny^000000!";
+        } else {
+            mes "รอบนั้นปลาออกฝั่ง " + ((.@result==1)?"^0000FFคู่^000000":"^FF0000คี่^000000") + " แต่มึงแทงผิด!";
+            mes "โดนโต๊ะแดกเรียบสิครับไอ้หนุ่ม โอกาสหน้ามาแก้มือใหม่นะ!";
+        }
+        
+        set #MyNpcFish_Round, 0;
+        set #MyNpcFish_Even, 0;
+        set #MyNpcFish_Odd, 0;
+        close;
+    }
+
+    if ($NpcFish_State == 1) {
+        mes "ชู่ววว! เงียบก่อน บ่อนปิดชั่วคราว กูกำลังเย่อกับปลา! รอแทงรอบหน้านะวัยรุ่น!";
+        close;
+    }
+
+    set .@max_cap, 300000; 
+
+    mes "ว่าไงวัยรุ่น บ่อนเซียนเบ็ดเปิดรับแทงแล้ว!";
+    mes "กติกา: ทายว่าปลาที่กูตกได้จะเป็น ^0000FFคู่^000000 หรือ ^FF0000คี่^000000";
+    mes "^FF0000** เงื่อนไขเหล็ก: ยอดรวมทั้ง 2 ฝั่งต้องเต็ม "+.@max_cap+" Zeny กูถึงจะทำงาน! **^000000";
+    mes "----------------------------------";
+    mes "รอบปัจจุบัน: ตาที่ " + $NpcFish_Round;
+    mes "โควต้าฝั่งคู่ (Even): ^0000FF" + $NpcFish_TotalEven + "^000000 / " + .@max_cap;
+    mes "โควต้าฝั่งคี่ (Odd): ^FF0000" + $NpcFish_TotalOdd + "^000000 / " + .@max_cap;
+    mes "----------------------------------";
+    
+    if (#MyNpcFish_Round == $NpcFish_Round) {
+        mes "ยอดเดิมพันปัจจุบันของมึงในตานี้:";
+        if (#MyNpcFish_Even > 0) mes "- แทงฝั่งคู่ไปแล้ว: ^0000FF" + #MyNpcFish_Even + "^000000 Zeny";
+        if (#MyNpcFish_Odd > 0) mes "- แทงฝั่งคี่ไปแล้ว: ^FF0000" + #MyNpcFish_Odd + "^000000 Zeny";
+        mes "----------------------------------";
+    }
+    next;
+
+    switch(select("- แทงฝั่งคู่ (Even)","- แทงฝั่งคี่ (Odd)","- ดูกระดานสถิติย้อนหลัง","- ไม่เล่นดีกว่า")) {
+        case 1: set .@side, 1; break;
+        case 2: set .@side, 2; break;
+        case 3: 
+            mes "[กระดานสถิติเซียนเบ็ด]";
+            mes "รวบรวมผลการตกปลา 10 ตาล่าสุด";
+            mes "----------------------------------";
+            if ($NpcFish_Round <= 1) {
+                mes "ยังไม่มีประวัติการตกปลาเลยว่ะ รอเปิดซิงตาแรกอยู่!";
+            } else {
+                set .@start, $NpcFish_Round - 1;
+                set .@end, $NpcFish_Round - 10;
+                if (.@end < 1) set .@end, 1;
+
+                for (set .@i, .@start; .@i >= .@end; set .@i, .@i - 1) {
+                    set .@res, $NpcFish_History[.@i % 1000];
+                    if (.@res == 1) set .@res_str$, "^0000FFคู่ (Even)^000000";
+                    else if (.@res == 2) set .@res_str$, "^FF0000คี่ (Odd)^000000";
+                    else set .@res_str$, "^777777ไม่ทราบผล^000000"; 
+                    mes "รอบที่ " + .@i + " : ออก " + .@res_str$;
+                }
+            }
+            mes "----------------------------------";
+            mes "กำลังเปิดรับแทงรอบปัจจุบันตาที่: ^009900" + $NpcFish_Round + "^000000";
+            close;
+        case 4: close;
+    }
+
+    if (#MyNpcFish_Round == $NpcFish_Round) {
+        if (.@side == 1 && #MyNpcFish_Odd > 0) {
+            mes "[เซียนเบ็ด]";
+            mes "เฮ้ย! ตานี้มึงลงเงินฝั่ง ^FF0000คี่ (Odd)^000000 ไปแล้วนี่หว่า!";
+            mes "จะมาแทงกั๊กสองฝั่งไม่ได้โว้ย! เป็นนักเลงใจต้องถึง เลือกฝั่งไหนต้องสุดฝั่งนั้นดิ!";
+            close;
+        }
+        else if (.@side == 2 && #MyNpcFish_Even > 0) {
+            mes "[เซียนเบ็ด]";
+            mes "เฮ้ย! ตานี้มึงลงเงินฝั่ง ^0000FFคู่ (Even)^000000 ไปแล้วนี่หว่า!";
+            mes "จะมาแทงกั๊กสองฝั่งไม่ได้โว้ย! เป็นนักเลงใจต้องถึง เลือกฝั่งไหนต้องสุดฝั่งนั้นดิ!";
+            close;
+        }
+    }
+
+    if (.@side == 1) set .@remain_view, .@max_cap - $NpcFish_TotalEven;
+    else set .@remain_view, .@max_cap - $NpcFish_TotalOdd;
+
+    if (.@remain_view <= 0) {
+        mes "[เซียนเบ็ด]";
+        mes "โควต้าฝั่งนี้เต็ม " + .@max_cap + " Zeny ไปแล้วว่ะ! ฝั่งนี้ไม่รับเพิ่มแล้ว!";
+        close;
+    }
+
+    mes "[เซียนเบ็ด]";
+    mes "มึงเลือกฝั่ง " + ((.@side==1)?"^0000FFคู่^000000":"^FF0000คี่^000000");
+    mes "โควต้าฝั่งนี้เหลือให้แทงสมทบได้อีก: ^009900" + .@remain_view + " Zeny^000000";
+    mes "จะสมทบทุนเพิ่มเท่าไหร่?";
+    next;
+    
+    switch(select("10,000 Zeny","50,000 Zeny","100,000 Zeny","แทงปิดยอดที่เหลือ ("+.@remain_view+" Z)","- ยกเลิก")) {
+        case 1: set .@bet, 10000; break;
+        case 2: set .@bet, 50000; break;
+        case 3: set .@bet, 100000; break;
+        case 4: set .@bet, .@remain_view; break; 
+        case 5: close;
+    }
+
+    if ($NpcFish_State == 1) {
+        mes "[เซียนเบ็ด]";
+        mes "ช้าไปไอ้หนุ่ม! มีคนตัดหน้าแทงปิดยอดไปแล้ว กูกำลังเย่อปลาอยู่!";
+        close;
+    }
+
+    if (.@side == 1) set .@real_remain, .@max_cap - $NpcFish_TotalEven;
+    else set .@real_remain, .@max_cap - $NpcFish_TotalOdd;
+
+    if (.@bet > .@real_remain) {
+        mes "[เซียนเบ็ด]";
+        mes "ช้าไป! มีคนตัดหน้าแทงสมทบฝั่งนี้ไปแล้ว ยอดตอนนี้รับได้อีกแค่ " + .@real_remain + " Zeny เท่านั้น!";
+        close;
+    }
+
+    if (Zeny < .@bet) {
+        mes "[เซียนเบ็ด]";
+        mes "เงินไม่พอ! ไปหาเงินมาก่อนไป๊อย่ามาเนียน!";
+        close;
+    }
+
+    set Zeny, Zeny - .@bet;
+    soundeffect "cash.wav", 0;
+    
+    if (#MyNpcFish_Round != $NpcFish_Round) {
+        set #MyNpcFish_Round, $NpcFish_Round;
+        set #MyNpcFish_Even, 0;
+        set #MyNpcFish_Odd, 0;
+    }
+
+    if (.@side == 1) {
+        set $NpcFish_TotalEven, $NpcFish_TotalEven + .@bet;
+        set #MyNpcFish_Even, #MyNpcFish_Even + .@bet;
+    } else {
+        set $NpcFish_TotalOdd, $NpcFish_TotalOdd + .@bet;
+        set #MyNpcFish_Odd, #MyNpcFish_Odd + .@bet;
+    }
+
+    mes "[เซียนเบ็ด]";
+    mes "รับบิลเรียบร้อย! เติมยอดฝั่ง " + ((.@side==1)?"^0000FFคู่^000000":"^FF0000คี่^000000") + " ไป ^009900" + .@bet + " Zeny^000000";
+
+    if ($NpcFish_TotalEven >= .@max_cap && $NpcFish_TotalOdd >= .@max_cap) {
+        set $NpcFish_State, 1; 
+        mes "----------------------------------";
+        mes "เฮ้ย!! ยอดเงินเต็มโควต้า " + .@max_cap + " Zeny ทั้ง 2 ฝั่งแล้ว!!";
+        mes "ได้เวลาสนุกแล้วสิ! กูจะเริ่มตกปลาเดี๋ยวนี้แหละ ลุยยยย!!";
+        close2;
+        donpcevent "เซียนเบ็ด#บ่อน::OnStartProcess";
+        end;
+    }
+
+    mes "ยอดอัปเดตแล้ว... ถ้าโควต้ายังไม่เต็ม มึงจะกลับมากดเติมเงินฝั่งมึงอีกกี่รอบก็ได้นะเว้ย!";
+    close;
+
+// --- ระบบประมวลผลแอนิเมชันตอนงัดปลา (แก้ไขบั๊กแสง Player Not Attached) ---
+OnStartProcess:
+    announce "[บ่อนเซียนเบ็ด] กิ๊ง!! ยอดเงินกองรวมเต็ม 300,000 Zeny ทั้งสองฝั่งแล้ว! เซียนเบ็ดเริ่มเหวี่ยงเบ็ดลงน้ำแล้ว!!", bc_all, 0xFFFF00;
+    specialeffect 568; 
+    soundeffectall "quest_ok.wav", 0, "morocc"; 
+    sleep 2500;
+    
+    announce "[บ่อนเซียนเบ็ด] เซียนเบ็ด: ฮึ่มมมม!! ปลากินเบ็ดแล้ว! ตัวนี้แม่งแรงเยอะชิบหาย!!", bc_all, 0xFF9900;
+    specialeffect 611; 
+    sleep 4000; 
+    specialeffect 69; 
+    sleep 2000;
+    
+    announce "[บ่อนเซียนเบ็ด] เซียนเบ็ด: ย้ากกกกกกก!! ขึ้นมาสิวะไอ้หน้าหมี!!!", bc_all, 0xFF3333;
+    specialeffect 610; 
+    soundeffectall "attack.wav", 0, "morocc"; 
+    sleep 2000;
+    
+    set .@weight, rand(10, 1500); 
+    set .@weight_str$, (.@weight / 10) + "." + (.@weight % 10);
+    set .@is_odd, .@weight % 2; 
+    
+    if (.@is_odd == 0) set .@result_side, 1;
+    else set .@result_side, 2;
+
+    set $NpcFish_History[$NpcFish_Round % 1000], .@result_side;
+
+    announce "[บ่อนเซียนเบ็ด] ตู้ม!! เซียนเบ็ดงัดปลาขึ้นมาได้หนัก "+.@weight_str$+" KG ผลคือเลข "+((.@result_side==1)?"คู่ (Even)":"คี่ (Odd)")+"!! ฝั่งที่ชนะเดินมารับเงินรางวัลที่หน้าบ่อนด่วน!", bc_all, 0x00FF00;
+    specialeffect 154; 
+    soundeffectall "levelup.wav", 0, "morocc"; 
+
+    set $NpcFish_Round, $NpcFish_Round + 1;
+    set $NpcFish_TotalEven, 0;
+    set $NpcFish_TotalOdd, 0;
+    set $NpcFish_State, 0;
+    end;
+
+OnInit:
+    if ($NpcFish_Round == 0) set $NpcFish_Round, 1;
+    set $NpcFish_TotalEven, 0;
+    set $NpcFish_TotalOdd, 0;
+    set $NpcFish_State, 0;
+    end;
+}

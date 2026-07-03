@@ -1,0 +1,212 @@
+//-------------------------------------------
+// ระบบขุดแร่ (Mining System) By Tharakan + ChatGPT 2025
+// รองรับ rAthena 2025
+//-------------------------------------------
+
+//-------------------------------------------
+// [ตั้งค่าระบบ]
+//-------------------------------------------
+-	script	Miner_setting#1	-1,{
+
+OnInit:
+	// ตั้งค่าเครื่องมือขุด
+	set $miner_dig,3507;        // Item ID เครื่องมือขุด
+	set $miner_digH,1;          // 1 = จอบมือเดียว | 2 = จอบสองมือ
+
+	// โหมด Stamina
+	set $miner_stamina,1;       // 1=เปิด 0=ปิด
+
+	// โหมดก่อกวนคนขุด
+	set $miner_boomb,0;         // 1=เปิด 0=ปิด
+	set $miner_itemboomb,3500;  // Item ID สำหรับก่อกวน
+
+	// โหมดสุ่ม Cash(bitcoin) — ไม่แก้ไขโค้ยย!
+	set $miner_Cash,1;          // 1=เปิด 0=ปิด
+	set $miner_ratesCash,2;     // %โอกาสได้ Cash (ใช้ตามเดิม)
+	set $miner_random,3;        // Cash สูงสุดที่สุ่มได้
+
+	// ค่าประสบการณ์ (EXP) ต่อการขุด
+	set $Mining_ratesexp,1;     
+	set $ratesMining_LV1,10000; 
+	set $ratesMining_LV2,30000;
+	set $ratesMining_LV3,50000;
+	set $ratesMining_LV4,100000;
+	set $ratesMining_LV5,200000;
+
+	// EXP แบบสุ่ม
+	set $Mining_exprandom,1;        // 0=ปิด 1=เปิด
+	set $Mining_ratesexprandom,20;  // EXP สุ่มสูงสุด
+
+	// ค่าการเสีย Stamina ต่อเลเวล
+	set $miner_stamina_0,300;
+	set $miner_stamina_1,280;
+	set $miner_stamina_2,250;
+	set $miner_stamina_3,230;
+	set $miner_stamina_4,200;
+	set $miner_stamina_5,150;
+
+	// ไอเท็มขยะ (หินราคาต่ำ)
+	set $ratesMining_nonitem,6635;
+
+	// ตัวนี้จะไม่ใช้แล้ว (เก็บไว้ไม่เป็นไร)
+	set $ratesMining_getitem,5;
+
+	// สุ่มตำแหน่งก้อนแร่
+	set $Mining_randomlocation,1;  // 1=เปิด 0=ปิด
+
+
+	// ===== อัตราดรอปหลักแบบ one-roll =====
+	// หินทั่วไป 50% (ตายตัวตามที่ขอ)
+	set $mining_nonitem_rate, 70; // หน่วยเป็น %
+
+	// ---- Pool รายกอง (10 กอง) ----
+	// ใช้ไอเท็ม 4 ชิ้นเดิม: 6000223, 6000224, 6000225, 6000226
+	// อัตรารายชิ้น: 10%, 8%, 6%, 5%  (รวม 29%)
+
+	// default (สำรอง)
+	setarray $mining_item_ids_default[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_default[0], 5,      5,       5,       5;
+	set $mining_item_size_default, 4;
+
+	// pay1..pay10 (ตั้งเท่ากันทั้ง 10 กอง)
+	setarray $mining_item_ids_pay1[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay1[0], 5,      5,       5,       5;
+	set $mining_item_size_pay1, 4;
+
+	setarray $mining_item_ids_pay2[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay2[0], 5,      5,       5,       5;
+	set $mining_item_size_pay2, 4;
+
+	setarray $mining_item_ids_pay3[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay3[0], 5,      5,       5,       5;
+	set $mining_item_size_pay3, 4;
+
+	setarray $mining_item_ids_pay4[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay4[0], 5,      5,       5,       5;
+	set $mining_item_size_pay4, 4;
+
+	setarray $mining_item_ids_pay5[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay5[0], 5,      5,       5,       5;
+	set $mining_item_size_pay5, 4;
+
+	setarray $mining_item_ids_pay6[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay6[0], 5,      5,       5,       5;
+	set $mining_item_size_pay6, 4;
+
+	setarray $mining_item_ids_pay7[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay7[0], 5,      5,       5,       5;
+	set $mining_item_size_pay7, 4;
+
+	setarray $mining_item_ids_pay8[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay8[0], 5,      5,       5,       5;
+	set $mining_item_size_pay8, 4;
+
+	setarray $mining_item_ids_pay9[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay9[0], 5,      5,       5,       5;
+	set $mining_item_size_pay9, 4;
+
+	setarray $mining_item_ids_pay10[0],   6000223, 6000224, 6000225, 6000226;
+	setarray $mining_item_rates_pay10[0], 5,      5,       5,       5;
+	set $mining_item_size_pay10, 4;
+
+end;
+}
+
+
+//-------------------------------------------
+// [เคลียร์สถานะเมื่อ Login/Logout/Die/Move]
+//-------------------------------------------
+-	script	miner_status_clear	-1,{
+
+OnPCLoginEvent:
+	query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+	undisguise;
+	set minerstus,0;
+end;
+
+OnPCLogoutEvent:
+	query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+	undisguise;
+	set minerstus,0;
+end;
+
+OnPCDieEvent:
+	query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+	undisguise;
+	set minerstus,0;
+end;
+
+OnPCMoveEvent:
+	query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+	undisguise;
+	set minerstus,0;
+end;
+
+}
+
+//-------------------------------------------
+// [ร้านเช่าจอบ]
+//-------------------------------------------
+-	shop	Buying_Miner	HIDDEN_NPC,3508:50000
+
+pay_fild07,283,378,3	script	เช่าจอบ#01	4_M_EINMINER,{
+	mes "[คนขายจอบ]";
+	mes "สวัสดีจ้า! ต้องการเช่าจอบสำหรับขุดแร่ไหม?";
+	next;
+	switch(select("เช่าจอบ:ยกเลิก")) {
+		case 1:
+			mes "[คนขายจอบ]";
+			mes "เลือกจอบที่อยากได้เลยจ้า!";
+			callshop "Buying_Miner",1;
+			end;
+		case 2:
+			mes "[คนขายจอบ]";
+			mes "ไว้เจอกันใหม่นะจ๊ะ~";
+			close;
+	}
+OnInit:
+	waitingroom "เช่าจอบ",0;
+end;
+}
+/*
+//-------------------------------------------
+// [NPC แสดงไอเท็มที่ขุดได้]
+//-------------------------------------------
+pay_fild07,283,373,3	script	ไอเท็มจากการขุด	S_DUMMY_100_WIND,{
+	mes "[ระบบขุดแร่]";
+	mes "คุณอยากดูรายการไอเท็มทั้งหมดที่สามารถขุดได้ไหม?";
+	next;
+	switch(select("ดูรายการไอเท็ม:ยกเลิก")) {
+		case 1:
+			npcshopattach "Show_Miner";
+			callshop "Show_Miner",1;
+			end;
+		case 2:
+			mes "[ระบบขุดแร่]";
+			mes "ไว้ดูคราวหน้านะ!";
+			close;
+	}
+	end;
+}
+
+//-------------------------------------------
+// [ร้านโชว์ไอเท็มที่สามารถขุดได้]
+//-------------------------------------------
+-	marketshop	Show_Miner	HIDDEN_NPC,
+6635:1000000:-1,984:1000000:-1,985:1000000:-1,999:1000000:-1,1010:1000000:-1,1011:1000000:-1,
+6636:1000000:-1,6637:1000000:-1,6638:1000000:-1,6639:1000000:-1,6640:1000000:-1,6641:1000000:-1,
+6642:1000000:-1,6643:1000000:-1,6644:1000000:-1,6645:1000000:-1,6716:1000000:-1,6717:1000000:-1,
+6718:1000000:-1,6740:1000000:-1,6741:1000000:-1,6742:1000000:-1,6743:1000000:-1,6744:1000000:-1,
+6745:1000000:-1,6790:1000000:-1,6791:1000000:-1,6792:1000000:-1,6908:1000000:-1,6943:1000000:-1,
+6944:1000000:-1,6945:1000000:-1,6946:1000000:-1,6947:1000000:-1,6948:1000000:-1,6949:1000000:-1,
+6950:1000000:-1,6951:1000000:-1,6964:1000000:-1,6999:1000000:-1
+*/
+
+
+//-------------------------------------------
+// [NPC รับแลกแร่]
+//-------------------------------------------
+pay_fild07,283,373,3	script	ไอเท็มจากการขุด	S_DUMMY_100_WIND,{
+			callshop "Change_Ore", 1;
+			end;
+}

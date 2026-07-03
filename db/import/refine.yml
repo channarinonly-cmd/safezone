@@ -1,0 +1,162 @@
+# This file is a part of rAthena++.
+#   Copyright(C) 2021 rAthena Development Team
+#   https://rathena.org - https://github.com/rathena
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+###########################################################################
+# Refine Database
+###########################################################################
+#
+# Refine Settings
+#
+###########################################################################
+# - Group                               Refine item type.
+#   Levels:                             Refinement settings per item level. (Default: null)
+#     - Level                           Item level.
+#       RefineLevels:                   Refinement settings per refine level. (Default: null)
+#         - Level                       Refine level.
+#           Bonus                       Refinement bonus. (Default: 0)
+#           RandomBonus                 Extra refinement bonus of 0~RandomBonus stacked on Bonus. (Default: 0)
+#           BlacksmithBlessingAmount    Amount of Blacksmith Blessing required. (Default: 0)
+#           BroadcastSuccess            Broadcast to the whole server when a refine attempt at this level succeeds. (Default: false)
+#           BroadcastFailure            Broadcast to the whole server when a refine attempt at this level fails. (Default: false)
+#           Chances:                    Success chance based on cost type. (Default: null)
+#             - Type                    Refinement cost type based on ore used.
+#               Rate                    Chance of success out of 0~10000. (Default: 0)
+#               Price                   Amount of zeny required to refine. (Default: 0)
+#               Material                Ore item required to refine. (Default: 0)
+#               BreakingRate            Chance of item breaking out of 0~10000. (Default: 0)
+#               DowngradeAmount         Number of refine levels reduced on failure. (Default: 0)
+###########################################################################
+
+Header:
+  Type: REFINE_DB
+  Version: 2
+
+Body:
+  - Group: Charm_Upgrade
+    Levels:
+      - Level: 0
+        RefineLevels:
+          - Level: 1
+            BlacksmithBlessingAmount: 5
+            Chances:
+              - Type: Normal
+                Rate: 5000
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+          - Level: 2
+            BlacksmithBlessingAmount: 10
+            Chances:
+              - Type: Normal
+                Rate: 5000
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+          - Level: 3
+            BlacksmithBlessingAmount: 15
+            Chances:
+              - Type: Normal
+                Rate: 5000
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+          - Level: 4
+            BlacksmithBlessingAmount: 20
+            Chances:
+              - Type: Normal
+                Rate: 5000
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+          - Level: 5
+            BlacksmithBlessingAmount: 25
+            Chances:
+              - Type: Normal
+                Rate: 5000
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+              - Type: Enriched
+                Rate: 10000
+                Price: 20000
+                Material: Enriched_Elunium
+                BreakingRate: 10000
+          - Level: 6
+            BlacksmithBlessingAmount: 30
+            Chances:
+              - Type: Normal
+                Rate: 4000
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+              - Type: Enriched
+                Rate: 9000
+                Price: 20000
+                Material: Enriched_Elunium
+                BreakingRate: 10000
+          - Level: 7
+            BlacksmithBlessingAmount: 35
+            Chances:
+              - Type: Normal
+                Rate: 3500
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+              - Type: Enriched
+                Rate: 8000
+                Price: 20000
+                Material: Enriched_Elunium
+                BreakingRate: 10000
+          - Level: 8
+            BlacksmithBlessingAmount: 40
+            Chances:
+              - Type: Normal
+                Rate: 3000
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+              - Type: Enriched
+                Rate: 7000
+                Price: 20000
+                Material: Enriched_Elunium
+                BreakingRate: 10000
+          - Level: 9
+            BlacksmithBlessingAmount: 45
+            Chances:
+              - Type: Normal
+                Rate: 3500
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+              - Type: Enriched
+                Rate: 6000
+                Price: 20000
+                Material: Enriched_Elunium
+                BreakingRate: 10000
+          - Level: 10
+            BlacksmithBlessingAmount: 50
+            Chances:
+              - Type: Normal
+                Rate: 3000
+                Price: 10000
+                Material: Gold
+                BreakingRate: 10000
+              - Type: Enriched
+                Rate: 5000
+                Price: 20000
+                Material: Enriched_Elunium
+                BreakingRate: 10000

@@ -1,0 +1,337 @@
+//======================================================
+// MVP Ranking + Statue Rank#1 Only (Top 3 only)
+//======================================================
+
+//------------------------------------------------------
+// 1) เก็บแต้ม MVP จาก OnNPCKillEvent
+//------------------------------------------------------
+-	script	script_rank_mvp	-1,{
+
+OnInit:
+	query_sql("CREATE TABLE IF NOT EXISTS `rank_mvp_player_logs` (`id` int(7) NOT NULL AUTO_INCREMENT,`account_id` int(11) NOT NULL,`char_id` int(11) NOT NULL,`player_name` varchar(255) NOT NULL,`score` int(7) NOT NULL,PRIMARY KEY (`id`)) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;");
+	query_sql("CREATE TABLE IF NOT EXISTS `rank_mvp_player_ranking` (`id` int(7) NOT NULL AUTO_INCREMENT,`account_id` int(11) NOT NULL,`char_id` int(11) NOT NULL,`player_name` varchar(255) NOT NULL,`score` int(7) NOT NULL,PRIMARY KEY (`id`)) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;");
+	query_sql("CREATE TABLE IF NOT EXISTS `rank_mvp_player_winners` (`id` int(7) NOT NULL AUTO_INCREMENT,`account_id` int(11) NOT NULL,`char_id` int(11) NOT NULL,`player_name` varchar(255) NOT NULL,`score` int(7) NOT NULL,`status` int(7) NOT NULL,PRIMARY KEY (`id`)) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;");
+	end;
+
+OnNPCKillEvent:
+	// [SF] ANTIBLOAT_BEGIN
+	if (killedrid) {
+		if (#SF_KC_LAST_RID == killedrid && (#SF_KC_LAST_MS + 350) > gettimetick(2)) end;
+		set #SF_KC_LAST_RID, killedrid;
+		set #SF_KC_LAST_MS, gettimetick(2);
+	}
+	// [SF] ANTIBLOAT_END
+
+	// นับเฉพาะมอนที่เป็น MVP
+	if (getmonsterinfo(killedrid, MOB_MVPEXP) <= 0)
+		end;
+
+	.@point = 1;
+	getitem 6000239,1; // ของแถมเวลาฆ่า MVP
+
+	// log รวมตลอดกาล
+	query_sql("SELECT score FROM `rank_mvp_player_logs` WHERE char_id = "+getcharid(0), .@score);
+	if (!.@score) {
+		query_sql("INSERT INTO `rank_mvp_player_logs` (account_id,char_id,player_name,score) VALUES ("+getcharid(3)+","+getcharid(0)+",'"+escape_sql(strcharinfo(0))+"',"+.@point+")");
+	} else {
+		query_sql("UPDATE `rank_mvp_player_logs` SET `score` = `score`+"+.@point+" WHERE char_id = "+getcharid(0));
+	}
+
+	// คะแนนประจำสัปดาห์
+	query_sql("SELECT score FROM `rank_mvp_player_ranking` WHERE char_id = "+getcharid(0), .@score2);
+	if (!.@score2) {
+		query_sql("INSERT INTO `rank_mvp_player_ranking` (account_id,char_id,player_name,score) VALUES ("+getcharid(3)+","+getcharid(0)+",'"+escape_sql(strcharinfo(0))+"',"+.@point+")");
+	} else {
+		query_sql("UPDATE `rank_mvp_player_ranking` SET `score` = `score`+"+.@point+" WHERE char_id = "+getcharid(0));
+	}
+
+	announce "[ จัดอันดับ MVP ] : ผู้เล่น "+strcharinfo(0)+" ได้รับ 1 คะแนน จากการสังหาร "+getmonsterinfo(killedrid,MOB_NAME), bc_all, 0xFFFF00;
+	end;
+}
+
+//------------------------------------------------------
+// 2) NPC Ranking MVP (Top 3 only + ตัดรางวัล + set Top1)
+//------------------------------------------------------
+
+morocc,166,66,6	script	Ranking MVP	827,{
+
+Start:
+
+	mes .mes$;
+
+	if (.day_of_rank_mvp == 0) .@day$ = "อาทิตย์";
+	if (.day_of_rank_mvp == 1) .@day$ = "จันทร์";
+	if (.day_of_rank_mvp == 2) .@day$ = "อังคาร";
+	if (.day_of_rank_mvp == 3) .@day$ = "พุธ";
+	if (.day_of_rank_mvp == 4) .@day$ = "พฤหัสบดี";
+	if (.day_of_rank_mvp == 5) .@day$ = "ศุกร์";
+	if (.day_of_rank_mvp == 6) .@day$ = "เสาร์";
+
+	mes "ตัดอันดับทุกวัน "+.@day$+" เวลา 21.00 น.";
+
+	query_sql("SELECT score FROM `rank_mvp_player_ranking` WHERE char_id = "+getcharid(0), .@score_me);
+	mes "คะแนน MVP สัปดาห์นี้: ^0000FF"+callfunc("F_InsertComma",.@score_me)+"^000000";
+
+	.@menu = select(
+		"- ตรวจสอบอันดับ ^0000FFปัจจุบัน (Top 3)^000000",
+		"- ตรวจสอบอันดับ ^0099FFสัปดาห์ที่แล้ว (Top 3)^000000",
+		"-^009900 รับรางวัลจัดอันดับ (Top 3)^000000",
+		"-^FF9900 ตัวอย่างรางวัล Top 3^000000",
+		"- ตรวจสอบอันดับ ^FF3300อันดับรวมทั้งหมด (Top 3)^000000"
+	);
+
+	if (.@menu == 1) goto L_Current;
+	if (.@menu == 2) goto L_LastWeek;
+	if (.@menu == 3) goto L_Reward;
+	if (.@menu == 4) goto L_PrizeSample;
+	if (.@menu == 5) goto L_Total;
+	close;
+
+// เมนู 1: อันดับสัปดาห์นี้ (Top 3)
+L_Current:
+	clear;
+	mes .mes$;
+	query_sql("SELECT player_name,score FROM `rank_mvp_player_ranking` ORDER BY score DESC LIMIT 3", .@name$, .@score);
+	if (!getarraysize(.@score)) {
+		mes "^FF0000ยังไม่มีข้อมูลของสัปดาห์นี้^000000";
+		close;
+	}
+	for (.@i = 0; .@i < getarraysize(.@name$); .@i++) {
+		mes "อันดับ "+(.@i+1)+" : ^0099FF"+.@name$[.@i]+"^000000 (^FF0000"+.@score[.@i]+" pt.^000000)";
+	}
+	close;
+
+// เมนู 2: อันดับสัปดาห์ที่แล้ว (Top 3)
+L_LastWeek:
+	clear;
+	mes .mes$;
+	query_sql("SELECT player_name,score FROM `rank_mvp_player_winners` ORDER BY score DESC LIMIT 3", .@name$, .@score);
+	if (!getarraysize(.@score)) {
+		mes "^FF0000ยังไม่มีข้อมูลของสัปดาห์ที่แล้ว^000000";
+		close;
+	}
+	for (.@i = 0; .@i < getarraysize(.@name$); .@i++) {
+		mes "อันดับ "+(.@i+1)+" : ^0099FF"+.@name$[.@i]+"^000000 (^FF0000"+.@score[.@i]+" pt.^000000)";
+	}
+	close;
+
+// เมนู 3: รับรางวัล (เฉพาะ Top 3)
+L_Reward:
+	clear;
+	query_sql("SELECT id FROM `rank_mvp_player_winners` WHERE char_id = "+getcharid(0)+" AND status = 0", .@id);
+	mes .mes$;
+	mes "รางวัลที่ยังไม่ได้รับ: ^FF0000"+getarraysize(.@id)+"^000000 ครั้ง";
+	next;
+	if (!getarraysize(.@id)) {
+		mes .mes$;
+		mes "ยังไม่มีรางวัลที่คุณสามารถรับได้ตอนนี้";
+		close;
+	}
+	if (select("รับรางวัลเลย:ยกเลิก") == 2) {
+		mes .mes$;
+		mes "ไม่เป็นไร ไว้มารับทีหลังก็ได้";
+		close;
+	}
+
+	// แจกของ 1 ชุด (ใช้ชุดอันดับ 1 เป็นรางวัลมาตรฐานของ Top 3)
+	query_sql("UPDATE `rank_mvp_player_winners` SET status = 1 WHERE char_id = "+getcharid(0));
+	dispbottom "ระบบ : คุณได้รับรางวัล Ranking MVP (Top 3)", 0x0000FF;
+
+	for (.@i = 0; .@i < getarraysize(.item_id_rw_01); .@i++)
+		getitem .item_id_rw_01[.@i], .item_am_rw_01[.@i];
+
+	close;
+
+// เมนู 4: ตัวอย่างรางวัล (Top 3 เท่านั้น)
+L_PrizeSample:
+	clear;
+
+	// อันดับ 1
+	mes .mes$;
+	mes "อันดับ 1";
+	for (.@i = 0; .@i < getarraysize(.item_id_rw_01); .@i++)
+		mes "- "+getitemname(.item_id_rw_01[.@i])+" x"+.item_am_rw_01[.@i];
+	next;
+
+	// อันดับ 2
+	mes .mes$;
+	mes "อันดับ 2";
+	for (.@i = 0; .@i < getarraysize(.item_id_rw_02); .@i++)
+		mes "- "+getitemname(.item_id_rw_02[.@i])+" x"+.item_am_rw_02[.@i];
+	next;
+
+	// อันดับ 3
+	mes .mes$;
+	mes "อันดับ 3";
+	for (.@i = 0; .@i < getarraysize(.item_id_rw_03); .@i++)
+		mes "- "+getitemname(.item_id_rw_03[.@i])+" x"+.item_am_rw_03[.@i];
+
+	close;
+
+// เมนู 5: อันดับรวมตลอดกาล (Top 3)
+L_Total:
+	clear;
+	mes .mes$;
+	query_sql("SELECT player_name,score FROM `rank_mvp_player_logs` ORDER BY score DESC LIMIT 3", .@name$, .@score);
+	if (!getarraysize(.@score)) {
+		mes "^FF0000ยังไม่มีข้อมูลเลย^000000";
+		close;
+	}
+	for (.@i = 0; .@i < getarraysize(.@name$); .@i++) {
+		mes "อันดับ "+(.@i+1)+" : ^0099FF"+.@name$[.@i]+"^000000 (^FF0000"+.@score[.@i]+" pt.^000000)";
+	}
+	close;
+
+//------------------------
+// Auto ตัดอันดับประจำสัปดาห์ 21:00
+//------------------------
+
+OnClock2100:
+
+	if (gettime(DT_DAYOFWEEK) != .day_of_rank_mvp) end;
+
+OnRanking:
+
+	// ล้างผู้ชนะเดิมออก แล้วเก็บใหม่เฉพาะ Top 3
+	query_sql("TRUNCATE TABLE `rank_mvp_player_winners`");
+	query_sql("SELECT account_id,char_id,player_name,score FROM `rank_mvp_player_ranking` ORDER BY score DESC LIMIT 3", .@acc, .@cid, .@name$, .@score);
+
+	// เซฟอันดับ 1 ไว้ทำหุ่น
+	if (getarraysize(.@cid) >= 1) {
+		$MVPTopChar1  = .@cid[0];
+		$MVPTopName1$ = .@name$[0];
+		$MVPTopScore1 = .@score[0];
+	}
+
+	for (.@i = 0; .@i < getarraysize(.@acc); .@i++) {
+		announce "[Ranking MVP] : ผู้เล่น "+.@name$[.@i]+" ได้อันดับ "+(.@i+1)+" ด้วยคะแนน "+.@score[.@i]+" pt.", bc_all, 0xFFFF00;
+		query_sql("INSERT INTO `rank_mvp_player_winners` (account_id,char_id,player_name,score,status) VALUES ("+.@acc[.@i]+","+.@cid[.@i]+",'"+escape_sql(.@name$[.@i])+"',"+.@score[.@i]+",0)");
+	}
+
+	query_sql("TRUNCATE TABLE `rank_mvp_player_ranking`");
+	announce "[Ranking MVP] : รีเซ็ตอันดับประจำสัปดาห์เรียบร้อยแล้ว (Top 3)", bc_all, 0xFFFF00;
+
+	// อัปเดตหุ่น
+	donpcevent "MVP_Statue#1::OnUpdate";
+	end;
+
+//------------------------
+// GM Command: @rank_mvp – บังคับตัดอันดับทันที
+//------------------------
+
+OnMenu:
+	donpcevent strnpcinfo(3)+"::OnRanking";
+	end;
+
+//------------------------
+// Init ตั้งค่าของรางวัล + วันตัดอันดับ (Top 3 เท่านั้น)
+//------------------------
+
+OnInit:
+
+	.mes$ = "^FF3300[ จัดอันดับ MVP – Top 3 ]^000000";
+	.day_of_rank_mvp = 5; // 0=อาทิตย์,...,5=ศุกร์,6=เสาร์
+
+	// เคลียร์ของรางวัลเก่าทิ้ง
+	deletearray .item_id_rw_01;	deletearray .item_am_rw_01;
+	deletearray .item_id_rw_02;	deletearray .item_am_rw_02;
+	deletearray .item_id_rw_03;	deletearray .item_am_rw_03;
+
+	// รางวัลอันดับ 1
+	setarray .item_id_rw_01[0],7619,7620,984,985;
+	setarray .item_am_rw_01[0],5,5,10,10;
+
+	// รางวัลอันดับ 2
+	setarray .item_id_rw_02[0],7619,7620,984,985;
+	setarray .item_am_rw_02[0],3,3,5,5;
+
+	// รางวัลอันดับ 3
+	setarray .item_id_rw_03[0],7619,7620,984,985;
+	setarray .item_am_rw_03[0],1,1,5,5;
+
+	bindatcmd "rank_mvp", strnpcinfo(3)+"::OnMenu", 99, 0;
+
+	waitingroom "  "+strnpcinfo(0),0;
+	end;
+}
+//------------------------------------------------------
+// MVP Statue – โชว์เฉพาะอันดับ 1 + เอฟเฟคเท่ๆ (NPC Timer + waitingroom ปลอดภัย)
+//------------------------------------------------------
+
+morocc,162,111,4	script	MVP_Statue#1	1_M_01,{
+
+OnInit:
+	.gid = getnpcid(0);
+	// เคลียร์ห้องบนหัวก่อน กัน error ซ้ำ
+	delwaitingroom strnpcinfo(3);
+	waitingroom "MVP Rank #1",0;
+	if ($MVPTopChar1) donpcevent strnpcinfo(3)+"::OnUpdate";
+	initnpctimer;
+	end;
+
+// อัปเดตรูปปั้นตามตัวจริง
+OnUpdate:
+
+	.@gid = .gid;
+
+	if (!$MVPTopChar1) {
+		setunitdata .@gid, UNPC_CLASS,      JOB_NOVICE;
+		setunitdata .@gid, UNPC_SEX,        SEX_MALE;
+		setunitdata .@gid, UNPC_HAIRSTYLE,  1;
+		setunitdata .@gid, UNPC_HAIRCOLOR,  0;
+		setunitdata .@gid, UNPC_CLOTHCOLOR, 0;
+		setunitdata .@gid, UNPC_HEADTOP,    0;
+		setunitdata .@gid, UNPC_HEADMIDDLE, 0;
+		setunitdata .@gid, UNPC_HEADBOTTOM, 0;
+		setunitdata .@gid, UNPC_ROBE,       0;
+
+		// ป้ายบนหัว default
+		delwaitingroom strnpcinfo(3);
+		waitingroom "MVP Rank #1",0;
+		end;
+	}
+
+	query_sql("SELECT `class`,`sex`,`hair`,`hair_color`,`clothes_color`,`body`,`head_top`,`head_mid`,`head_bottom`,`robe` FROM `char` WHERE `char_id` = "+$MVPTopChar1+" LIMIT 1",
+		.@class, .@sex$, .@hair, .@hair_color, .@cloth_color, .@body, .@top, .@mid, .@bot, .@robe);
+
+	if (!.@class) end;
+
+	setunitdata .@gid, UNPC_CLASS,      .@class;
+	setunitdata .@gid, UNPC_SEX,        (.@sex$ == "F") ? SEX_FEMALE : SEX_MALE;
+	setunitdata .@gid, UNPC_HAIRSTYLE,  .@hair;
+	setunitdata .@gid, UNPC_HAIRCOLOR,  .@hair_color;
+	setunitdata .@gid, UNPC_CLOTHCOLOR, .@cloth_color;
+	setunitdata .@gid, UNPC_HEADTOP,    .@top;
+	setunitdata .@gid, UNPC_HEADMIDDLE, .@mid;
+	setunitdata .@gid, UNPC_HEADBOTTOM, .@bot;
+	setunitdata .@gid, UNPC_ROBE,       .@robe;
+
+	// ป้ายบนหัวเป็นชื่ออันดับ 1
+	delwaitingroom strnpcinfo(3);
+	waitingroom "MVP1 : "+$MVPTopName1$,0;
+	end;
+
+// แตะที่หุ่น
+OnTouch:
+	mes "[ MVP อันดับ 1 ]";
+	if (!$MVPTopChar1) {
+		mes "ยังไม่มีผู้เล่นอันดับ 1";
+	} else {
+		mes "ผู้เล่น: ^0099FF"+$MVPTopName1$+"^000000";
+		mes "คะแนน: ^FF0000"+callfunc("F_InsertComma",$MVPTopScore1)+"^000000";
+	}
+	close;
+
+// NPC Timer – ยิงทุก 3 วิ
+OnTimer3000:
+	callsub S_DoEffect;
+	initnpctimer;
+	end;
+
+// เอฟเฟคเท่ๆ รอบหุ่น
+S_DoEffect:
+	specialeffect EF_GUARD4, AREA;
+	// ถ้าอยากตู้มแบบ MVP ตอนเกิดด้วย เปิดอันนี้:
+	// specialeffect EF_MVP, AREA;
+	return;
+}

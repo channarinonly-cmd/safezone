@@ -1,0 +1,73 @@
+//= Reset Jackpot
+//==================================
+-	script	reset_jackpot	-1,{
+	end;
+	
+OnCmd:
+	if(!$status){
+		mes "[Jackpot]";
+		mes "สถานะ : ^FF0000"+(($status)?"เปิดใช้งาน":"ปิดใช้งานอยู่")+"^000000";
+	} else {
+		mes "[Jackpot]";
+		mes "สถานะ : ^017A01เปิดใช้งานอยู่^000000";
+	}
+	mes "Jackpot Bonus ^FF0000"+callfunc("F_InsertComma",$jackpotcashweek)+"^000000 Cash";
+	mes "Jackpot Bonus ^FF0000"+callfunc("F_InsertComma",$jackpotzenyweek)+"^000000 Zeny";
+	next;
+	switch(select(""+((!$status)?"^017A01เปิดใช้งาน Jackpot^000000":"^FF0000ปิดใช้งาน Jackpot^000000"), "Reset Jackpot Bonus", "ล้าง Jackpot Logs", "ยกเลิก")){
+		case 1:
+			if (select(""+((!$status)?"^017A01ยืนยันที่จะเปิดใช้งาน Jackpot^000000":"^FF0000ยืนยันที่จะปิดใช้งาน Jackpot^000000"), "ยกเลิก") == 2){
+				close;
+			}
+			if(!$status){
+				$status = 1;
+				announce "[Jackpot] ทำการเปิดใช้งาน 'Jackpot'",bc_all,0xFFFFFF;
+			}else{
+				$status = 0;
+				announce "[Jackpot] ทำการปิดใช้งาน 'Jackpot'",bc_all,0xFFFFFF;
+			}
+			close;
+		case 2:
+			switch(select("Reset Jackpot Bonus", "ยกเลิก")){
+				case 1:
+					if (select("ยืนยันที่จะ Reset:ยกเลิก") == 2){
+						close;
+					}
+					mes "[Jackpot Bonus Reset]";
+					mes "=======================";
+					mes "ทำการ Reset";
+					mes "Jackpot Bonus เรียบร้อยแล้ว";
+					mes "=======================";
+					$jackpotcashweek = 0;
+					$jackpotzenyweek = 0;
+					announce "[Jackpot] ทำการ Reset 'Jackpot Bonus'",bc_all,0xFFFFFF;
+					close;
+				case 2:
+					close;
+			}
+			end;
+		case 3:
+			mes "[Jackpot]";
+			mes "ต้องการล้าง Jackpot Logs ไหม?";
+			next;
+			if (select("ยืนยันที่จะล้าง:ยกเลิก") == 2){
+				close;
+			}
+			mes "[Jackpot Logs Reset]";
+			mes "=======================";
+			mes "ทำการล้าง";
+			mes "Jackpot Logs เรียบร้อยแล้ว";
+			mes "=======================";
+			query_sql("TRUNCATE TABLE `jackpot_cash_logs`");
+			query_sql("TRUNCATE TABLE `jackpot_zeny_logs`");
+			query_sql("TRUNCATE TABLE `jackpot_rare_logs`");
+			query_sql("TRUNCATE TABLE `jackpot_events_logs`");
+			close;
+		case 4:
+			close;
+	}
+	end;
+OnInit:
+	bindatcmd "jackpot", strnpcinfo(0)+"::OnCmd", 99, 99;
+	end;
+}

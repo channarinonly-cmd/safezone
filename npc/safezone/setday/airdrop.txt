@@ -1,0 +1,131 @@
+//===== rAthena Script ======================================= 
+//= Find the Airdrops (2 Maps Edition)
+//===== By: ================================================== 
+//= Mysterious (Edited & Optimized)
+//===== Current Version: ===================================== 
+//= 3.7
+//===== Compatible With: ===================================== 
+//= rAthena Project
+//============================================================ 
+
+morocc,145,38,6	script	Airdrops	4_STAR_BOX_BARRIER2,{
+	mes "[ ^FF0000Airdrops^000000 ]";
+	
+	// กรณีที่กิจกรรมกำลังดำเนินอยู่
+	if (.status == 1) {
+		.@count1 = mobcount(.active_maps$[0], strnpcinfo(0) + "::OnMobKilled");
+		.@count2 = mobcount(.active_maps$[1], strnpcinfo(0) + "::OnMobKilled");
+		.@total = .@count1 + .@count2;
+
+		if (.@total > 0) {
+			mes "ขณะนี้มี Airdrops เหลืออยู่ทั้งหมด ^FF0000" + .@total + "^000000 กล่อง!";
+			if (.@count1 > 0) mes "- แมพ ^0000FF" + .active_maps$[0] + "^000000 (เหลือ " + .@count1 + " กล่อง)";
+			if (.@count2 > 0) mes "- แมพ ^0000FF" + .active_maps$[1] + "^000000 (เหลือ " + .@count2 + " กล่อง)";
+			mes " ";
+			mes "ค้นหาและทำลายมัน เพื่อรับ ^008800" + getitemname(.prize) + "^000000!";
+			close;
+		}
+		
+		// กรณีระบบรวน (status เป็น 1 แต่มอนสเตอร์ไม่เหลือแล้ว) ให้เคลียร์ค่า
+		deletearray .active_maps$;
+		.status = 0;
+		mes "Airdrops ในรอบนี้ถูกทำลายไปหมดแล้วล่ะ รอรอบถัดไปนะ!";
+		close;
+	}
+
+	// กรณีไม่มีกิจกรรมและไม่ใช่ GM
+	if (getgmlevel() < .GM) {
+		mes "ยังไม่มีกิจกรรมในขณะนี้ครับ!";
+		close;
+	}
+
+	// เมนูสำหรับ GM ในการเปิดกิจกรรมเอง
+	mes "ต้องการเริ่มกิจกรรมสุ่มเกิด Airdrops (2 พื้นที่) ทันทีหรือไม่?";
+	next;
+	if (select("~ ยังก่อน:~ เริ่มกิจกรรมเลย!") == 1) close;
+	
+	mes "[ ^FF0000Airdrops^000000 ]";
+	mes "ระบบกำลังเริ่มต้นกิจกรรม!";
+	close2; 
+	callsub OnStartEvent;
+	end;
+
+OnInit:
+	.prize = 23038;	// รหัสไอเทมรางวัล
+	.amount = 1;	// จำนวนไอเทมที่ได้รับต่อการตี 1 กล่อง
+	.GM = 99;		// ระดับ GM ที่สามารถกดเริ่มกิจกรรมเองได้
+	
+	// รายชื่อแมพทั้งหมดที่จะเอามาสุ่ม (ต้องใส่ไว้อย่างน้อย 2 แมพขึ้นไป)
+	//setarray .maps_list$[0], "morocc", "prontera", "payon", "geffen", "alberta"; 
+	setarray .maps_list$[0], "morocc", "prontera"; 
+	end;
+
+OnClock0000:
+OnClock0300:
+OnClock0600:
+OnClock0900:
+OnClock1200:
+OnClock1500:
+OnClock1800:
+OnClock2100:
+OnStartEvent:
+	if (.status) end;
+	.status = 1;
+	
+	// สุ่มหา 2 แมพที่ไม่ซ้ำกัน
+	.@map_idx1 = rand(getarraysize(.maps_list$));
+	.@map_idx2 = rand(getarraysize(.maps_list$));
+	while (.@map_idx1 == .@map_idx2) {
+		.@map_idx2 = rand(getarraysize(.maps_list$));
+	}
+	
+	// บันทึกแมพที่สุ่มได้ลง Array ตัวแปรเซิร์ฟเวอร์
+	.active_maps$[0] = .maps_list$[.@map_idx1];
+	.active_maps$[1] = .maps_list$[.@map_idx2];
+	
+	// สุ่มจำนวนกล่องที่จะเกิดในแต่ละแมพ (1-10 กล่องต่อแมพ)
+	.@spawn1 = rand(1, 10);
+	.@spawn2 = rand(1, 10);
+	.@label$ = strnpcinfo(0) + "::OnMobKilled";
+	
+	// เคลียร์มอนสเตอร์เก่าที่อาจค้างอยู่
+	killmonster .active_maps$[0], .@label$;
+	killmonster .active_maps$[1], .@label$;
+	
+	// สร้างมอนสเตอร์กล่องทั้ง 2 แมพ
+	monster .active_maps$[0], 0, 0, "-- Airdrops --", 2288, .@spawn1, .@label$;
+	monster .active_maps$[1], 0, 0, "-- Airdrops --", 2288, .@spawn2, .@label$;
+	
+	announce "[ ค้นหา Airdrops ] : Airdrops ปรากฏตัวขึ้นที่แผนที่ " + .active_maps$[0] + " และ " + .active_maps$[1] + "!", 0;
+	sleep 2500;
+	announce "[ ค้นหา Airdrops ] : ทำลายกล่อง Airdrops เพื่อรับ " + getitemname(.prize) + " และไอเทม Cash Shop มากมาย!", 0;
+	end;
+
+OnMobKilled:
+	if (playerattached() == 0) end;
+	
+	getitem .prize, .amount;
+	
+	// เช็คจำนวนกล่องที่เหลือในแมพที่ผู้เล่นกำลังตีอยู่
+	.@current_map$ = strcharinfo(3);
+	.@local_spawn = mobcount(.@current_map$, strnpcinfo(0) + "::OnMobKilled");
+	
+	// เช็คจำนวนกล่องที่เหลือรวมทั้ง 2 แมพ
+	.@total_spawn = mobcount(.active_maps$[0], strnpcinfo(0) + "::OnMobKilled") + mobcount(.active_maps$[1], strnpcinfo(0) + "::OnMobKilled");
+	
+	if (.@total_spawn > 0) {
+		if (.@local_spawn > 0) {
+			// ถ้าในแมพนั้นยังมีกล่องเหลืออยู่
+			mapannounce .@current_map$, "[ " + strcharinfo(0) + " ] ได้ทำลาย Airdrops! ตอนนี้เหลืออีก " + .@local_spawn + " กล่อง ในพื้นที่นี้!", 0;
+		} else {
+			// ถ้ากล่องในแมพนั้นหมดแล้ว (แต่แมพอื่นยังเหลือ)
+			mapannounce .@current_map$, "[ " + strcharinfo(0) + " ] ได้ทำลาย Airdrops กล่องสุดท้ายในพื้นที่นี้ไปแล้ว!", 0;
+		}
+	} else {
+		// ถ้ากล่องทั้ง 2 แมพถูกตีจนหมด
+		announce "[ ค้นหา Airdrops ] : สิ้นสุดกิจกรรม! Airdrops ทั้ง 2 พื้นที่ถูกทำลายเรียบร้อยแล้ว", 0;
+		.status = 0;
+		deletearray .active_maps$;
+	}
+	end;
+}

@@ -1,0 +1,339 @@
+/*
+=================== TERMS OF SERVICES. ===================
+1. ALL RIGHT RESERVED RE-SELLER OR SHARE SCRIPT TO PUBLISH.
+2. BUT YOU RE-SELLER OR SHARE SCRIPT WITH OUT UNAUTHORIZRD
+   I WILL ALL CANCEL MY SUPPORT FOR YOU.
+3. MAINTENANCE SCRIPTS WILL BE FREE SERVICES.
+4. I WILL NOT KEEP ANY INFORMATIONS FROMS YOU SERVER THAT
+   YOU SEND FOR ME.
+5. I HOPE YOU WILL ALL ACCEPT TERMS OF SERVICES.
+==========================================================
+Script. Lucky Rooms																		 
+Create By. [Eddga-Studio]
+Translator By. Eddga Studio
+Bug Report. Dollaporn Naraphan [ FB ]																					 
+Contact Us. Dollaporn Naraphan [ FB ]																					 
+==========================================================
+*/
+morocc,178,55,4	script	Lucky Rooms	446,{
+
+mes "[ Lucky Rooms ]";
+	mes "คุณต้องการที่จะเข้าสู่ห้องกิจกรรม Lucky Rooms ?";
+	mes "ต้อง LV.80 ขึ้นไป";
+	mes "ตารางเวลากิจกรรม";
+	mes "12:00น , 18:00น , 00:00น";
+	next;
+	mes "[ Lucky Rooms ]";
+	mes "วิธีเล่นง่ายๆ คือ เลือกห้อง";
+	mes "ตามดวงของท่าน";
+	mes "ถ้าดวงดีก็ชนะไป";
+	mes "เป็นกิจกรรมที่ง่ายมากๆ";
+	next;
+	mes "[ Lucky Rooms ]";
+	mes "ผู้ชนะ จะได้รับ ^i[12997]^FFFFFF_^000000^FF0000Elunium Box 1 ea.^000000";
+	mes "ผู้แพ้ จะได้รับ ^i[12264]^FFFFFF_^000000^FF0000[Not For Sale] Bubble Gum 1 ea.^000000";
+	next;
+	switch(select("~ เข้าร่วมกิจกรรม ("+getmapusers("quiz_02")+"คน):" + ((getgmlevel() >= .gmlevel) ? "^FF0000~ ระบจัดการ Game Master^000000" : "") + ":~ ยกเลิก"))
+	{
+		case 1: if ( .Start != 1 ) { mes "[ Lucky Rooms ]"; mes "^FF0000ขณะนี้ยังไม่ถึงเวลากิจกรรม"; close; }
+				
+				if ( BaseLevel < 80 ) { 
+				mes "[ Lucky Rooms ]";
+				mes "ฮืมๆๆๆๆ";
+				mes "Lv. 80 ขึ้นไปถึงสามารถเข้าร่วม";
+				mes "กิจกรรม Lucky Rooms ได้น่ะ";
+				close;
+				mes "[ Lucky Rooms ]";
+				mes "ตารางเวลากิจกรรม";
+				mes "12:00น , 18:00น , 00:00น";
+				close; 
+				}
+				announce "[ ผู้เล่น "+strcharinfo(0) +" ได้เข้าสู่ห้อง กิจกรรม Lucky Rooms ]",bc_all|bc_yellow;
+				warp "quiz_02",337,83;
+				end;
+		case 2:
+			mes "[ Lucky Rooms ]";
+			switch (.Start)
+			{
+				case 0: mes "กิจกรรม Lucky Rooms "; mes "^FF0000สถานะ : ยังไม่เริ่มต้น.^000000"; break;
+				case 1: mes "กิจกรรม Lucky Rooms "; mes "^FF0000สถานะ : กำลังเริ่ม.^000000"; break;
+				case 2: mes "กิจกรรม Lucky Rooms "; mes "^FF0000สถานะ : กำลังทำงานอยู่.^000000"; break;
+			}
+			next;
+			switch(select("~ เริ่มกิจกรรม.:~ หยุดกิจกรรม.:~ ยกเลิก."))
+			{
+				case 1:
+					mes "[ Lucky Rooms ]";
+					if (.Start)
+						mes "กิจกรรม Lucky Rooms ได้เริ่มต้นขึ้นแล้ว.";
+					else
+					{
+						mes "เริ่มกิจกรรม Lucky Rooms...";
+						donpcevent strnpcinfo(0) +"::OnStartEvent";
+					}
+					close;
+					
+				case 2:
+					mes "[ Lucky Rooms ]";
+					if (!.Start)
+						mes "กิจกรรม Lucky Rooms ได้สิ้นสุดลงแล้ว.";
+					else {
+						mes "สิ้นสุดกิจกรรม Lucky Rooms...";
+						donpcevent strnpcinfo(0) +"::OnStopEvent";
+					}
+					close;
+					
+				case 3:
+					break;
+			}
+			break;
+			
+		case 3:
+			close;
+	}
+
+OnStartEvent:
+OnClock1200:
+OnClock1800:
+OnClock0000:
+
+	.Start = 1;
+	announce "[ กิจกรรม Lucky Rooms : ได้เริ่มต้นขึ้นแล้ว กรุณาเข้าไปยังห้องกิจกรรม และ เลือกหมายเลขห้องภายใน 5 นาที. ]",bc_all;
+	sleep 60000;
+	announce "[ กิจกรรม Lucky Rooms : กิจกรรม Lucky Rooms กำลังจะเปิดในอีก 4 นาที. ]",bc_all;
+	sleep 60000;
+	announce "[ กิจกรรม Lucky Rooms : กิจกรรม Lucky Rooms กำลังจะเปิดในอีก 3 นาที. ]",bc_all;
+	sleep 60000;
+	announce "[ กิจกรรม Lucky Rooms : กิจกรรม Lucky Rooms กำลังจะเปิดในอีก 2 นาที. ]",bc_all;
+	sleep 60000;
+	announce "[ กิจกรรม Lucky Rooms : กิจกรรม Lucky Rooms กำลังจะเปิดในอีก 1 นาที. ]",bc_all;
+	sleep 60000;
+	mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : ประตูกิจกรรม Lucky Rooms ได้เปิดขึ้นแล้ว ! ]",bc_map;
+	enablenpc "Lucky#warp1"; enablenpc "Lucky#warp2"; enablenpc "Lucky#warp3"; enablenpc "Lucky#warp4";
+	mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : กรุณาเลือกห้องภายใน 1 นาที. ]",bc_map;
+	sleep 60000;
+	mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : หมดเวลาการเลือกห้องแล้ว !. ]",bc_map;
+	sleep 2000;
+	disablenpc "Lucky#warp1"; disablenpc "Lucky#warp2"; disablenpc "Lucky#warp3"; disablenpc "Lucky#warp4";
+	donpcevent strnpcinfo(0) +"::OnStage";
+	end;
+	
+OnStage:
+	mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : จะเริ่มทำการสุ่มหมายเลขห้องที่มีระเบิดฝังอยู่ภายในนั้น ใครจะคือผู้โชคดีในวันนี้ !. ]",bc_map;
+	sleep 5000;
+	mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : จะเริ่มใน 3 !!. ]",bc_map;
+	sleep 5000;
+	mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : จะเริ่มใน 2 !!. ]",bc_map;
+	sleep 5000;
+	mapannounce "quiz_02","[ กิจกรรม Lucky Rooms :  จะเริ่มใน 1 !!. ]",bc_map;
+	sleep 5000;
+	donpcevent strnpcinfo(0) +"::OnRand";
+	end;
+
+OnRand:
+	set .clear,rand(1,4);
+	setd ".rooms"+.clear,1;
+	donpcevent strnpcinfo(0) +"::OnRooms"+.clear;
+	end;
+	
+OnBoomb:
+	.stage += 1;
+	if ( .stage > 2 )
+	{
+		donpcevent strnpcinfo(0) +"::OnStopEvent";
+		end;
+	}
+	donpcevent strnpcinfo(0) +"::OnStage";
+	end;
+
+OnRooms1:
+	if ( .roomsoneactive == 1)
+	{
+		donpcevent strnpcinfo(0) +"::OnRand";
+		end;
+	}
+	else if ( .rooms1 == 1)
+	{
+		.roomsoneactive = 1;
+		specialeffect 90,AREA,"#EFF_ROOMS1";
+		mapannounce "quiz_02","[ กิจกรรม Lucky Rooms :  ระเบิดอยู่ห้องหมายเลข "+ .clear +" !!. ]",bc_map;
+		areawarp "quiz_02",314,57,323,34,"new_5-4",99,18;
+		donpcevent strnpcinfo(0) +"::OnBoomb";
+		end;
+	}
+	end;
+
+OnRooms2:
+	if ( .roomstwoactive == 1)
+	{
+		donpcevent strnpcinfo(0) +"::OnRand";
+		end;
+	}
+	if ( .rooms2 == 1)
+	{
+		.roomstwoactive = 1;
+		specialeffect 90,AREA,"#EFF_ROOMS2";
+		mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : ระเบิดอยู่ห้องหมายเลข "+ .clear +" !!. ]",bc_map;
+		areawarp "quiz_02",326,57,335,34,"new_5-4",99,18;
+		donpcevent strnpcinfo(0) +"::OnBoomb";
+		end;
+	}
+	end;
+
+OnRooms3:
+	if ( .roomsthreeactive == 1)
+	{
+		donpcevent strnpcinfo(0) +"::OnRand";
+		end;
+	}
+	if ( .rooms3 == 1)
+	{
+		.roomsthreeactive = 1;
+		specialeffect 90,AREA,"#EFF_ROOMS3";
+		mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : ระเบิดอยู่ห้องหมายเลข "+ .clear +" !!. ]",bc_map;
+		areawarp "quiz_02",338,57,347,34,"new_5-4",99,18;
+		donpcevent strnpcinfo(0) +"::OnBoomb";
+		end;
+	}
+	end;
+	
+OnRooms4:
+	if ( .roomsfouractive == 1)
+	{
+		donpcevent strnpcinfo(0) +"::OnRand";
+		end;
+	}
+	if ( .rooms4 == 1)
+	{
+		.roomsfouractive = 1;
+		specialeffect 90,AREA,"#EFF_ROOMS4";
+		mapannounce "quiz_02","[ กิจกรรม Lucky Rooms : ระเบิดอยู่ห้องหมายเลข "+ .clear +" !!. ]",bc_map;
+		areawarp "quiz_02",350,57,359,34,"new_5-4",99,18;
+		donpcevent strnpcinfo(0) +"::OnBoomb";
+		end;
+	}
+	end;
+	
+OnStopEvent:
+	.Start = .rooms1 = .rooms2 = .rooms3 = .rooms4 = .stage = .roomsoneactive = .roomstwoactive = .roomsthreeactive = .roomsfouractive = 0;
+	areawarp "quiz_02",314,57,359,34,"new_4-4",99,18;
+	end;
+
+OnInit:
+	.gmlevel = 99;
+	setmapflag	"quiz_02",	mf_loadevent;
+	end;
+	
+	OnPCLoadMapEvent:
+		if	(strcharinfo(3)	!=	"quiz_02")	end;
+			set	.@size,	query_sql("SELECT	`account_id`	FROM	`login`	WHERE	`last_ip`	=	'"+getcharip()+"'",.@aid);	//	ถ้าไม่ต้องการเช็คให้ใส่	//	หน้า	set.
+		if	(.@size	<	4)	end;
+			set	.@self,	getcharid(3);
+		for(set	.@i,0;	.@i<.@size;	set	.@i,.@i+1)	{
+			if	(.@aid[.@i]	==	.@self)
+		continue;
+			if	(attachrid(.@aid[.@i]))	{
+				if	(compare(strcharinfo(3),"quiz_02"))	{
+				set .@j,.@j+1;
+			if (.@j == 3)
+			{
+			set	.@name$,	strcharinfo(0);
+			attachrid(.@self);
+			message	strcharinfo(0),"[ คำเตือน! ] อนุญาติให้เข้าแค่ 3 ตัวละคร ต่อ เครื่องเท่านั้น";
+			warp	"SavePoint",0,0;
+			end;
+			}
+			}
+			}
+		}
+	end;
+}
+quiz_02,319,47,4	script	#EFF_ROOMS1	111,{
+	end;
+}
+
+quiz_02,331,47,4	script	#EFF_ROOMS2	111,{
+	end;
+}
+
+quiz_02,343,47,4	script	#EFF_ROOMS3	111,{
+	end;
+}
+
+quiz_02,355,47,4	script	#EFF_ROOMS4	111,{
+	end;
+}
+
+quiz_02,319,61,4	script	Lucky#warp1	45,1,1,{
+	warp "quiz_02",319,47;
+	end;
+}
+
+quiz_02,331,61,4	script	Lucky#warp2	45,1,1,{
+	warp "quiz_02",331,47;
+	end;
+}
+
+quiz_02,343,61,4	script	Lucky#warp3	45,1,1,{
+	warp "quiz_02",343,47;
+	end;
+}
+
+quiz_02,355,61,4	script	Lucky#warp4	45,1,1,{
+	warp "quiz_02",355,47;
+	end;
+}
+
+new_5-4,99,25,4	script	รับของรางวัลผู้พ่ายแพ้	811,{
+	getitem 12264,1;
+	warp "morocc",160,45;
+	end;
+
+OnInit:
+	waitingroom "~ รับของรางวัล ที่นี้",0;
+	end;
+}
+
+new_4-4,99,25,4	script	รับของรางวัลผู้ชนะ	811,{
+	getitem 12997,1;
+	warp "morocc",160,45;
+	end;
+
+OnInit:
+	waitingroom "~ รับของรางวัล ที่นี้",0;
+	end;
+}
+
+quiz_02,332,83,4	script	Exit	837,{
+	warp "morocc",160,45;
+	end;
+
+OnInit:
+	waitingroom "~ กลับเมือง",0;
+	end;
+}
+
+//important mapflag
+new_5-4	mapflag	nowarpto
+new_5-4	mapflag	nowarp
+new_5-4	mapflag	noskill
+new_5-4	mapflag	nosave
+new_5-4	mapflag	nomemo
+new_5-4	mapflag	noteleport
+new_5-4	mapflag	nobranch
+//==================
+new_4-4	mapflag	nowarpto
+new_4-4	mapflag	nowarp
+new_4-4	mapflag	noskill
+new_4-4	mapflag	nosave
+new_4-4	mapflag	nomemo
+new_4-4	mapflag	noteleport
+new_4-4	mapflag	nobranch
+//==================
+quiz_02	mapflag	nowarpto
+quiz_02	mapflag	nowarp
+quiz_02	mapflag	noskill
+quiz_02	mapflag	nosave
+quiz_02	mapflag	nomemo
+quiz_02	mapflag	noteleport
+quiz_02	mapflag	nobranch

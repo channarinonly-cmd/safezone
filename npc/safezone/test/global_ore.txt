@@ -1,0 +1,384 @@
+// =====================================================
+// GLOBAL ORE DROP EVENT - PRODUCTION BUILD (OnClock)
+// -----------------------------------------------------
+// ? OnClock = ตรงเวลา, ไม่กินเครื่อง, ไม่ drift
+// ? ไม่แก้ drop DB / ไม่ spawn เพิ่ม
+// ? แจก “ดรอปจริงจากมอน” เพื่อให้ Bubble Gum / โบนัสเพิ่มดรอปมีผล
+// ? เลือกมอนเป็นรอบ ๆ (ต่อหมวด) แล้ว Apply drop ตอนเริ่มกิจกรรม
+// ? Stop -> Remove drop (กันค้าง)
+// ? มี Board NPC ดูเวลาเหลือ + รายชื่อมอน (console style)
+// =====================================================
+
+
+// =====================================================
+// CORE
+// =====================================================
+-	script	Global_OreDrop_Core	-1,{
+
+OnInit:
+	// ----- lock ชื่อ Core ให้คงที่ (กันโดน rename #xxxx) -----
+	setnpcdisplay strnpcinfo(3), "Global_OreDrop_Core";
+
+	// ----- CONFIG -----
+	.g_time_min     = 180;   // ระยะเวลากิจกรรม (นาที)
+	.g_announce     = 1;    // ประกาศเริ่ม/จบ/รายชื่อ
+	.g_announce_cap = 12;   // ประกาศชื่อมอนต่อหมวด (กันยาวเกิน)
+
+	// ----- ITEMS -----
+	.g_item_elu = 757; // Rough Elunium
+	.g_item_ori = 756; // Rough Oridecon
+
+	// ----- RATES -----
+	// 0.1% = 1/1000
+	.g_den_01 = 1000;
+	.g_num_01 = 1;
+
+	// 1% = 1/100
+	.g_den_1  = 100;
+	.g_num_1  = 1;
+
+	// ----- POOLS (ใส่ลิสต์เต็มทีหลังได้) -----
+	// Elunium 0.1%
+	setarray .pool_elu01[0], 1191,1095,1160,1154,1139;
+	// Elunium 1%
+	setarray .pool_elu1[0], 1268,1219,1132;
+	// Oridecon 0.1%
+	setarray .pool_ori01[0], 1057,1158,1176,1106,1151;
+	// Oridecon 1%
+	setarray .pool_ori1[0], 1109,1310,1061;
+
+	// ----- จำนวน “ชนิดมอน” ที่ถูกเลือกใช้ต่อรอบ (ต่อหมวด) -----
+	.pick_elu01 = 1;
+	.pick_elu1  = 1;
+	.pick_ori01 = 1;
+	.pick_ori1  = 1;
+
+	// ----- STATE (global เพื่อให้ NPC อื่นอ่านง่าย) -----
+	$G_OD_ACTIVE = 0;
+	$G_OD_ENDTICK = 0;
+
+	// ล้าง active list
+	callsub S_ClearActive;
+
+	// GM commands
+	bindatcmd "oredropstart", "Global_OreDrop_Core::OnStart", 99, 99;
+	bindatcmd "oredropstop",  "Global_OreDrop_Core::OnStop",  99, 99;
+	bindatcmd "oredropinfo",  "Global_OreDrop_Core::OnInfo",  99, 99;
+
+	end;
+
+
+// =====================================================
+// GM INFO
+// =====================================================
+OnInfo:
+	dispbottom "[OreDrop] Active="+$G_OD_ACTIVE+" EndTick="+$G_OD_ENDTICK;
+	dispbottom "[OreDrop] 0.1% = "+.g_num_01+"/"+.g_den_01+" | 1% = "+.g_num_1+"/"+.g_den_1;
+	dispbottom "[OreDrop] Picks: elu01="+.pick_elu01+" elu1="+.pick_elu1+" ori01="+.pick_ori01+" ori1="+.pick_ori1;
+	end;
+
+
+// =====================================================
+// OnClock (PRODUCTION): ใส่เวลาที่ต้องการตรงนี้
+// -----------------------------------------------------
+// เพิ่มเวลาได้เรื่อย ๆ เช่น OnClock0847 / OnClock1400 / OnClock2000
+// =====================================================
+OnClock0000:
+	donpcevent "Global_OreDrop_Core::OnStart";
+	end;
+
+OnClock0400:
+	donpcevent "Global_OreDrop_Core::OnStart";
+	end;
+
+OnClock0800:
+	donpcevent "Global_OreDrop_Core::OnStart";
+	end;
+
+OnClock1200:
+	donpcevent "Global_OreDrop_Core::OnStart";
+	end;
+	
+OnClock1600:
+	donpcevent "Global_OreDrop_Core::OnStart";
+	end;
+
+OnClock2000:
+	donpcevent "Global_OreDrop_Core::OnStart";
+	end;
+
+
+// =====================================================
+// START / STOP
+// =====================================================
+OnStart:
+	// กันซ้อน: ถ้ากำลังเปิดอยู่ ให้ปิดก่อนแล้วค่อยเปิดใหม่
+	if ($G_OD_ACTIVE) donpcevent "Global_OreDrop_Core::OnStop";
+
+	$G_OD_ACTIVE = 1;
+	$G_OD_ENDTICK = gettimetick(2) + (.g_time_min * 60);
+
+	// เลือกมอนของรอบนี้
+	callsub S_PickAllGroups;
+
+	// ? สำคัญ: Apply drop ให้มอน “ก่อนถูกฆ่า” -> ของตกแน่ + Gum มีผล
+	callsub S_ApplyDrops;
+
+	if (.g_announce) {
+		announce "[OreDrop] เริ่มกิจกรรม! ระยะเวลา "+.g_time_min+" นาที", bc_all, 0x00FF00;
+		announce "[OreDrop] เช็คมอนที่ต้องตีได้ที่ OreDrop Board (Morocc 145,44)", bc_all, 0xFFFF00;
+
+		// ประกาศรายชื่อแบบย่อ (กันยาว)
+		callsub S_AnnounceGroup, "Rough Elunium 1% (757)", 2, 0x33FFCC;
+		callsub S_AnnounceGroup, "Rough Oridecon 1% (756)", 4, 0xCC66FF;
+		callsub S_AnnounceGroup, "Rough Elunium 0.1% (757)", 1, 0x66CCFF;
+		callsub S_AnnounceGroup, "Rough Oridecon 0.1% (756)", 3, 0xFFCC66;
+	}
+	end;
+
+OnStop:
+	if ($G_OD_ACTIVE && .g_announce) {
+		announce "[OreDrop] จบกิจกรรม", bc_all, 0xFF0000;
+	}
+
+	// ? ลบดรอป runtime ออก (กันค้าง)
+	callsub S_RemoveDrops;
+
+	$G_OD_ACTIVE = 0;
+	$G_OD_ENDTICK = 0;
+
+	callsub S_ClearActive;
+	end;
+
+
+// =====================================================
+// SUB: CLEAR ACTIVE LISTS
+// =====================================================
+S_ClearActive:
+	deletearray .act_elu01[0], getarraysize(.act_elu01);
+	deletearray .act_elu1[0],  getarraysize(.act_elu1);
+	deletearray .act_ori01[0], getarraysize(.act_ori01);
+	deletearray .act_ori1[0],  getarraysize(.act_ori1);
+	return;
+
+
+// =====================================================
+// SUB: PICK (NO DUP) for all groups
+// =====================================================
+S_PickAllGroups:
+	callsub S_ClearActive;
+	callsub S_PickFromPool, 1;
+	callsub S_PickFromPool, 2;
+	callsub S_PickFromPool, 3;
+	callsub S_PickFromPool, 4;
+	return;
+
+// g: 1=elu01,2=elu1,3=ori01,4=ori1
+S_PickFromPool:
+	.@g = getarg(0);
+
+	if (.@g==1) { .@pool_sz=getarraysize(.pool_elu01); .@pick=.pick_elu01; }
+	else if (.@g==2) { .@pool_sz=getarraysize(.pool_elu1);  .@pick=.pick_elu1;  }
+	else if (.@g==3) { .@pool_sz=getarraysize(.pool_ori01); .@pick=.pick_ori01; }
+	else { .@pool_sz=getarraysize(.pool_ori1);  .@pick=.pick_ori1; }
+
+	if (.@pool_sz <= 0 || .@pick <= 0) return;
+	if (.@pick > .@pool_sz) .@pick = .@pool_sz;
+
+	deletearray .@used[0], getarraysize(.@used);
+
+	for (.@k=0; .@k<.@pick; .@k++) {
+		.@r = rand(.@pool_sz);
+		while (.@used[.@r]) .@r = rand(.@pool_sz);
+		.@used[.@r] = 1;
+
+		if (.@g==1) .act_elu01[getarraysize(.act_elu01)] = .pool_elu01[.@r];
+		else if (.@g==2) .act_elu1[getarraysize(.act_elu1)] = .pool_elu1[.@r];
+		else if (.@g==3) .act_ori01[getarraysize(.act_ori01)] = .pool_ori01[.@r];
+		else .act_ori1[getarraysize(.act_ori1)] = .pool_ori1[.@r];
+	}
+	return;
+
+
+// =====================================================
+// SUB: ANNOUNCE GROUP (short list)
+// =====================================================
+S_AnnounceGroup:
+	.@title$ = getarg(0);
+	.@g = getarg(1);
+	.@color = getarg(2);
+
+	.@msg$ = "[OreDrop] "+.@title$+" : ";
+
+	if (.@g==1) .@sz = getarraysize(.act_elu01);
+	else if (.@g==2) .@sz = getarraysize(.act_elu1);
+	else if (.@g==3) .@sz = getarraysize(.act_ori01);
+	else .@sz = getarraysize(.act_ori1);
+
+	if (.@sz <= 0) {
+		announce .@msg$+"(none)", bc_all, 0xCCCCCC;
+		return;
+	}
+
+	.@limit = (.@sz < .g_announce_cap) ? .@sz : .g_announce_cap;
+
+	for (.@i=0; .@i<.@limit; .@i++) {
+		if (.@g==1) .@mid = .act_elu01[.@i];
+		else if (.@g==2) .@mid = .act_elu1[.@i];
+		else if (.@g==3) .@mid = .act_ori01[.@i];
+		else .@mid = .act_ori1[.@i];
+
+		.@msg$ += getmonsterinfo(.@mid,0);
+		if (.@i < .@limit-1) .@msg$ += ", ";
+	}
+	if (.@sz > .g_announce_cap) .@msg$ += " ...";
+
+	announce .@msg$, bc_all, .@color;
+	return;
+
+
+// =====================================================
+// SUB: APPLY / REMOVE DROPS (runtime) -> Gum works (SRC)
+// - ใช้คำสั่ง mobdynamicdrop / delmobdynamicdrop
+// - Stamina check ถูกบังคับที่ src แล้ว (ไม่มี SC_STAMINA = ไม่ดรอป)
+// =====================================================
+S_ApplyDrops:
+	// แปลงเรตจาก num/den -> 1..10000 (10000=100%)
+	.@rate01 = (.g_num_01 * 10000) / .g_den_01;
+	.@rate1  = (.g_num_1  * 10000) / .g_den_1;
+
+	if (.@rate01 < 1) .@rate01 = 1;
+	if (.@rate01 > 10000) .@rate01 = 10000;
+	if (.@rate1  < 1) .@rate1  = 1;
+	if (.@rate1  > 10000) .@rate1  = 10000;
+
+	// ระยะเวลาให้ดรอปนี้มีผล (วินาที)
+	.@dur = .g_time_min * 60;
+	if (.@dur < 1) .@dur = 1;
+
+	// กันซ้อน: ลบก่อน (เผื่อเคยค้าง)
+	callsub S_RemoveDrops;
+
+	// Elu 0.1%
+	for (.@i=0; .@i<getarraysize(.act_elu01); .@i++) {
+		mobdynamicdrop .act_elu01[.@i], .g_item_elu, .@rate01, .@dur;
+	}
+
+	// Elu 1%
+	for (.@i=0; .@i<getarraysize(.act_elu1); .@i++) {
+		mobdynamicdrop .act_elu1[.@i], .g_item_elu, .@rate1, .@dur;
+	}
+
+	// Ori 0.1%
+	for (.@i=0; .@i<getarraysize(.act_ori01); .@i++) {
+		mobdynamicdrop .act_ori01[.@i], .g_item_ori, .@rate01, .@dur;
+	}
+
+	// Ori 1%
+	for (.@i=0; .@i<getarraysize(.act_ori1); .@i++) {
+		mobdynamicdrop .act_ori1[.@i], .g_item_ori, .@rate1, .@dur;
+	}
+
+	return;
+
+S_RemoveDrops:
+	// ลบ runtime drops ที่เราใส่ไว้ (ลบตาม active list ของรอบนั้น)
+	for (.@i=0; .@i<getarraysize(.act_elu01); .@i++) {
+		delmobdynamicdrop .act_elu01[.@i], .g_item_elu;
+	}
+	for (.@i=0; .@i<getarraysize(.act_elu1); .@i++) {
+		delmobdynamicdrop .act_elu1[.@i], .g_item_elu;
+	}
+	for (.@i=0; .@i<getarraysize(.act_ori01); .@i++) {
+		delmobdynamicdrop .act_ori01[.@i], .g_item_ori;
+	}
+	for (.@i=0; .@i<getarraysize(.act_ori1); .@i++) {
+		delmobdynamicdrop .act_ori1[.@i], .g_item_ori;
+	}
+	return;
+}
+
+
+
+// =====================================================
+// HOOK: ไม่ใช้แล้ว (เพราะ Apply drop ตอนเริ่มกิจกรรมแทน)
+// =====================================================
+-	script	Global_OreDrop_Hook	-1,{
+OnNPCKillEvent:
+	end;
+}
+
+
+
+// =====================================================
+// BOARD NPC (Console style + Remaining time)
+// =====================================================
+morocc,145,44,5	script	OreDrop Board	4_F_KAFRA1,{
+
+	mes "[OreDrop Board]";
+
+	if (!$G_OD_ACTIVE) {
+		mes "สถานะ: ^FF0000ปิด^000000";
+		close;
+	}
+
+	.@remain = $G_OD_ENDTICK - gettimetick(2);
+	if (.@remain < 0) .@remain = 0;
+
+	.@m = .@remain / 60;
+	.@s = .@remain % 60;
+
+	mes "สถานะ: ^0000FFกำลังเปิดอยู่^000000";
+	mes "เวลาเหลือ: ^FF0000"+.@m+"^000000 นาที ^FF0000"+.@s+"^000000 วินาที";
+	next;
+
+	// แสดง 4 หมวดรวดเดียว เหมือน console
+	callsub S_ShowGroup, "Rough Elunium 1% (757)", 2;
+	callsub S_ShowGroup, "Rough Oridecon 1% (756)", 4;
+	callsub S_ShowGroup, "Rough Elunium 0.1% (757)", 1;
+	callsub S_ShowGroup, "Rough Oridecon 0.1% (756)", 3;
+
+	close;
+
+S_ShowGroup:
+	.@title$ = getarg(0);
+	.@g = getarg(1);
+
+	mes "[OreDrop]";
+	mes "^FF0000"+.@title$+"^000000";
+
+	if (.@g==1) .@sz = getarraysize(getvariableofnpc(.act_elu01, "Global_OreDrop_Core"));
+	else if (.@g==2) .@sz = getarraysize(getvariableofnpc(.act_elu1, "Global_OreDrop_Core"));
+	else if (.@g==3) .@sz = getarraysize(getvariableofnpc(.act_ori01, "Global_OreDrop_Core"));
+	else .@sz = getarraysize(getvariableofnpc(.act_ori1, "Global_OreDrop_Core"));
+
+	if (.@sz <= 0) {
+		mes "^999999(ไม่มีรายชื่อในรอบนี้)^000000";
+		next;
+		return;
+	}
+
+	// กันล้น: โชว์ทีละ 10 บรรทัด
+	.@per = 10;
+	for (.@i=0; .@i<.@sz; .@i++) {
+
+		if (.@g==1) .@mid = getvariableofnpc(.act_elu01[.@i], "Global_OreDrop_Core");
+		else if (.@g==2) .@mid = getvariableofnpc(.act_elu1[.@i],  "Global_OreDrop_Core");
+		else if (.@g==3) .@mid = getvariableofnpc(.act_ori01[.@i], "Global_OreDrop_Core");
+		else .@mid = getvariableofnpc(.act_ori1[.@i],  "Global_OreDrop_Core");
+
+		if (.@mid <= 0) continue;
+		mes " - "+getmonsterinfo(.@mid,0)+" ^777777(ID:"+.@mid+")^000000";
+
+		if ((.@i+1) % .@per == 0 && (.@i+1) < .@sz) next;
+	}
+
+	next;
+	return;
+	
+OnInit:
+	// กัน error: already has a chatroom
+	delwaitingroom;
+	waitingroom "Ore Daily - Dropแร่", 0;
+	end;
+}

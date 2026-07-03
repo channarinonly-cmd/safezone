@@ -1,0 +1,558 @@
+//===========================================================
+// Event Dungeon : Ninja Village (for_dun01) - Ultimate Master Version
+// - เงื่อนไข: ชุดป้องกันบวกรวม +30 (ไม่รวมอาวุธ) + ค่าเข้า 200,000 Zeny (ถามก่อนหักเงิน)
+// - จำกัดเวลา: 4 ชั่วโมง / วัน / 1 Account (ใช้บัตรต่อเวลาได้)
+// - ป้องกันการลักลอบ: Mapflags & Double Check OnLoadMap
+// - ระบบมอนสเตอร์: ไดนามิกรีสปอว์น ล็อกจำนวน 100 ตัวถาวร + กันบั๊ก
+// - ระบบแต้ม: สุ่ม 10% ได้แต้ม (เข้าตัวทันที)
+// - ระบบ Leaderboard: อัปเดต SQL + โบนัสสเตตัส (All Stats, Atk, Matk, Drop)
+// - ระบบออร่า: วนลูปโชว์เอฟเฟกต์ทุกๆ 10 วินาที (ลดอาการเกมแลค)
+// - ระบบรีเซ็ต: ตัดรอบทุกๆ 7 วัน พร้อมประกาศแชมป์เปี้ยน (Season System)
+// - ระบบ NPC รวมร่าง: เมนูจัดการจบในตัวเดียว (มีเนื้อเรื่องและกติกา + ของรางวัลผูกติดไอดี)
+// - ระบบเตะตัดขา: เล็งเป้า Top 3 ระบุแต้มที่ต้องการลบ (1,000 Zeny ต่อ 1 แต้ม)
+// - แก้บั๊ก Timer ซ้อนทับจากการวิง/โหลดแมพ
+//===========================================================
+
+for_dun01	mapflag	loadevent      
+for_dun01	mapflag	nomemo         
+for_dun01	mapflag	nowarp         
+for_dun01	mapflag	nowarpto       
+//for_dun01	mapflag	noteleport     
+for_dun01	mapflag	nosave	SavePoint 
+for_dun01	mapflag	nobranch       
+for_dun01	mapflag	nopenalty      
+
+// ==========================================
+// 1. ประตูทางเข้า (Morocc -> For_dun01)
+// ==========================================
+morocc,203,87,0	script	Event_Warp_In	45,2,2,{
+OnTouch:
+	.@ticket_id = 35008; // รหัสไอเทม "บัตรต่อเวลาดันเจี้ยน"
+
+	if (#NinjaDun_Day != gettime(DT_DAYOFYEAR)) {
+		#NinjaDun_Time = 14400; 
+		#NinjaDun_Day = gettime(DT_DAYOFYEAR); 
+	}
+	
+	if (#NinjaDun_Time <= 0) {
+		if (countitem(.@ticket_id) > 0) {
+			mes "[ ประตูกิจกรรม ]";
+			mes "เวลาโควต้า 4 ชั่วโมงของท่านหมดลงแล้วสำหรับวันนี้...";
+			mes "แต่ข้าเห็นว่าท่านมี ^0000FF" + getitemname(.@ticket_id) + "^000000 อยู่ในกระเป๋า";
+			mes "ท่านต้องการใช้มัน 1 ใบ เพื่อรีเซ็ตเวลาใหม่ (เพิ่ม 4 ชั่วโมง) หรือไม่?";
+			next;
+			if (select("ใช้บัตรต่อเวลาเลย!:ขอกลับไปพักผ่อนก่อน") == 2) close;
+
+			delitem .@ticket_id, 1;
+			#NinjaDun_Time = 14400;
+			
+			mes "[ ประตูกิจกรรม ]";
+			mes "เวลาของท่านถูกเติมกลับมาเต็ม 4 ชั่วโมงเรียบร้อยแล้ว!";
+			mes "ท่านสามารถเข้าสู่ดันเจี้ยนได้เลย!";
+			next;
+		} else {
+			dispbottom "[ ประตูกิจกรรม ] : โควต้าเวลา 4 ชั่วโมงของท่านหมดลงแล้ว และท่านไม่มีบัตรต่อเวลา พรุ่งนี้ค่อยมาใหม่นะ!";
+			specialeffect2 158;
+			end;
+		}
+	}
+
+	.@total_refine = 0;
+	setarray .@parts[0], EQI_HEAD_TOP, EQI_HEAD_MID, EQI_HEAD_LOW, EQI_ARMOR, EQI_HAND_L, EQI_GARMENT, EQI_SHOES, EQI_ACC_R, EQI_ACC_L;
+	
+	for(.@i = 0; .@i < getarraysize(.@parts); .@i++) {
+		.@eq_id = getequipid(.@parts[.@i]);
+		if (.@eq_id > 0) {
+			if (getiteminfo(.@eq_id, ITEMINFO_TYPE) == 4) { 
+				.@total_refine += getequiprefinerycnt(.@parts[.@i]);
+			}
+		}
+	}
+
+	if (.@total_refine >= 30) {
+		// ?? ระบบใหม่: เปิดกล่องข้อความถามผู้เล่นก่อนหักเงิน ป้องกันการเดินตกวาร์ปโดยไม่ตั้งใจ
+		mes "[ ประตูกิจกรรม ]";
+		mes "ยินดีต้อนรับยอดฝีมือ อุปกรณ์ป้องกันของท่านผ่านมาตรฐาน!";
+		mes "ท่านต้องการจ่ายค่าธรรมเนียม ^FF0000200,000 Zeny^000000";
+		mes "เพื่อเข้าสู่ Ninja Dungeon เลยหรือไม่?";
+		next;
+		
+		if (select("ตกลง จ่ายเงินเข้าเลย:ยกเลิก ยังไม่เข้าตอนนี้") == 2) {
+			mes "[ ประตูกิจกรรม ]";
+			mes "เข้าใจแล้ว ไว้พร้อมเมื่อไหร่ค่อยกลับมาคุยกับข้านะ";
+			close;
+		}
+
+		// --- เช็คเงินหลังกดยืนยันจะเข้า ---
+		if (Zeny < 200000) {
+			mes "[ ประตูกิจกรรม ]";
+			mes "เงิน Zeny ของท่านมีไม่พอนะ! ต้องใช้ 200,000 Zeny";
+			specialeffect2 158;
+			close;
+		}
+		
+		Zeny -= 200000;
+		dispbottom "[ ประตูกิจกรรม ] : หักค่าผ่านทาง 200,000 Zeny เรียบร้อยแล้ว!";
+		
+		specialeffect2 11; 
+		announce "[ หมู่บ้านนินจา ] : ยอดฝีมือ [" + strcharinfo(0) + "] ได้บุกเข้าสู่ดันเจี้ยนลับแล้ว!", bc_map | bc_blue;
+		warp "for_dun01", 41, 19;
+		close;
+	} else {
+		dispbottom "[ ประตูกิจกรรม ] : ชุดป้องกันของเจ้าตีบวกรวมแค่ +" + .@total_refine + " (ต้องการ +30 ไม่รวมอาวุธ) กลับไปตีบวกมาใหม่ซะ!";
+		specialeffect2 158; 
+	}
+	end;
+}
+
+for_dun01,41,15,0	warp	Event_Warp_Out	2,2,morocc,202,83
+
+// ==========================================
+// 2. ระบบจับเวลา & ดักจับคนลักลอบเข้าแมพ
+// ==========================================
+-	script	NinjaDun_TimerSystem	-1,{
+OnPCLoadMapEvent:
+	if (strcharinfo(3) == "for_dun01") {
+		.@total_refine = 0;
+		setarray .@parts[0], EQI_HEAD_TOP, EQI_HEAD_MID, EQI_HEAD_LOW, EQI_ARMOR, EQI_HAND_L, EQI_GARMENT, EQI_SHOES, EQI_ACC_R, EQI_ACC_L;
+		for(.@i = 0; .@i < getarraysize(.@parts); .@i++) {
+			.@eq_id = getequipid(.@parts[.@i]);
+			if (.@eq_id > 0) {
+				if (getiteminfo(.@eq_id, ITEMINFO_TYPE) == 4) {
+					.@total_refine += getequiprefinerycnt(.@parts[.@i]);
+				}
+			}
+		}
+
+		if (.@total_refine < 30) {
+			dispbottom "[ ระบบรักษาความปลอดภัย ] : ตรวจพบการลักลอบเข้าพื้นที่ หรืออุปกรณ์ของท่านไม่ได้มาตรฐาน! ทำการส่งกลับเมือง...";
+			sc_end SC_STAMINA;
+			sleep2 1000;
+			warp "SavePoint", 0, 0;
+			end;
+		}
+		
+		if (#NinjaDun_Day != gettime(DT_DAYOFYEAR)) {
+			#NinjaDun_Time = 14400; 
+			#NinjaDun_Day = gettime(DT_DAYOFYEAR);
+		}
+		
+		if (#NinjaDun_Time <= 0) {
+			dispbottom "[ ระบบ ] : หมดเวลาสำหรับวันนี้แล้ว! ทำการส่งกลับเมือง...";
+			sc_end SC_STAMINA; 
+			sleep2 1000;
+			warp "SavePoint", 0, 0;
+			end;
+		}
+		
+		dispbottom "[ ดันเจี้ยนลับ ] : ท่านเหลือเวลาอยู่ในดันเจี้ยนนี้ " + (#NinjaDun_Time / 60) + " นาที สำหรับวันนี้";
+		
+		deltimer strnpcinfo(0)+"::OnMinuteTick";
+		addtimer 60000, strnpcinfo(0)+"::OnMinuteTick";
+	} else {
+		deltimer strnpcinfo(0)+"::OnMinuteTick";
+	}
+	end;
+
+OnMinuteTick:
+	if (strcharinfo(3) != "for_dun01") {
+		deltimer strnpcinfo(0)+"::OnMinuteTick";
+		end; 
+	}
+	
+	#NinjaDun_Time -= 60; 
+	if (#NinjaDun_Time <= 0) {
+		dispbottom "[ ระบบ ] : เวลา 4 ชั่วโมงของท่านหมดลงแล้ว! ทำการส่งกลับเมือง...";
+		deltimer strnpcinfo(0)+"::OnMinuteTick"; 
+		sc_end SC_STAMINA;
+		warp "SavePoint", 0, 0;
+		end;
+	}
+	if (#NinjaDun_Time % 1800 == 0) { 
+		dispbottom "[ ดันเจี้ยนลับ ] : แจ้งเตือน! ท่านเหลือเวลาอีก " + (#NinjaDun_Time / 60) + " นาที";
+	}
+	
+	deltimer strnpcinfo(0)+"::OnMinuteTick";
+	addtimer 60000, strnpcinfo(0)+"::OnMinuteTick";
+	end;
+}
+
+// ==========================================
+// 3. ระบบเก็บแต้ม (ดักบั๊กหลุดจอ)
+// ==========================================
+-	script	NinjaDun_PointSystem	-1,{
+OnKill_31983: .@mob = 31983; goto L_Respawn;
+OnKill_31982: .@mob = 31982; goto L_Respawn;
+OnKill_31993: .@mob = 31993; goto L_Respawn;
+OnKill_31992: .@mob = 31992; goto L_Respawn;
+OnKill_31991: .@mob = 31991; goto L_Respawn;
+OnKill_31990: .@mob = 31990; goto L_Respawn;
+OnKill_31989: .@mob = 31989; goto L_Respawn;
+OnKill_31988: .@mob = 31988; goto L_Respawn;
+OnKill_31987: .@mob = 31987; goto L_Respawn;
+OnKill_31986: .@mob = 31986; goto L_Respawn;
+OnKill_31985: .@mob = 31985; goto L_Respawn;
+OnKill_31984: .@mob = 31984; goto L_Respawn;
+
+L_Respawn:
+	if (playerattached()) {
+		if (#Ninja_Season_Mem != $Ninja_Season) { #Ninja_Points = 0; #Ninja_Season_Mem = $Ninja_Season; }
+
+		if (rand(1, 100) <= 10) { 
+			#Ninja_Points += 1;
+			dispbottom "ได้รับแต้มนินจา 1 แต้ม! (แต้มสะสมทั้งหมด: " + callfunc("F_InsertComma", #Ninja_Points) + " แต้ม)";
+			query_sql("REPLACE INTO `ninja_leaderboard` (`account_id`, `char_name`, `points`) VALUES ("+getcharid(3)+", '"+escape_sql(strcharinfo(0))+"', "+#Ninja_Points+")");
+			doevent "NinjaRank_Aura::OnRefreshRank";
+		}
+	}
+	monster "for_dun01",0,0,strmobinfo(2, .@mob),.@mob,1,strnpcinfo(0)+"::OnKill_"+.@mob;
+	end;
+}
+
+// ==========================================
+// 4. ระบบคำนวณโบนัสสเตตัส & เอฟเฟกต์ออร่า (ลดแลค 10 วิ)
+// ==========================================
+-	script	NinjaRank_Aura	-1,{
+OnPCLoginEvent:
+OnPCLoadMapEvent:
+	if (#Ninja_Season_Mem != $Ninja_Season) { #Ninja_Points = 0; #Ninja_Season_Mem = $Ninja_Season; }
+
+	.@count = query_sql("SELECT `account_id` FROM `ninja_leaderboard` ORDER BY `points` DESC LIMIT 5", .@top_acc);
+	.@my_rank = 0;
+	for(.@i = 0; .@i < .@count; .@i++) {
+		if (getcharid(3) == .@top_acc[.@i]) { .@my_rank = .@i + 1; break; }
+	}
+	
+	if (.@my_rank > 0) {
+		if (.@my_rank == 1) bonus_script "{ bonus bAllStats,15; bonus bAtkRate,10; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,10; }", 86400, 0;
+		else if (.@my_rank == 2) bonus_script "{ bonus bAllStats,10; bonus bAtkRate,7; bonus bMatkRate,7; bonus2 bDropAddRace,RC_All,7; }", 86400, 0;
+		else if (.@my_rank == 3) bonus_script "{ bonus bAllStats,5; bonus bAtkRate,5; bonus bMatkRate,5; bonus2 bDropAddRace,RC_All,5; }", 86400, 0;
+		else bonus_script "{ bonus bAtkRate,3; bonus bMatkRate,3; }", 86400, 0;
+	}
+
+OnRefreshRank:
+	deltimer strnpcinfo(0)+"::OnAuraLoop";
+	.@count = query_sql("SELECT `account_id` FROM `ninja_leaderboard` ORDER BY `points` DESC LIMIT 5", .@top_acc);
+	.@my_rank = 0;
+	for(.@i = 0; .@i < .@count; .@i++) {
+		if (getcharid(3) == .@top_acc[.@i]) { .@my_rank = .@i + 1; break; }
+	}
+	if (.@my_rank > 0) {
+		@ninja_aura_rank = .@my_rank;
+		addtimer 500, strnpcinfo(0)+"::OnAuraLoop";
+	} else {
+		@ninja_aura_rank = 0; 
+	}
+	end;
+
+OnAuraLoop:
+	if (strcharinfo(3) == "") end; 
+	
+	if (@ninja_aura_rank == 1) specialeffect2 1004;      
+	else if (@ninja_aura_rank == 2) specialeffect2 568; 
+	else if (@ninja_aura_rank == 3) specialeffect2 569; 
+	
+	deltimer strnpcinfo(0)+"::OnAuraLoop";
+	addtimer 10000, strnpcinfo(0)+"::OnAuraLoop";
+	end;
+}
+
+// ==========================================
+// 5. ระบบรีเซ็ต Leaderboard ประจำสัปดาห์ (Season)
+// ==========================================
+-	script	Ninja_Rank_Reset	-1,{
+OnInit:
+	if ($Ninja_NextReset == 0) $Ninja_NextReset = gettimetick(2) + 604800;
+	end;
+
+OnMinute00: 
+	if (gettimetick(2) >= $Ninja_NextReset) {
+		$Ninja_NextReset = gettimetick(2) + 604800;
+		
+		.@count = query_sql("SELECT `char_name`, `points` FROM `ninja_leaderboard` ORDER BY `points` DESC LIMIT 1", .@top_name$, .@top_pts);
+		if (.@count > 0 && .@top_pts[0] > 0) {
+			announce "[ หมู่บ้านนินจา ] : สิ้นสุดฤดูกาล! ขอแสดงความยินดีกับ ["+.@top_name$[0]+"] แชมป์เปี้ยนอันดับ 1 ด้วยคะแนน "+callfunc("F_InsertComma", .@top_pts[0])+" แต้ม!", bc_all | bc_yellow;
+		}
+		
+		announce "[ หมู่บ้านนินจา ] : รีเซ็ตแต้ม Leaderboard ทั้งเซิร์ฟเวอร์! เริ่มต้นการแข่งขันฤดูกาลใหม่ได้ ณ บัดนี้!", bc_all | bc_blue;
+		
+		query_sql("DELETE FROM `ninja_leaderboard`");
+		$Ninja_Season += 1;
+	}
+	end;
+}
+
+// ==========================================
+// 6. NPC ศูนย์รวมกิจกรรมนินจา (Ninja Master)
+// ==========================================
+morocc,206,88,4	script	Ninja Master	85,{
+	if (#Ninja_Season_Mem != $Ninja_Season) { #Ninja_Points = 0; #Ninja_Season_Mem = $Ninja_Season; }
+	.@npc_name$ = "^FF8C00[ Ninja Master ]^000000";
+
+L_MainMenu:
+	mes .@npc_name$;
+	mes "ยินดีต้อนรับสู่ศูนย์รวมกิจกรรมหมู่บ้านนินจา!";
+	mes "แต้มสะสมปัจจุบันของเจ้า: ^0000FF" + callfunc("F_InsertComma", #Ninja_Points) + " แต้ม^000000";
+	mes "ต้องการให้ข้าช่วยเหลือเรื่องใด?";
+	next;
+
+	.@menu$ = "ดูอันดับ (Leaderboard):ร้านค้าทั่วไป (Ninja Shop):คลังสมบัติ (Kage Treasury):จ้างลอบสังหาร (Shadow Assassin):อ่านกติกาและเนื้อเรื่อง (Rules & Story):ลาก่อน";
+	if (getgmlevel() >= 99) .@menu$ += ":[GM] จัดการระบบ";
+
+	.@sel = select(.@menu$);
+
+	if (.@sel == 6) close;
+
+	// ----------------------------------------------------
+	// เมนู 1 : Leaderboard
+	// ----------------------------------------------------
+	if (.@sel == 1) {
+		mes .@npc_name$;
+		mes "นี่คือรายชื่อ 5 ยอดนินจาที่มีแต้มสูงสุดในเซิร์ฟเวอร์!";
+		mes "ระบบจะตัดรอบรีเซ็ตแต้ม ^FF0000ทุกๆ 7 วัน^000000";
+		mes "--------------------------------";
+		.@count = query_sql("SELECT `char_name`, `points` FROM `ninja_leaderboard` ORDER BY `points` DESC LIMIT 5", .@top_name$, .@top_pts);
+		if (.@count == 0) {
+			mes "^888888ยังไม่มีผู้ใดสร้างตำนาน...^000000";
+		} else {
+			for (.@i = 0; .@i < .@count; .@i++) {
+				if (.@i == 0) mes "^FF0000อันดับ 1 : " + .@top_name$[.@i] + " (" + callfunc("F_InsertComma", .@top_pts[.@i]) + " แต้ม)^000000";
+				else if (.@i == 1) mes "^0000FFอันดับ 2 : " + .@top_name$[.@i] + " (" + callfunc("F_InsertComma", .@top_pts[.@i]) + " แต้ม)^000000";
+				else if (.@i == 2) mes "^00AA00อันดับ 3 : " + .@top_name$[.@i] + " (" + callfunc("F_InsertComma", .@top_pts[.@i]) + " แต้ม)^000000";
+				else mes "อันดับ " + (.@i + 1) + " : " + .@top_name$[.@i] + " (" + callfunc("F_InsertComma", .@top_pts[.@i]) + " แต้ม)";
+			}
+		}
+		next; goto L_MainMenu;
+	}
+
+	// ----------------------------------------------------
+	// เมนู 2 : Ninja Shop
+	// ----------------------------------------------------
+	if (.@sel == 2) {
+		setarray .@shop_items[0], 6634, 6633; 
+		setarray .@shop_costs[0], 1000, 3000;    
+		
+		mes .@npc_name$;
+		mes "^0000FF[ ร้านค้าทั่วไป ]^000000";
+		mes "เลือกไอเทมที่ต้องการแลกเปลี่ยนได้เลย";
+		mes "^FF0000(ไอเทมที่ได้รับจะถูกผูกติดกับไอดี โอนย้ายไม่ได้)^000000";
+		.@m$ = "";
+		for(.@i = 0; .@i < getarraysize(.@shop_items); .@i++) {
+			.@m$ += "แลก " + getitemname(.@shop_items[.@i]) + " (" + .@shop_costs[.@i] + " แต้ม):";
+		}
+		.@m$ += "กลับเมนูหลัก";
+		
+		.@sel_shop = select(.@m$) - 1;
+		if (.@sel_shop >= getarraysize(.@shop_items)) goto L_MainMenu;
+
+		.@req_pts = .@shop_costs[.@sel_shop];
+		.@rew_id = .@shop_items[.@sel_shop];
+
+		if (#Ninja_Points < .@req_pts) { mes .@npc_name$; mes "^FF0000แต้มไม่พอนะ! ขาดอีก "+(.@req_pts - #Ninja_Points)+" แต้ม^000000"; next; goto L_MainMenu; }
+		if (checkweight(.@rew_id, 1) == 0) { mes .@npc_name$; mes "กระเป๋าเต็ม เคลียร์ของก่อน!"; next; goto L_MainMenu; }
+
+		#Ninja_Points -= .@req_pts;
+		query_sql("REPLACE INTO `ninja_leaderboard` (`account_id`, `char_name`, `points`) VALUES ("+getcharid(3)+", '"+escape_sql(strcharinfo(0))+"', "+#Ninja_Points+")");
+		doevent "NinjaRank_Aura::OnRefreshRank";
+		
+		getitembound .@rew_id, 1, 1;
+		
+		specialeffect2 153;
+		mes .@npc_name$; 
+		mes "แลกไอเทมสำเร็จ!"; 
+		mes "^0000FFไอเทมได้ถูกผูกติดกับไอดีของท่านเรียบร้อยแล้ว^000000";
+		next; goto L_MainMenu;
+	}
+
+	// ----------------------------------------------------
+	// เมนู 3 : Kage Treasury (แลกคอสตูมขั้นบันได)
+	// ----------------------------------------------------
+	if (.@sel == 3) {
+		setarray .@costume_id[1], 35205, 35206, 35207, 35208; 
+		setarray .@req_pts[1], 5000, 10000, 20000, 50000;
+		if (#NinjaCos_Step == 0) #NinjaCos_Step = 1;
+		.@step = #NinjaCos_Step;
+
+		if (.@step > 4) { mes .@npc_name$; mes "สุดยอด! ท่านได้รับคอสตูมระดับตำนานครบทั้ง 4 ชิ้นแล้ว!"; next; goto L_MainMenu; }
+
+		mes .@npc_name$;
+		mes "^0000FF[ คลังสมบัติคาเงะ ]^000000";
+		mes "ตอนนี้ท่านอยู่ในการแลกของรางวัล ^FF0000ขั้นที่ " + .@step + " / 4^000000";
+		mes "รางวัลขั้นที่ " + .@step + ": ^i["+.@costume_id[.@step]+"]^00AA00 " + getitemname(.@costume_id[.@step]) + "^000000";
+		mes "ต้องใช้แต้ม: ^FF0000" + callfunc("F_InsertComma", .@req_pts[.@step]) + " แต้ม^000000";
+		mes "^FF0000(ไอเทมที่ได้รับจะถูกผูกติดกับไอดี โอนย้ายไม่ได้)^000000";
+		next;
+		
+		if (select("แลกรางวัลขั้นที่ " + .@step + "!:กลับเมนูหลัก") == 2) goto L_MainMenu;
+
+		if (#Ninja_Points < .@req_pts[.@step]) { mes .@npc_name$; mes "^FF0000แต้มไม่พอ!^000000"; next; goto L_MainMenu; }
+		if (checkweight(.@costume_id[.@step], 1) == 0) { mes .@npc_name$; mes "กระเป๋าเต็ม!"; next; goto L_MainMenu; }
+
+		#Ninja_Points -= .@req_pts[.@step];
+		query_sql("REPLACE INTO `ninja_leaderboard` (`account_id`, `char_name`, `points`) VALUES ("+getcharid(3)+", '"+escape_sql(strcharinfo(0))+"', "+#Ninja_Points+")");
+		doevent "NinjaRank_Aura::OnRefreshRank";
+
+		getitembound .@costume_id[.@step], 1, 1;
+		#NinjaCos_Step += 1;
+		
+		specialeffect2 153; specialeffect2 248;
+		mes .@npc_name$; 
+		mes "แลกสำเร็จ! เป้าหมายต่อไปคือขั้นที่ " + #NinjaCos_Step; 
+		mes "^0000FFคอสตูมได้ถูกผูกติดกับไอดีของท่านเรียบร้อยแล้ว^000000";
+		next; goto L_MainMenu;
+	}
+
+	// ----------------------------------------------------
+	// เมนู 4 : Shadow Assassin (ใช้ Zeny หักแต้ม Top 3)
+	// ----------------------------------------------------
+	if (.@sel == 4) {
+		mes .@npc_name$;
+		mes "^888888[ องค์กรนักฆ่า ]^000000";
+		mes "หึหึ... หมั่นไส้พวกอันดับต้นๆ อยู่ใช่ไหม?";
+		mes "เรทราคาของข้าคือ ^FF0000ลบ 1 แต้ม = 1,000 Zeny^000000";
+		next;
+
+		.@count_top3 = query_sql("SELECT `account_id`, `char_name`, `points` FROM `ninja_leaderboard` ORDER BY `points` DESC LIMIT 3", .@t3_acc, .@t3_name$, .@t3_pts);
+		if (.@count_top3 == 0) { mes .@npc_name$; mes "ตอนนี้บอร์ดยังว่างเปล่า... ไม่มีใครให้ลอบสังหารเลย!"; next; goto L_MainMenu; }
+
+		mes .@npc_name$;
+		mes "เลือกเป้าหมายที่ท่านต้องการลอบสังหาร:";
+		.@m2$ = "";
+		for (.@i = 0; .@i < .@count_top3; .@i++) {
+			.@m2$ += "อันดับ " + (.@i+1) + " - " + .@t3_name$[.@i] + " (" + callfunc("F_InsertComma", .@t3_pts[.@i]) + " แต้ม):";
+		}
+		.@m2$ += "กลับเมนูหลัก";
+		
+		.@sel_target = select(.@m2$) - 1;
+		if (.@sel_target >= .@count_top3) goto L_MainMenu;
+
+		.@target_acc = .@t3_acc[.@sel_target];
+		.@target_name$ = .@t3_name$[.@sel_target];
+		.@t_pts_current = .@t3_pts[.@sel_target];
+
+		if (.@target_acc == getcharid(3)) { mes .@npc_name$; mes "จะจ้างข้าไปหักแต้มตัวเองทำไม!? ไร้สาระสิ้นดี!"; next; goto L_MainMenu; }
+		if (.@t_pts_current <= 0) { mes .@npc_name$; mes "เป้าหมายไม่มีแต้มเหลือให้หักแล้ว!"; next; goto L_MainMenu; }
+
+		next;
+		mes .@npc_name$;
+		mes "เป้าหมาย: ^0000FF" + .@target_name$ + "^000000 (" + callfunc("F_InsertComma", .@t_pts_current) + " แต้ม)";
+		mes "ท่านต้องการจ้างหักแต้มเป้าหมาย ^FF0000กี่แต้ม?^000000";
+		mes "(ใส่ตัวเลข 1 ถึง " + .@t_pts_current + ")";
+		input .@dmg;
+
+		if (.@dmg <= 0) goto L_MainMenu;
+		if (.@dmg > .@t_pts_current) .@dmg = .@t_pts_current; 
+
+		.@cost = .@dmg * 1000; 
+
+		if (Zeny < .@cost) {
+			mes .@npc_name$;
+			mes "เงิน ^FF0000Zeny^000000 ของท่านไม่พอนะ!";
+			mes "ต้องใช้ " + callfunc("F_InsertComma", .@cost) + " Zeny สำหรับ " + callfunc("F_InsertComma", .@dmg) + " แต้ม";
+			next; goto L_MainMenu;
+		}
+
+		next;
+		mes .@npc_name$;
+		mes "เป้าหมาย: ^0000FF" + .@target_name$ + "^000000";
+		mes "หักแต้ม: ^FF0000" + callfunc("F_InsertComma", .@dmg) + " แต้ม^000000";
+		mes "ค่าจ้างรวม: ^FF0000" + callfunc("F_InsertComma", .@cost) + " Zeny^000000";
+		mes "ยืนยันที่จะดำเนินการหรือไม่?";
+		if (select("ลุยเลย!:เปลี่ยนใจ") == 2) goto L_MainMenu;
+
+		query_sql("SELECT `points` FROM `ninja_leaderboard` WHERE `account_id` = " + .@target_acc, .@fresh_t_pts);
+		Zeny -= .@cost;
+
+		.@final_target_pts = .@fresh_t_pts[0] - .@dmg;
+		if (.@final_target_pts < 0) .@final_target_pts = 0; 
+
+		if (attachrid(.@target_acc)) {
+			#Ninja_Points = .@final_target_pts;
+			dispbottom "[ คำเตือน ] : ท่านถูกลอบสังหารจากเงามืด! แต้มหายไป " + callfunc("F_InsertComma", .@dmg) + " แต้ม!";
+			specialeffect2 13; 
+			doevent "NinjaRank_Aura::OnRefreshRank"; 
+			detachrid(); 
+		}
+
+		query_sql("UPDATE `ninja_leaderboard` SET `points` = " + .@final_target_pts + " WHERE `account_id` = " + .@target_acc);
+		announce "[ Shadow Assassin ] : " + strcharinfo(0) + " ใช้เงินฟาดหัวนักฆ่า ไปสอยคะแนนของ " + .@target_name$ + " ร่วงไป " + callfunc("F_InsertComma", .@dmg) + " แต้ม!!", bc_all | bc_red;
+		
+		specialeffect2 153;
+		mes .@npc_name$; mes "รับเงินเรียบร้อย แต้มของเป้าหมายถูกทำลายทิ้งแล้ว!"; next; goto L_MainMenu;
+	}
+
+	// ----------------------------------------------------
+	// เมนู 5 : อ่านกติกาและเนื้อเรื่อง (Rules & Story)
+	// ----------------------------------------------------
+	if (.@sel == 5) {
+		mes .@npc_name$;
+		mes "^0000FF[ เนื้อเรื่องลับแห่งหมู่บ้านนินจา ]^000000";
+		mes "ณ หมู่บ้านนินจาที่ถูกปิดตายลึกเข้าไปในป่าลับ... มีคัมภีร์และสมบัติโบราณที่สาบสูญซ่อนอยู่";
+		mes "เพื่อปกป้องความลับนี้ เหล่ายอดฝีมือแห่งโคโนฮะทั้ง 12 คนจึงได้ตื่นขึ้นจากการหลับใหล";
+		mes "พวกเขาพร้อมที่จะทดสอบความแข็งแกร่งของผู้กล้าที่กล้าย่างกรายเข้ามาในอาณาเขตแห่งนี้!";
+		next;
+		mes .@npc_name$;
+		mes "^0000FF[ กติกาการเข้าร่วมกิจกรรม ]^000000";
+		mes "1. ผู้เข้าร่วมต้องมีอุปกรณ์ป้องกันตีบวกรวมกัน ^FF0000+30 ขึ้นไป^000000 (ไม่นับอาวุธ) และเสียค่าเข้า ^FF0000200,000 Zeny^000000";
+		mes "2. สามารถเข้าดันเจี้ยนได้ ^FF00004 ชั่วโมงต่อวัน^000000 (มีไอเทมต่อเวลาขาย)";
+		mes "3. เมื่อกำจัดยอดฝีมือนินจา มีโอกาสได้รับแต้มเพื่อนำไปแลกไอเทมและคอสตูมระดับตำนานได้";
+		next;
+		mes .@npc_name$;
+		mes "^0000FF[ ระบบจัดอันดับ (Leaderboard) ]^000000";
+		mes "ผู้ที่มีคะแนนสะสมสูงสุด 5 อันดับแรก จะได้รับออร่าพิเศษและบัฟสเตตัสสุดโหด (All Stats, Atk, Matk, เพิ่มอัตราดรอป)";
+		mes "บอร์ดประกาศจับจะทำการ ^FF0000รีเซ็ตแต้มผู้เล่นทุกคนกลับเป็นศูนย์ในทุกๆ 7 วัน^000000 เพื่อเริ่มฤดูกาลใหม่";
+		mes "หมายเหตุ: หากไม่อยากให้ใครแซงหน้า ท่านสามารถจ้างมือสังหารด้วยเงิน Zeny เพื่อหักคะแนนอันดับ 1-3 ได้ในเมนู 'จ้างลอบสังหาร'!";
+		next; goto L_MainMenu;
+	}
+
+	// ----------------------------------------------------
+	// เมนู 7 : GM Tools (สำหรับ GM เท่านั้น)
+	// ----------------------------------------------------
+	if (.@sel == 6) {
+L_GMTools:
+		mes "^0000FF[ GM Tools ]^000000";
+		mes "เลือกระบบที่ต้องการจัดการ:";
+		.@gm_sel = select("บังคับรีเซ็ต Leaderboard ฤดูกาลใหม่","ทดสอบเอฟเฟกต์ (Effect Tester)","กลับเมนูหลัก");
+		
+		if (.@gm_sel == 3) goto L_MainMenu;
+
+		if (.@gm_sel == 1) {
+			mes "^0000FF[ GM Tools ]^000000";
+			mes "แน่ใจนะว่าจะกดตัดรอบ Leaderboard ฤดูกาลใหม่ทันที?";
+			next;
+			if (select("จัดไป!:เปลี่ยนใจ") == 2) goto L_GMTools;
+			
+			$Ninja_NextReset = gettimetick(2); 
+			doevent "Ninja_Rank_Reset::OnMinute00";
+			
+			mes "^0000FF[ GM Tools ]^000000";
+			mes "สั่งรีเซ็ตเรียบร้อย!";
+			next; goto L_GMTools;
+		}
+
+		if (.@gm_sel == 2) {
+L_EffectLoop:
+			mes "^0000FF[ Effect Tester ]^000000";
+			mes "ใส่หมายเลข Effect (แนะนำ 1-2500)";
+			mes "พิมพ์ 0 เพื่อกลับเมนู GM";
+			input .@ef_id;
+
+			if (.@ef_id <= 0) goto L_GMTools;
+			if (.@ef_id > 2500) { mes "^FF0000เลขสูงเกินไป!^000000"; next; goto L_EffectLoop; }
+
+			specialeffect2 .@ef_id; 
+			mes "กำลังแสดงผล Effect ID : ^FF0000" + .@ef_id + "^000000";
+			next; goto L_EffectLoop; 
+		}
+	}
+
+OnInit:
+	waitingroom "Ninja Dungeon", 0;
+	query_sql("CREATE TABLE IF NOT EXISTS `ninja_leaderboard` (`account_id` INT NOT NULL PRIMARY KEY, `char_name` VARCHAR(30) NOT NULL, `points` INT NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+	killmonster "for_dun01", "All";
+	setarray .Mobs[0], 31983, 31982, 31993, 31992, 31991, 31990, 31989, 31988, 31987, 31986, 31985, 31984;
+	for(.@i = 0; .@i < getarraysize(.Mobs); .@i++) {
+		monster "for_dun01",0,0,strmobinfo(2, .Mobs[.@i]),.Mobs[.@i],100,"NinjaDun_PointSystem::OnKill_"+.Mobs[.@i];
+	}
+	end;
+}

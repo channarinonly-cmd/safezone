@@ -1,0 +1,4 @@
+// Voice client rollout compatibility.
+// Set to 0 until the exact LOGIN_ID1 memory offset for this RO client is confirmed.
+voice_login_id1_strict: 0
+voice_speaking_hat_effect: HAT_EF_MIC

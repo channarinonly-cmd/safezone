@@ -1,0 +1,143 @@
+// ==========================================
+// 2. สคริปต์ลงทะเบียนชนิดพื้นดิน (OnInit)
+// ==========================================
+-	script	Zone_CellPVP_Setup	-1,{
+OnInit:
+	// setcell "ชื่อแมพ", X_ซ้ายล่าง, Y_ซ้ายล่าง, X_ขวาบน, Y_ขวาบน, ชนิดเซลล์, สถานะ(1=เปิด);
+	setcell "morocc", 201, 52, 218, 66, cell_pvp, 1;
+	end;
+}
+
+// ==========================================
+// 3. ฟังก์ชันส่วนกลาง (แจกบัฟอัตโนมัติ)
+// ==========================================
+function	script	F_Autobuff	{
+	sc_start SC_BLESSING, 60000, 10;
+	sc_start SC_INCREASEAGI, 60000, 10;
+	return;
+}
+
+// ==========================================
+// 4. Core NPC: Deathmatch (ห้ามเปลี่ยนชื่อ!)
+// ==========================================
+-	script	deathmatch_core	-1,{
+	callfunc "F_Autobuff";
+	end;
+}
+
+// ==========================================
+// 5. PVP Manager: จัดการ Event เข้า/ออก
+// ==========================================
+-	script	PVP_Manager	-1,{
+OnPVPEnter:
+	end;
+
+OnPVPLeave:
+	end;
+}
+
+// ==========================================
+// 6. NPC ทางเข้า และ ทางออก
+// ==========================================
+// ยามหน้าประตู (อยู่นอกรั้ว)
+morocc,198,59,4	script	PVP Gatekeeper	111,{
+	mes "[PVP Gatekeeper]";
+	mes "พร้อมจะเข้าไปลุยในลาน Free PK หรือยัง?";
+	mes "ด้านในนี้คุณสามารถหวดได้ทันทีโดยไม่ต้องกด Shift!";
+	next;
+	if (select("เข้าไปลุยเลย!:ขอเตรียมตัวก่อน") == 2) {
+		close;
+	}
+	// วาร์ปไปตรงกลางลาน
+	warp "morocc", 209, 59;
+	end;
+}
+
+// จุดวาร์ปออก (อยู่ขอบด้านในลาน)
+morocc,209,65,4	script	PVP Exit	111,{
+	mes "[PVP Exit]";
+	mes "ต้องการออกจากลานประลองหรือไม่?";
+	next;
+	if (select("ออกไปพัก:ขอลุยต่อ") == 2) {
+		close;
+	}
+	// วาร์ปกลับมาหา Gatekeeper
+	warp "morocc", 198, 57;
+	end;
+}
+
+// ==========================================
+// 7. รั้วกั้นรอบลานประลอง (บล็อกการเดิน 100%)
+// (วาง NPC ติดกันทุกช่องเพื่อสร้างกำแพง)
+// **เคล็ดลับ: สามารถเปลี่ยนเลข 111 เป็น 844 เพื่อให้เป็นแผงกั้นไม้กิลด์วอร์ได้
+// ==========================================
+
+// --- ขอบล่าง (Y = 52) ---
+morocc,201,52,0	script	Fence_B01	111,{ end; }
+morocc,202,52,0	script	Fence_B02	111,{ end; }
+morocc,203,52,0	script	Fence_B03	111,{ end; }
+morocc,204,52,0	script	Fence_B04	111,{ end; }
+morocc,205,52,0	script	Fence_B05	111,{ end; }
+morocc,206,52,0	script	Fence_B06	111,{ end; }
+morocc,207,52,0	script	Fence_B07	111,{ end; }
+morocc,208,52,0	script	Fence_B08	111,{ end; }
+morocc,209,52,0	script	Fence_B09	111,{ end; }
+morocc,210,52,0	script	Fence_B10	111,{ end; }
+morocc,211,52,0	script	Fence_B11	111,{ end; }
+morocc,212,52,0	script	Fence_B12	111,{ end; }
+morocc,213,52,0	script	Fence_B13	111,{ end; }
+morocc,214,52,0	script	Fence_B14	111,{ end; }
+morocc,215,52,0	script	Fence_B15	111,{ end; }
+morocc,216,52,0	script	Fence_B16	111,{ end; }
+morocc,217,52,0	script	Fence_B17	111,{ end; }
+morocc,218,52,0	script	Fence_B18	111,{ end; }
+
+// --- ขอบบน (Y = 66) ---
+morocc,201,66,0	script	Fence_T01	111,{ end; }
+morocc,202,66,0	script	Fence_T02	111,{ end; }
+morocc,203,66,0	script	Fence_T03	111,{ end; }
+morocc,204,66,0	script	Fence_T04	111,{ end; }
+morocc,205,66,0	script	Fence_T05	111,{ end; }
+morocc,206,66,0	script	Fence_T06	111,{ end; }
+morocc,207,66,0	script	Fence_T07	111,{ end; }
+morocc,208,66,0	script	Fence_T08	111,{ end; }
+morocc,209,66,0	script	Fence_T09	111,{ end; }
+morocc,210,66,0	script	Fence_T10	111,{ end; }
+morocc,211,66,0	script	Fence_T11	111,{ end; }
+morocc,212,66,0	script	Fence_T12	111,{ end; }
+morocc,213,66,0	script	Fence_T13	111,{ end; }
+morocc,214,66,0	script	Fence_T14	111,{ end; }
+morocc,215,66,0	script	Fence_T15	111,{ end; }
+morocc,216,66,0	script	Fence_T16	111,{ end; }
+morocc,217,66,0	script	Fence_T17	111,{ end; }
+morocc,218,66,0	script	Fence_T18	111,{ end; }
+
+// --- ขอบซ้าย (X = 201) ---
+morocc,201,53,0	script	Fence_L01	111,{ end; }
+morocc,201,54,0	script	Fence_L02	111,{ end; }
+morocc,201,55,0	script	Fence_L03	111,{ end; }
+morocc,201,56,0	script	Fence_L04	111,{ end; }
+morocc,201,57,0	script	Fence_L05	111,{ end; }
+morocc,201,58,0	script	Fence_L06	111,{ end; }
+morocc,201,59,0	script	Fence_L07	111,{ end; }
+morocc,201,60,0	script	Fence_L08	111,{ end; }
+morocc,201,61,0	script	Fence_L09	111,{ end; }
+morocc,201,62,0	script	Fence_L10	111,{ end; }
+morocc,201,63,0	script	Fence_L11	111,{ end; }
+morocc,201,64,0	script	Fence_L12	111,{ end; }
+morocc,201,65,0	script	Fence_L13	111,{ end; }
+
+// --- ขอบขวา (X = 218) ---
+morocc,218,53,0	script	Fence_R01	111,{ end; }
+morocc,218,54,0	script	Fence_R02	111,{ end; }
+morocc,218,55,0	script	Fence_R03	111,{ end; }
+morocc,218,56,0	script	Fence_R04	111,{ end; }
+morocc,218,57,0	script	Fence_R05	111,{ end; }
+morocc,218,58,0	script	Fence_R06	111,{ end; }
+morocc,218,59,0	script	Fence_R07	111,{ end; }
+morocc,218,60,0	script	Fence_R08	111,{ end; }
+morocc,218,61,0	script	Fence_R09	111,{ end; }
+morocc,218,62,0	script	Fence_R10	111,{ end; }
+morocc,218,63,0	script	Fence_R11	111,{ end; }
+morocc,218,64,0	script	Fence_R12	111,{ end; }
+morocc,218,65,0	script	Fence_R13	111,{ end; }

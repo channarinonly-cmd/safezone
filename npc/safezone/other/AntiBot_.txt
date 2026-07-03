@@ -1,0 +1,456 @@
+//////////////////////////////////////////////////////
+// AntiBot System – FINAL CLEAN + GM ALERT + Anti-Warp Freeze
+// เงื่อนไขตรวจ: ต้องมี SC_STAMINA และต้อง "ไม่" มี SC_AUTOATTACK
+// AutoAttack = บอทของเซิร์ฟ (ไม่ตรวจ)
+//
+// [FIXED] ใช้ playerattached() แทนคำสั่งเดิมที่ไม่มีใน rAthena
+//////////////////////////////////////////////////////
+
+// --------------------------------------------------
+// GM ALERT (แจ้ง GM ที่ออนไลน์ - เห็นเฉพาะ GM)
+// --------------------------------------------------
+function	script	F_NotifyGM	{
+	.@msg$ = getarg(0);
+	announce "[GM-ALERT] " + .@msg$, bc_blue|bc_gm;
+	end;
+}
+
+// ==================================================
+// CORE: AntiBotCheck (ระบบเบื้องหลัง ไม่ต้องเช็ก Faction)
+// ==================================================
+-	script	AntiBotCheck	-1,{
+
+OnInit:
+	.check_min_ms = 600000;      // 10 นาที
+	.check_max_ms = 3600000;     // 60 นาที
+	.check_rate   = 100;         // % โอกาสตรวจในแต่ละรอบ
+	.max_fail     = 3;
+
+	// ===== GM ALERT SETTING =====
+	.gm_alert_score_threshold = 3;   // score ตั้งแต่เท่านี้ขึ้นไป => แจ้งว่าเข้าข่าย macro/openkore
+	.gm_alert_fail_each_time  = 1;   // 1=แจ้ง GM ทุกครั้งที่ตอบผิด, 0=ไม่แจ้งทุกครั้ง
+	end;
+
+// --------------------------------------------------
+// LOGIN (กัน timer ค้าง/ซ้อน 100%)
+// --------------------------------------------------
+OnPCLoginEvent:
+	// เคลียร์สถานะ block/check ค้าง
+	setoption 0x40,0;
+	setoption 0x2000,0;
+	pcblockmove getcharid(3),0;
+
+	// เคลียร์ timer เดิมของ "ตัวละครนี้" ที่อาจค้าง
+	deltimer "AntiBotCheck::OnCheckBot";
+
+	// รีเซ็ตตัวแปรควบคุม
+	#AB_Checking  = 0;
+	#AB_TimerSet  = 0;
+	#AB_FastCheck = 0;
+	#AB_LogoutWhileChecking = 0;
+
+	// ตั้งรอบตรวจใหม่
+	callsub S_ScheduleCheck;
+	end;
+
+// --------------------------------------------------
+// SCHEDULE CHECK (ล้างคิวเดิมก่อนเสมอ = ไม่ซ้อนแน่นอน)
+// --------------------------------------------------
+S_ScheduleCheck:
+	if (!getcharid(3)) return;
+
+	// ล้างคิวเดิม (สำคัญสุด)
+	deltimer "AntiBotCheck::OnCheckBot";
+
+	#AB_TimerSet = 1;
+	addtimer rand(.check_min_ms,.check_max_ms), "AntiBotCheck::OnCheckBot";
+	return;
+
+// --------------------------------------------------
+// MAIN CHECK
+// --------------------------------------------------
+OnCheckBot:
+	#AB_TimerSet = 0;
+
+	// [FIX WARP FREEZE] ถ้าผู้เล่นกำลังเปลี่ยนแมพ (ไม่มีตัวละครผูกกับสคริปต์) ให้ข้ามไปเลย
+	if (!playerattached()) {
+		callsub S_ScheduleCheck;
+		end;
+	}
+	
+	// ถ้าผู้เล่นตายอยู่ ให้ข้ามไปเลย
+	if (isdead()) {
+		callsub S_ScheduleCheck;
+		end;
+	}
+
+	// ถ้ากำลังตรวจอยู่/ถูกบล็อกอยู่ ให้ตั้งรอบใหม่แล้วจบ (กันหลุดรอบ)
+	if (#AB_Checking || checkoption(0x40) || checkoption(0x2000)) {
+		callsub S_ScheduleCheck;
+		end;
+	}
+
+	// ต้องเป็น STAMINA-only (และต้องไม่ AutoAttack)
+	if (!(getstatus(SC_STAMINA) && !getstatus(SC_AUTOATTACK))) {
+		callsub S_ScheduleCheck;
+		end;
+	}
+
+	// FastCheck = บังคับตรวจ 100%
+	.@rate = (#AB_FastCheck ? 100 : .check_rate);
+
+	if (rand(100) >= .@rate) {
+		callsub S_ScheduleCheck;
+		end;
+	}
+
+	// ข้าม GM / AFK / PvP
+	if (getgmlevel() >= 99 || checkidle() >= 300) {
+		callsub S_ScheduleCheck;
+		end;
+	}
+	if (getmapflag(strcharinfo(3),mf_pvp) || getmapflag(strcharinfo(3),mf_gvg)) {
+		callsub S_ScheduleCheck;
+		end;
+	}
+
+	// ข้ามในเมือง (whitelist ชื่อแผนที่)
+	if (strcharinfo(3) == "prontera" ||
+	    strcharinfo(3) == "morocc"   ||
+	    strcharinfo(3) == "geffen"   ||
+	    strcharinfo(3) == "payon"    ||
+	    strcharinfo(3) == "alberta"  ||
+	    strcharinfo(3) == "izlude"   ||
+	    strcharinfo(3) == "aldebaran"||
+	    strcharinfo(3) == "comodo"   ||
+	    strcharinfo(3) == "yuno"     ||
+	    strcharinfo(3) == "louyang"  ||
+	    strcharinfo(3) == "sec_pri"  ||    
+	    strcharinfo(3) == "safezone"       
+	) {
+		callsub S_ScheduleCheck;
+		end;
+	}
+
+	// ===== START CHECK =====
+	#AB_Checking  = 1;
+	#AB_FastCheck = 0;
+
+	setoption 0x40;
+	setoption 0x2000;
+	pcblockmove getcharid(3),1;
+
+	// [SAFEGUARD] เผื่อผู้เล่นกดวิงจังหวะเดียวกับที่สคริปต์ล็อคตัว ให้รอ 1 วินาทีแล้วเช็คอีกรอบ
+	sleep2 1000;
+	if (!playerattached()) {
+		// ถ้าหลุดการเชื่อมต่อไปแล้ว (วิง/ออกเกม)
+		#AB_Checking = 0;
+		callsub S_ScheduleCheck;
+		end;
+	}
+	if (isdead()) {
+		// ถ้าเพิ่งตายเมื่อกี้พอดี
+		#AB_Checking = 0;
+		setoption 0x40,0;
+		setoption 0x2000,0;
+		pcblockmove getcharid(3),0;
+		callsub S_ScheduleCheck;
+		end;
+	}
+
+	// --------------------------------------------------
+	// สุ่มโจทย์: 0=ตัวเลข, 1=รูปภาพ
+	// --------------------------------------------------
+	.@mode = rand(2);
+
+	if (.@mode == 0) {
+		.@ok = callsub(S_Challenge_Number);
+	} else {
+		.@ok = callsub(S_Challenge_Image);
+	}
+
+	if (.@ok) {
+		callsub S_Pass;
+		end;
+	}
+
+	callsub S_Fail;
+	end;
+
+// --------------------------------------------------
+// CHALLENGE: NUMBER (ตัวเลข 3 หลัก)
+// --------------------------------------------------
+S_Challenge_Number:
+	mes "[ Anti-Bot ]";
+	mes "กรุณาตอบคำถามภายใน 1 นาที";
+	next;
+
+	.@code = rand(100,999);
+	mes "กรอกตัวเลข: ^FF0000"+.@code+"^000000";
+	input .@ans;
+
+	if (.@ans == .@code) return 1;
+	return 0;
+
+// --------------------------------------------------
+// CHALLENGE: IMAGE (สุ่มรูป + ให้เลือกเมนู)
+// --------------------------------------------------
+S_Challenge_Image:
+	.@try = 0;
+
+L_TryAgain:
+	.@try++;
+
+	.@imgset = rand(1,5);
+	deletearray .@ANTIBOT_FN$[0], getarraysize(.@ANTIBOT_FN$);
+
+	if (.@imgset == 1) { setarray .@ANTIBOT_FN$[0], "Anubis", "Rybio", "Bigfoot", "Golem"; }
+	if (.@imgset == 2) { setarray .@ANTIBOT_FN$[0], "Chimera", "Baphomet", "Marduk", "Mummy"; }
+	if (.@imgset == 3) { setarray .@ANTIBOT_FN$[0], "Nightmare", "Sting", "Raydric", "Reqium"; } 
+	if (.@imgset == 4) { setarray .@ANTIBOT_FN$[0], "Rocker", "Zombie", "Wolf", "Minorous"; }
+	if (.@imgset == 5) { setarray .@ANTIBOT_FN$[0], "Isis", "Joker", "Kobold", "Pecopeco"; }
+
+	.@img = rand(getarraysize(.@ANTIBOT_FN$));
+	.@question$ = .@ANTIBOT_FN$[.@img];
+
+	// แสดงรูป
+	cutin .@question$, 4;
+
+	mes "[ Anti-Bot ]";
+	mes "เลือกรูปให้ถูกต้อง:";
+	next;
+
+	.@menu$ = implode(.@ANTIBOT_FN$, ":");
+	.@pick = select(.@menu$) - 1;
+	.@answer$ = .@ANTIBOT_FN$[.@pick];
+
+	cutin "", 255;
+
+	if (.@answer$ == .@question$) return 1;
+
+	if (.@try < 3) goto L_TryAgain;
+	return 0;
+
+// --------------------------------------------------
+// PASS
+// --------------------------------------------------
+S_Pass:
+	#AB_Checking  = 0;
+	#AntiBotFail  = 0;
+	#AB_Score     = 0;
+
+	setoption 0x40,0;
+	setoption 0x2000,0;
+	pcblockmove getcharid(3),0;
+
+	query_sql("DELETE FROM suspect_bot_list WHERE char_id="+getcharid(3));
+	message strcharinfo(0),"[AntiBot] ผ่านการตรวจสอบ";
+
+	callsub S_ScheduleCheck;
+	return;
+
+// --------------------------------------------------
+// FAIL
+// --------------------------------------------------
+S_Fail:
+	#AB_Checking = 0;
+	#AntiBotFail = #AntiBotFail + 1;
+	#AB_Score    = #AB_Score + 1;
+
+	query_sql("INSERT INTO suspect_bot_list (char_id,name,score) VALUES ("+
+		getcharid(3)+",'"+escape_sql(strcharinfo(0))+"',"+#AB_Score+
+		") ON DUPLICATE KEY UPDATE score="+#AB_Score);
+
+	// ===== GM ALERT: fail =====
+	if (.gm_alert_fail_each_time) {
+		callfunc "F_NotifyGM",
+			"ผู้เล่น "+strcharinfo(0)+" (CID:"+getcharid(3)+") ตอบ AntiBot ผิด ("+#AntiBotFail+"/"+.max_fail+") | score="+#AB_Score+" | map="+strcharinfo(3);
+	}
+
+	// ===== GM ALERT: เข้าข่าย macro/openkore (ตาม score) =====
+	if (#AB_Score >= .gm_alert_score_threshold) {
+		callfunc "F_NotifyGM",
+			"?? เข้าข่าย Macro/OpenKore: "+strcharinfo(0)+" (CID:"+getcharid(3)+") score="+#AB_Score+" | ล่าสุดตอบผิด/พฤติกรรมผิดปกติ | map="+strcharinfo(3);
+	}
+
+	if (#AntiBotFail >= .max_fail) {
+		atcommand "@jail "+strcharinfo(0);
+		#AntiBotFail = 0;
+
+		callfunc "F_NotifyGM",
+			"? จับเข้าคุก: "+strcharinfo(0)+" (CID:"+getcharid(3)+") | score="+#AB_Score+" | map="+strcharinfo(3);
+
+		callsub S_ScheduleCheck;
+		end;
+	}
+
+	setoption 0x40,0;
+	setoption 0x2000,0;
+	pcblockmove getcharid(3),0;
+
+	message strcharinfo(0),"[AntiBot] ตอบผิด ("+#AntiBotFail+"/"+.max_fail+")";
+
+	callsub S_ScheduleCheck;
+	return;
+}
+
+// ==================================================
+// LOGOUT = หนีตรวจ (SAFE)
+// ==================================================
+-	script	JailOnReLogin	-1,{
+
+OnPCLogoutEvent:
+	// ถ้ามีตัวแปรเช็คอยู่ แปลว่ากำลังโดนบอททัก แล้วดันกดออกเกม
+	if (#AB_Checking) {
+		#AB_LogoutWhileChecking = 1;
+		#AB_Checking = 0; // ป้องกันบักติดค้าง
+	}
+	end;
+
+OnPCLoginEvent:
+	if (#AB_LogoutWhileChecking) {
+		#AB_LogoutWhileChecking = 0;
+
+		query_sql("INSERT INTO suspect_bot_list (char_id,name,score) VALUES ("+
+			getcharid(3)+",'"+escape_sql(strcharinfo(0))+"',1"+
+		") ON DUPLICATE KEY UPDATE score=score+1");
+
+		message strcharinfo(0), "[AntiBot] ตรวจพบการออกเกมระหว่างถูกตรวจ (เพิ่มคะแนนสงสัย)";
+
+		announce "[GM-ALERT] หนีตรวจ: "+strcharinfo(0)+" (CID:"+getcharid(3)+") ออกเกมระหว่างถูกตรวจ | +score | map="+strcharinfo(3), bc_blue|bc_gm;
+	}
+	end;
+}
+
+// ==================================================
+// FAST CHECK WATCHER (POLLING)
+// ==================================================
+-	script	AntiBotStatusWatch	-1,{
+
+OnPCLoginEvent:
+	#AB_WatchOn = 1;
+	deltimer strnpcinfo(3)+"::OnWatch";
+	addtimer 3000, strnpcinfo(3)+"::OnWatch";
+	end;
+
+OnPCLogoutEvent:
+	#AB_WatchOn = 0;
+	deltimer strnpcinfo(3)+"::OnWatch";
+	end;
+
+OnWatch:
+	if (!#AB_WatchOn) end;
+
+	// กันกรณีตัวละครไม่ได้ออนไลน์อยู่
+	if (!playerattached()) end;
+
+	if (getstatus(SC_AUTOATTACK)) {
+		#WasAutoAttack = 1;
+		goto L_Resched;
+	}
+
+	if (#WasAutoAttack && getstatus(SC_STAMINA)) {
+		#WasAutoAttack = 0;
+
+		if (#AB_Checking) goto L_Resched;
+
+		#AB_FastCheck = 1;
+
+		deltimer "AntiBotCheck::OnCheckBot";
+		#AB_TimerSet = 1;
+		addtimer rand(60000,180000), "AntiBotCheck::OnCheckBot";
+
+		dispbottom "[AntiBot] ตรวจแบบเร่งจะเริ่มภายใน 1–3 นาที (หลังปิด AutoAttack).";
+	}
+
+L_Resched:
+	deltimer strnpcinfo(3)+"::OnWatch";
+	addtimer 3000, strnpcinfo(3)+"::OnWatch";
+	end;
+}
+
+// ==================================================
+// NPC Appeal – ขอปล่อยตัวออกจากคุก
+// ==================================================
+sec_pri,24,83,3	script	AntiBot Appeal#core	4_F_KAFRA1,{
+
+	mes "[AntiBot Appeal]";
+	mes "ถ้าคุณคิดว่าตัวเองเป็นผู้เล่นจริง ไม่ได้ใช้บอท";
+	mes "สามารถยื่นคำร้องพิสูจน์ตัวเองเพื่อออกจากคุกได้.";
+	next;
+
+	mes "[AntiBot Appeal]";
+	mes "กรุณาพิมพ์ประโยคต่อไปนี้ให้ตรงทุกตัวอักษร:";
+	mes "^0000FFฉันยืนยันว่าฉันเล่นเอง ไม่ได้ใช้โปรแกรมช่วยเล่น^000000";
+	next;
+
+	input .@ans$;
+
+	if (.@ans$ != "ฉันยืนยันว่าฉันเล่นเอง ไม่ได้ใช้โปรแกรมช่วยเล่น") {
+		mes "[AntiBot Appeal]";
+		mes "^FF0000คำตอบไม่ตรง^000000";
+		mes "ระบบถือว่าคุณยังไม่ผ่านการยืนยันตัวตน.";
+		close;
+	}
+
+	mes "[AntiBot Appeal]";
+	mes "^00FF00คุณผ่านการยืนยันตัวตนแล้ว^000000";
+	mes "ระบบจะปล่อยคุณออกจากคุก และรีเซ็ตโควตา + คะแนนสงสัย.";
+	next;
+	close2;
+
+	#AntiBotFail = 0;
+	#AB_Score    = 0;
+	#AB_Checking = 0;
+
+	query_sql "DELETE FROM suspect_bot_list WHERE char_id = "+getcharid(3);
+
+	atcommand "@unjail " + strcharinfo(0);
+	
+	warp "SavePoint",0,0;
+	end;
+}
+
+sec_pri,49,83,3	duplicate(AntiBot Appeal#core)	AntiBot Appeal#1	4_F_KAFRA1
+sec_pri,74,83,3	duplicate(AntiBot Appeal#core)	AntiBot Appeal#2	4_F_KAFRA1
+sec_pri,99,83,3	duplicate(AntiBot Appeal#core)	AntiBot Appeal#3	4_F_KAFRA1
+
+// ==================================================
+// NPC กระดานประกาศ “ผู้ต้องสงสัยเป็นบอท”
+// ==================================================
+-	script	BotBoard_Core	-1,{
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) {
+		callfunc "Check_Faction", 1; 
+	} else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) {
+		callfunc "Check_Faction", 2; 
+	}
+
+	mes "[กระดานประกาศจับบอท]";
+	mes "รายชื่อผู้เล่นที่เข้าข่ายต้องสงสัยว่าใช้โปรแกรมช่วยเล่น:";
+	next;
+
+	.@n = query_sql("SELECT name,score,last_update FROM suspect_bot_list ORDER BY score DESC LIMIT 10",
+		.@name$, .@score, .@time$);
+
+	if (.@n <= 0) {
+		mes "[ระบบ]";
+		mes "ตอนนี้ยังไม่มีผู้เล่นที่เข้าข่ายต้องสงสัย.";
+		close;
+	}
+
+	for (.@i = 0; .@i < .@n; .@i++) {
+		mes "^FF0000"+ .@name$[.@i] +"^000000 – คะแนนสงสัย: ^FF9900"+ .@score[.@i] +"^000000";
+		mes "อัปเดตล่าสุด: "+ .@time$[.@i];
+		mes "------------------------------------";
+	}
+	close;
+
+OnInit:
+	if (strnpcinfo(0) == "BotBoard_Core") end;
+	waitingroom "รายชื่อ Bot Daily",0;
+	end;
+}
+
+morocc,156,75,3	duplicate(BotBoard_Core)	[ประกาศจับบอท]#moc	4_F_KAFRA1
+prontera,137,94,5	duplicate(BotBoard_Core)	[ประกาศจับบอท]#prt	4_F_KAFRA1

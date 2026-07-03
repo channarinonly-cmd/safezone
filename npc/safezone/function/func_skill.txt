@@ -1,0 +1,40 @@
+function	script	test_skill	{
+Start:
+	
+	mes "กำหนด รอบ";
+	input .@round_max;
+	clear;
+	mes "รอบ : "+.@round_max+"";
+	mes "กำหนด X";
+	input .@x;
+	clear;
+	mes "รอบ : "+.@round_max+"";
+	mes "X : "+.@x+"";
+	mes "กำหนด Y";
+	clear;
+	mes "รอบ : "+.@round_max+"";
+	mes "X : "+.@x+"";
+	input .@y;
+	clear;
+	mes "รอบ : "+.@round_max+"";
+	mes "X : "+.@x+"";
+	mes "Y : "+.@y+"";
+	
+	.@menu = select(
+		"- เริ่มสกิลอัตโนมัติ"
+	);
+	
+	if(.@menu == 1){ close2; }
+	
+	OnLoop:
+	//getmapxy(.@map$,.@x,.@y,BL_PC);
+	unitskillusepos getcharid(3),"WZ_STORMGUST",10,.@x,.@y;
+	.@round ++;
+	sleep2 3000;
+	if(.@round >= .@round_max){ end; }
+	goto OnLoop;
+	end;
+	
+}
+
+

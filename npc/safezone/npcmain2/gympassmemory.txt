@@ -1,0 +1,33 @@
+function	script	gympassmemory	{
+	if (gympassmemory == 10) {
+		dispbottom "ไม่สามารถใช้งานได้อีกต่อไป (เลเวลสกิลสูงสุดแล้ว)",0xFFFFFF;
+		end;
+	}
+	if (countitem(7776) < 2) {
+		dispbottom "ไม่สามารถใช้งานได้ (ต้องการ Gym Membership Card 2 ea)",0xFFFFFF;
+		end;
+	}
+	set .@add_carry,gympassmemory + 1;
+	set gympassmemory,.@add_carry;
+	skill "ALL_INCCARRY",.@add_carry,SKILL_PERM_GRANT;
+	delitem 7776,2;
+	specialeffect2 EF_EARTHSPIKE;
+	dispbottom "คุณทำการใช้ Gym Membership Card ทั้งหมด 2 ea เพื่อเพิ่มน้ำหนักสำเร็จ",0x000000;
+	end;
+}
+
+function	script	ResetStatus	{
+	delitem 6320,1;
+	resetstatus;
+	end;
+}
+
+function	script	ResetSkill	{
+	if (checkfalcon() || checkcart() || checkriding() || ismounting()){
+		dispbottom "กรุณาถอด " + ((checkfalcon()) ? "Falcon" : "") + ((checkcart()) ? "Cart" : "") + ((checkriding()) ? "Pecopeco" : "") + ((ismounting()) ? "Mount" : "") +" ก่อนทำการรีเซ็ต",0x000000;
+		end;
+	}
+	delitem 12213,1;
+	resetskill;
+	end;
+}

@@ -1,0 +1,513 @@
+// ============================================================
+// Mapflags (ตั้งค่าคุณสมบัติห้อง Bossnia)
+// ============================================================
+// ลดดาเมจสกิล 2036 (Rolling Cutter) ให้เหลือ 50%
+bossnia_01	mapflag	custom_skill_dmg	2036,50
+bossnia_02	mapflag	custom_skill_dmg	2036,50
+bossnia_03	mapflag	custom_skill_dmg	2036,50
+bossnia_04	mapflag	custom_skill_dmg	2036,50
+
+// สกิลอื่นๆ นอกจาก 2036 ให้เหลือ 50%
+bossnia_01	mapflag	mob_damagerate	50
+bossnia_02	mapflag	mob_damagerate	50
+bossnia_03	mapflag	mob_damagerate	50
+bossnia_04	mapflag	mob_damagerate	50
+
+// ป้องกันมอนสเตอร์และบอสไม่ให้ดรอปไอเทมทุกชนิด (เปลี่ยนเป็นล่าเพื่อสะสมแต้มแทน)
+bossnia_01	mapflag	nomobloot
+bossnia_02	mapflag	nomobloot
+bossnia_03	mapflag	nomobloot
+bossnia_04	mapflag	nomobloot
+bossnia_01	mapflag	nomvploot
+bossnia_02	mapflag	nomvploot
+bossnia_03	mapflag	nomvploot
+bossnia_04	mapflag	nomvploot
+
+// ป้องกันไม่ให้เสีย EXP เมื่อตาย
+bossnia_01	mapflag	nopenalty	
+bossnia_02	mapflag	nopenalty	
+bossnia_03	mapflag	nopenalty	
+bossnia_04	mapflag	nopenalty
+
+// ป้องกันการเซฟจุดเกิด / ป้องกันวิง / ป้องกันเทเลพอร์ต
+bossnia_01	mapflag	nomemo	
+bossnia_02	mapflag	nomemo	
+bossnia_03	mapflag	nomemo	
+bossnia_04	mapflag	nomemo	
+bossnia_01	mapflag	noteleport	
+bossnia_02	mapflag	noteleport	
+bossnia_03	mapflag	noteleport	
+bossnia_04	mapflag	noteleport
+
+// ป้องกันการโจมตีอัตโนมัติ
+bossnia_01	mapflag	noautoattack
+bossnia_02	mapflag	noautoattack
+bossnia_03	mapflag	noautoattack
+bossnia_04	mapflag	noautoattack
+
+// ============================================================
+// Entrance NPCs - ควบคุมเวลาเข้าและห้องกิจกรรม
+// ============================================================
+morocc,191,94,6	script	Event Bossnia#1	4_M_RACHMAN1,{
+
+	if ($bossnia_event == 1) {
+		if (BaseLevel < 99){
+			mes "[Riss]";
+			mes "เจ้าไม่สามารถเข้าร่วมกิจกรรมได้";
+			mes "เนื่องจากเลเวลของเจ้าไม่ถึง ^FF0000Lv.99^000000";
+			close;
+		}
+		if (rentalcountitem(7227) < 1) {
+			mes "[Riss]";
+			mes "ขณะนี้กิจกรรมได้เริ่มต้นขึ้นแล้ว!";
+			mes "แต่เจ้ายังไม่มีบัตรเข้านะ?";
+			next;
+			switch(select("ซื้อบัตรเข้าห้องบอส 1 ชั่วโมง", "จบการสนทนา")){
+				case 1:
+					mes "[Riss]";
+					mes "Bossnia MVP Passport";
+					mes "ราคา : 1,000,000 Zeny";
+					mes "ระยะเวลา : 1 ชั่วโมง";
+					mes "ต้องการซื้อหรือไม่?";
+					next;
+					if(select("ซื้อ Bossnia MVP Passport","จบการสนทนา") == 2) {
+						mes "[Riss]";
+						mes "เจ้าได้ตัดสินใจที่จะไม่ซื้อ";
+						close;
+					}
+					if (Zeny < 1000000){
+						mes "[Riss]";
+						mes "แลกเปลี่ยนไม่สำเร็จ";
+						mes "เจ้ามีเงินไม่พอ";
+						close;
+					}
+					mes "[Riss]";
+					mes "แลกเปลี่ยนสำเร็จ";
+					mes "^FF0000หากเจ้าซื้อบัตรนี้ในเวลา 23.59^000000";
+					mes "^FF0000เมื่อกิจกรรมจบลง เจ้าจะไม่สามารถใช้มันได้อีก^000000";
+					Zeny -= 1000000;
+					rentitem 7227,3600;
+					end;
+				case 2:
+					close;
+			}
+			end;
+		}
+		mes "[Riss]";
+		mes "ขณะนี้กิจกรรมได้เริ่มต้นขึ้นแล้ว!";
+		mes "แล้วเจ้าล่ะ พร้อมจะเข้าไปหรือยัง?";
+		next;
+		set .@i, select("Event Bossnia เข้าร่วมแล้ว ("+getmapusers("bossnia_01")+") คน");
+		announce "["+strcharinfo(0)+"] ได้เข้าร่วม Event Bossnia", bc_all;
+		warp "bossnia_0"+.@i,rand(202,204),rand(202,204);
+		end;
+	} else {
+		mes "[Riss]";
+		mes "Event Bossnia เปิดทุกวัน";
+		mes "เวลา 22.00 น. ถึง 24.00 น.";
+		mes "เจ้าต้อง ^FF0000Lv.99^000000 ด้วยนะ";
+		mes "^FF0000ขณะนี้กิจกรรมยังไม่เปิด^000000";
+		end;
+	}
+
+// ==========================================
+// ส่วนคำสั่ง GM: @bossnia
+// ==========================================
+OnAtCmd:
+	if ($bossnia_event == 1) {
+		$bossnia_event = 0;
+		$bossnia_endtime = 0;
+		announce "[GM] ปิด Event Bossnia รอบพิเศษ!", bc_all;
+		mapwarp "bossnia_01","morocc",142,98;
+		mapwarp "bossnia_02","morocc",142,98;
+		mapwarp "bossnia_03","morocc",142,98;
+		mapwarp "bossnia_04","morocc",142,98;
+		dispbottom "ปิดกิจกรรม Bossnia พร้อมดึงผู้เล่นออกเรียบร้อยแล้ว";
+		end;
+	}
+	
+	$bossnia_event = 1;
+	$bossnia_endtime = gettimetick(2) + 3600; // ตั้งเวลาปัจจุบัน + ไปอีก 3600 วินาที (1 ชั่วโมง)
+	announce "[GM] ประกาศเปิด Event Bossnia รอบพิเศษ เป็นเวลา 1 ชั่วโมง!", bc_all;
+	dispbottom "เปิดกิจกรรม Bossnia 1 ชั่วโมงเรียบร้อยแล้ว (พิมพ์ @bossnia ซ้ำอีกครั้งหากต้องการปิดก่อนเวลา)";
+	end;
+
+// ==========================================
+// เช็คเวลาทุกๆ 1 นาที (ไม่ผูกติดตัวละคร)
+// ==========================================
+OnTimer60000:
+	if ($bossnia_event == 1 && $bossnia_endtime > 0) {
+		if (gettimetick(2) >= $bossnia_endtime) {
+			$bossnia_event = 0;
+			$bossnia_endtime = 0;
+			announce "ขณะนี้ Event Bossnia รอบพิเศษ 1 ชั่วโมง ได้หมดเวลาลงแล้ว!", bc_all;
+			mapwarp "bossnia_01","morocc",142,98;
+			mapwarp "bossnia_02","morocc",142,98;
+			mapwarp "bossnia_03","morocc",142,98;
+			mapwarp "bossnia_04","morocc",142,98;
+		}
+	}
+	setnpctimer 0; // ลูปตรวจเช็คใหม่เรื่อยๆ
+	end;
+
+// ==========================================
+// รอบปกติประจำวัน (6 รอบต่อวัน)
+// ==========================================
+OnClock0155: OnClock0555: OnClock0955: OnClock1355: OnClock1755: OnClock2155:
+	announce "Event Bossnia จะเริ่มขึ้นในอีก 5 นาที", bc_all;
+	end;
+OnClock0156: OnClock0556: OnClock0956: OnClock1356: OnClock1756: OnClock2156:
+	announce "Event Bossnia จะเริ่มขึ้นในอีก 4 นาที", bc_all;
+	end;
+OnClock0157: OnClock0557: OnClock0957: OnClock1357: OnClock1757: OnClock2157:
+	announce "Event Bossnia จะเริ่มขึ้นในอีก 3 นาที", bc_all;
+	end;
+OnClock0158: OnClock0558: OnClock0958: OnClock1358: OnClock1758: OnClock2158:
+	announce "Event Bossnia จะเริ่มขึ้นในอีก 2 นาที", bc_all;
+	end;
+OnClock0159: OnClock0559: OnClock0959: OnClock1359: OnClock1759: OnClock2159:
+	announce "Event Bossnia จะเริ่มขึ้นในอีก 1 นาที", bc_all;
+	end;
+
+// เวลาเปิด
+OnClock0200: OnClock0600: OnClock1000: OnClock1400: OnClock1800: OnClock2200:
+	$bossnia_event = 1;
+	$bossnia_endtime = 0; 
+	announce "ขณะนี้ Event Bossnia ได้เริ่มต้นขึ้นแล้ว", bc_all;
+	end;
+
+// เวลาปิด
+OnClock0400: OnClock0800: OnClock1200: OnClock1600: OnClock2000: OnClock0000:
+	$bossnia_event = 0;
+	$bossnia_endtime = 0;
+	announce "ขณะนี้ Event Bossnia ได้จบลงแล้ว", bc_all;
+	mapwarp "bossnia_01","morocc",142,98;
+	mapwarp "bossnia_02","morocc",142,98;
+	mapwarp "bossnia_03","morocc",142,98;
+	mapwarp "bossnia_04","morocc",142,98;
+	end;
+
+OnInit:
+	bindatcmd "bossnia", strnpcinfo(3)+"::OnAtCmd", 60, 99; // สร้างคำสั่งให้ GM Level 60+ พิมพ์ได้
+	delwaitingroom;
+	waitingroom "Bossnia Event",0;
+	initnpctimer; // สั่งรัน Thread เช็คเวลาแบบเบื้องหลัง
+	end;
+}
+
+
+// ============================================================
+// NPC สำหรับเช็คและแลกของรางวัล Bossnia Point
+// ============================================================
+morocc,193,94,6	script	Bossnia Reward	4_M_RACHMAN1,{
+	mes "[Bossnia Reward]";
+	mes "ยินดีต้อนรับ! เจ้ามีแต้มสะสม Bossnia อยู่ทั้งหมด ^FF0000" + #BossniaPoints + "^000000 แต้ม";
+	mes "ต้องการทำสิ่งใดล่ะ?";
+	next;
+	switch(select("แลก Gold (20 แต้ม):อธิบายระบบ:จบการสนทนา")) {
+		case 1:
+			mes "[Bossnia Reward]";
+			mes "ใช้ ^FF000020 Bossnia Points^000000 แลก Gold 1 ชิ้น";
+			mes "คำเตือน: ^0000FFไอเทมที่แลกไปจะผูกมัดกับไอดี^000000";
+			mes "^0000FFไม่สามารถตั้งร้าน หรือเดลให้คนอื่นได้^000000";
+			mes "ต้องการแลกหรือไม่?";
+			next;
+			if(select("แลกเปลี่ยน:ไม่ดีกว่า") == 2) close;
+
+			if (#BossniaPoints < 20) {
+				mes "[Bossnia Reward]";
+				mes "แต้มของเจ้าไม่พอนะ ไปล่า MVP มาเพิ่มก่อนเถอะ!";
+				close;
+			}
+			
+			// หักแต้ม
+			#BossniaPoints -= 20;
+			
+			// บังคับให้เป็นของติดไอดี (Account Bound)
+			getitembound 969, 1, 1; 
+			
+			mes "[Bossnia Reward]";
+			mes "แลกเปลี่ยนสำเร็จ! ได้รับ Account Bound Gold 1 ea";
+			mes "แต้มคงเหลือของคุณคือ " + #BossniaPoints + " แต้ม";
+			close;
+
+		case 2:
+			mes "[Bossnia Reward]";
+			mes "ในกิจกรรมนี้ หากเจ้าเข้าไปใน Bossnia";
+			mes "และสามารถจัดการ ^FF0000Boss MVP^000000 ได้สำเร็จ";
+			mes "เจ้ามีโอกาสสุ่มได้รับ 1 Bossnia Point";
+			mes "(ลูกน้องบอสจะไม่นับนะจ๊ะ)";
+			mes "นอกจากนี้ยังมีโอกาสดรอปไอเทมพิเศษเข้าตัวด้วย!";
+			mes "เมื่อสะสมแต้มครบ นำมาแลกของรางวัลล้ำค่ากับข้าได้เลย";
+			close;
+
+		case 3:
+			close;
+	}
+}
+
+// ============================================================
+// สคริปต์จัดการรางวัลเมื่อฆ่าบอสใน Bossnia
+// ============================================================
+-	script	Bossnia_Kill_Reward	-1,{
+OnNPCKillEvent:
+	// 1. เช็คว่าอยู่ในแผนที่กิจกรรมหรือไม่
+	if (strcharinfo(3) != "bossnia_01" && strcharinfo(3) != "bossnia_02" && strcharinfo(3) != "bossnia_03" && strcharinfo(3) != "bossnia_04") {
+		end;
+	}
+
+	// 2. กรองบอสด้วย Switch-Case (ป้องกันการแจกแต้มจากลูกน้อง)
+	switch(killedrid) {
+		case 1252: case 1272: case 1046: case 1389: case 1112: case 1147: case 1059:
+		case 1039: case 1658: case 1511: case 1785: case 1115: case 1038: case 1190:
+		case 1087: case 1492: case 1150: case 1373: case 1583: case 1312: case 1157:
+		case 1251: case 1159: case 1086: case 1418: case 1719: case 1768: case 1685:
+		case 1779: case 1734: case 1708: case 1688: case 1871: case 1623: case 1647:
+		case 1648: case 1873: case 1751: case 1832:
+			break; 
+		default:
+			end; // ถ้าไม่ใช่บอส ให้หยุดทำงาน
+	}
+
+	// ==========================================
+	// ระบบที่ 1: สุ่มรับคะแนน Bossnia Point (โอกาส 10%)
+	// ==========================================
+	if (rand(1, 100) <= 10) {
+		#BossniaPoints += 1;
+		dispbottom "[Bossnia] ยินดีด้วย! คุณได้รับ 1 Bossnia Point (แต้มสะสม: " + #BossniaPoints + ")";
+	}
+
+	// ==========================================
+	// ระบบที่ 2: สุ่มดรอปไอเทมเข้าตัวโดยตรง
+	// ==========================================
+	// ทอง 969 (โอกาส 500 จาก 10000 = 5%)
+	if (rand(10000) < 500) {
+		getitem 969, 1;
+		dispbottom "[Bossnia] โชคดีสุดๆ! คุณได้รับ Gold จากการล่าบอส";
+	}
+	
+	//  Blacksmith Blessing 6634 (โอกาส 100 จาก 10000 = 1%)
+	if (rand(10000) < 100) {
+		getitem 6634, 1;
+		dispbottom "[Bossnia] โชคดีสุดๆ! คุณได้รับ Blacksmith Blessing จากการล่าบอส";
+	}
+	
+	// Aegis Scroll 6633 (โอกาส 5 จาก 10000 = 0.05%)
+	if (rand(10000) < 5) {
+		getitem 6633, 1;
+		dispbottom "[Bossnia] โชคดีสุดๆ! คุณได้รับ Aegis Scroll จากการล่าบอส";
+	}
+	
+	// Oridecon 984 (โอกาส 3 จาก 10000 = 3%)
+	if (rand(10000) < 300) {
+		getitem 984, 1;
+		dispbottom "[Bossnia] โชคดีสุดๆ! คุณได้รับ Oridecon จากการล่าบอส";
+	}
+	
+	// Elunium 985 (โอกาส 3 จาก 10000 = 3%)
+	if (rand(10000) < 300) {
+		getitem 985, 1;
+		dispbottom "[Bossnia] โชคดีสุดๆ! คุณได้รับ Elunium จากการล่าบอส";
+	}
+	
+	// OCA 616 (โอกาส 0.5)
+	if (rand(10000) < 50) {
+		getitem 616, 1;
+		dispbottom "[Bossnia] โชคดีสุดๆ! คุณได้รับ Old Card Album จากการล่าบอส";
+	}
+	end;
+}
+
+// Warp Portals
+//============================================================
+//bossnia_01,204,204,0	warp	bossnia01	1,1,prontera,155,180
+//bossnia_02,204,204,0	warp	bossnia02	1,1,prontera,155,180
+//bossnia_03,204,204,0	warp	bossnia03	1,1,prontera,155,180
+//bossnia_04,204,204,0	warp	bossnia04	1,1,prontera,155,180
+
+// ============================================================
+// Monster Spawns
+// ============================================================
+
+//----------------------------------------------------------------------------
+// bossnia_01 - Bossnia
+//----------------------------------------------------------------------------
+bossnia_01,0,0	monster	Garm	1252,4,30000
+//bossnia_01,0,0	monster	Gloom Under Night	1768,2,7200000
+bossnia_01,0,0	monster	Dark Lord	1272,4,30000
+bossnia_01,0,0	monster	Doppelganger	1046,4,30000
+bossnia_01,0,0	monster	Dracula	1389,4,30000
+bossnia_01,0,0	monster	Drake	1112,4,30000
+//bossnia_01,0,0	monster	Detale	1719,1,30000
+bossnia_01,0,0	monster	Maya	1147,4,30000
+bossnia_01,0,0	monster	Mistress	1059,4,30000
+bossnia_01,0,0	monster	Baphomet	1039,4,30000
+//bossnia_01,0,0	monster	Egnigem Cenia	1658,10,1800000
+bossnia_01,0,0	monster	Amon Ra	1511,4,30000
+bossnia_01,0,0	monster	Atroce	1785,4,30000
+//bossnia_01,0,0	monster	Vesper	1685,1,30000
+bossnia_01,0,0	monster	Eddga	1115,4,30000
+bossnia_01,0,0	monster	Osiris	1038,4,30000
+bossnia_01,0,0	monster	Orc Lord	1190,4,30000
+bossnia_01,0,0	monster	Orc Hero	1087,4,30000
+bossnia_01,0,0	monster	Samurai Specter	1492,4,30000
+bossnia_01,0,0	monster	Moonlight Flower	1150,4,30000
+bossnia_01,0,0	monster	Lord of the Dead	1373,4,30000
+//bossnia_01,0,0	monster	Ktullanux	1779,2,7200000
+//bossnia_01,0,0	monster	Kiel D-01	1734,1,30000
+//bossnia_01,0,0	monster	Thanatos Phantom	1708,2,7200000
+//bossnia_01,0,0	monster	Lady Tanee	1688,1,30000
+bossnia_01,0,0	monster	Tao Gunka	1583,4,30000
+bossnia_01,0,0	monster	Turtle General	1312,4,30000
+bossnia_01,0,0	monster	Pharaoh	1157,4,30000
+bossnia_01,0,0	monster	Stormy Knight	1251,4,30000
+//bossnia_01,0,0	monster	Falling Bishop	1871,5,7200000
+bossnia_01,0,0	monster	Phreeoni	1159,4,30000
+bossnia_01,0,0	monster	Golden Thief Bug	1086,4,30000
+bossnia_01,0,0	monster	Evil Snake Lord	1418,4,30000
+//bossnia_01,0,0	monster	RSX-0806	1623,1,30000
+//bossnia_01,0,0	monster	Assassin Cross Eremes	1647,1
+//bossnia_01,0,0	monster	Whitesmith Howard	1648,1
+//bossnia_01,0,0	monster	Beelzebub	1873,1
+//bossnia_01,0,0	monster	Beelzebub	1873,1
+//bossnia_01,0,0	monster	Valkyrie Randgris	1751,1
+//bossnia_01,0,0	monster	Ifrit	1832,1
+//bossnia_01,0,0	monster	CELIA	2237,5
+//bossnia_01,0,0	monster	RANDEL	2235,5
+//bossnia_01,0,0	monster	ALPHOCCIO	2240,5
+//bossnia_01,0,0	monster	FLAMEL	2236,5
+//bossnia_01,0,0	monster	CHEN	2238,5
+//bossnia_01,0,0	monster	GIOIA	2251,2
+//bossnia_01,0,0	monster	I QUEEN SCARABA	2165,5
+
+//----------------------------------------------------------------------------
+// bossnia_02 - Bossnia
+//----------------------------------------------------------------------------
+bossnia_02,0,0	monster	Garm	1252,4,30000
+//bossnia_02,0,0	monster	Gloom Under Night	1768,2,7200000
+bossnia_02,0,0	monster	Dark Lord	1272,4,30000
+bossnia_02,0,0	monster	Doppelganger	1046,4,30000
+bossnia_02,0,0	monster	Dracula	1389,4,30000
+bossnia_02,0,0	monster	Drake	1112,4,30000
+bossnia_02,0,0	monster	Detale	1719,4,30000
+bossnia_02,0,0	monster	Maya	1147,4,30000
+bossnia_02,0,0	monster	Mistress	1059,4,30000
+bossnia_02,0,0	monster	Baphomet	1039,4,30000
+bossnia_02,0,0	monster	Egnigem Cenia	1658,4,30000
+bossnia_02,0,0	monster	Amon Ra	1511,4,30000
+bossnia_02,0,0	monster	Atroce	1785,4,30000
+//bossnia_02,0,0	monster	Vesper	1685,2,7200000
+bossnia_02,0,0	monster	Eddga	1115,4,30000
+bossnia_02,0,0	monster	Osiris	1038,4,30000
+bossnia_02,0,0	monster	Orc Lord	1190,4,30000
+bossnia_02,0,0	monster	Orc Hero	1087,4,30000
+bossnia_02,0,0	monster	Samurai Specter	1492,4,30000
+bossnia_02,0,0	monster	Moonlight Flower	1150,4,30000
+bossnia_02,0,0	monster	Lord of the Dead	1373,4,30000
+//bossnia_02,0,0	monster	Ktullanux	1779,2,7200000
+//bossnia_02,0,0	monster	Kiel D-01	1734,1,30000
+//bossnia_02,0,0	monster	Thanatos Phantom	1708,2,7200000
+//bossnia_02,0,0	monster	Lady Tanee	1688,1,30000
+bossnia_02,0,0	monster	Tao Gunka	1583,4,30000
+bossnia_02,0,0	monster	Turtle General	1312,4,30000
+bossnia_02,0,0	monster	Pharaoh	1157,4,30000
+bossnia_02,0,0	monster	Stormy Knight	1251,4,30000
+//bossnia_02,0,0	monster	Falling Bishop	1871,5,7200000
+bossnia_02,0,0	monster	Phreeoni	1159,4,30000
+bossnia_02,0,0	monster	Golden Thief Bug	1086,4,30000
+bossnia_02,0,0	monster	Evil Snake Lord	1418,4,30000
+//bossnia_02,0,0	monster	RSX-0806	1623,1,30000
+//bossnia_02,0,0	monster	Assassin Cross Eremes	1647,1
+//bossnia_02,137,118,1,1	monster	Whitesmith Howard	1648,1
+//bossnia_02,122,195,1,1	monster	Beelzebub	1873,1
+//bossnia_02,45,118,1,1	monster	Beelzebub	1873,1
+//bossnia_02,196,122,1,1	monster	Valkyrie Randgris	1751,1
+//bossnia_02,142,61,1,1	monster	Ifrit	1832,1
+
+//----------------------------------------------------------------------------
+// bossnia_03 - Bossnia
+//----------------------------------------------------------------------------
+bossnia_03,0,0	monster	Garm	1252,4,30000
+//bossnia_03,0,0	monster	Gloom Under Night	1768,2,7200000
+bossnia_03,0,0	monster	Dark Lord	1272,4,30000
+bossnia_03,0,0	monster	Doppelganger	1046,4,30000
+bossnia_03,0,0	monster	Dracula	1389,4,30000
+bossnia_03,0,0	monster	Drake	1112,4,30000
+bossnia_03,0,0	monster	Detale	1719,4,30000
+bossnia_03,0,0	monster	Maya	1147,4,30000
+bossnia_03,0,0	monster	Mistress	1059,4,30000
+bossnia_03,0,0	monster	Baphomet	1039,4,30000
+bossnia_03,0,0	monster	Egnigem Cenia	1658,4,30000
+bossnia_03,0,0	monster	Amon Ra	1511,4,30000
+bossnia_03,0,0	monster	Atroce	1785,4,30000
+//bossnia_03,0,0	monster	Vesper	1685,2,7200000
+bossnia_03,0,0	monster	Eddga	1115,4,30000
+bossnia_03,0,0	monster	Osiris	1038,4,30000
+bossnia_03,0,0	monster	Orc Lord	1190,4,30000
+bossnia_03,0,0	monster	Orc Hero	1087,4,30000
+bossnia_03,0,0	monster	Samurai Specter	1492,4,30000
+bossnia_03,0,0	monster	Moonlight Flower	1150,4,30000
+bossnia_03,0,0	monster	Lord of the Dead	1373,4,30000
+//bossnia_03,0,0	monster	Ktullanux	1779,2,7200000
+//bossnia_03,0,0	monster	Kiel D-01	1734,1,30000
+//bossnia_02,0,0	monster	Thanatos Phantom	1708,2,7200000
+//bossnia_03,0,0	monster	Lady Tanee	1688,1,30000
+bossnia_03,0,0	monster	Tao Gunka	1583,4,30000
+bossnia_03,0,0	monster	Turtle General	1312,4,30000
+bossnia_03,0,0	monster	Pharaoh	1157,4,30000
+bossnia_03,0,0	monster	Stormy Knight	1251,4,30000
+//bossnia_02,0,0	monster	Falling Bishop	1871,5,7200000
+bossnia_03,0,0	monster	Phreeoni	1159,4,30000
+bossnia_03,0,0	monster	Golden Thief Bug	1086,4,30000
+bossnia_03,0,0	monster	Evil Snake Lord	1418,4,30000
+//bossnia_03,0,0	monster	RSX-0806	1623,1,30000
+//bossnia_03,0,0	monster	Assassin Cross Eremes	1647,1
+//bossnia_03,137,118,1,1	monster	Whitesmith Howard	1648,1
+//bossnia_03,122,195,1,1	monster	Beelzebub	1873,1
+//bossnia_03,45,118,1,1	monster	Beelzebub	1873,1
+//bossnia_03,196,122,1,1	monster	Valkyrie Randgris	1751,1
+//bossnia_03,142,61,1,1	monster	Ifrit	1832,1
+
+//----------------------------------------------------------------------------
+// bossnia_04 - Bossnia
+//----------------------------------------------------------------------------
+bossnia_04,0,0	monster	Garm	1252,4,30000
+//bossnia_04,0,0	monster	Gloom Under Night	1768,2,7200000
+bossnia_04,0,0	monster	Dark Lord	1272,4,30000
+bossnia_04,0,0	monster	Doppelganger	1046,4,30000
+bossnia_04,0,0	monster	Dracula	1389,4,30000
+bossnia_04,0,0	monster	Drake	1112,4,30000
+bossnia_04,0,0	monster	Detale	1719,4,30000
+bossnia_04,0,0	monster	Maya	1147,4,30000
+bossnia_04,0,0	monster	Mistress	1059,4,30000
+bossnia_04,0,0	monster	Baphomet	1039,4,30000
+bossnia_04,0,0	monster	Egnigem Cenia	1658,4,30000
+bossnia_04,0,0	monster	Amon Ra	1511,4,30000
+bossnia_04,0,0	monster	Atroce	1785,4,30000
+//bossnia_04,0,0	monster	Vesper	1685,2,7200000
+bossnia_04,0,0	monster	Eddga	1115,4,30000
+bossnia_04,0,0	monster	Osiris	1038,4,30000
+bossnia_04,0,0	monster	Orc Lord	1190,4,30000
+bossnia_04,0,0	monster	Orc Hero	1087,4,30000
+bossnia_04,0,0	monster	Samurai Specter	1492,4,30000
+bossnia_04,0,0	monster	Moonlight Flower	1150,4,30000
+bossnia_04,0,0	monster	Lord of the Dead	1373,4,30000
+//bossnia_04,0,0	monster	Ktullanux	1779,2,7200000
+//bossnia_04,0,0	monster	Kiel D-01	1734,1,30000
+//bossnia_04,0,0	monster	Thanatos Phantom	1708,2,7200000
+bossnia_04,0,0	monster	Lady Tanee	1688,4,30000
+bossnia_04,0,0	monster	Tao Gunka	1583,4,30000
+bossnia_04,0,0	monster	Turtle General	1312,4,30000
+bossnia_04,0,0	monster	Pharaoh	1157,4,30000
+bossnia_04,0,0	monster	Stormy Knight	1251,4,30000
+//bossnia_04,0,0	monster	Falling Bishop	1871,5,7200000
+bossnia_04,0,0	monster	Phreeoni	1159,4,30000
+bossnia_04,0,0	monster	Golden Thief Bug	1086,4,30000
+bossnia_04,0,0	monster	Evil Snake Lord	1418,4,30000
+//bossnia_04,0,0	monster	RSX-0806	1623,1,30000
+//bossnia_04,0,0	monster	Assassin Cross Eremes	1647,1
+//bossnia_04,137,118,1,1	monster	Whitesmith Howard	1648,1
+//bossnia_04,122,195,1,1	monster	Beelzebub	1873,1
+//bossnia_04,45,118,1,1	monster	Beelzebub	1873,1
+//bossnia_04,196,122,1,1	monster	Valkyrie Randgris	1751,1
+//bossnia_04,142,61,1,1	monster	Ifrit	1832,1

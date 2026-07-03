@@ -1,0 +1,12 @@
+bl_depth1,0,0	monster	ABR Battle Warrior	20834,60
+bl_depth1,0,0	monster	ABR Duel Cannon	20835,60
+bl_depth1,0,0	monster	ABR Mother Net	20836,90
+bl_depth1,0,0	monster	ABR Infinity	20837,90
+bl_depth1,91,106	monster	Red Plant	1078,1,300000,150000
+bl_depth1,92,108	monster	Yellow Plant	1081,1,300000,150000
+bl_depth1,114,106	monster	Green Plant	1080,1,300000,150000
+bl_depth1,0,0	monster	Red Plant	1078,1,300000,150000
+bl_depth1,0,0	monster	Shining Plant	1083,1,3000000,1500000
+bl_depth1,0,0	monster	Red Plant	1078,10,180000,90000
+bl_depth1,89,111,3,3	monster	Black Mushroom	1084,3,180000,90000
+bl_depth1,121,109,3,3	monster	Black Mushroom	1084,3,180000,90000

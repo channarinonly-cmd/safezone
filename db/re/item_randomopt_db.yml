@@ -1,0 +1,1741 @@
+# This file is a part of rAthena.
+#   Copyright(C) 2021 rAthena Development Team
+#   https://rathena.org - https://github.com/rathena
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+###########################################################################
+# Item Random Option Database
+###########################################################################
+#
+# Item Random Option Settings
+#
+###########################################################################
+# - Id          Item Random Option ID matching the ID defined in enumvar.lub in the client.
+#   Option      Item Random Option constant.
+#   Script      Bonus script used for option.
+###########################################################################
+
+Header:
+  Type: RANDOM_OPTION_DB
+  Version: 1
+
+Body:
+  - Id: 1
+    Option: VAR_MAXHPAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(200, .@val);
+      bonus bMaxHP,.@val;
+  - Id: 2
+    Option: VAR_MAXSPAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(50, .@val);
+      bonus bMaxSP,.@val;
+  - Id: 3
+    Option: VAR_STRAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bStr,.@val;
+  - Id: 4
+    Option: VAR_AGIAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bAgi,.@val;
+  - Id: 5
+    Option: VAR_VITAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bVit,.@val;
+  - Id: 6
+    Option: VAR_INTAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bInt,.@val;
+  - Id: 7
+    Option: VAR_DEXAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bDex,.@val;
+  - Id: 8
+    Option: VAR_LUKAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bLuk,.@val;
+  - Id: 9
+    Option: VAR_MAXHPPERCENT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bMaxHPrate,.@val;
+  - Id: 10
+    Option: VAR_MAXSPPERCENT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bMaxSPrate,.@val;
+  - Id: 11
+    Option: VAR_HPACCELERATION
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus bHPrecovRate,.@val;
+  - Id: 12
+    Option: VAR_SPACCELERATION
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus bSPrecovRate,.@val;
+  - Id: 13
+    Option: VAR_ATKPERCENT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bAtkRate,.@val;
+  - Id: 14
+    Option: VAR_MAGICATKPERCENT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bMatkRate,.@val;
+  - Id: 15
+    Option: VAR_PLUSASPD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(1, .@val);
+      bonus bAspd,.@val;
+  - Id: 16
+    Option: VAR_PLUSASPDPERCENT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bAspdRate,.@val;
+  - Id: 17
+    Option: VAR_ATTPOWER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(20, .@val);
+      bonus bAtk,.@val;
+  - Id: 18
+    Option: VAR_HITSUCCESSVALUE
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(15, .@val);
+      bonus bHit,.@val;
+  - Id: 19
+    Option: VAR_ATTMPOWER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(20, .@val);
+      bonus bMatk,.@val;
+  - Id: 20
+    Option: VAR_ITEMDEFPOWER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(8, .@val);
+      bonus bDef,.@val;
+  - Id: 21
+    Option: VAR_MDEFPOWER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bMdef,.@val;
+  - Id: 22
+    Option: VAR_AVOIDSUCCESSVALUE
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(15, .@val);
+      bonus bFlee,.@val;
+  - Id: 23
+    Option: VAR_PLUSAVOIDSUCCESSVALUE
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(15, .@val);
+      bonus bFlee2,.@val;
+  - Id: 24
+    Option: VAR_CRITICALSUCCESSVALUE
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(7, .@val);
+      bonus bCritical,.@val;
+  - Id: 25
+    Option: ATTR_TOLERACE_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Neutral,.@val;
+  - Id: 26
+    Option: ATTR_TOLERACE_WATER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Water,.@val;
+  - Id: 27
+    Option: ATTR_TOLERACE_GROUND
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Earth,.@val;
+  - Id: 28
+    Option: ATTR_TOLERACE_FIRE
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Fire,.@val;
+  - Id: 29
+    Option: ATTR_TOLERACE_WIND
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Wind,.@val;
+  - Id: 30
+    Option: ATTR_TOLERACE_POISON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Poison,.@val;
+  - Id: 31
+    Option: ATTR_TOLERACE_SAINT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Holy,.@val;
+  - Id: 32
+    Option: ATTR_TOLERACE_DARKNESS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Dark,.@val;
+  - Id: 33
+    Option: ATTR_TOLERACE_TELEKINESIS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Ghost,.@val;
+  - Id: 34
+    Option: ATTR_TOLERACE_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_Undead,.@val;
+  - Id: 35
+    Option: ATTR_TOLERACE_ALLBUTNOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      for(.@i = Ele_Water; .@i < Ele_Undead; ++.@i)
+        bonus2 bSubEle,.@i,.@val;
+  - Id: 36
+    Option: DAMAGE_PROPERTY_NOTHING_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Neutral,.@val;
+  - Id: 37
+    Option: DAMAGE_PROPERTY_NOTHING_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Neutral,.@val;
+  - Id: 38
+    Option: DAMAGE_PROPERTY_WATER_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Water,.@val;
+  - Id: 39
+    Option: DAMAGE_PROPERTY_WATER_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Water,.@val;
+  - Id: 40
+    Option: DAMAGE_PROPERTY_GROUND_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Earth,.@val;
+  - Id: 41
+    Option: DAMAGE_PROPERTY_GROUND_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Earth,.@val;
+  - Id: 42
+    Option: DAMAGE_PROPERTY_FIRE_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Fire,.@val;
+  - Id: 43
+    Option: DAMAGE_PROPERTY_FIRE_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Fire,.@val;
+  - Id: 44
+    Option: DAMAGE_PROPERTY_WIND_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Wind,.@val;
+  - Id: 45
+    Option: DAMAGE_PROPERTY_WIND_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Wind,.@val;
+  - Id: 46
+    Option: DAMAGE_PROPERTY_POISON_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Poison,.@val;
+  - Id: 47
+    Option: DAMAGE_PROPERTY_POISON_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Poison,.@val;
+  - Id: 48
+    Option: DAMAGE_PROPERTY_SAINT_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Holy,.@val;
+  - Id: 49
+    Option: DAMAGE_PROPERTY_SAINT_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Holy,.@val;
+  - Id: 50
+    Option: DAMAGE_PROPERTY_DARKNESS_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Dark,.@val;
+  - Id: 51
+    Option: DAMAGE_PROPERTY_DARKNESS_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Dark,.@val;
+  - Id: 52
+    Option: DAMAGE_PROPERTY_TELEKINESIS_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Ghost,.@val;
+  - Id: 53
+    Option: DAMAGE_PROPERTY_TELEKINESIS_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Ghost,.@val;
+  - Id: 54
+    Option: DAMAGE_PROPERTY_UNDEAD_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubDefEle,Ele_Undead,.@val;
+  - Id: 55
+    Option: DAMAGE_PROPERTY_UNDEAD_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddEle,Ele_Undead,.@val;
+  - Id: 56
+    Option: MDAMAGE_PROPERTY_NOTHING_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Neutral,.@val;
+  - Id: 57
+    Option: MDAMAGE_PROPERTY_NOTHING_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Neutral,.@val;
+  - Id: 58
+    Option: MDAMAGE_PROPERTY_WATER_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Water,.@val;
+  - Id: 59
+    Option: MDAMAGE_PROPERTY_WATER_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Water,.@val;
+  - Id: 60
+    Option: MDAMAGE_PROPERTY_GROUND_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Earth,.@val;
+  - Id: 61
+    Option: MDAMAGE_PROPERTY_GROUND_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Earth,.@val;
+  - Id: 62
+    Option: MDAMAGE_PROPERTY_FIRE_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Fire,.@val;
+  - Id: 63
+    Option: MDAMAGE_PROPERTY_FIRE_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Fire,.@val;
+  - Id: 64
+    Option: MDAMAGE_PROPERTY_WIND_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Wind,.@val;
+  - Id: 65
+    Option: MDAMAGE_PROPERTY_WIND_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Wind,.@val;
+  - Id: 66
+    Option: MDAMAGE_PROPERTY_POISON_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Poison,.@val;
+  - Id: 67
+    Option: MDAMAGE_PROPERTY_POISON_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Poison,.@val;
+  - Id: 68
+    Option: MDAMAGE_PROPERTY_SAINT_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Holy,.@val;
+  - Id: 69
+    Option: MDAMAGE_PROPERTY_SAINT_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Holy,.@val;
+  - Id: 70
+    Option: MDAMAGE_PROPERTY_DARKNESS_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Dark,.@val;
+  - Id: 71
+    Option: MDAMAGE_PROPERTY_DARKNESS_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Dark,.@val;
+  - Id: 72
+    Option: MDAMAGE_PROPERTY_TELEKINESIS_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Ghost,.@val;
+  - Id: 73
+    Option: MDAMAGE_PROPERTY_TELEKINESIS_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Ghost,.@val;
+  - Id: 74
+    Option: MDAMAGE_PROPERTY_UNDEAD_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubDefEle,Ele_Undead,.@val;
+  - Id: 75
+    Option: MDAMAGE_PROPERTY_UNDEAD_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddEle,Ele_Undead,.@val;
+  - Id: 76
+    Option: BODY_ATTR_NOTHING
+    Script: |
+      bonus bDefEle,Ele_Neutral;
+  - Id: 77
+    Option: BODY_ATTR_WATER
+    Script: |
+      bonus bDefEle,Ele_Water;
+  - Id: 78
+    Option: BODY_ATTR_GROUND
+    Script: |
+      bonus bDefEle,Ele_Earth;
+  - Id: 79
+    Option: BODY_ATTR_FIRE
+    Script: |
+      bonus bDefEle,Ele_Fire;
+  - Id: 80
+    Option: BODY_ATTR_WIND
+    Script: |
+      bonus bDefEle,Ele_Wind;
+  - Id: 81
+    Option: BODY_ATTR_POISON
+    Script: |
+      bonus bDefEle,Ele_Poison;
+  - Id: 82
+    Option: BODY_ATTR_SAINT
+    Script: |
+      bonus bDefEle,Ele_Holy;
+  - Id: 83
+    Option: BODY_ATTR_DARKNESS
+    Script: |
+      bonus bDefEle,Ele_Dark;
+  - Id: 84
+    Option: BODY_ATTR_TELEKINESIS
+    Script: |
+      bonus bDefEle,Ele_Ghost;
+  - Id: 85
+    Option: BODY_ATTR_UNDEAD
+    Script: |
+      bonus bDefEle,Ele_Undead;
+  - Id: 87
+    Option: RACE_TOLERACE_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Formless,.@val;
+  - Id: 88
+    Option: RACE_TOLERACE_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Undead,.@val;
+  - Id: 89
+    Option: RACE_TOLERACE_ANIMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Brute,.@val;
+  - Id: 90
+    Option: RACE_TOLERACE_PLANT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Plant,.@val;
+  - Id: 91
+    Option: RACE_TOLERACE_INSECT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Insect,.@val;
+  - Id: 92
+    Option: RACE_TOLERACE_FISHS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Fish,.@val;
+  - Id: 93
+    Option: RACE_TOLERACE_DEVIL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Demon,.@val;
+  - Id: 94
+    Option: RACE_TOLERACE_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_DemiHuman,.@val;
+  - Id: 95
+    Option: RACE_TOLERACE_ANGEL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Angel,.@val;
+  - Id: 96
+    Option: RACE_TOLERACE_DRAGON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Dragon,.@val;
+  - Id: 97
+    Option: RACE_DAMAGE_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Formless,.@val;
+  - Id: 98
+    Option: RACE_DAMAGE_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Undead,.@val;
+  - Id: 99
+    Option: RACE_DAMAGE_ANIMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Brute,.@val;
+  - Id: 100
+    Option: RACE_DAMAGE_PLANT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Plant,.@val;
+  - Id: 101
+    Option: RACE_DAMAGE_INSECT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Insect,.@val;
+  - Id: 102
+    Option: RACE_DAMAGE_FISHS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Fish,.@val;
+  - Id: 103
+    Option: RACE_DAMAGE_DEVIL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Demon,.@val;
+  - Id: 104
+    Option: RACE_DAMAGE_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_DemiHuman,.@val;
+  - Id: 105
+    Option: RACE_DAMAGE_ANGEL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Angel,.@val;
+  - Id: 106
+    Option: RACE_DAMAGE_DRAGON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Dragon,.@val;
+  - Id: 107
+    Option: RACE_MDAMAGE_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Formless,.@val;
+  - Id: 108
+    Option: RACE_MDAMAGE_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Undead,.@val;
+  - Id: 109
+    Option: RACE_MDAMAGE_ANIMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Brute,.@val;
+  - Id: 110
+    Option: RACE_MDAMAGE_PLANT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Plant,.@val;
+  - Id: 111
+    Option: RACE_MDAMAGE_INSECT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Insect,.@val;
+  - Id: 112
+    Option: RACE_MDAMAGE_FISHS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Fish,.@val;
+  - Id: 113
+    Option: RACE_MDAMAGE_DEVIL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Demon,.@val;
+  - Id: 114
+    Option: RACE_MDAMAGE_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_DemiHuman,.@val;
+  - Id: 115
+    Option: RACE_MDAMAGE_ANGEL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Angel,.@val;
+  - Id: 116
+    Option: RACE_MDAMAGE_DRAGON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Dragon,.@val;
+  - Id: 117
+    Option: RACE_CRI_PERCENT_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Formless,.@val/10;
+  - Id: 118
+    Option: RACE_CRI_PERCENT_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Undead,.@val/10;
+  - Id: 119
+    Option: RACE_CRI_PERCENT_ANIMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Brute,.@val/10;
+  - Id: 120
+    Option: RACE_CRI_PERCENT_PLANT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Plant,.@val/10;
+  - Id: 121
+    Option: RACE_CRI_PERCENT_INSECT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Insect,.@val/10;
+  - Id: 122
+    Option: RACE_CRI_PERCENT_FISHS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Fish,.@val/10;
+  - Id: 123
+    Option: RACE_CRI_PERCENT_DEVIL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Demon,.@val/10;
+  - Id: 124
+    Option: RACE_CRI_PERCENT_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_DemiHuman,.@val/10;
+  - Id: 125
+    Option: RACE_CRI_PERCENT_ANGEL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Angel,.@val/10;
+  - Id: 126
+    Option: RACE_CRI_PERCENT_DRAGON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Dragon,.@val/10;
+  - Id: 127
+    Option: RACE_IGNORE_DEF_PERCENT_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Formless,.@val;
+  - Id: 128
+    Option: RACE_IGNORE_DEF_PERCENT_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Undead,.@val;
+  - Id: 129
+    Option: RACE_IGNORE_DEF_PERCENT_ANIMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Brute,.@val;
+  - Id: 130
+    Option: RACE_IGNORE_DEF_PERCENT_PLANT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Plant,.@val;
+  - Id: 131
+    Option: RACE_IGNORE_DEF_PERCENT_INSECT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Insect,.@val;
+  - Id: 132
+    Option: RACE_IGNORE_DEF_PERCENT_FISHS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Fish,.@val;
+  - Id: 133
+    Option: RACE_IGNORE_DEF_PERCENT_DEVIL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Demon,.@val;
+  - Id: 134
+    Option: RACE_IGNORE_DEF_PERCENT_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_DemiHuman,.@val;
+  - Id: 135
+    Option: RACE_IGNORE_DEF_PERCENT_ANGEL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Angel,.@val;
+  - Id: 136
+    Option: RACE_IGNORE_DEF_PERCENT_DRAGON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Dragon,.@val;
+  - Id: 137
+    Option: RACE_IGNORE_MDEF_PERCENT_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Formless,.@val;
+  - Id: 138
+    Option: RACE_IGNORE_MDEF_PERCENT_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Undead,.@val;
+  - Id: 139
+    Option: RACE_IGNORE_MDEF_PERCENT_ANIMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Brute,.@val;
+  - Id: 140
+    Option: RACE_IGNORE_MDEF_PERCENT_PLANT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Plant,.@val;
+  - Id: 141
+    Option: RACE_IGNORE_MDEF_PERCENT_INSECT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Insect,.@val;
+  - Id: 142
+    Option: RACE_IGNORE_MDEF_PERCENT_FISHS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Fish,.@val;
+  - Id: 143
+    Option: RACE_IGNORE_MDEF_PERCENT_DEVIL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Demon,.@val;
+  - Id: 144
+    Option: RACE_IGNORE_MDEF_PERCENT_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_DemiHuman,.@val;
+  - Id: 145
+    Option: RACE_IGNORE_MDEF_PERCENT_ANGEL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Angel,.@val;
+  - Id: 146
+    Option: RACE_IGNORE_MDEF_PERCENT_DRAGON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Dragon,.@val;
+  - Id: 147
+    Option: CLASS_DAMAGE_NORMAL_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddClass,Class_Normal,.@val;
+  - Id: 148
+    Option: CLASS_DAMAGE_BOSS_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddClass,Class_Boss,.@val;
+  - Id: 149
+    Option: CLASS_DAMAGE_NORMAL_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubClass,Class_Normal,.@val;
+  - Id: 150
+    Option: CLASS_DAMAGE_BOSS_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubClass,Class_Boss,.@val;
+  - Id: 151
+    Option: CLASS_MDAMAGE_NORMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddClass,Class_Normal,.@val;
+  - Id: 152
+    Option: CLASS_MDAMAGE_BOSS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddClass,Class_Boss,.@val;
+  - Id: 153
+    Option: CLASS_IGNORE_DEF_PERCENT_NORMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefClassRate,Class_Normal,.@val;
+  - Id: 154
+    Option: CLASS_IGNORE_DEF_PERCENT_BOSS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefClassRate,Class_Boss,.@val;
+  - Id: 155
+    Option: CLASS_IGNORE_MDEF_PERCENT_NORMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefClassRate,Class_Normal,.@val;
+  - Id: 156
+    Option: CLASS_IGNORE_MDEF_PERCENT_BOSS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefClassRate,Class_Boss,.@val;
+  - Id: 157
+    Option: DAMAGE_SIZE_SMALL_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddSize,Size_Small,.@val;
+  - Id: 158
+    Option: DAMAGE_SIZE_MIDIUM_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddSize,Size_Medium,.@val;
+  - Id: 159
+    Option: DAMAGE_SIZE_LARGE_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddSize,Size_Large,.@val;
+  - Id: 160
+    Option: DAMAGE_SIZE_SMALL_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubSize,Size_Small,.@val;
+  - Id: 161
+    Option: DAMAGE_SIZE_MIDIUM_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubSize,Size_Medium,.@val;
+  - Id: 162
+    Option: DAMAGE_SIZE_LARGE_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bSubSize,Size_Large,.@val;
+  - Id: 163
+    Option: DAMAGE_SIZE_PERFECT
+    Script: |
+      bonus bNoSizeFix,1;
+  - Id: 164
+    Option: DAMAGE_CRI_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bCritAtkRate,.@val;
+  - Id: 165
+    Option: DAMAGE_CRI_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bCritDefRate,.@val;
+  - Id: 166
+    Option: RANGE_ATTACK_DAMAGE_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bLongAtkRate,.@val;
+  - Id: 167
+    Option: RANGE_ATTACK_DAMAGE_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bLongAtkDef,.@val;
+  - Id: 168
+    Option: HEAL_VALUE
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus bHealPower,.@val;
+  - Id: 169
+    Option: HEAL_MODIFY_PERCENT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus bHealPower2,.@val;
+  - Id: 170
+    Option: DEC_SPELL_CAST_TIME
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bVariableCastrate,-.@val;
+  - Id: 171
+    Option: DEC_SPELL_DELAY_TIME
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bDelayrate,-.@val;
+  - Id: 172
+    Option: DEC_SP_CONSUMPTION
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bUseSPrate,-.@val;
+  - Id: 175
+    Option: WEAPON_ATTR_NOTHING
+    Script: |
+      bonus bAtkEle,Ele_Neutral;
+  - Id: 176
+    Option: WEAPON_ATTR_WATER
+    Script: |
+      bonus bAtkEle,Ele_Water;
+  - Id: 177
+    Option: WEAPON_ATTR_GROUND
+    Script: |
+      bonus bAtkEle,Ele_Earth;
+  - Id: 178
+    Option: WEAPON_ATTR_FIRE
+    Script: |
+      bonus bAtkEle,Ele_Fire;
+  - Id: 179
+    Option: WEAPON_ATTR_WIND
+    Script: |
+      bonus bAtkEle,Ele_Wind;
+  - Id: 180
+    Option: WEAPON_ATTR_POISON
+    Script: |
+      bonus bAtkEle,Ele_Poison;
+  - Id: 181
+    Option: WEAPON_ATTR_SAINT
+    Script: |
+      bonus bAtkEle,Ele_Holy;
+  - Id: 182
+    Option: WEAPON_ATTR_DARKNESS
+    Script: |
+      bonus bAtkEle,Ele_Dark;
+  - Id: 183
+    Option: WEAPON_ATTR_TELEKINESIS
+    Script: |
+      bonus bAtkEle,Ele_Ghost;
+  - Id: 184
+    Option: WEAPON_ATTR_UNDEAD
+    Script: |
+      bonus bAtkEle,Ele_Undead;
+  - Id: 185
+    Option: WEAPON_INDESTRUCTIBLE
+    Script: |
+      bonus bUnbreakableWeapon,1;
+  - Id: 186
+    Option: BODY_INDESTRUCTIBLE
+    Script: |
+      bonus bUnbreakableArmor,1;
+  - Id: 187
+    Option: MDAMAGE_SIZE_SMALL_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddSize,Size_Small,.@val;
+  - Id: 188
+    Option: MDAMAGE_SIZE_MIDIUM_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddSize,Size_Medium,.@val;
+  - Id: 189
+    Option: MDAMAGE_SIZE_LARGE_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddSize,Size_Large,.@val;
+  - Id: 190
+    Option: MDAMAGE_SIZE_SMALL_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubSize,Size_Small,.@val;
+  - Id: 191
+    Option: MDAMAGE_SIZE_MIDIUM_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubSize,Size_Medium,.@val;
+  - Id: 192
+    Option: MDAMAGE_SIZE_LARGE_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicSubSize,Size_Large,.@val;
+  - Id: 193
+    Option: ATTR_TOLERACE_ALL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubEle,Ele_All,.@val;
+  - Id: 194
+    Option: RACE_WEAPON_TOLERACE_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Formless,.@val,BF_WEAPON;
+  - Id: 195
+    Option: RACE_WEAPON_TOLERACE_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Undead,.@val,BF_WEAPON;
+  - Id: 196
+    Option: RACE_WEAPON_TOLERACE_ANIMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Brute,.@val,BF_WEAPON;
+  - Id: 197
+    Option: RACE_WEAPON_TOLERACE_PLANT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Plant,.@val,BF_WEAPON;
+  - Id: 198
+    Option: RACE_WEAPON_TOLERACE_INSECT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Insect,.@val,BF_WEAPON;
+  - Id: 199
+    Option: RACE_WEAPON_TOLERACE_FISHS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Fish,.@val,BF_WEAPON;
+  - Id: 200
+    Option: RACE_WEAPON_TOLERACE_DEVIL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Demon,.@val,BF_WEAPON;
+  - Id: 201
+    Option: RACE_WEAPON_TOLERACE_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_DemiHuman,.@val,BF_WEAPON;
+  - Id: 202
+    Option: RACE_WEAPON_TOLERACE_ANGEL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Angel,.@val,BF_WEAPON;
+  - Id: 203
+    Option: RACE_WEAPON_TOLERACE_DRAGON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus3 bSubRace,RC_Dragon,.@val,BF_WEAPON;
+  - Id: 206
+    Option: RACE_TOLERACE_PLAYER_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Player_Human,.@val;
+  - Id: 207
+    Option: RACE_TOLERACE_PLAYER_DORAM
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bSubRace,RC_Player_Doram,.@val;
+  - Id: 208
+    Option: RACE_DAMAGE_PLAYER_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Player_Human,.@val;
+  - Id: 209
+    Option: RACE_DAMAGE_PLAYER_DORAM
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bAddRace,RC_Player_Doram,.@val;
+  - Id: 210
+    Option: RACE_MDAMAGE_PLAYER_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Player_Human,.@val; 
+  - Id: 211
+    Option: RACE_MDAMAGE_PLAYER_DORAM
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAddRace,RC_Player_Doram,.@val;
+  - Id: 212
+    Option: RACE_CRI_PERCENT_PLAYER_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Player_Human,.@val/10;
+  - Id: 213
+    Option: RACE_CRI_PERCENT_PLAYER_DORAM
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(70, .@val);
+      bonus2 bCriticalAddRace,RC_Player_Doram,.@val/10;
+  - Id: 214
+    Option: RACE_IGNORE_DEF_PERCENT_PLAYER_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Player_Human,.@val;
+  - Id: 215
+    Option: RACE_IGNORE_DEF_PERCENT_PLAYER_DORAM
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreDefRaceRate,RC_Player_Doram,.@val;
+  - Id: 216
+    Option: RACE_IGNORE_MDEF_PERCENT_PLAYER_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Player_Human,.@val;
+  - Id: 217
+    Option: RACE_IGNORE_MDEF_PERCENT_PLAYER_DORAM
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bIgnoreMdefRaceRate,RC_Player_Doram,.@val;
+  - Id: 218
+    Option: REFLECT_DAMAGE_PERCENT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bReduceDamageReturn,.@val;
+  - Id: 219
+    Option: MELEE_ATTACK_DAMAGE_TARGET
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bShortAtkRate,.@val;
+  - Id: 220
+    Option: MELEE_ATTACK_DAMAGE_USER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bNearAtkDef,.@val;
+  - Id: 221
+    Option: ADDSKILLMDAMAGE_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Neutral,.@val;
+  - Id: 222
+    Option: ADDSKILLMDAMAGE_WATER
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Water,.@val;
+  - Id: 223
+    Option: ADDSKILLMDAMAGE_GROUND
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Earth,.@val;
+  - Id: 224
+    Option: ADDSKILLMDAMAGE_FIRE
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Fire,.@val;
+  - Id: 225
+    Option: ADDSKILLMDAMAGE_WIND
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Wind,.@val;
+  - Id: 226
+    Option: ADDSKILLMDAMAGE_POISON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Poison,.@val;
+  - Id: 227
+    Option: ADDSKILLMDAMAGE_SAINT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Holy,.@val;
+  - Id: 228
+    Option: ADDSKILLMDAMAGE_DARKNESS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Dark,.@val;
+  - Id: 229
+    Option: ADDSKILLMDAMAGE_TELEKINESIS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Ghost,.@val;
+  - Id: 230
+    Option: ADDSKILLMDAMAGE_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_Undead,.@val;
+  - Id: 231
+    Option: ADDSKILLMDAMAGE_ALL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus2 bMagicAtkEle,Ele_All,.@val;
+  - Id: 232
+    Option: ADDEXPPERCENT_KILLRACE_NOTHING
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Formless,.@val;
+  - Id: 233
+    Option: ADDEXPPERCENT_KILLRACE_UNDEAD
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Undead,.@val;
+  - Id: 234
+    Option: ADDEXPPERCENT_KILLRACE_ANIMAL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Brute,.@val;
+  - Id: 235
+    Option: ADDEXPPERCENT_KILLRACE_PLANT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Plant,.@val;
+  - Id: 236
+    Option: ADDEXPPERCENT_KILLRACE_INSECT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Insect,.@val;
+  - Id: 237
+    Option: ADDEXPPERCENT_KILLRACE_FISHS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Fish,.@val;
+  - Id: 238
+    Option: ADDEXPPERCENT_KILLRACE_DEVIL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Demon,.@val;
+  - Id: 239
+    Option: ADDEXPPERCENT_KILLRACE_HUMAN
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_DemiHuman,.@val;
+  - Id: 240
+    Option: ADDEXPPERCENT_KILLRACE_ANGEL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Angel,.@val;
+  - Id: 241
+    Option: ADDEXPPERCENT_KILLRACE_DRAGON
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_Dragon,.@val;
+  - Id: 242
+    Option: ADDEXPPERCENT_KILLRACE_ALL
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus2 bExpAddRace,RC_All,.@val;
+  - Id: 243
+    Option: VAR_POWAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bPow,.@val;
+  - Id: 244
+    Option: VAR_SPLAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bSpl,.@val;
+  - Id: 245
+    Option: VAR_STAAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bSta,.@val;
+  - Id: 246
+    Option: VAR_WISAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bWis,.@val;
+  - Id: 247
+    Option: VAR_CONAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bCon,.@val;
+  - Id: 248
+    Option: VAR_CRTAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(3, .@val);
+      bonus bCrt,.@val;
+  - Id: 249
+    Option: VAR_PATKAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus bPAtk,.@val;
+  - Id: 250
+    Option: VAR_SMATKAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus bSMatk,.@val;
+  - Id: 251
+    Option: VAR_RESAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus bRes,.@val;
+  - Id: 252
+    Option: VAR_MRESAMOUNT
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(10, .@val);
+      bonus bMRes,.@val;
+  - Id: 253
+    Option: VAR_HEAL_PLUS
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bHPlus,.@val;
+  - Id: 254
+    Option: VAR_CRITICAL_RATE
+    Script: |
+      .@val = getrandomoptinfo(ROA_VALUE);
+      .@val = min(5, .@val);
+      bonus bCRate,.@val;
+  - Id: 301
+    Option: REFINEUI_DMG_BOSS
+    Script: |
+      .@val = min(10, getrandomoptinfo(ROA_VALUE));
+      bonus2 bAddClass,Class_Boss,.@val;
+      bonus2 bMagicAddClass,Class_Boss,.@val;
+  - Id: 302
+    Option: REFINEUI_ATKRATE
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus bAtkRate,.@val;
+  - Id: 303
+    Option: REFINEUI_MATKRATE
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus bMatkRate,.@val;
+  - Id: 304
+    Option: REFINEUI_MAX_HPSPRATE
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus bMaxHPrate,.@val;
+      bonus bMaxSPrate,.@val;
+  - Id: 305
+    Option: REFINEUI_MAXHP
+    Script: |
+      .@val = min(300, getrandomoptinfo(ROA_VALUE));
+      bonus bMaxHP,.@val;
+  - Id: 306
+    Option: REFINEUI_MAXSP
+    Script: |
+      .@val = min(100, getrandomoptinfo(ROA_VALUE));
+      bonus bMaxSP,.@val;
+  - Id: 307
+    Option: REFINEUI_DEF
+    Script: |
+      .@val = min(8, getrandomoptinfo(ROA_VALUE));
+      bonus bDef,.@val;
+  - Id: 308
+    Option: REFINEUI_MDEF
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus bMdef,.@val;
+  - Id: 309
+    Option: REFINEUI_SUB_NEUTRAL
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus2 bSubEle,Ele_Neutral,.@val;
+  - Id: 310
+    Option: REFINEUI_SUB_BOSS
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus2 bSubClass,Class_Boss,.@val;
+  - Id: 311
+    Option: REFINEUI_STR
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus bStr,.@val;
+  - Id: 312
+    Option: REFINEUI_AGI
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus bAgi,.@val;
+  - Id: 313
+    Option: REFINEUI_VIT
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus bVit,.@val;
+  - Id: 314
+    Option: REFINEUI_INT
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus bInt,.@val;
+  - Id: 315
+    Option: REFINEUI_DEX
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus bDex,.@val;
+  - Id: 316
+    Option: REFINEUI_LUK
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus bLuk,.@val;
+  - Id: 317
+    Option: REFINEUI_FLEE
+    Script: |
+      .@val = min(15, getrandomoptinfo(ROA_VALUE));
+      bonus bFlee,.@val;
+  - Id: 318
+    Option: REFINEUI_HIT
+    Script: |
+      .@val = min(15, getrandomoptinfo(ROA_VALUE));
+      bonus bHit,.@val;
+  - Id: 319
+    Option: REFINEUI_VCT
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus bVariableCastrate,-.@val;
+  - Id: 320
+    Option: REFINEUI_DELAY
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus bDelayrate,-.@val;
+  - Id: 321
+    Option: REFINEUI_ATK
+    Script: |
+      .@val = min(10, getrandomoptinfo(ROA_VALUE));
+      bonus bBaseAtk,.@val;
+  - Id: 322
+    Option: REFINEUI_ASPDRATE
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus bAspdRate,.@val;
+  - Id: 323
+    Option: REFINEUI_CRI
+    Script: |
+      .@val = min(7, getrandomoptinfo(ROA_VALUE));
+      bonus bCritical,.@val;
+  - Id: 324
+    Option: REFINEUI_CRIDMG
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus bCritAtkRate,.@val;
+  - Id: 325
+    Option: REFINEUI_LONGRATE
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus bLongAtkRate,.@val;
+  - Id: 326
+    Option: REFINEUI_ALLSIZE
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus2 bAddSize,Size_All,.@val;
+      bonus2 bMagicAddSize,Size_All,.@val;
+  - Id: 327
+    Option: REFINEUI_DROP
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus2 bDropAddRace,RC_ALL,.@val;
+  - Id: 328
+    Option: REFINEUI_EXP
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus2 bEXPAddRace,RC_All,.@val;
+  - Id: 329
+    Option: REFINEUI_RC_HUMAN
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus2 bAddRace,RC_DemiHuman,.@val;
+      bonus2 bAddRace,RC_Player_Human,.@val;
+  - Id: 330
+    Option: REFINEUI_MRC_HUMAN
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus2 bMagicAddRace,RC_DemiHuman,.@val;
+      bonus2 bMagicAddRace,RC_Player_Human,.@val;
+  - Id: 331
+    Option: REFINEUI_RC_HUMAN_AM
+    Script: |
+      .@val = min(5, getrandomoptinfo(ROA_VALUE));
+      bonus2 bAddRace,RC_DemiHuman,.@val;
+      bonus2 bMagicAddRace,RC_DemiHuman,.@val;
+      bonus2 bAddRace,RC_Player_Human,.@val;
+      bonus2 bMagicAddRace,RC_Player_Human,.@val;
+  - Id: 332
+    Option: REFINEUI_SP_RECOVER
+    Script: |
+      .@val = min(10, getrandomoptinfo(ROA_VALUE));
+      bonus bSPrecovRate,.@val;
+  - Id: 333
+    Option: REFINEUI_RC_SHUMAN
+    Script: |
+      .@val = min(3, getrandomoptinfo(ROA_VALUE));
+      bonus2 bSubRace,RC_DemiHuman,.@val;
+      bonus2 bSubRace,RC_Player_Human,.@val;
+  - Id: 334
+    Option: REFINEUI_HEAL
+    Script: |
+      .@val = min(10, getrandomoptinfo(ROA_VALUE));
+      bonus bHealPower,.@val;
+  - Id: 335
+    Option: REFINEUI_MAX_WEIGHT_50
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 336
+    Option: REFINEUI_MAX_WEIGHT_100
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 337
+    Option: REFINEUI_MAX_WEIGHT_150
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 338
+    Option: REFINEUI_MAX_WEIGHT_200
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 339
+    Option: REFINEUI_MAX_WEIGHT_250
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 340
+    Option: REFINEUI_MAX_WEIGHT_300
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 341
+    Option: REFINEUI_MAX_WEIGHT_350
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 342
+    Option: REFINEUI_MAX_WEIGHT_400
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 343
+    Option: REFINEUI_MAX_WEIGHT_450
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 344
+    Option: REFINEUI_MAX_WEIGHT_500
+    Script: |
+      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+  - Id: 345
+    Option: REFINEUI_JUPITEL_T
+    Script: |
+      .@val = min(15, getrandomoptinfo(ROA_VALUE));
+      bonus2 bSkillAtk,"WZ_JUPITEL",.@val;
+  - Id: 346
+    Option: REFINEUI_STORMGUST
+    Script: |
+      .@val = min(15, getrandomoptinfo(ROA_VALUE));
+      bonus2 bSkillAtk,"WZ_STORMGUST",.@val;
+  - Id: 347
+    Option: REFINEUI_CARTREVOLUTION
+    Script: |
+      .@val = min(15, getrandomoptinfo(ROA_VALUE));
+      bonus2 bSkillAtk,"MC_CARTREVOLUTION",.@val;
+  - Id: 348
+    Option: REFINEUI_MAMMONITE
+    Script: |
+      .@val = min(15, getrandomoptinfo(ROA_VALUE));
+      bonus2 bSkillAtk,"MC_MAMMONITE",.@val;
+  - Id: 349
+    Option: REFINEUI_HP_GAIN
+    Script: |
+      .@val = min(21, getrandomoptinfo(ROA_VALUE));
+      bonus bHPGainValue,.@val;
+      bonus bLongHPGainValue,.@val;
+      bonus bMagicHPGainValue,.@val;
+  - Id: 350
+    Option: REFINEUI_SP_GAIN
+    Script: |
+      .@val = min(2, getrandomoptinfo(ROA_VALUE));
+      bonus bSPGainValue,.@val;
+      bonus bLongSPGainValue,.@val;
+      bonus bMagicSPGainValue,.@val;
+  - Id: 351
+    Option: REFINEUI_MAGNUS
+    Script: |
+      .@val = min(15, getrandomoptinfo(ROA_VALUE));
+      bonus2 bSkillAtk,"PR_MAGNUS",.@val;

@@ -1,0 +1,167 @@
+//======================================================
+// Item Exchange System with Success Rate, Announce & GM Top 5 Log
+//======================================================
+
+morocc,175,87,1	script	Item Exchanger#3112	125,{
+
+	// ----------------------------------------------------
+	// CONFIGURATION (ตั้งค่าเบื้องต้นตรงนี้ได้เลย)
+	// ----------------------------------------------------
+	.req_item = 3112;       // ไอเทมที่ต้องใช้เป็นวัตถุดิบ
+	.req_amount = 20;       // จำนวนที่ต้องใช้
+	.req_zeny = 30000;      // เงิน Zeny ที่ต้องใช้
+	
+	.reward_item = 6634;    // ไอเทมที่จะได้รับเมื่อสำเร็จ
+	.reward_amount = 1;     // จำนวนที่จะได้รับ
+	
+	.success_rate = 15;     // โอกาสสำเร็จ (ตั้งค่า 1 ถึง 100)
+	.gm_level_req = 99;     // ระดับ GM ที่สามารถดู Log Top 5 ได้
+	// ----------------------------------------------------
+
+	mes "[Item Exchanger]";
+	mes "สวัสดี! ข้าสามารถนำ ^0000FF"+getitemname(.req_item)+"^000000 จำนวน ^FF0000"+.req_amount+" ea^000000";
+	mes "มาหลอมรวมเป็น ^00AA00"+getitemname(.reward_item)+"^000000 ให้เจ้าได้นะ!";
+	mes " ";
+	mes "ค่าธรรมเนียม: ^FF0000"+.req_zeny+" Zeny^000000";
+	mes "โอกาสสำเร็จ: ^0000FF"+.success_rate+"%^000000";
+	mes " ";
+	mes "^FF0000*คำเตือน: หากล้มเหลว ไอเทมวัตถุดิบและเงินของเจ้าจะหายไปทั้งหมด!*^000000";
+	next;
+	
+	// --- เมนูแยกสำหรับผู้เล่นปกติ และ GM ---
+	if (getgmlevel() >= .gm_level_req) {
+		.@menu = select("ลองดูสักตั้ง! (Craft):ขอคิดดูก่อน (Cancel):[GM] ดู Top 5 ผู้ทำสำเร็จ");
+	} else {
+		.@menu = select("ลองดูสักตั้ง! (Craft):ขอคิดดูก่อน (Cancel)");
+	}
+
+	if (.@menu == 2) {
+		mes "[Item Exchanger]";
+		mes "ไม่เป็นไร ไว้เจ้าพร้อมเมื่อไหร่ค่อยกลับมาหาข้าใหม่นะ";
+		close;
+	}
+	
+	// --- เมนูสำหรับ GM ดู Log ---
+	if (.@menu == 3) {
+		mes "[Item Exchanger]";
+		mes "^0000FF--- Top 5 ผู้ทำสำเร็จสูงสุด ---^000000";
+		for (.@i = 0; .@i < 5; .@i++) {
+			if ($Ex3112TopCount[.@i] > 0) {
+				mes "อันดับ "+(.@i+1)+": ^00AA00"+$Ex3112TopName$[.@i]+"^000000 ("+$Ex3112TopCount[.@i]+" ครั้ง)";
+			} else {
+				mes "อันดับ "+(.@i+1)+": - ยังไม่มีข้อมูล -";
+			}
+		}
+		mes "^0000FF-----------------------------^000000";
+		close;
+	}
+
+	// 1. ตรวจสอบจำนวนเงิน Zeny
+	if (Zeny < .req_zeny) {
+		mes "[Item Exchanger]";
+		mes "เงิน Zeny ของเจ้าไม่พอนะ ไปหามาเพิ่มก่อน!";
+		close;
+	}
+
+	// 2. ตรวจสอบจำนวนไอเทมวัตถุดิบ
+	if (countitem(.req_item) < .req_amount) {
+		mes "[Item Exchanger]";
+		mes "เจ้ามี ^0000FF"+getitemname(.req_item)+"^000000 ไม่ครบ "+.req_amount+" ea นะ!";
+		close;
+	}
+
+	// 3. ตรวจสอบน้ำหนักและช่องว่างในกระเป๋า
+	if (checkweight(.reward_item, .reward_amount) == 0) {
+		mes "[Item Exchanger]";
+		mes "น้ำหนักกระเป๋าของเจ้าเกิน หรือช่องเก็บของเต็ม! กรุณาไปจัดการก่อน";
+		close;
+	}
+
+	// --- เมื่อเงื่อนไขผ่านทั้งหมด ทำการหักเงินและไอเทม ---
+	Zeny -= .req_zeny;
+	delitem .req_item, .req_amount;
+
+	// --- สุ่มโอกาสสำเร็จ (1 ถึง 100) ---
+	if (rand(1, 100) <= .success_rate) {
+		// กรณีสำเร็จ
+		specialeffect2 EF_BLESSING; 
+		getitem .reward_item, .reward_amount;
+		
+		// เพิ่มจำนวนครั้งที่สำเร็จของตัวละครนั้นๆ
+		Ex3112_SuccessCount++; 
+		
+		// ----------------------------------------------------
+		// ระบบอัปเดตอันดับ Top 5 (Bubble Sort Update)
+		// ----------------------------------------------------
+		.@name$ = strcharinfo(0);
+		.@score = Ex3112_SuccessCount;
+		.@found = 0;
+
+		// เช็คว่ามีชื่อใน Top 5 อยู่แล้วหรือไม่
+		for (.@i = 0; .@i < 5; .@i++) {
+			if ($Ex3112TopName$[.@i] == .@name$) {
+				$Ex3112TopCount[.@i] = .@score;
+				.@found = 1;
+				// ดันอันดับขึ้นหากคะแนนมากกว่าคนข้างบน
+				while (.@i > 0) {
+					// เช็คเงื่อนไขคะแนนแยกออกมาด้านใน เพื่อป้องกัน Index -1
+					if ($Ex3112TopCount[.@i] <= $Ex3112TopCount[.@i - 1]) {
+						break; 
+					}
+					.@tempScore = $Ex3112TopCount[.@i - 1];
+					.@tempName$ = $Ex3112TopName$[.@i - 1];
+					
+					$Ex3112TopCount[.@i - 1] = $Ex3112TopCount[.@i];
+					$Ex3112TopName$[.@i - 1] = $Ex3112TopName$[.@i];
+					
+					$Ex3112TopCount[.@i] = .@tempScore;
+					$Ex3112TopName$[.@i] = .@tempName$;
+					.@i--;
+				}
+				break;
+			}
+		}
+
+		// ถ้าไม่มีชื่อใน Top 5 และคะแนนมากกว่าอันดับที่ 5 ให้เสียบแทนที่
+		if (!.@found && .@score > $Ex3112TopCount[4]) {
+			$Ex3112TopName$[4] = .@name$;
+			$Ex3112TopCount[4] = .@score;
+			.@i = 4;
+			// ดันอันดับขึ้น
+			while (.@i > 0) {
+				// เช็คเงื่อนไขคะแนนแยกออกมาด้านใน เพื่อป้องกัน Index -1
+				if ($Ex3112TopCount[.@i] <= $Ex3112TopCount[.@i - 1]) {
+					break; 
+				}
+				.@tempScore = $Ex3112TopCount[.@i - 1];
+				.@tempName$ = $Ex3112TopName$[.@i - 1];
+				
+				$Ex3112TopCount[.@i - 1] = $Ex3112TopCount[.@i];
+				$Ex3112TopName$[.@i - 1] = $Ex3112TopName$[.@i];
+				
+				$Ex3112TopCount[.@i] = .@tempScore;
+				$Ex3112TopName$[.@i] = .@tempName$;
+				.@i--;
+			}
+		}
+		// ----------------------------------------------------
+		
+		announce "[ Item Exchanger ] : ยินดีด้วย! ผู้เล่น ["+strcharinfo(0)+"] ทำการหลอมรวม "+getitemname(.reward_item)+" ได้สำเร็จ!", bc_all|bc_blue;
+		
+		mes "[Item Exchanger]";
+		mes "^00AA00สุดยอด! การหลอมรวมสำเร็จอย่างงดงาม!^000000";
+		mes "เจ้าได้รับ ^0000FF"+getitemname(.reward_item)+"^000000 จำนวน "+.reward_amount+" ea";
+	} else {
+		// กรณีล้มเหลว
+		specialeffect2 EF_PHANTOMMENACE; 
+		
+		mes "[Item Exchanger]";
+		mes "^FF0000อ๊าาา...! ข้าขอโทษด้วย การหลอมรวมล้มเหลว ไอเทมแตกสลายไปหมดแล้ว...^000000";
+	}
+	
+	close;
+
+OnInit:
+	waitingroom "หลอมBlacksmith Blessing ", 0;
+	end;
+}

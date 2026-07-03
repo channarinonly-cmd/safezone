@@ -1,0 +1,187 @@
+// ======================================================
+// ระบบ Stamina Lucky Map [สุ่ม 3 แผนที่ / Ep 0.0 - 5.0]
+// ======================================================
+
+-	script	Stamina_Lucky_Engine	-1,{
+
+OnClock1200:
+OnClock1400:
+OnClock1600:
+OnClock1800:
+OnClock2000:
+OnClock2200:
+	
+	setarray .MapPool$[0],
+		"prt_fild01","prt_fild02","prt_fild03","prt_fild04","prt_fild05","prt_fild06","prt_fild07","prt_fild08",
+		"gef_fild01","gef_fild02","gef_fild03","gef_fild04","gef_fild05","gef_fild06","gef_fild07","gef_fild08",
+		"moc_fild01","moc_fild02","moc_fild03","moc_fild07","moc_fild10","moc_fild11","moc_fild12",
+		"pay_fild01","pay_fild02","pay_fild03","pay_fild04","pay_fild05","pay_fild06","pay_fild07",
+		"mjolnir_01","mjolnir_02","mjolnir_03","mjolnir_04","mjolnir_05","mjolnir_06",
+		"cmd_fild01","cmd_fild02","cmd_fild03","cmd_fild04","cmd_fild05","cmd_fild06",
+		"yuno_fild01","yuno_fild02","yuno_fild03","yuno_fild04",
+		"moc_pryd01","moc_pryd02","moc_pryd03","moc_pryd04",
+		"anthell01","anthell02","orcsdun01","orcsdun02","mjo_dun01",
+		"gef_dun00","gef_dun01","gef_dun02","pay_dun00","pay_dun01","pay_dun02","pay_dun03",
+		"treasure01","treasure02","iz_dun00","iz_dun01","iz_dun02","iz_dun03","iz_dun04",
+		"tur_dun01","tur_dun02","tur_dun03","c_tower1","c_tower2","c_tower3","mag_dun01","mag_dun02",
+		"gl_cas01","gl_church","gl_chyard","gl_dun01","gl_prison","gl_knt01";
+
+	.DurationMin = 60; 
+	$LuckyMap_WarpFee = 2000;
+
+	// ล้าง Mapflag เก่าอย่างปลอดภัย
+	for (.@i = 0; .@i < getarraysize(.MapPool$); .@i++) {
+		if (.MapPool$[.@i] != "") {
+			if (getmapusers(.MapPool$[.@i]) != -1) {
+				removemapflag .MapPool$[.@i], mf_nostamina;
+			}
+		}
+	}
+
+	setarray $LuckyMaps$[0], "", "", "";
+	.@found = 0;
+	.@attempts = 0; 
+	
+	while (.@found < 3 && .@attempts < 100) {
+		.@attempts++;
+		.@temp$ = .MapPool$[rand(getarraysize(.MapPool$))];
+		
+		// แยกการตรวจสอบออกจากกัน กันบั๊ก rAthena
+		if (.@temp$ != $LuckyMaps$[0] && .@temp$ != $LuckyMaps$[1] && .@temp$ != $LuckyMaps$[2]) {
+			if (getmapusers(.@temp$) != -1) {
+				$LuckyMaps$[.@found] = .@temp$;
+				setmapflag $LuckyMaps$[.@found], mf_nostamina;
+				.@found++;
+			}
+		}
+	}
+
+	$LuckyMap_EndTime = gettimetick(2) + (.DurationMin * 60); 
+	announce "ระบบ Stamina: Lucky Map เริ่มแล้วที่แผนที่ ["+$LuckyMaps$[0]+"], ["+$LuckyMaps$[1]+"], ["+$LuckyMaps$[2]+"]", bc_all | bc_yellow;
+
+	donpcevent "Stamina_Officer::OnUpdateWaitroom";
+	stopnpctimer; setnpctimer 0; startnpctimer;
+	end;
+
+OnTimer3600000:
+	stopnpctimer;
+	for (.@i = 0; .@i < 3; .@i++) {
+		if ($LuckyMaps$[.@i] != "") {
+			if (getmapusers($LuckyMaps$[.@i]) != -1) {
+				removemapflag $LuckyMaps$[.@i], mf_nostamina;
+			}
+		}
+		$LuckyMaps$[.@i] = "";
+	}
+	$LuckyMap_EndTime = 0;
+	announce "ระบบ Stamina: กิจกรรม Lucky Map จบลงแล้ว", bc_all | bc_yellow;
+	donpcevent "Stamina_Officer::OnUpdateWaitroom";
+	end;
+
+OnInit:
+	if ($LuckyMaps$[0] != "" && $LuckyMap_EndTime > gettimetick(2)) {
+		for (.@i = 0; .@i < 3; .@i++) {
+			if ($LuckyMaps$[.@i] != "") {
+				if (getmapusers($LuckyMaps$[.@i]) != -1) {
+					setmapflag $LuckyMaps$[.@i], mf_nostamina;
+				}
+			}
+		}
+		.@remaining_ms = ($LuckyMap_EndTime - gettimetick(2)) * 1000;
+		setnpctimer (3600000 - .@remaining_ms);
+		startnpctimer;
+	} else {
+		for (.@i = 0; .@i < 3; .@i++) {
+			if ($LuckyMaps$[.@i] != "") {
+				if (getmapusers($LuckyMaps$[.@i]) != -1) {
+					removemapflag $LuckyMaps$[.@i], mf_nostamina;
+				}
+			}
+			$LuckyMaps$[.@i] = "";
+		}
+		$LuckyMap_EndTime = 0;
+	}
+	
+	sleep 1000; 
+	donpcevent "Stamina_Officer::OnUpdateWaitroom";
+	end;
+}
+
+// ======================================================
+// NPC Stamina Officer
+// ======================================================
+
+prontera,156,112,3	script	Stamina_Officer	401,{
+	
+	mes "[เจ้าหน้าที่ Stamina]";
+	if ($LuckyMap_EndTime < gettimetick(2)) {
+		mes "สวัสดีค่ะ ขณะนี้ไม่มีกิจกรรม Lucky Map";
+		mes "รอบกิจกรรมถัดไปคือเวลา:";
+		mes "^0055FF12, 14, 16, 18, 20, 22:00^000000 ค่ะ";
+		close;
+	}
+
+	.@min = ($LuckyMap_EndTime - gettimetick(2)) / 60;
+	if (.@min < 1) .@min = 1;
+
+	mes "กิจกรรม ^0055FFLucky Map^000000 กำลังเปิดอยู่!";
+	mes "เหลือเวลาฟาร์มฟรีอีก ^FF9900" + .@min + "^000000 นาที";
+	mes "ค่าบริการวาร์ปเพียง ^0000FF" + $LuckyMap_WarpFee + "^000000 Zeny";
+	mes " ";
+	mes "โปรดเลือกแผนที่ที่ต้องการจะไป:";
+	next;
+	
+	setarray .@m$[1], $LuckyMaps$[0], $LuckyMaps$[1], $LuckyMaps$[2];
+	.@s = select(.@m$[1], .@m$[2], .@m$[3], "ยกเลิก");
+	
+	if (.@s == 4 || .@s == 255) {
+		mes "[เจ้าหน้าที่ Stamina]";
+		mes "ขอให้สนุกกับการฟาร์มนะคะ!";
+		close;
+	}
+
+	if (Zeny < $LuckyMap_WarpFee) {
+		mes "[เจ้าหน้าที่ Stamina]";
+		mes "เงินไม่พอค่ะ ต้องมีอย่างน้อย " + $LuckyMap_WarpFee + " Zeny";
+		close;
+	}
+
+	if ($LuckyMap_EndTime < gettimetick(2)) {
+		mes "[เจ้าหน้าที่ Stamina]";
+		mes "อุ๊ย! กิจกรรมเพิ่งจบลงไปเมื่อกี้เองค่ะ";
+		close;
+	}
+	
+	Zeny -= $LuckyMap_WarpFee;
+	warp .@m$[.@s], 0, 0;
+	close;
+
+	OnUpdateWaitroom:
+		delwaitingroom;
+		if ($LuckyMap_EndTime > gettimetick(2)) {
+			waitingroom " [ Lucky Map: เริ่มแล้ว ]", 0;
+		} else {
+			.@h = gettime(3);
+			if (.@h < 12) .n$ = "12:00";
+			else if (.@h < 14) .n$ = "14:00";
+			else if (.@h < 16) .n$ = "16:00";
+			else if (.@h < 18) .n$ = "18:00";
+			else if (.@h < 20) .n$ = "20:00";
+			else if (.@h < 22) .n$ = "22:00";
+			else .n$ = "พรุ่งนี้";
+			waitingroom " รอบถัดไป: " + .n$, 0;
+		}
+		
+		if (strnpcinfo(2) == "") { 
+			donpcevent "Stamina_Officer#mor::OnUpdateWaitroom";
+			//donpcevent "Stamina_Officer#iz::OnUpdateWaitroom";
+			//donpcevent "Stamina_Officer#gef::OnUpdateWaitroom";
+			//donpcevent "Stamina_Officer#pay::OnUpdateWaitroom";
+		}
+		end;
+}
+
+morocc,174,101,3	duplicate(Stamina_Officer)	Stamina_Officer#mor	401
+//izlude,128,146,3	duplicate(Stamina_Officer)	Stamina_Officer#iz	401
+//geffen,120,113,3	duplicate(Stamina_Officer)	Stamina_Officer#gef	401
+//payon,181,104,3	duplicate(Stamina_Officer)	Stamina_Officer#pay	401

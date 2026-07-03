@@ -1,0 +1,80 @@
+-	script	ClearSCOnMap	-1,{
+OnPCLoadMapEvent:
+	// ตรวจสอบชื่อแผนที่เพื่อให้สคริปต์ทำงานเฉพาะในแผนที่ที่ต้องการ
+	if (strcharinfo(3) == "payg_cas01" || 
+		strcharinfo(3) == "payg_cas05" || 
+		strcharinfo(3) == "prtg_cas05" || 
+		strcharinfo(3) == "guild_vs3") {
+		// ล้างสถานะ SC_POEMBRAGI ในแผนที่ที่กำหนด
+		sc_end SC_POEMBRAGI;
+	}
+	end;
+}
+
+// ทำให้แผนที่ที่ต้องการโหลดสคริปต์นี้เมื่อผู้เล่นเข้ามา
+payg_cas01	mapflag	loadevent
+payg_cas05	mapflag	loadevent
+prtg_cas05	mapflag	loadevent
+guild_vs3	mapflag	loadevent
+
+
+-	script	adjust_skill_damage_map	-1,{
+
+	OnPCLoadMapEvent:
+		// ตรวจสอบว่าอยู่ในแผนที่ใดแล้วปรับค่าดาเมจตามแผนที่นั้น
+		if (strcharinfo(3) == "payg_cas01") {
+			// ลดดาเมจจากการโจมตีทั้งหมดลง 50%
+			bonus2 bSkillAtk,"AS_SONICBLOW",-30;
+			bonus2 bSkillAtk,"KN_BOWLINGBASH",-30;
+			bonus2 bSkillAtk,"WZ_VERMILION",30;
+			bonus2 bSkillAtk,"WZ_STORMGUST",30;
+			bonus2 bSkillAtk,"WZ_METEOR",30;
+			bonus2 bSkillAtk,"KN_BRANDISHSPEAR",30;
+		} else if (strcharinfo(3) == "payg_cas05") {
+			bonus2 bSkillAtk,"AS_SONICBLOW",-30;
+			bonus2 bSkillAtk,"KN_BOWLINGBASH",-30;
+			bonus2 bSkillAtk,"WZ_VERMILION",30;
+			bonus2 bSkillAtk,"WZ_STORMGUST",30;
+			bonus2 bSkillAtk,"WZ_METEOR",30;
+			bonus2 bSkillAtk,"KN_BRANDISHSPEAR",30;
+		} else if (strcharinfo(3) == "prtg_cas05") {
+			bonus2 bSkillAtk,"AS_SONICBLOW",-30;
+			bonus2 bSkillAtk,"KN_BOWLINGBASH",-30;
+			bonus2 bSkillAtk,"WZ_VERMILION",30;
+			bonus2 bSkillAtk,"WZ_STORMGUST",30;
+			bonus2 bSkillAtk,"WZ_METEOR",30;
+			bonus2 bSkillAtk,"KN_BRANDISHSPEAR",30;
+		} else if (strcharinfo(3) == "guild_vs3") {
+			bonus2 bSkillAtk,"AS_SONICBLOW",-30;
+			bonus2 bSkillAtk,"KN_BOWLINGBASH",-30;
+			bonus2 bSkillAtk,"WZ_VERMILION",30;
+			bonus2 bSkillAtk,"WZ_STORMGUST",30;
+			bonus2 bSkillAtk,"WZ_METEOR",30;
+			bonus2 bSkillAtk,"KN_BRANDISHSPEAR",30;
+		} else if (strcharinfo(3) == "morocc") {
+			bonus2 bSkillAtk,"AS_SONICBLOW",-30;
+			bonus2 bSkillAtk,"KN_BOWLINGBASH",-30;
+			bonus2 bSkillAtk,"WZ_VERMILION",30;
+			bonus2 bSkillAtk,"WZ_STORMGUST",30;
+			bonus2 bSkillAtk,"WZ_METEOR",30;
+			bonus2 bSkillAtk,"KN_BRANDISHSPEAR",30;
+		} else {
+			// ลบการปรับค่าดาเมจเมื่อผู้เล่นออกจากแผนที่เหล่านี้
+			bonus2 bSkillAtk,"AS_SONICBLOW",0;
+			bonus2 bSkillAtk,"KN_BOWLINGBASH",0;
+			bonus2 bSkillAtk,"WZ_VERMILION",0;
+			bonus2 bSkillAtk,"WZ_STORMGUST",0;
+			bonus2 bSkillAtk,"WZ_METEOR",0;
+			bonus2 bSkillAtk,"KN_BRANDISHSPEAR",30;
+		}
+		end;
+
+	OnInit:
+		// ตั้งค่าให้สคริปต์ทำงานเมื่อเข้าสู่แผนที่ที่ต้องการ
+		setmapflag "payg_cas01", mf_loadevent;
+		setmapflag "payg_cas05", mf_loadevent;
+		setmapflag "prtg_cas05", mf_loadevent;
+		setmapflag "guild_vs3", mf_loadevent;
+		setmapflag "morocc", mf_loadevent;
+		end;
+}

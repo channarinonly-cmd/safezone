@@ -1,0 +1,119 @@
+//===========================================================
+// Gacha NPC - สุ่มประดับอาชีพ (โชว์รูปภาพ + SQL Log + Waitingroom)
+//===========================================================
+
+morocc,165,131,4	script	Gacha Master	100,{
+	// ปิดการใช้ไอเท็ม ป้องกันบั๊กสลับของ
+	disable_items;
+
+	// =========================================
+	// [ CONFIG : ตั้งค่าตู้สุ่ม ]
+	// =========================================
+	.@npc_name$ = "^000080Gacha Master^000000";
+	.@coin_id = 35008; // รหัสเหรียญที่ใช้สุ่ม
+	.@coin_amt = 1;    // ใช้กี่เหรียญต่อการหมุน 1 ครั้ง
+	
+	.@rare_chance = 10; // โอกาสได้ของแรร์ (%)
+
+	// รายการของแรร์ (ประดับอาชีพ)
+	setarray .@rare_items[0], 
+		24248, 24252, // Acolyte
+		24246, 24250, // Swordman
+		24249, 24254, // Magician
+		28392, 24255, // Archer
+		24247, 24251, // Merchant
+		28391, 24253; // Thief
+
+	// รายการของขยะ (ไอเทมเกลือ)
+	setarray .@trash_items[0], 12221, 12883, 14766, 23475, 12684, 12796;
+	// =========================================
+
+	mes "["+.@npc_name$+"]";
+	mes "เร่เข้ามา! ตู้สุ่มประดับอาชีพสุดแรร์เปิดให้บริการแล้ว!";
+	mes "ค่าบริการ: ^FF0000" + .@coin_amt + "x " + getitemname(.@coin_id) + "^000000 / รอบ";
+	mes " ";
+	mes "^0000FF[ รายการของแรร์ที่มีโอกาสได้รับ ]^000000";
+	
+	// วนลูปโชว์รูปไอเทมแรร์ทั้งหมดก่อนสุ่ม
+	for (.@i = 0; .@i < getarraysize(.@rare_items); .@i++) {
+		mes "^i[" + .@rare_items[.@i] + "]^FFFFFF_^000000 " + getitemname(.@rare_items[.@i]);
+	}
+	
+	next;
+	
+	mes "["+.@npc_name$+"]";
+	mes "เจ้าต้องการจะลองเสี่ยงดวงดูไหมล่ะ?";
+	mes " ";
+	if(select("- หมุนเลย! (ใช้ " + .@coin_amt + " เหรียญ):- ไว้คราวหน้าดีกว่า") == 2) {
+		enable_items;
+		close;
+	}
+
+	// เช็คเหรียญ
+	if (countitem(.@coin_id) < .@coin_amt) {
+		mes "["+.@npc_name$+"]";
+		mes "^FF0000เหรียญของเจ้ามีไม่พอนะ!^000000";
+		enable_items;
+		close;
+	}
+
+	// เช็คน้ำหนัก
+	if (checkweight(909, 1) == 0) { 
+		mes "["+.@npc_name$+"]";
+		mes "^FF0000น้ำหนัก หรือ ช่องเก็บของ ของเจ้าเต็ม!^000000";
+		enable_items;
+		close;
+	}
+
+	delitem .@coin_id, .@coin_amt;
+	mes "["+.@npc_name$+"]";
+	mes "กำลังทำการสุ่ม...";
+	sleep2 1000;
+
+	// ระบบสุ่ม
+	.@roll = rand(1, 100);
+	.@is_rare = 0;
+
+	if (.@roll <= .@rare_chance) {
+		.@reward_id = .@rare_items[rand(getarraysize(.@rare_items))];
+		.@is_rare = 1;
+	} else {
+		.@reward_id = .@trash_items[rand(getarraysize(.@trash_items))];
+	}
+
+	getitem .@reward_id, 1;
+
+	// แสดงผลลัพธ์
+	if (.@is_rare) {
+		specialeffect2 153; 
+		specialeffect2 338; 
+		emotion ET_BEST;
+
+		mes "^0000FFยินดีด้วย! เจ้าได้รับของแรร์!^000000";
+		mes "ได้รับ: ^i[" + .@reward_id + "]^FFFFFF_^000000 " + getitemname(.@reward_id);
+		
+		announce "[ Gacha Master ] : ยินดีด้วย! คุณ ["+strcharinfo(0)+"] สุ่มได้รับ ["+getitemname(.@reward_id)+"]", bc_blue|bc_all;
+
+		// ยิง Log เข้า SQL
+		.@char_name$ = escape_sql(strcharinfo(0));
+		.@item_name$ = escape_sql(getitemname(.@reward_id));
+		query_sql("INSERT INTO `gacha_rare_log` (`account_id`, `char_name`, `item_id`, `item_name`) VALUES (" + getcharid(3) + ", '" + .@char_name$ + "', " + .@reward_id + ", '" + .@item_name$ + "')");
+		
+	} else {
+		specialeffect2 155; 
+		emotion ET_HUK;
+		mes "^FF0000อ่า... รอบนี้ดวงไม่ดีเลยนะ^000000";
+		mes "ได้รับ: ^i[" + .@reward_id + "]^FFFFFF_^000000 " + getitemname(.@reward_id);
+	}
+	
+	enable_items;
+	close;
+
+OnInit:
+	// โชว์ป้ายชื่อ NPC บนหัว
+	waitingroom " สุ่ม Shadow อาชีพ", 0;
+
+	// สร้างตาราง Log อัตโนมัติ
+	query_sql("CREATE TABLE IF NOT EXISTS `gacha_rare_log` (`log_id` int(11) NOT NULL AUTO_INCREMENT, `account_id` int(11) NOT NULL, `char_name` varchar(30) NOT NULL, `item_id` int(11) NOT NULL, `item_name` varchar(50) NOT NULL, `datetime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`log_id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+	end;
+}

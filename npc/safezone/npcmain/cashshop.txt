@@ -1,0 +1,78 @@
+// ========================================================
+// ฐานข้อมูลร้านค้า Cash Shop (ใช้ -1 เพื่อซ่อนตัว NPC)
+// ========================================================
+-	cashshop	CashShop_ETC	-1,23038:2,23207:159,23213:49,13601:30,25793:10,6417:1,12208:10,6320:100,12213:100,13990:80,12900:80,12210:10,14592:10,12902:80,13710:150,17229:59,17920:30,17921:30
+-	cashshop	CashShop_RENT	-1,13646:80,13647:80,13648:80,13649:80,13650:80,13651:80,13652:80,13653:80,13654:80,13655:80,13656:80
+-	cashshop	CashShop_Buff	-1,12910:1,12912:15,12913:2,12914:2,12915:2,12916:2,12917:2,12919:8,13623:8,17224:8,17980:8,17886:8,17277:8
+-	cashshop	Bot_Shop	-1,12910:1,12912:15,12913:2,12914:2,12915:2,12916:2,12917:2,12919:8,13623:8,17224:8,17980:8,17886:8,17277:8
+
+-	cashshop	CashShop_RENT2	-1,13664:90,13665:50,13666:50,13667:50,13668:50,13669:50,13670:50,13671:50
+// ========================================================
+// 1. Cash Shop : ETC
+// ========================================================
+morocc,165,61,5	script	CashShop#CS_ETC_NPC	112,{
+
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1;
+	} else if (strcharinfo(3) == "prontera") {
+		callfunc "Check_Faction", 2;
+	}
+
+	callshop "CashShop_ETC",1;
+	end;
+
+OnInit:
+	delwaitingroom;
+	waitingroom "Cash Shop",0;
+	end;	
+}
+
+// จุดเพิ่ม NPC เมืองอื่นๆ ของ Cash Shop (ETC)
+prontera,141,126,5	duplicate(CashShop#CS_ETC_NPC)	CashShop#prontera_etc	112
+
+// ========================================================
+// 2. Cash Shop : RENT (ไอเท็มเช่า - ปัจจุบันปิดไว้อยู่)
+// ========================================================
+
+morocc,165,68,5	script	CashShop#CS_RENT_NPC	112,{
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1;
+	} else if (strcharinfo(3) == "prontera") {
+		callfunc "Check_Faction", 2;
+	}
+
+	callshop "CashShop_RENT2",1;
+	end;
+
+OnInit:
+	delwaitingroom;
+	waitingroom "   ไอเท็มเช่า",0;
+	end;	
+}
+
+// จุดเพิ่ม NPC เมืองอื่นๆ ของ Cash Shop (RENT)
+prontera,129,126,5	duplicate(CashShop#CS_RENT_NPC)	CashShop#prontera_rent	112
+
+
+// ========================================================
+// 3. Cash Shop : Buff (ไอเท็มสะดวกใช้)
+// ========================================================
+morocc,165,64,5	script	CashShop#CS_BUFF_NPC	112,{
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1;
+	} else if (strcharinfo(3) == "prontera") {
+		callfunc "Check_Faction", 2;
+	}
+
+	callshop "CashShop_Buff",1;
+	end;
+
+OnInit:
+	delwaitingroom;
+	waitingroom "ไอเท็มสะดวกใช้",0;
+	end;	
+}
+
+// จุดเพิ่ม NPC เมืองอื่นๆ ของ Cash Shop (Buff)
+prontera,135,126,5	duplicate(CashShop#CS_BUFF_NPC)	CashShop#prontera_buff	112
+

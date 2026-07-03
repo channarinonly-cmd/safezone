@@ -1,0 +1,119 @@
+/*
+==========================================================
+Script. ระบบจำลองผู้เล่น (Global Fake Players 2-1 & 2-2)
+Description. บอทสุ่มเกิดทั่วโลก ครบทุกสายอาชีพ พร้อมระบบเก็บของ
+==========================================================
+*/
+
+-	script	FakePlayerAutoSpawn	-1,{
+
+OnInit:
+	// --- [ ส่วนที่ 1: รายชื่อแผนที่ ] ---
+	setarray .Maps$[0], 
+		"prontera","alberta","geffen","payon","morocc","aldebaran","izlude","yuno","amatsu","gonryun","umbala","niflheim","louyang","ayothaya","einbroch","einbech","lighthalzen","hugel","rachel","veins","moscovia","brasilis","dicastes01","mora","dewata","malangdo","malaya","eclage","prt_fild00","prt_fild01","prt_fild02","prt_fild03","prt_fild04","prt_fild05","prt_fild06","prt_fild07","prt_fild08","prt_fild09","prt_fild10","prt_fild11","gef_fild00","gef_fild01","gef_fild02","gef_fild03","gef_fild04","gef_fild05","gef_fild06","gef_fild07","gef_fild08","gef_fild09","gef_fild10","gef_fild11","gef_fild12","gef_fild13","gef_fild14","pay_fild01","pay_fild02","pay_fild03","pay_fild04","pay_fild05","pay_fild06","pay_fild07","pay_fild08","pay_fild09","pay_fild10","pay_fild11","moc_fild01","moc_fild02","moc_fild03","moc_fild04","moc_fild05","moc_fild06","moc_fild07","moc_fild08","moc_fild09","moc_fild10","moc_fild11","moc_fild12","moc_fild13","moc_fild14","moc_fild15","moc_fild16","moc_fild17","moc_fild18","moc_fild19","moc_fild20","moc_fild21","moc_fild22","mjolnir_01","mjolnir_02","mjolnir_03","mjolnir_04","mjolnir_05","mjolnir_06","mjolnir_07","mjolnir_08","mjolnir_09","mjolnir_10","mjolnir_11","mjolnir_12","yuno_fild01","yuno_fild02","yuno_fild03","yuno_fild04","yuno_fild05","yuno_fild06","yuno_fild07","yuno_fild08","yuno_fild09","yuno_fild10","yuno_fild11","yuno_fild12","ra_fild01","ra_fild02","ra_fild03","ra_fild04","ra_fild05","ra_fild06","ra_fild07","ra_fild08","ra_fild09","ra_fild10","ra_fild11","ra_fild12","ra_fild13","ve_fild01","ve_fild02","ve_fild03","ve_fild04","ve_fild05","ve_fild06","ve_fild07","ein_fild01","ein_fild02","ein_fild03","ein_fild04","ein_fild05","ein_fild06","ein_fild07","ein_fild08","ein_fild09","ein_fild10","lhz_fild01","lhz_fild02","lhz_fild03","cmd_fild01","cmd_fild02","cmd_fild03","cmd_fild04","cmd_fild05","cmd_fild06","cmd_fild07","cmd_fild08","cmd_fild09","prt_maze01","prt_maze02","prt_maze03","prt_sewb1","prt_sewb2","prt_sewb3","prt_sewb4","pay_dun00","pay_dun01","pay_dun02","pay_dun03","pay_dun04","anthell01","anthell02","gef_dun00","gef_dun01","gef_dun02","gef_dun03","gef_tower","moc_pryd01","moc_pryd02","moc_pryd03","moc_pryd04","moc_pryd05","moc_pryd06","moc_prydb1","in_sphinx1","in_sphinx2","in_sphinx3","in_sphinx4","in_sphinx5","mag_dun01","mag_dun02","iz_dun00","iz_dun01","iz_dun02","iz_dun03","iz_dun04","iz_dun05","mjo_dun01","mjo_dun02","mjo_dun03","orcsdun01","orcsdun02","gl_cas01","gl_cas02","gl_church","gl_chyard","gl_dun01","gl_dun02","gl_knt01","gl_knt02","gl_prison","gl_sew01","gl_sew02","gl_sew03","gl_sew04","alde_dun01","alde_dun02","alde_dun03","alde_dun04","c_tower1","c_tower2","c_tower3","c_tower4","xmas_dun01","xmas_dun02","ice_dun01","ice_dun02","ice_dun03","ice_dun04","tur_dun01","tur_dun02","tur_dun03","tur_dun04","tur_dun05","tur_dun06","ama_dun01","ama_dun02","ama_dun03","gon_dun01","gon_dun02","gon_dun03","lou_dun01","lou_dun02","lou_dun03","ein_dun01","ein_dun02","lhz_dun01","lhz_dun02","lhz_dun03","lhz_dun04","juperos_01","juperos_02","jupe_core","abyss_01","abyss_02","abyss_03","tha_t01","tha_t02","tha_t03","tha_t04","tha_t05","tha_t06","tha_t07","tha_t08","tha_t09","tha_t10","tha_t11","tha_t12","kh_dun01","kh_dun02","ra_san01","ra_san02","ra_san03","ra_san04","ra_san05","thor_v01","thor_v02","thor_v03","abbey01","abbey02","abbey03","mosk_dun01","mosk_dun02","mosk_dun03","nyd_dun01","nyd_dun02","bra_dun01","bra_dun02","ama_fild01","gon_fild01","lou_fild01","ayo_fild01","ayo_fild02","ayo_dun01","ayo_dun02","pvp_y_1-4";
+
+	// --- [ ส่วนที่ 2: ข้อมูลอาชีพ [JobID, Body2, WeaponID, MonsterID] ] ---
+	setarray .JobData[0],  
+		// --- Class 2-1 ---
+		7,  7, 1164,   21000, // Knight
+		12, 12, 1275,   21001, // Assassin
+		10, 10, 1388,   21002, // Blacksmith
+		8,  8, 1585,   21003, // Priest
+		11, 11, 1726,   21004, // Hunter
+		9,  9, 1603,   21005, // Wizard
+		// --- Class 2-2 ---
+		14, 14, 1410,   21006, // Crusader
+		17, 17, 1224,   21007, // Rogue
+		18, 18, 1364,   21008, // Alchemist
+		15, 15, 1807,   21009, // Monk
+		16, 16, 1613,   21010, // Sage
+		19, 19, 1714,   21011; // Bard / Dancer (19/20)
+
+	goto L_Spawn;
+
+L_Spawn:
+	freeloop(1);
+	// วนลูปตามจำนวนอาชีพทั้งหมด (12 อาชีพ x 4 ช่อง = 48)
+	// ปรับรอบการวน .@i ให้เหมาะสมกับกำลังของ Server นะครับคุณ (แนะนำ 50-100 ต่ออาชีพ)
+	for(.@j = 0; .@j < 48; .@j += 4) {
+		for(.@i = 0; .@i < 1000; .@i++) {
+			
+			.@map$ = .Maps$[rand(getarraysize(.Maps$))];
+			.@mID  = .JobData[.@j+3];
+			
+			monster .@map$,0,0,"FakePlayer",.@mID,1,"FakePlayerAutoSpawn::OnMobDead";
+			.@GID = $@mobid[0];
+			
+			if(!unitexists(.@GID)) continue;
+
+			// --- [ ตั้งค่ารูปลักษณ์และโหมด ] ---
+			setunitdata .@GID, UMOB_CLASS, .JobData[.@j];
+			setunitdata .@GID, UMOB_BODY2, .JobData[.@j+1];
+			setunitdata .@GID, UMOB_WEAPON, .JobData[.@j+2];
+			
+			setunitdata .@GID, UMOB_MODE, 2181; // CanMove | Looter | Assist | CanAttack
+			setunitdata .@GID, UMOB_GROUP_ID, 2;
+			setunitdata .@GID, UMOB_AI, 1;
+			setunitdata .@GID, UMOB_SEX, rand(0,1);
+			setunitdata .@GID, UMOB_LEVEL, rand(75,99);
+			setunitdata .@GID, UMOB_SPEED, 150;
+			
+			// เครื่องแต่งกายสุ่ม
+			setunitdata .@GID, UMOB_HEADTOP, rand(500,1000);
+			setunitdata .@GID, UMOB_HEADMIDDLE, rand(500,1000);
+			setunitdata .@GID, UMOB_HEADBOTTOM, rand(500,1000);
+			setunitdata .@GID, UMOB_ROBE, rand(12,56);
+			setunitdata .@GID, UMOB_HAIRSTYLE, rand(1,24);
+			setunitdata .@GID, UMOB_HAIRCOLOR, rand(1,24);
+		}
+	}
+	freeloop(0);
+	end;
+
+// --- [ ส่วนการเกิดใหม่เมื่อตาย (แตกตัวเพิ่ม) ] ---
+OnMobDead:
+	// หน่วงเวลาก่อนเกิดใหม่เล็กน้อยเพื่อให้เนียนครับคุณ
+	sleep rand(5000, 10000);
+	
+	// --- [ จุดแก้ไข: กำหนดจำนวนการเกิดใหม่ต่อการตาย 1 ครั้ง ] ---
+	.@multi_spawn = 2; // ตาย 1 ตัว จะเกิดใหม่กี่ตัว? (ปรับเลขนี้ได้เลยครับคุณ)
+
+	for (.@i = 0; .@i < .@multi_spawn; .@i++) {
+		
+		// สุ่มอาชีพใหม่ให้ไม่ซ้ำตัวเดิม
+		.@j_idx = rand(0, 11) * 4; 
+		
+		// สุ่มแมพปลายทางจากรายการที่คุณมี
+		.@map$ = .Maps$[rand(getarraysize(.Maps$))];
+		.@mID  = .JobData[.@j_idx+3];
+
+		if (.@mID <= 0) continue; // ถ้า Error ให้ข้ามไปลูปถัดไป
+
+		// สั่งสร้างตัวใหม่
+		monster .@map$,0,0,"FakePlayer",.@mID,1,strnpcinfo(3)+"::OnMobDead";
+		.@GID = $@mobid[0];
+
+		if(unitexists(.@GID)) {
+			// ตั้งค่าข้อมูลตามอาชีพที่สุ่มได้ใหม่
+			setunitdata .@GID, UMOB_CLASS, .JobData[.@j_idx];
+			setunitdata .@GID, UMOB_BODY2, .JobData[.@j_idx+1];
+			setunitdata .@GID, UMOB_WEAPON, .JobData[.@j_idx+2];
+			
+			setunitdata .@GID, UMOB_MODE, 2181; 
+			setunitdata .@GID, UMOB_GROUP_ID, 2;
+			setunitdata .@GID, UMOB_AI, 1;
+			setunitdata .@GID, UMOB_SEX, rand(0,1);
+			setunitdata .@GID, UMOB_LEVEL, rand(75,99);
+			setunitdata .@GID, UMOB_SPEED, 150;
+			
+			// สุ่มเครื่องแต่งกายใหม่ทุกตัว
+			setunitdata .@GID, UMOB_HEADTOP, rand(500,2000);
+			setunitdata .@GID, UMOB_HEADMIDDLE, rand(500,2000);
+			setunitdata .@GID, UMOB_HEADBOTTOM, rand(500,2000);
+			setunitdata .@GID, UMOB_ROBE, rand(12,56);
+			setunitdata .@GID, UMOB_HAIRSTYLE, rand(1,24);
+			setunitdata .@GID, UMOB_HAIRCOLOR, rand(1,24);
+		}
+	}
+	end;
+}
