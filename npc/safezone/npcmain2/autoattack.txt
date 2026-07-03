@@ -147,6 +147,7 @@ config_menu:
 
 	// To disable an option, comment the line
 	menu	" ^ff0000~^000000 ย้อนกลับ",main_menu,
+			" ^ff0000~^000000 Quick Preset",quick_preset_menu,
 			" ^ff0000~^000000 โจมตีปกติ",melee_attack,
 			" ^ff0000~^000000 โหมดการเคลื่อนที่",stop_walk,
 			" ^ff0000~^000000 โฟกัส",focus_menu,
@@ -165,6 +166,68 @@ config_menu:
 			" ^ff0000~^000000 หลบหนีมอน",flee_mob_menu;
 	end;
 	
+
+quick_preset_menu:
+	clear2();
+	.@menu$ = "[^FF0000*^000000 ^2f00ffAuto Attack Preset^000000 ^FF0000*^000000]";
+	mes .@menu$;
+	mes "Choose a fast setup.";
+	mes "You can fine tune each option later.";
+
+	.@preset = select(
+		" Farmer: normal attack + pickup + flywing",
+		" Skill Farmer: skill chance 60% + pickup + flywing",
+		" Safe Mode: normal attack + HP flywing + no pickup",
+		" Stop Auto Attack",
+		" Back"
+	);
+
+	switch(.@preset) {
+		case 1:
+			autoattackset("6;1");
+			autoattackset("9;2;0");
+			autoattackset("7;1;1");
+			autoattackset("7;2;30");
+			autoattackset("7;3;15");
+			autoattackset("10;20");
+			autoattackset("12;1");
+			dispbottom "[Auto Attack] Farmer preset applied.";
+			break;
+		case 2:
+			autoattackset("6;1");
+			autoattackset("9;2;0");
+			autoattackset("7;1;1");
+			autoattackset("7;2;35");
+			autoattackset("7;3;10");
+			autoattackset("10;60");
+			autoattackset("12;1");
+			dispbottom "[Auto Attack] Skill Farmer preset applied.";
+			break;
+		case 3:
+			autoattackset("6;1");
+			autoattackset("9;2;2");
+			autoattackset("7;1;1");
+			autoattackset("7;2;55");
+			autoattackset("7;3;20");
+			autoattackset("10;10");
+			autoattackset("12;1");
+			dispbottom "[Auto Attack] Safe Mode preset applied.";
+			break;
+		case 4:
+			autostart(false);
+			if(#AI_self$ != "")
+				pcstopfollow getCharID(3,#AI_self$);
+			deltimer strnpcinfo(3)+"::OnWeightCheck";
+			dispbottom "[Auto Attack] Stopped.";
+			break;
+		default:
+			goto(config_menu);
+	}
+
+	next;
+	goto(config_menu);
+	end;
+
 stop_walk:
 	clear2();
 	.@menu$ = "[^FF0000•^000000 ^2f00ffการเคลื่อนที่^000000 ^FF0000•^000000]";
