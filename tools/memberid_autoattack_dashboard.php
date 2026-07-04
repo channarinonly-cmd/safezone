@@ -158,6 +158,42 @@ function aa_usable_item_ids(): array
     return $ids;
 }
 
+function aa_buy_catalog(mysqli $con): array
+{
+    static $items = null;
+    if ($items !== null) {
+        return $items;
+    }
+
+    $items = [];
+    foreach ([__DIR__ . '/../../ai_buy_items.txt', __DIR__ . '/../../db/custom/ai_buy_items.txt'] as $file) {
+        foreach (@file($file, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+            $line = preg_replace('/\/\/.*$/', '', trim($line));
+            if ($line === '') {
+                continue;
+            }
+
+            $parts = array_map('trim', explode(',', $line));
+            $itemId = (int)($parts[0] ?? 0);
+            $currency = strtolower($parts[1] ?? '');
+            $price = (int)($parts[2] ?? 0);
+            if ($itemId <= 0 || $price <= 0 || !in_array($currency, ['zeny', 'cc', 'cash'], true)) {
+                continue;
+            }
+
+            $items[$itemId] = [
+                'id' => $itemId,
+                'name' => aa_item_name($con, $itemId),
+                'currency' => $currency === 'cash' ? 'cc' : $currency,
+                'price' => $price,
+            ];
+        }
+    }
+
+    uasort($items, fn($a, $b) => $a['id'] <=> $b['id']);
+    return $items;
+}
+
 function aa_pick_buy_rows(array $enabled, array $mins, array $targets): array
 {
     $rows = [];
@@ -235,7 +271,11 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach (aa_ints($_POST['keep_items'] ?? []) as $id) {
             $ok = $ok && $con->query("INSERT INTO `aa_items` (`char_id`,`type`,`item_id`) VALUES ({$selected_char_id},3,{$id})");
         }
+        $buyAllowed = aa_buy_catalog($con);
         foreach (aa_pick_buy_rows($_POST['buy_items'] ?? [], $_POST['buy_min'] ?? [], $_POST['buy_target'] ?? []) as $row) {
+            if (!isset($buyAllowed[$row['item_id']])) {
+                continue;
+            }
             $ok = $ok && $con->query("INSERT INTO `aa_items` (`char_id`,`type`,`item_id`,`min_hp`,`min_sp`) VALUES ({$selected_char_id},4,{$row['item_id']},{$row['min_amount']},{$row['target_amount']})");
         }
 
@@ -298,11 +338,16 @@ foreach ($inventory as $item) {
         $usableItems[] = $item;
     }
 }
-$buyItems = $usableItems;
-foreach ($selected['buy'] as $id => $row) {
-    if (!isset($inventory[$id])) {
-        $buyItems[] = ['id' => $id, 'amount' => 0, 'name' => aa_item_name($con, $id)];
-    }
+$buyItems = [];
+foreach (aa_buy_catalog($con) as $buyItem) {
+    $id = $buyItem['id'];
+    $buyItems[] = [
+        'id' => $id,
+        'amount' => $inventory[$id]['amount'] ?? 0,
+        'name' => $buyItem['name'],
+        'currency' => $buyItem['currency'],
+        'price' => $buyItem['price'],
+    ];
 }
 
 $skills = [];
@@ -425,7 +470,10 @@ while ($res && ($row = $res->fetch_object())) {
                                         </div>
                                         <?php foreach ($inventory as $item) : ?>
                                             <div class="ai-item-row ai-filter-row" data-group="item" data-name="<?= htmlspecialchars(strtolower($item['name'] . ' ' . $item['id'])) ?>">
-                                                <div><div class="ai-name"><?= htmlspecialchars($item['name']) ?></div><div class="ai-muted">ID <?= $item['id'] ?> / มี <?= $item['amount'] ?> ชิ้น</div></div>
+                                                <div>
+                                                    <div class="ai-name"><?= htmlspecialchars($item['name']) ?></div>
+                                                    <div class="ai-muted">ID <?= $item['id'] ?> / มี <?= $item['amount'] ?> ชิ้น / ราคา <?= number_format((int)$item['price']) ?> <?= strtoupper($item['currency']) ?></div>
+                                                </div>
                                                 <div class="ai-actions">
                                                     <label><input type="checkbox" name="pickup_items[]" value="<?= $item['id'] ?>" <?= isset($selected['pickup'][$item['id']]) ? 'checked' : '' ?>> เก็บของนี้</label>
                                                     <label><input type="checkbox" name="keep_items[]" value="<?= $item['id'] ?>" <?= isset($selected['keep'][$item['id']]) ? 'checked' : '' ?>> ไม่ฝากคลัง</label>

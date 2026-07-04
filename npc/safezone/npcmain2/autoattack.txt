@@ -627,8 +627,8 @@ autobuy_menu:
 	.@buy_menu = select(" เลือกจากกระเป๋า"," เพิ่มด้วยไอดี"," ลบด้วยไอดี"," ล้างรายการ"," กลับ");
 	switch(.@buy_menu){
 		case 1:
-			.@choice = select(autoattackmenulist(5));
-			.@item_id = autoattackmenuid(5,.@choice);
+			.@choice = select(autoattackmenulist(7));
+			.@item_id = autoattackmenuid(7,.@choice);
 			if(.@item_id <= 0) goto(autobuy_menu);
 			goto(autobuy_amount_menu);
 		case 2:

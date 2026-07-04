@@ -10,11 +10,15 @@
 #include "script.hpp"
 
 #include <errno.h>
+#include <algorithm>
+#include <cctype>
+#include <fstream>
 #include <math.h>
 #include <setjmp.h>
 #include <stdlib.h> // atoi, strtol, strtoll, exit
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #ifdef PCRE_SUPPORT
@@ -28102,6 +28106,75 @@ static const char* autoattack_item_display_name(std::shared_ptr<item_data> item)
 	return item->name.c_str();
 }
 
+enum class e_autoattack_buy_currency : uint8 {
+	ZENY,
+	CC,
+};
+
+struct s_autoattack_buy_config {
+	e_autoattack_buy_currency currency;
+	int price;
+};
+
+static std::string autoattack_trim_copy(std::string value)
+{
+	value.erase(value.begin(), std::find_if(value.begin(), value.end(), [](unsigned char ch) {
+		return !std::isspace(ch);
+	}));
+	value.erase(std::find_if(value.rbegin(), value.rend(), [](unsigned char ch) {
+		return !std::isspace(ch);
+	}).base(), value.end());
+	return value;
+}
+
+static std::unordered_map<t_itemid, s_autoattack_buy_config> autoattack_read_buy_config()
+{
+	std::unordered_map<t_itemid, s_autoattack_buy_config> items;
+	std::ifstream file("db/custom/ai_buy_items.txt");
+	std::string line;
+
+	while (std::getline(file, line)) {
+		size_t comment = line.find("//");
+		if (comment != std::string::npos)
+			line.erase(comment);
+
+		line = autoattack_trim_copy(line);
+		if (line.empty())
+			continue;
+
+		std::stringstream ss(line);
+		std::string id_text;
+		std::string currency_text;
+		std::string price_text;
+
+		if (!std::getline(ss, id_text, ',') || !std::getline(ss, currency_text, ',') || !std::getline(ss, price_text, ','))
+			continue;
+
+		id_text = autoattack_trim_copy(id_text);
+		currency_text = autoattack_trim_copy(currency_text);
+		price_text = autoattack_trim_copy(price_text);
+		std::transform(currency_text.begin(), currency_text.end(), currency_text.begin(), [](unsigned char ch) {
+			return (char)std::tolower(ch);
+		});
+
+		try {
+			t_itemid item_id = (t_itemid)std::stoi(id_text);
+			int price = std::stoi(price_text);
+			if (item_id <= 0 || price <= 0 || !item_db.exists(item_id))
+				continue;
+
+			if (currency_text == "zeny") {
+				items[item_id] = { e_autoattack_buy_currency::ZENY, price };
+			} else if (currency_text == "cc" || currency_text == "cash") {
+				items[item_id] = { e_autoattack_buy_currency::CC, price };
+			}
+		} catch (...) {
+		}
+	}
+
+	return items;
+}
+
 /*
  * get info of player on autoattack
  *
@@ -29228,6 +29301,10 @@ case GET_INFO_FLEE_MOB:
 						break;
 					}
 
+					auto buy_config = autoattack_read_buy_config();
+					if (buy_config.find(nameid) == buy_config.end())
+						return SCRIPT_CMD_SUCCESS;
+
 					auto itAutobuyitem = std::find_if(sd->aa.autobuyitems.begin(), sd->aa.autobuyitems.end(), [nameid] ( s_autobuyitem const &v) {return v.item_id == nameid;});
 					if(itAutobuyitem != sd->aa.autobuyitems.end()){
 						itAutobuyitem->is_active = status;
@@ -29642,6 +29719,13 @@ static std::vector<int> autoattack_menu_ids(map_session_data* sd, int type)
 		case 6:
 			map_foreachinmap(autoattack_mapdrop_sub, sd->bl.m, BL_MOB, &ids);
 			break;
+		case 7: {
+			auto buy_config = autoattack_read_buy_config();
+			for (const auto& entry : buy_config)
+				ids.push_back(entry.first);
+			std::sort(ids.begin(), ids.end());
+			break;
+		}
 	}
 
 	return ids;
@@ -29694,10 +29778,17 @@ BUILDIN_FUNC(autoattackmenulist)
 			if (!item)
 				continue;
 			const char* item_name = autoattack_item_display_name(item);
-			if (type == 6)
+			if (type == 6) {
 				safesnprintf(buffer, sizeof(buffer), "%d - %s:", id, item_name);
-			else
+			} else if (type == 7) {
+				auto buy_config = autoattack_read_buy_config();
+				auto config = buy_config.find(id);
+				const char* currency = config != buy_config.end() && config->second.currency == e_autoattack_buy_currency::CC ? "CC" : "Zeny";
+				int price = config != buy_config.end() ? config->second.price : 0;
+				safesnprintf(buffer, sizeof(buffer), "%d - %s (%d %s):", id, item_name, price, currency);
+			} else {
 				safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item_name, autoattack_count_item(sd, id));
+			}
 		}
 
 		menu += buffer;
@@ -29736,9 +29827,14 @@ BUILDIN_FUNC(autoattackbuy)
 		return SCRIPT_CMD_FAILURE;
 
 	int bought = 0;
+	auto buy_config = autoattack_read_buy_config();
 
 	for (auto &entry : sd->aa.autobuyitems) {
 		if (!entry.is_active || entry.item_id <= 0 || entry.target_amount <= 0)
+			continue;
+
+		auto config = buy_config.find(entry.item_id);
+		if (config == buy_config.end())
 			continue;
 
 		int current = autoattack_count_item(sd, entry.item_id);
@@ -29746,29 +29842,37 @@ BUILDIN_FUNC(autoattackbuy)
 			continue;
 
 		std::shared_ptr<item_data> item = item_db.find(entry.item_id);
-		if (!item || item->value_buy <= 0)
+		if (!item)
 			continue;
 
 		int need = entry.target_amount - current;
 		if (need <= 0)
 			continue;
 
-		int can_afford = sd->status.zeny / item->value_buy;
+		int can_afford = config->second.currency == e_autoattack_buy_currency::CC ? sd->cashPoints / config->second.price : sd->status.zeny / config->second.price;
 		need = cap_value(need, 0, can_afford);
 		if (need <= 0)
 			continue;
 
-		int total_cost = (int)cap_value((int64)item->value_buy * need, 0, INT_MAX);
+		int total_cost = (int)cap_value((int64)config->second.price * need, 0, INT_MAX);
 
 		struct item tmp_item = {};
 		tmp_item.nameid = entry.item_id;
 		tmp_item.identify = 1;
 
-		if (pc_payzeny(sd, total_cost, LOG_TYPE_NPC))
-			continue;
+		if (config->second.currency == e_autoattack_buy_currency::CC) {
+			if (pc_paycash(sd, total_cost, 0, LOG_TYPE_NPC) < 0)
+				continue;
+		} else {
+			if (pc_payzeny(sd, total_cost, LOG_TYPE_NPC))
+				continue;
+		}
 
 		if (pc_additem(sd, &tmp_item, need, LOG_TYPE_NPC)) {
-			pc_getzeny(sd, total_cost, LOG_TYPE_NPC);
+			if (config->second.currency == e_autoattack_buy_currency::CC)
+				pc_getcash(sd, total_cost, 0, LOG_TYPE_NPC);
+			else
+				pc_getzeny(sd, total_cost, LOG_TYPE_NPC);
 			continue;
 		}
 
@@ -29786,8 +29890,13 @@ BUILDIN_FUNC(autoattackneedbuy)
 	if (!script_rid2sd(sd))
 		return SCRIPT_CMD_FAILURE;
 
+	auto buy_config = autoattack_read_buy_config();
+
 	for (auto &entry : sd->aa.autobuyitems) {
 		if (!entry.is_active || entry.item_id <= 0 || entry.target_amount <= 0)
+			continue;
+
+		if (buy_config.find(entry.item_id) == buy_config.end())
 			continue;
 
 		int current = autoattack_count_item(sd, entry.item_id);
