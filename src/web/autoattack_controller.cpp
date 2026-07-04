@@ -116,7 +116,7 @@ button.secondary{background:#475569}button:disabled{opacity:.55;cursor:not-allow
 <header><h1>ตั้งค่า AI ฟาร์ม</h1></header>
 <main>
 	<section class="panel">
-		<div class="auth">
+		<div class="auth" id="authbox">
 			<div><label>AID</label><input id="aid" inputmode="numeric"></div>
 			<div><label>GID / Char ID</label><input id="gid" inputmode="numeric"></div>
 			<div><label>AuthToken</label><input id="token"></div>
@@ -170,6 +170,18 @@ $("save").onclick = async () => {
 		setStatus("บันทึกแล้ว เข้าเกมใหม่หรือรอระบบโหลดค่าตัวละครอีกครั้ง");
 	} catch(e) { setStatus(e.message || "บันทึกไม่สำเร็จ", true); }
 };
+const params = new URLSearchParams(location.search);
+const hasDashboardAuth = params.has("aid") && params.has("gid") && params.has("token");
+if (hasDashboardAuth) {
+	$("aid").value = params.get("aid") || "";
+	$("gid").value = params.get("gid") || "";
+	$("token").value = params.get("token") || "";
+	$("authbox").style.display = "none";
+	setStatus("กำลังโหลดค่าจากเว็บสมาชิก...");
+	$("load").click();
+	if (history.replaceState)
+		history.replaceState(null, "", "/autoattack");
+}
 </script>
 </body>
 </html>
