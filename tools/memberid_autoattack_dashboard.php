@@ -26,7 +26,28 @@ function aa_ints($value): array
 function aa_name(mysqli $con, int $id): string
 {
     static $cache = [];
+    static $ymlNames = null;
     if (isset($cache[$id])) {
+        return $cache[$id];
+    }
+
+    if ($ymlNames === null) {
+        $ymlNames = [];
+        foreach (glob(__DIR__ . '/../../item_db*.yml') ?: [] as $file) {
+            $currentId = 0;
+            foreach (@file($file, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+                if (preg_match('/^\s*-\s*Id:\s*(\d+)/', $line, $m)) {
+                    $currentId = (int)$m[1];
+                } elseif ($currentId > 0 && preg_match('/^\s*Name:\s*(.+?)\s*$/', $line, $m)) {
+                    $ymlNames[$currentId] = trim($m[1], " \"'");
+                    $currentId = 0;
+                }
+            }
+        }
+    }
+
+    if (!empty($ymlNames[$id])) {
+        $cache[$id] = $ymlNames[$id];
         return $cache[$id];
     }
 
@@ -35,9 +56,13 @@ function aa_name(mysqli $con, int $id): string
         $res = @$con->query("SELECT `name_japanese`,`name_english` FROM `{$table}` WHERE `id`={$id} LIMIT 1");
         if ($res && $res->num_rows > 0) {
             $row = $res->fetch_assoc();
-            $name = $row['name_japanese'] ?: $row['name_english'];
+            $name = $row['name_english'] ?: $row['name_japanese'];
             break;
         }
+    }
+
+    if ($name && strpos($name, '_') !== false) {
+        $name = str_replace('_', ' ', $name);
     }
 
     $cache[$id] = $name ?: ('Item #' . $id);
