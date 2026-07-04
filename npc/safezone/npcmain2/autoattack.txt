@@ -112,6 +112,7 @@ OnAutoReturnFarm:
 	set @AI_return_timer, 0;
 	end;
 OnMainAI:
+	autoattackset("12;0");
 	if(!sc_check(SC_AUTOATTACK)){
 		// showscript "เปิดระบบ AI ฟาร์ม";
 		if(getstatus(SC_STAMINA)) {
@@ -192,10 +193,8 @@ config_menu:
 
 	// To disable an option, comment the line
 	menu	" ^ff0000~^000000 ย้อนกลับ",main_menu,
-			" ^ff0000~^000000 ตั้งค่าเร็ว",quick_preset_menu,
 			" ^ff0000~^000000 โจมตีปกติ",melee_attack,
 			" ^ff0000~^000000 โหมดการเคลื่อนที่",stop_walk,
-			" ^ff0000~^000000 โฟกัส",focus_menu,
 			" ^ff0000~^000000 ฟื้นฟู",regeneration_menu,
 			" ^ff0000~^000000 สกิลโจมตี",attackskills_menu,
 			" ^ff0000~^000000 สกิลซับพอร์ท",buffskills_menu,
@@ -210,9 +209,23 @@ config_menu:
 			" ^ff0000~^000000 ซื้อของอัตโนมัติ",autobuy_menu,
 			" ^ff0000~^000000 ล้างการกำหนดเป้าหมาย",reset_mob_menu,
 			" ^ff0000~^000000 ล้างการกำหนดไอเทม",reset_item_menu,
+			" ^ff0000~^000000 ล้างค่าทั้งหมด",reset_all_menu,
 			" ^ff0000~^000000 หลบหนีมอน",flee_mob_menu;
 	end;
 
+
+reset_all_menu:
+	clear2();
+	mes "[^FF0000*^000000 ^2f00ffล้างค่าทั้งหมด^000000 ^FF0000*^000000]";
+	mes "ระบบจะล้างค่า AI ทั้งหมด";
+	.@ok = select(" ยืนยันล้างทั้งหมด"," กลับ");
+	if(.@ok == 1){
+		autoattackclear(9999);
+		autoattackset("12;0");
+		dispbottom "[AI] ล้างค่าทั้งหมดแล้ว";
+	}
+	goto(config_menu);
+	end;
 
 quick_preset_menu:
 	clear2();
@@ -237,7 +250,7 @@ quick_preset_menu:
 			autoattackset("7;2;30");
 			autoattackset("7;3;15");
 			autoattackset("10;20");
-			autoattackset("12;1");
+			autoattackset("12;0");
 			dispbottom "[AI] ใช้ตั้งค่าเร็ว: ฟาร์มทั่วไป";
 			break;
 		case 2:
@@ -247,7 +260,7 @@ quick_preset_menu:
 			autoattackset("7;2;35");
 			autoattackset("7;3;10");
 			autoattackset("10;60");
-			autoattackset("12;1");
+			autoattackset("12;0");
 			dispbottom "[AI] ใช้ตั้งค่าเร็ว: ฟาร์มใช้สกิล";
 			break;
 		case 3:
@@ -257,7 +270,7 @@ quick_preset_menu:
 			autoattackset("7;2;55");
 			autoattackset("7;3;20");
 			autoattackset("10;10");
-			autoattackset("12;1");
+			autoattackset("12;0");
 			dispbottom "[AI] ใช้ตั้งค่าเร็ว: ปลอดภัย";
 			break;
 		case 4:
@@ -529,8 +542,9 @@ pickupitems_menu:
 		case 2:
 			clear();
 			mes .@menu$;
-			mes "ระบุไอเทมไอดีเพื่อเพิ่มเข้ารายการ (สูงสุด "+getbattleflag("autoattack_max_itemlist")+" ไอเทม)";
-			input .@itempickup_id;
+			mes "?????????????????????????????????????";
+			.@choice = select(autoattackmenulist(6));
+			.@itempickup_id = autoattackmenuid(6,.@choice);
 			if(.@itempickup_id <= 0 )
 				goto(pickupitems_menu);
 
@@ -849,7 +863,7 @@ focus_menu:
 		autoattackset("12;0"); // ถ้าเป็นเก็บของ  เปลี่ยนเป็นตีมอน
 		mes "ตอนนี้ตั้งค่าเป็น ^FF0000เน้นเก็บของ^000000 แล้ว";
 	} else {
-		autoattackset("12;1"); // ถ้าเป็นตีมอน  เปลี่ยนเป็นเก็บของ
+		autoattackset("12;0"); // ถ้าเป็นตีมอน  เปลี่ยนเป็นเก็บของ
 		mes "ตอนนี้ตั้งค่าเป็น ^0000FFเน้นตีมอนสเตอร์^000000 แล้ว";
 	}
 
@@ -1175,7 +1189,13 @@ attackskills_menu:
 			input .@attack_skilllv;
 		} while(.@attack_skilllv < 1 || .@attack_skilllv > getskilllv(.@attack_skillid));
 
-		autoattackset("4;1;"+ .@attack_skillid + ";" + .@attack_skilllv);
+		clear();
+		mes .@menu$;
+		mes "??????????????????????????????";
+		mes "??? 0 = ??????????";
+		input .@attack_swarm_min,0,50;
+
+		autoattackset("4;1;"+ .@attack_skillid + ";" + .@attack_skilllv + ";" + .@attack_swarm_min);
 		goto(attackskills_menu);
 	}
 	if(.@attackskills_menu == 3) {

@@ -28259,6 +28259,10 @@ BUILDIN_FUNC(autoattackstrinfo)
 						if(skill){
 							safesnprintf(buffer, sizeof(buffer), msg_txt(NULL,1621),itAutoattackskills.skill_id,skill->desc,itAutoattackskills.skill_lv);
 							buf += buffer;
+							if (itAutoattackskills.swarm_min > 0) {
+								safesnprintf(buffer, sizeof(buffer), "  ใช้เมื่อโดนรุม %d ตัวขึ้นไป\n", itAutoattackskills.swarm_min);
+								buf += buffer;
+							}
 						}
 					}
 				}
@@ -28872,10 +28876,11 @@ BUILDIN_FUNC(autoattackset)
 				break;
 
 			case GET_INFO_ATTACK_SKILL:
-				if(result.size() == 4){ // id = 4 - autoattackskills (is_active;skill_id;skill_lv)
+				if(result.size() == 4 || result.size() == 5){ // id = 4 - autoattackskills (is_active;skill_id;skill_lv;swarm_min)
 					struct s_autoattackskills autoattackskills = {};
 					int skill_id = std::stoi(result.at(2));
 					int is_active = std::stoi(result.at(1));
+					int swarm_min = result.size() == 5 ? cap_value(std::stoi(result.at(4)), 0, 50) : 0;
 
 					//check if skill exist and is support type and has status change
 					skill = skill_db.find(skill_id);
@@ -28895,10 +28900,12 @@ BUILDIN_FUNC(autoattackset)
 					if(itAutoattackskills != sd->aa.autoattackskills.end()){
 						itAutoattackskills->is_active = is_active;
 						itAutoattackskills->skill_lv = std::stoi(result.at(3));
+						itAutoattackskills->swarm_min = swarm_min;
 					} else {
 						autoattackskills.is_active = is_active;
 						autoattackskills.skill_id = skill_id;
 						autoattackskills.skill_lv = std::stoi(result.at(3));
+						autoattackskills.swarm_min = swarm_min;
 						autoattackskills.last_use = 1;
 						sd->aa.autoattackskills.push_back(autoattackskills);
 					}
@@ -29258,6 +29265,26 @@ BUILDIN_FUNC(autoattackclear)
 		case 1003:
 			sd->aa.autobuyitems.clear();
 			break;
+		case 9999:
+			sd->aa.autoheal.clear();
+			sd->aa.autopotion.clear();
+			sd->aa.autositregen = {};
+			sd->aa.autobuffskills.clear();
+			sd->aa.autoattackskills.clear();
+			sd->aa.autobuffitems.clear();
+			sd->aa.autobuyitems.clear();
+			sd->aa.pickup_item_id.clear();
+			sd->aa.storage_keep_item_id.clear();
+			sd->aa.flee_mobs.clear();
+			sd->aa.mobs.id.clear();
+			sd->aa.pickup_item_config = 0;
+			sd->aa.mobs.aggressive_behavior = 0;
+			sd->aa.stopmelee = 0;
+			sd->aa.focus_mob = false;
+			sd->aa.stay_mode = 0;
+			sd->aa.skill_use_rate = battle_config.autoattack_skill_rate_default;
+			sd->aa.skill_swarm_min = 0;
+			break;
 	}
 
 	return SCRIPT_CMD_SUCCESS;
@@ -29482,6 +29509,28 @@ static int autoattack_mapmob_sub(struct block_list* bl, va_list ap)
 	return 0;
 }
 
+static int autoattack_mapdrop_sub(struct block_list* bl, va_list ap)
+{
+	nullpo_ret(bl);
+
+	mob_data* md = (mob_data*)bl;
+	std::vector<int>* item_ids = va_arg(ap, std::vector<int>*);
+
+	if (!md || !md->db)
+		return 0;
+
+	for (int i = 0; i < MAX_MOB_DROP_TOTAL; i++) {
+		t_itemid nameid = md->db->dropitem[i].nameid;
+		if (nameid <= 0)
+			continue;
+
+		if (std::find(item_ids->begin(), item_ids->end(), nameid) == item_ids->end())
+			item_ids->push_back(nameid);
+	}
+
+	return 0;
+}
+
 static bool autoattack_item_type_can_use(std::shared_ptr<item_data> item)
 {
 	return item && (item->type == IT_HEALING || item->type == IT_USABLE || item->type == IT_CASH);
@@ -29579,6 +29628,9 @@ static std::vector<int> autoattack_menu_ids(map_session_data* sd, int type)
 				}
 			}
 			break;
+		case 6:
+			map_foreachinmap(autoattack_mapdrop_sub, sd->bl.m, BL_MOB, &ids);
+			break;
 	}
 
 	return ids;
@@ -29631,7 +29683,10 @@ BUILDIN_FUNC(autoattackmenulist)
 			if (!item)
 				continue;
 			const char* item_name = !item->name.empty() ? item->name.c_str() : (!item->ename.empty() ? item->ename.c_str() : "\xe4\xcd\xe0\xb7\xc1");
-			safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item_name, autoattack_count_item(sd, id));
+			if (type == 6)
+				safesnprintf(buffer, sizeof(buffer), "%d - %s:", id, item_name);
+			else
+				safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item_name, autoattack_count_item(sd, id));
 		}
 
 		menu += buffer;

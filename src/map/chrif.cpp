@@ -478,7 +478,7 @@ void chrif_aa_save(map_session_data* sd){
 	//insert aa_skills - 2 - autoattackskills
 	if(sd->aa.autoattackskills.size()){
 		for(auto &itAutoattackskills : sd->aa.autoattackskills){
-			if( SQL_ERROR == Sql_Query( mmysql_handle, "INSERT INTO `aa_skills` (`char_id`,`type`,`skill_id`,`skill_lv`) VALUES (%d, 2, %d, %d)", sd->status.char_id, itAutoattackskills.skill_id, itAutoattackskills.skill_lv ) ){
+			if( SQL_ERROR == Sql_Query( mmysql_handle, "INSERT INTO `aa_skills` (`char_id`,`type`,`skill_id`,`skill_lv`,`min_hp`) VALUES (%d, 2, %d, %d, %d)", sd->status.char_id, itAutoattackskills.skill_id, itAutoattackskills.skill_lv, itAutoattackskills.swarm_min ) ){
 				Sql_ShowDebug(mmysql_handle);
 			}
 		}

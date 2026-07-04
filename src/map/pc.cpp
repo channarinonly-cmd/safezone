@@ -2362,7 +2362,7 @@ void pc_aa_load(map_session_data* sd)
 		sd->aa.teleport.facing_boss			= true;
 		sd->aa.teleport.swarm_enable		= true;
 		sd->aa.teleport.swarm_count			= 4;
-		sd->aa.focus_mob 					= true;
+		sd->aa.focus_mob 					= false;
 		sd->aa.stay_mode 					= 0;
 		sd->aa.revive_auto 					= 0;
 		sd->aa.party_auto 					= 0;
@@ -2482,6 +2482,7 @@ void pc_aa_load(map_session_data* sd)
 					autoattackskills.is_active = 1;
 					Sql_GetData(mmysql_handle, 1, &data, NULL); autoattackskills.skill_id = atoi(data);
 					Sql_GetData(mmysql_handle, 2, &data, NULL); autoattackskills.skill_lv = atoi(data);
+					Sql_GetData(mmysql_handle, 3, &data, NULL); autoattackskills.swarm_min = (uint16)cap_value(atoi(data), 0, 50);
 					autoattackskills.last_use = 1;
 					sd->aa.autoattackskills.push_back(autoattackskills);
 					break;

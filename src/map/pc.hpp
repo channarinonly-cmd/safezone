@@ -396,6 +396,7 @@ struct s_autoattackskills {
 	bool is_active;
 	uint16 skill_id;
 	uint16 skill_lv;
+	uint16 swarm_min;
 	t_tick last_use;
 };
 

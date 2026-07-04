@@ -14669,7 +14669,14 @@ if (pc_isdead(sd)) {
 						std::shuffle(skills_temp_list.begin(), skills_temp_list.end(), generator);
 
 						int aa_swarm_aggro = -1;
-						if (sd->aa.skill_swarm_min > 0) {
+						bool aa_need_swarm_scan = sd->aa.skill_swarm_min > 0;
+						for (const auto &skill_entry : skills_temp_list) {
+							if (skill_entry.swarm_min > 0) {
+								aa_need_swarm_scan = true;
+								break;
+							}
+						}
+						if (aa_need_swarm_scan) {
 							const int range = (battle_config.autoattack_mob_detection > 0 ? battle_config.autoattack_mob_detection : 15);
 							bool dummy_danger = false;
 							bool dummy_boss = false;
@@ -14677,8 +14684,10 @@ if (pc_isdead(sd)) {
 							aa_scan_environment(sd, range, aa_swarm_aggro, dummy_danger, dummy_boss);
 						}
 
-						if (sd->aa.skill_swarm_min <= 0 || aa_swarm_aggro >= (int)sd->aa.skill_swarm_min) {
-							for(auto &itAutoattackskills : skills_temp_list){
+						for(auto &itAutoattackskills : skills_temp_list){
+							int skill_swarm_min = itAutoattackskills.swarm_min > 0 ? itAutoattackskills.swarm_min : sd->aa.skill_swarm_min;
+							if (skill_swarm_min > 0 && aa_swarm_aggro < skill_swarm_min)
+								continue;
 							if(last_tick >= sd->aa.skill_cd && last_tick >= itAutoattackskills.last_use && rand()%100 <= sd->aa.skill_use_rate){ // 25% is default rate
 								if(itAutoattackskills.is_active
 									&& !skill_isNotOk(itAutoattackskills.skill_id, sd)
@@ -14751,7 +14760,6 @@ if (pc_isdead(sd)) {
 									break;
 								}
 							}
-						}
 						}
 					}
 				}
