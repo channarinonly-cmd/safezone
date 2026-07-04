@@ -28844,7 +28844,7 @@ BUILDIN_FUNC(autoattackset)
 					//check if skill exist and is support type and has status change
 					skill = skill_db.find(skill_id);
 					e_cast_type type = skill_get_casttype(skill_id);
-					if (!skill || ~skill->ai_skill_type&SKILL_TYPE_SUPPORT)
+					if (!skill || ((~skill->ai_skill_type&SKILL_TYPE_SUPPORT) && pc_checkskill(sd, skill_id) <= 0))
 						return SCRIPT_CMD_FAILURE;
 
 					if(!is_active){
@@ -28878,7 +28878,7 @@ BUILDIN_FUNC(autoattackset)
 					//check if skill exist and is support type and has status change
 					skill = skill_db.find(skill_id);
 					e_cast_type type = skill_get_casttype(skill_id);
-					if (!skill || ~skill->ai_skill_type&SKILL_TYPE_ATTACK)
+					if (!skill || ((~skill->ai_skill_type&SKILL_TYPE_ATTACK) && pc_checkskill(sd, skill_id) <= 0))
 						return SCRIPT_CMD_FAILURE;
 
 					if(!is_active){
@@ -29502,6 +29502,16 @@ static std::vector<int> autoattack_menu_ids(map_session_data* sd, int type)
 				if ((type == 1 && (skill->ai_skill_type&SKILL_TYPE_ATTACK)) || (type == 2 && (skill->ai_skill_type&SKILL_TYPE_SUPPORT)))
 					ids.push_back(skill->nameid);
 			}
+			if (ids.empty()) {
+				for (int i = 0; i < MAX_SKILL; i++) {
+					if (sd->status.skill[i].id <= 0 || sd->status.skill[i].lv <= 0)
+						continue;
+
+					std::shared_ptr<s_skill_db> skill = skill_db.find(sd->status.skill[i].id);
+					if (skill)
+						ids.push_back(skill->nameid);
+				}
+			}
 			break;
 		case 3:
 		case 4:
@@ -29531,6 +29541,16 @@ static std::vector<int> autoattack_menu_ids(map_session_data* sd, int type)
 				}
 
 				ids.push_back(nameid);
+			}
+			if (ids.empty()) {
+				for (int i = 0; i < MAX_INVENTORY; i++) {
+					t_itemid nameid = sd->inventory.u.items_inventory[i].nameid;
+					if (nameid <= 0 || std::find(ids.begin(), ids.end(), nameid) != ids.end())
+						continue;
+
+					if (item_db.find(nameid))
+						ids.push_back(nameid);
+				}
 			}
 			break;
 	}
@@ -29578,12 +29598,14 @@ BUILDIN_FUNC(autoattackmenulist)
 			if (!skill)
 				continue;
 			int lv = pc_checkskill(sd, id);
-			safesnprintf(buffer, sizeof(buffer), "%d - %s Lv.%d:", id, skill->desc, lv);
+			const char* skill_name = skill->desc[0] ? skill->desc : "Skill";
+			safesnprintf(buffer, sizeof(buffer), "%d - %s Lv.%d:", id, skill_name, lv);
 		} else {
 			std::shared_ptr<item_data> item = item_db.find(id);
 			if (!item)
 				continue;
-			safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item->name.c_str(), autoattack_count_item(sd, id));
+			const char* item_name = !item->name.empty() ? item->name.c_str() : (!item->ename.empty() ? item->ename.c_str() : "Item");
+			safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item_name, autoattack_count_item(sd, id));
 		}
 
 		menu += buffer;
@@ -29693,6 +29715,15 @@ BUILDIN_FUNC(skillinfocheck)
 						}
 					}
 				}
+				if (skill_lists.empty()) {
+					for(int i=0;i<MAX_SKILL;i++){
+						if(sd->status.skill[i].id > 0 && sd->status.skill[i].lv > 0){
+							skill = skill_db.find(sd->status.skill[i].id);
+							if (skill)
+								skill_lists.push_back(skill->nameid);
+						}
+					}
+				}
 			break;
 
 		case SKILL_INFO_SUPPORT:
@@ -29700,6 +29731,15 @@ BUILDIN_FUNC(skillinfocheck)
 					if(sd->status.skill[i].id > 0 && sd->status.skill[i].lv > 0){
 						skill = skill_db.find(sd->status.skill[i].id);
 						if (skill && skill->ai_skill_type&SKILL_TYPE_SUPPORT){
+								skill_lists.push_back(skill->nameid);
+						}
+					}
+				}
+				if (skill_lists.empty()) {
+					for(int i=0;i<MAX_SKILL;i++){
+						if(sd->status.skill[i].id > 0 && sd->status.skill[i].lv > 0){
+							skill = skill_db.find(sd->status.skill[i].id);
+							if (skill)
 								skill_lists.push_back(skill->nameid);
 						}
 					}
