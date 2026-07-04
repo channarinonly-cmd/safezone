@@ -28494,7 +28494,7 @@ BUILDIN_FUNC(autoattackstrinfo)
 					buf += buffer;
 				}
 			} else
-				buf += "- empty -";
+				buf += "- ยังไม่มีรายการ -";
 
 			script_pushstrcopy(st, buf.c_str());
 			break;
@@ -28505,11 +28505,11 @@ BUILDIN_FUNC(autoattackstrinfo)
 					if( ( item_data = item_db.find(entry.item_id) ) == NULL )
 						continue;
 
-					safesnprintf(buffer, sizeof(buffer), "[%d] %s min %d -> buy to %d\n", item_data->nameid, item_data->name.c_str(), entry.min_amount, entry.target_amount);
+					safesnprintf(buffer, sizeof(buffer), "[%d] %s เหลือน้อยกว่า %d ซื้อให้ถึง %d\n", item_data->nameid, item_data->name.c_str(), entry.min_amount, entry.target_amount);
 					buf += buffer;
 				}
 			} else
-				buf += "- empty -";
+				buf += "- ยังไม่มีรายการ -";
 
 			script_pushstrcopy(st, buf.c_str());
 			break;
@@ -28703,6 +28703,8 @@ case GET_INFO_FLEE_MOB:
 
 	return SCRIPT_CMD_SUCCESS;
 }
+
+static bool autoattack_item_type_can_use(std::shared_ptr<item_data> item);
 
 /*
  * id = 1 // autopotion (is_active;item_id;min_hp;min_sp)
@@ -28913,15 +28915,7 @@ BUILDIN_FUNC(autoattackset)
 					if( ( item_data = item_db.find(nameid) ) == NULL )
 						return SCRIPT_CMD_FAILURE;
 
-					bool check = false;
-					if(ai_item_buff.size()){
-						for(auto &itentry : ai_item_buff){
-							if(nameid == itentry.itemid)
-								check = true;
-						}
-					}
-
-					if(!check)
+					if(!autoattack_item_type_can_use(item_data))
 						return SCRIPT_CMD_FAILURE;
 
 					if(!is_active){
@@ -29478,6 +29472,27 @@ static int autoattack_mapmob_sub(struct block_list* bl, va_list ap)
 	return 0;
 }
 
+static bool autoattack_item_type_can_use(std::shared_ptr<item_data> item)
+{
+	return item && (item->type == IT_HEALING || item->type == IT_USABLE || item->type == IT_CASH);
+}
+
+static bool autoattack_item_can_show(map_session_data* sd, int index, std::shared_ptr<item_data> item)
+{
+	if (!sd || !item || index < 0 || index >= MAX_INVENTORY)
+		return false;
+
+	struct item& inv_item = sd->inventory.u.items_inventory[index];
+
+	if (inv_item.nameid <= 0 || inv_item.amount <= 0)
+		return false;
+
+	if (inv_item.equip != 0)
+		return false;
+
+	return autoattack_item_type_can_use(item);
+}
+
 static std::vector<int> autoattack_menu_ids(map_session_data* sd, int type)
 {
 	std::vector<int> ids;
@@ -29522,7 +29537,7 @@ static std::vector<int> autoattack_menu_ids(map_session_data* sd, int type)
 					continue;
 
 				std::shared_ptr<item_data> item = item_db.find(nameid);
-				if (!item)
+				if (!autoattack_item_can_show(sd, i, item))
 					continue;
 
 				if (type == 3 && item->type != IT_HEALING)
@@ -29542,13 +29557,14 @@ static std::vector<int> autoattack_menu_ids(map_session_data* sd, int type)
 
 				ids.push_back(nameid);
 			}
-			if (ids.empty()) {
+			if (ids.empty() && type != 4) {
 				for (int i = 0; i < MAX_INVENTORY; i++) {
 					t_itemid nameid = sd->inventory.u.items_inventory[i].nameid;
 					if (nameid <= 0 || std::find(ids.begin(), ids.end(), nameid) != ids.end())
 						continue;
 
-					if (item_db.find(nameid))
+					std::shared_ptr<item_data> item = item_db.find(nameid);
+					if (autoattack_item_can_show(sd, i, item) && (type != 3 || item->type == IT_HEALING))
 						ids.push_back(nameid);
 				}
 			}
@@ -29598,20 +29614,20 @@ BUILDIN_FUNC(autoattackmenulist)
 			if (!skill)
 				continue;
 			int lv = pc_checkskill(sd, id);
-			const char* skill_name = skill->desc[0] ? skill->desc : "Skill";
+			const char* skill_name = skill->desc[0] ? skill->desc : "สกิล";
 			safesnprintf(buffer, sizeof(buffer), "%d - %s Lv.%d:", id, skill_name, lv);
 		} else {
 			std::shared_ptr<item_data> item = item_db.find(id);
 			if (!item)
 				continue;
-			const char* item_name = !item->name.empty() ? item->name.c_str() : (!item->ename.empty() ? item->ename.c_str() : "Item");
+			const char* item_name = !item->name.empty() ? item->name.c_str() : (!item->ename.empty() ? item->ename.c_str() : "ไอเทม");
 			safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item_name, autoattack_count_item(sd, id));
 		}
 
 		menu += buffer;
 	}
 
-	menu += "Manual ID / Back";
+	menu += "กรอกเอง / กลับ";
 	script_pushstrcopy(st, menu.c_str());
 	return SCRIPT_CMD_SUCCESS;
 }
