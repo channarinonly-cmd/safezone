@@ -72,18 +72,48 @@ function aa_name(mysqli $con, int $id): string
 function aa_skill_name(mysqli $con, int $id): string
 {
     static $cache = [];
+    static $ymlNames = null;
     if (isset($cache[$id])) {
+        return $cache[$id];
+    }
+
+    if ($ymlNames === null) {
+        $ymlNames = [];
+        $files = array_merge(
+            glob(__DIR__ . '/../../skill_db*.yml') ?: [],
+            glob(__DIR__ . '/../../db/*/skill_db*.yml') ?: [],
+            glob(__DIR__ . '/../../db/skill_db*.yml') ?: []
+        );
+        foreach ($files as $file) {
+            $currentId = 0;
+            foreach (@file($file, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+                if (preg_match('/^\s*-\s*Id:\s*(\d+)/', $line, $m)) {
+                    $currentId = (int)$m[1];
+                } elseif ($currentId > 0 && preg_match('/^\s*Description:\s*(.+?)\s*$/', $line, $m)) {
+                    $ymlNames[$currentId] = trim($m[1], " \"'");
+                    $currentId = 0;
+                }
+            }
+        }
+    }
+
+    if (!empty($ymlNames[$id])) {
+        $cache[$id] = $ymlNames[$id];
         return $cache[$id];
     }
 
     $name = '';
     foreach (['skill_db', 'skill_db_re'] as $table) {
-        $res = @$con->query("SELECT `desc` FROM `{$table}` WHERE `id`={$id} LIMIT 1");
+        $res = @$con->query("SELECT `desc`,`name` FROM `{$table}` WHERE `id`={$id} LIMIT 1");
         if ($res && $res->num_rows > 0) {
             $row = $res->fetch_assoc();
-            $name = $row['desc'];
+            $name = $row['desc'] ?: $row['name'];
             break;
         }
+    }
+
+    if ($name && strpos($name, '_') !== false) {
+        $name = str_replace('_', ' ', $name);
     }
 
     $cache[$id] = $name ?: ('Skill #' . $id);

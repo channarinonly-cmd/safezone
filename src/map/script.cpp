@@ -28091,6 +28091,17 @@ BUILDIN_FUNC(skillintinfo)
 	return SCRIPT_CMD_SUCCESS;
 }
 
+static const char* autoattack_item_display_name(std::shared_ptr<item_data> item)
+{
+	if (!item)
+		return "";
+
+	if (!item->ename.empty())
+		return item->ename.c_str();
+
+	return item->name.c_str();
+}
+
 /*
  * get info of player on autoattack
  *
@@ -28162,7 +28173,7 @@ BUILDIN_FUNC(autoattackstrinfo)
 						break;
 
 					if(item_data->type == IT_HEALING){ // check if item is type healing for potions
-						safesnprintf(buffer, sizeof(buffer), msg_txt(NULL,1614),item_data->nameid,item_data->name.c_str(),sd->inventory.u.items_inventory[i].amount);
+						safesnprintf(buffer, sizeof(buffer), msg_txt(NULL,1614),item_data->nameid,autoattack_item_display_name(item_data),sd->inventory.u.items_inventory[i].amount);
 						buf += buffer;
 					}
 				}
@@ -28172,7 +28183,7 @@ BUILDIN_FUNC(autoattackstrinfo)
 						if( ( item_data = item_db.find(itAutopotion.item_id) ) == NULL )
 							break;
 
-						safesnprintf(buffer, sizeof(buffer), msg_txt(NULL,1615),itAutopotion.item_id,item_data->name.c_str());
+						safesnprintf(buffer, sizeof(buffer), msg_txt(NULL,1615),itAutopotion.item_id,autoattack_item_display_name(item_data));
 						buf += buffer;
 						if(itAutopotion.min_hp){
 							safesnprintf(buffer2, sizeof(buffer2), msg_txt(NULL,1616),itAutopotion.min_hp);
@@ -28445,7 +28456,7 @@ BUILDIN_FUNC(autoattackstrinfo)
 					if( ( item_data = item_db.find(sd->aa.pickup_item_id.at(i)) ) == NULL )
 						break;
 
-					safesnprintf(buffer, sizeof(buffer), msg_txt(NULL,1627),item_data->nameid,item_data->name.c_str());
+					safesnprintf(buffer, sizeof(buffer), msg_txt(NULL,1627),item_data->nameid,autoattack_item_display_name(item_data));
 					buf += buffer;
 				}
 			} else
@@ -28494,7 +28505,7 @@ BUILDIN_FUNC(autoattackstrinfo)
 					if( ( item_data = item_db.find(entry) ) == NULL )
 						continue;
 
-					safesnprintf(buffer, sizeof(buffer), "[%d] %s\n", item_data->nameid, item_data->name.c_str());
+					safesnprintf(buffer, sizeof(buffer), "[%d] %s\n", item_data->nameid, autoattack_item_display_name(item_data));
 					buf += buffer;
 				}
 			} else
@@ -28509,7 +28520,7 @@ BUILDIN_FUNC(autoattackstrinfo)
 					if( ( item_data = item_db.find(entry.item_id) ) == NULL )
 						continue;
 
-					safesnprintf(buffer, sizeof(buffer), "[%d] %s \xe0\xcb\xc5\xd7\xcd\xb9\xe9\xcd\xc2\xa1\xc7\xe8\xd2 %d \xab\xd7\xe9\xcd\xe3\xcb\xe9\xb6\xd6\xa7 %d\n", item_data->nameid, item_data->name.c_str(), entry.min_amount, entry.target_amount);
+					safesnprintf(buffer, sizeof(buffer), "[%d] %s \xe0\xcb\xc5\xd7\xcd\xb9\xe9\xcd\xc2\xa1\xc7\xe8\xd2 %d \xab\xd7\xe9\xcd\xe3\xcb\xe9\xb6\xd6\xa7 %d\n", item_data->nameid, autoattack_item_display_name(item_data), entry.min_amount, entry.target_amount);
 					buf += buffer;
 				}
 			} else
@@ -29682,7 +29693,7 @@ BUILDIN_FUNC(autoattackmenulist)
 			std::shared_ptr<item_data> item = item_db.find(id);
 			if (!item)
 				continue;
-			const char* item_name = !item->name.empty() ? item->name.c_str() : (!item->ename.empty() ? item->ename.c_str() : "\xe4\xcd\xe0\xb7\xc1");
+			const char* item_name = autoattack_item_display_name(item);
 			if (type == 6)
 				safesnprintf(buffer, sizeof(buffer), "%d - %s:", id, item_name);
 			else
@@ -29765,6 +29776,28 @@ BUILDIN_FUNC(autoattackbuy)
 	}
 
 	script_pushint(st, bought);
+	return SCRIPT_CMD_SUCCESS;
+}
+
+BUILDIN_FUNC(autoattackneedbuy)
+{
+	TBL_PC* sd;
+
+	if (!script_rid2sd(sd))
+		return SCRIPT_CMD_FAILURE;
+
+	for (auto &entry : sd->aa.autobuyitems) {
+		if (!entry.is_active || entry.item_id <= 0 || entry.target_amount <= 0)
+			continue;
+
+		int current = autoattack_count_item(sd, entry.item_id);
+		if (current < entry.min_amount) {
+			script_pushint(st, 1);
+			return SCRIPT_CMD_SUCCESS;
+		}
+	}
+
+	script_pushint(st, 0);
 	return SCRIPT_CMD_SUCCESS;
 }
 
@@ -30881,6 +30914,7 @@ struct script_function buildin_func[] = {
 	BUILDIN_DEF(autostart,"i?"),
 	BUILDIN_DEF(autoattackstore,""),
 	BUILDIN_DEF(autoattackbuy,""),
+	BUILDIN_DEF(autoattackneedbuy,""),
 	BUILDIN_DEF(autoattackmenulist,"i"),
 	BUILDIN_DEF(autoattackmenuid,"ii"),
 	BUILDIN_DEF(skillinfocheck,"ii"),

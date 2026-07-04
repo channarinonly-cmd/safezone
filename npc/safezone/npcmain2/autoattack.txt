@@ -53,7 +53,9 @@ OnStatusEndEvent:
 OnWeightCheck:
 	if(!sc_check(SC_AUTOATTACK)) end;
 
-	if (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90) {
+	.@overweight = (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90);
+	.@needbuy = autoattackneedbuy();
+	if (.@overweight || .@needbuy) {
 		getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
 		@AI_return_timer = @ai_timer;
 		autostart(false);
@@ -62,7 +64,10 @@ OnWeightCheck:
 		}
 		deltimer strnpcinfo(3)+"::OnWeightCheck";
 		warp "SavePoint", 0, 0;
-		dispbottom "น้ำหนักเกิน 90% กลับจุดเซฟเพื่อเก็บของ";
+		if (.@overweight)
+			dispbottom "น้ำหนักเกิน 90% กลับจุดเซฟเพื่อเก็บของ";
+		else
+			dispbottom "[AI] ของที่ตั้งซื้อไว้ใกล้หมด กลับจุดเซฟเพื่อซื้อของ";
 		addtimer 2500, strnpcinfo(3)+"::OnAutoStore";
 		end;
 	}
@@ -74,8 +79,8 @@ OnAutoStore:
 
 	.@stored = autoattackstore();
 	.@bought = autoattackbuy();
-	if (.@stored <= 0) {
-		dispbottom "เก็บของไม่สำเร็จ ระบบหยุดทำงาน";
+	if (.@stored <= 0 && .@bought <= 0) {
+		dispbottom "[AI] ไม่มีของให้ฝากและซื้อของไม่ได้ ระบบหยุดทำงาน";
 		set @AI_return_map$, "";
 		set @AI_return_x, 0;
 		set @AI_return_y, 0;
