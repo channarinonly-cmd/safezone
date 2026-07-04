@@ -28494,7 +28494,7 @@ BUILDIN_FUNC(autoattackstrinfo)
 					buf += buffer;
 				}
 			} else
-				buf += "- ยังไม่มีรายการ -";
+				buf += "\x2d\x20\xc2\xd1\xa7\xe4\xc1\xe8\xc1\xd5\xc3\xd2\xc2\xa1\xd2\xc3\x20\x2d";
 
 			script_pushstrcopy(st, buf.c_str());
 			break;
@@ -28505,11 +28505,11 @@ BUILDIN_FUNC(autoattackstrinfo)
 					if( ( item_data = item_db.find(entry.item_id) ) == NULL )
 						continue;
 
-					safesnprintf(buffer, sizeof(buffer), "[%d] %s เหลือน้อยกว่า %d ซื้อให้ถึง %d\n", item_data->nameid, item_data->name.c_str(), entry.min_amount, entry.target_amount);
+					safesnprintf(buffer, sizeof(buffer), "[%d] %s \xe0\xcb\xc5\xd7\xcd\xb9\xe9\xcd\xc2\xa1\xc7\xe8\xd2 %d \xab\xd7\xe9\xcd\xe3\xcb\xe9\xb6\xd6\xa7 %d\n", item_data->nameid, item_data->name.c_str(), entry.min_amount, entry.target_amount);
 					buf += buffer;
 				}
 			} else
-				buf += "- ยังไม่มีรายการ -";
+				buf += "\x2d\x20\xc2\xd1\xa7\xe4\xc1\xe8\xc1\xd5\xc3\xd2\xc2\xa1\xd2\xc3\x20\x2d";
 
 			script_pushstrcopy(st, buf.c_str());
 			break;
@@ -29614,20 +29614,20 @@ BUILDIN_FUNC(autoattackmenulist)
 			if (!skill)
 				continue;
 			int lv = pc_checkskill(sd, id);
-			const char* skill_name = skill->desc[0] ? skill->desc : "สกิล";
+			const char* skill_name = skill->desc[0] ? skill->desc : "\xca\xa1\xd4\xc5";
 			safesnprintf(buffer, sizeof(buffer), "%d - %s Lv.%d:", id, skill_name, lv);
 		} else {
 			std::shared_ptr<item_data> item = item_db.find(id);
 			if (!item)
 				continue;
-			const char* item_name = !item->name.empty() ? item->name.c_str() : (!item->ename.empty() ? item->ename.c_str() : "ไอเทม");
+			const char* item_name = !item->name.empty() ? item->name.c_str() : (!item->ename.empty() ? item->ename.c_str() : "\xe4\xcd\xe0\xb7\xc1");
 			safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item_name, autoattack_count_item(sd, id));
 		}
 
 		menu += buffer;
 	}
 
-	menu += "กรอกเอง / กลับ";
+	menu += "\xa1\xc3\xcd\xa1\xe0\xcd\xa7\x20\x2f\x20\xa1\xc5\xd1\xba";
 	script_pushstrcopy(st, menu.c_str());
 	return SCRIPT_CMD_SUCCESS;
 }
