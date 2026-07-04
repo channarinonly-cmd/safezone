@@ -23,32 +23,49 @@ function aa_ints($value): array
     return array_values($out);
 }
 
-function aa_name(mysqli $con, int $id): string
+function aa_simple_yml_map(string $kind): array
 {
     static $cache = [];
-    static $ymlNames = null;
-    if (isset($cache[$id])) {
-        return $cache[$id];
+    if (isset($cache[$kind])) {
+        return $cache[$kind];
     }
 
-    if ($ymlNames === null) {
-        $ymlNames = [];
-        foreach (glob(__DIR__ . '/../../item_db*.yml') ?: [] as $file) {
+    $patterns = $kind === 'skill'
+        ? [__DIR__ . '/../../skill_db*.yml', __DIR__ . '/../../db/*/skill_db*.yml', __DIR__ . '/../../db/skill_db*.yml']
+        : [__DIR__ . '/../../item_db*.yml', __DIR__ . '/../../db/*/item_db*.yml', __DIR__ . '/../../db/item_db*.yml'];
+
+    $names = [];
+    foreach ($patterns as $pattern) {
+        foreach (glob($pattern) ?: [] as $file) {
             $currentId = 0;
             foreach (@file($file, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
                 if (preg_match('/^\s*-\s*Id:\s*(\d+)/', $line, $m)) {
                     $currentId = (int)$m[1];
-                } elseif ($currentId > 0 && preg_match('/^\s*Name:\s*(.+?)\s*$/', $line, $m)) {
-                    $ymlNames[$currentId] = trim($m[1], " \"'");
+                } elseif ($currentId > 0 && $kind === 'skill' && preg_match('/^\s*Description:\s*(.+?)\s*$/', $line, $m)) {
+                    $names[$currentId] = trim($m[1], " \"'");
+                    $currentId = 0;
+                } elseif ($currentId > 0 && $kind === 'item' && preg_match('/^\s*Name:\s*(.+?)\s*$/', $line, $m)) {
+                    $names[$currentId] = trim($m[1], " \"'");
                     $currentId = 0;
                 }
             }
         }
     }
 
-    if (!empty($ymlNames[$id])) {
-        $cache[$id] = $ymlNames[$id];
+    $cache[$kind] = $names;
+    return $names;
+}
+
+function aa_item_name(mysqli $con, int $id): string
+{
+    static $cache = [];
+    if (isset($cache[$id])) {
         return $cache[$id];
+    }
+
+    $names = aa_simple_yml_map('item');
+    if (!empty($names[$id])) {
+        return $cache[$id] = $names[$id];
     }
 
     $name = '';
@@ -65,41 +82,19 @@ function aa_name(mysqli $con, int $id): string
         $name = str_replace('_', ' ', $name);
     }
 
-    $cache[$id] = $name ?: ('Item #' . $id);
-    return $cache[$id];
+    return $cache[$id] = ($name ?: 'Item #' . $id);
 }
 
 function aa_skill_name(mysqli $con, int $id): string
 {
     static $cache = [];
-    static $ymlNames = null;
     if (isset($cache[$id])) {
         return $cache[$id];
     }
 
-    if ($ymlNames === null) {
-        $ymlNames = [];
-        $files = array_merge(
-            glob(__DIR__ . '/../../skill_db*.yml') ?: [],
-            glob(__DIR__ . '/../../db/*/skill_db*.yml') ?: [],
-            glob(__DIR__ . '/../../db/skill_db*.yml') ?: []
-        );
-        foreach ($files as $file) {
-            $currentId = 0;
-            foreach (@file($file, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
-                if (preg_match('/^\s*-\s*Id:\s*(\d+)/', $line, $m)) {
-                    $currentId = (int)$m[1];
-                } elseif ($currentId > 0 && preg_match('/^\s*Description:\s*(.+?)\s*$/', $line, $m)) {
-                    $ymlNames[$currentId] = trim($m[1], " \"'");
-                    $currentId = 0;
-                }
-            }
-        }
-    }
-
-    if (!empty($ymlNames[$id])) {
-        $cache[$id] = $ymlNames[$id];
-        return $cache[$id];
+    $names = aa_simple_yml_map('skill');
+    if (!empty($names[$id])) {
+        return $cache[$id] = $names[$id];
     }
 
     $name = '';
@@ -116,22 +111,61 @@ function aa_skill_name(mysqli $con, int $id): string
         $name = str_replace('_', ' ', $name);
     }
 
-    $cache[$id] = $name ?: ('Skill #' . $id);
-    return $cache[$id];
+    return $cache[$id] = ($name ?: 'Skill #' . $id);
 }
 
-function aa_buy_rows($text): array
+function aa_buff_item_ids(): array
+{
+    static $ids = null;
+    if ($ids !== null) {
+        return $ids;
+    }
+
+    $ids = [];
+    foreach ([__DIR__ . '/../../ai_item_buff.txt', __DIR__ . '/../../db/custom/ai_item_buff.txt'] as $file) {
+        foreach (@file($file, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+            $line = trim($line);
+            if ($line === '' || strpos($line, '//') === 0) {
+                continue;
+            }
+            $parts = explode(',', $line);
+            $itemId = (int)($parts[0] ?? 0);
+            if ($itemId > 0) {
+                $ids[$itemId] = true;
+            }
+        }
+    }
+
+    return $ids;
+}
+
+function aa_usable_item_ids(): array
+{
+    static $ids = null;
+    if ($ids !== null) {
+        return $ids;
+    }
+
+    $ids = [];
+    foreach ([__DIR__ . '/../../item_db_usable.yml', __DIR__ . '/../../db/re/item_db_usable.yml'] as $file) {
+        foreach (@file($file, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+            if (preg_match('/^\s*-\s*Id:\s*(\d+)/', $line, $m)) {
+                $ids[(int)$m[1]] = true;
+            }
+        }
+    }
+
+    return $ids;
+}
+
+function aa_pick_buy_rows(array $enabled, array $mins, array $targets): array
 {
     $rows = [];
-    foreach (preg_split('/\r\n|\r|\n/', (string)$text) as $line) {
-        preg_match_all('/\d+/', $line, $matches);
-        $parts = array_map('intval', $matches[0]);
-        if (count($parts) >= 3 && $parts[0] > 0 && $parts[2] > $parts[1]) {
-            $rows[$parts[0]] = [
-                'item_id' => $parts[0],
-                'min_amount' => $parts[1],
-                'target_amount' => $parts[2],
-            ];
+    foreach (aa_ints($enabled) as $id) {
+        $min = max(0, min(99999, (int)($mins[$id] ?? 0)));
+        $target = max(0, min(99999, (int)($targets[$id] ?? 0)));
+        if ($target > $min) {
+            $rows[$id] = ['item_id' => $id, 'min_amount' => $min, 'target_amount' => $target];
         }
     }
     return array_values($rows);
@@ -188,7 +222,11 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $ok = $ok && $con->query("DELETE FROM `aa_items` WHERE `char_id`={$selected_char_id} AND `type` IN (0,2,3,4)");
         $ok = $ok && $con->query("DELETE FROM `aa_skills` WHERE `char_id`={$selected_char_id} AND `type`=2");
 
+        $buffAllowed = aa_buff_item_ids();
         foreach (aa_ints($_POST['buff_items'] ?? []) as $id) {
+            if (!isset($buffAllowed[$id])) {
+                continue;
+            }
             $ok = $ok && $con->query("INSERT INTO `aa_items` (`char_id`,`type`,`item_id`) VALUES ({$selected_char_id},0,{$id})");
         }
         foreach (aa_ints($_POST['pickup_items'] ?? []) as $id) {
@@ -197,7 +235,7 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach (aa_ints($_POST['keep_items'] ?? []) as $id) {
             $ok = $ok && $con->query("INSERT INTO `aa_items` (`char_id`,`type`,`item_id`) VALUES ({$selected_char_id},3,{$id})");
         }
-        foreach (aa_buy_rows($_POST['buy_items'] ?? '') as $row) {
+        foreach (aa_pick_buy_rows($_POST['buy_items'] ?? [], $_POST['buy_min'] ?? [], $_POST['buy_target'] ?? []) as $row) {
             $ok = $ok && $con->query("INSERT INTO `aa_items` (`char_id`,`type`,`item_id`,`min_hp`,`min_sp`) VALUES ({$selected_char_id},4,{$row['item_id']},{$row['min_amount']},{$row['target_amount']})");
         }
 
@@ -209,7 +247,7 @@ if (!$error && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($ok) {
             $con->query("COMMIT");
-            $message = 'บันทึกแล้ว ถ้าตัวละครออนไลน์อยู่ให้ออกเข้าเกมใหม่ หรือปิดเปิด AI ใหม่เพื่อโหลดค่า';
+            $message = 'บันทึกแล้ว ถ้าตัวละครออนไลน์อยู่ให้ปิดเปิด AI ใหม่เพื่อโหลดค่า';
         } else {
             $con->query("ROLLBACK");
             $error = 'บันทึกไม่สำเร็จ: ' . htmlspecialchars($con->error);
@@ -234,7 +272,7 @@ while ($res && ($row = $res->fetch_object())) {
     if ((int)$row->type === 0) $selected['buff'][(int)$row->item_id] = true;
     if ((int)$row->type === 2) $selected['pickup'][(int)$row->item_id] = true;
     if ((int)$row->type === 3) $selected['keep'][(int)$row->item_id] = true;
-    if ((int)$row->type === 4) $selected['buy'][] = "{$row->item_id},{$row->min_hp},{$row->min_sp}";
+    if ((int)$row->type === 4) $selected['buy'][(int)$row->item_id] = ['min' => (int)$row->min_hp, 'target' => (int)$row->min_sp];
 }
 $res = $con->query("SELECT `skill_id`,`skill_lv`,`min_hp` FROM `aa_skills` WHERE `char_id`={$selected_char_id} AND `type`=2");
 while ($res && ($row = $res->fetch_object())) {
@@ -242,17 +280,51 @@ while ($res && ($row = $res->fetch_object())) {
 }
 
 $inventory = [];
-$res = $con->query("SELECT `nameid`,SUM(`amount`) AS amount FROM `inventory` WHERE `char_id`={$selected_char_id} AND `nameid` > 0 GROUP BY `nameid` ORDER BY `nameid` LIMIT 120");
+$buffIds = aa_buff_item_ids();
+$usableIds = aa_usable_item_ids();
+$res = $con->query("SELECT `nameid`,SUM(`amount`) AS amount FROM `inventory` WHERE `char_id`={$selected_char_id} AND `nameid` > 0 GROUP BY `nameid` ORDER BY `nameid` LIMIT 300");
 while ($res && ($row = $res->fetch_object())) {
-    $inventory[] = ['id' => (int)$row->nameid, 'amount' => (int)$row->amount, 'name' => aa_name($con, (int)$row->nameid)];
+    $id = (int)$row->nameid;
+    $inventory[$id] = ['id' => $id, 'amount' => (int)$row->amount, 'name' => aa_item_name($con, $id)];
+}
+
+$buffItems = [];
+$usableItems = [];
+foreach ($inventory as $item) {
+    if (isset($buffIds[$item['id']])) {
+        $buffItems[] = $item;
+    }
+    if (isset($usableIds[$item['id']])) {
+        $usableItems[] = $item;
+    }
+}
+$buyItems = $usableItems;
+foreach ($selected['buy'] as $id => $row) {
+    if (!isset($inventory[$id])) {
+        $buyItems[] = ['id' => $id, 'amount' => 0, 'name' => aa_item_name($con, $id)];
+    }
 }
 
 $skills = [];
-$res = $con->query("SELECT `id`,`lv` FROM `skill` WHERE `char_id`={$selected_char_id} AND `id` > 0 AND `lv` > 0 ORDER BY `id` LIMIT 120");
+$res = $con->query("SELECT `id`,`lv` FROM `skill` WHERE `char_id`={$selected_char_id} AND `id` > 0 AND `lv` > 0 ORDER BY `id` LIMIT 160");
 while ($res && ($row = $res->fetch_object())) {
     $skills[] = ['id' => (int)$row->id, 'lv' => (int)$row->lv, 'name' => aa_skill_name($con, (int)$row->id)];
 }
 ?>
+<style>
+.ai-panel{background:#fff;border:1px solid #e3e7ee;border-radius:8px;padding:16px;margin-bottom:14px}
+.ai-title{font-weight:700;margin:0 0 10px;color:#1f2937}
+.ai-muted{color:#6b7280;font-size:13px}
+.ai-item-row{display:grid;grid-template-columns:1fr;gap:8px;border-top:1px solid #eef1f5;padding:10px 0}
+.ai-item-row:first-child{border-top:0}
+.ai-name{font-weight:700;color:#111827}
+.ai-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.ai-actions label{margin:0}
+.ai-small-input{width:92px;display:inline-block}
+.ai-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.ai-search{max-width:360px}
+@media (min-width: 768px){.ai-item-row{grid-template-columns:minmax(220px,1fr) 2fr}.ai-actions{justify-content:flex-end}}
+</style>
 <section class="fxt-template-animation fxt-template-layout22" data-bg-image="<?= $app_url ?>/assets/img/figure/bg.jpg">
     <div class="star-animation"><div id="stars4"></div><div id="stars5"></div></div>
     <div class="container">
@@ -261,7 +333,7 @@ while ($res && ($row = $res->fetch_object())) {
                 <div class="fxt-content">
                     <div class="fxt-form">
                         <h2>ตั้งค่า AI ฟาร์ม</h2>
-                        <p>เลือกจากรายการได้เลย ไม่ต้องจำเลขไอเทมหรือเลขสกิล</p>
+                        <p class="ai-muted">เลือกจากรายการได้เลย ไม่ต้องจำเลขไอเทมหรือเลขสกิล</p>
                         <?php require_once '../template/menu.php' ?>
 
                         <div class="shadow p-3 mb-3 bg-body rounded">
@@ -269,7 +341,7 @@ while ($res && ($row = $res->fetch_object())) {
                             <?php if ($error) : ?><div class="alert alert-warning"><?= $error ?></div><?php endif; ?>
 
                             <?php if (!empty($char_list)) : ?>
-                                <form method="get" class="mb-3">
+                                <form method="get" class="ai-panel">
                                     <label class="form-label fw-bold">ตัวละคร</label>
                                     <div class="input-group">
                                         <select name="char_id" class="form-select">
@@ -283,64 +355,103 @@ while ($res && ($row = $res->fetch_object())) {
                             <?php endif; ?>
 
                             <?php if ($owns_char) : ?>
-                                <form method="post">
+                                <form method="post" id="aiForm">
                                     <input type="hidden" name="char_id" value="<?= (int)$selected_char_id ?>">
 
-                                    <div class="row">
-                                        <div class="col-lg-4 mb-3">
-                                            <label class="form-label fw-bold">โหมดเก็บของ</label>
-                                            <select name="pickup_mode" class="form-select">
-                                                <option value="0" <?= (int)$common->pickup_item_config === 0 ? 'selected' : '' ?>>เก็บทุกอย่าง</option>
-                                                <option value="1" <?= (int)$common->pickup_item_config === 1 ? 'selected' : '' ?>>เก็บเฉพาะที่เลือก</option>
-                                                <option value="2" <?= (int)$common->pickup_item_config === 2 ? 'selected' : '' ?>>ไม่เก็บของ</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-lg-4 mb-3">
-                                            <label class="form-label fw-bold">โอกาสใช้สกิลโจมตี %</label>
-                                            <input name="skill_rate" class="form-control" type="number" min="0" max="100" value="<?= (int)$common->skill_rate ?>">
-                                        </div>
-                                        <div class="col-lg-4 mb-3">
-                                            <label class="form-label fw-bold">โดนมอนรุมกี่ตัวให้วิง</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><input type="checkbox" name="swarm_wing_enabled" <?= (int)$common->tp_swarm_enable ? 'checked' : '' ?>></span>
-                                                <input name="swarm_wing_count" class="form-control" type="number" min="0" max="50" value="<?= (int)$common->tp_swarm_count ?>">
+                                    <div class="ai-panel">
+                                        <h5 class="ai-title">ตั้งค่าหลัก</h5>
+                                        <div class="row">
+                                            <div class="col-lg-4 mb-3">
+                                                <label class="form-label fw-bold">โหมดเก็บของ</label>
+                                                <select name="pickup_mode" class="form-select">
+                                                    <option value="0" <?= (int)$common->pickup_item_config === 0 ? 'selected' : '' ?>>เก็บทุกอย่าง</option>
+                                                    <option value="1" <?= (int)$common->pickup_item_config === 1 ? 'selected' : '' ?>>เก็บเฉพาะที่เลือก</option>
+                                                    <option value="2" <?= (int)$common->pickup_item_config === 2 ? 'selected' : '' ?>>ไม่เก็บของ</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-4 mb-3">
+                                                <label class="form-label fw-bold">โอกาสใช้สกิลโจมตี (%)</label>
+                                                <input name="skill_rate" class="form-control" type="number" min="0" max="100" value="<?= (int)$common->skill_rate ?>">
+                                            </div>
+                                            <div class="col-lg-4 mb-3">
+                                                <label class="form-label fw-bold">โดนมอนรุมกี่ตัวให้วิง</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><input type="checkbox" name="swarm_wing_enabled" <?= (int)$common->tp_swarm_enable ? 'checked' : '' ?>></span>
+                                                    <input name="swarm_wing_count" class="form-control" type="number" min="0" max="50" value="<?= (int)$common->tp_swarm_count ?>">
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <h5 class="mt-3">ของในตัว</h5>
-                                    <p class="text-muted">รายการนี้อ่านจากตัวละครล่าสุด ถ้าออนไลน์อยู่แล้วไม่เห็นของใหม่ ให้ relog หรือกดโหลดใหม่หลังเซฟตัวละคร</p>
-                                    <div class="row">
+                                    <div class="ai-panel">
+                                        <div class="ai-toolbar">
+                                            <h5 class="ai-title mb-0">ยาบัฟ</h5>
+                                            <span class="ai-muted">แสดงเฉพาะของในตัวที่อยู่ใน ai_item_buff.txt</span>
+                                        </div>
+                                        <?php if (empty($buffItems)) : ?>
+                                            <div class="alert alert-light border">ไม่พบยาบัฟในตัวละครนี้</div>
+                                        <?php endif; ?>
+                                        <?php foreach ($buffItems as $item) : ?>
+                                            <div class="ai-item-row ai-filter-row" data-name="<?= htmlspecialchars(strtolower($item['name'] . ' ' . $item['id'])) ?>">
+                                                <div><div class="ai-name"><?= htmlspecialchars($item['name']) ?></div><div class="ai-muted">ID <?= $item['id'] ?> / มี <?= $item['amount'] ?> ชิ้น</div></div>
+                                                <div class="ai-actions">
+                                                    <label><input type="checkbox" name="buff_items[]" value="<?= $item['id'] ?>" <?= isset($selected['buff'][$item['id']]) ? 'checked' : '' ?>> ใช้เป็นยาบัฟ</label>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+
+                                    <div class="ai-panel">
+                                        <div class="ai-toolbar">
+                                            <h5 class="ai-title mb-0">สกิลโจมตี</h5>
+                                            <input class="form-control ai-search" data-ai-search="skill" placeholder="ค้นหาสกิล">
+                                        </div>
+                                        <?php foreach ($skills as $skill) : $saved = $selected['skills'][$skill['id']] ?? null; ?>
+                                            <div class="ai-item-row ai-filter-row" data-group="skill" data-name="<?= htmlspecialchars(strtolower($skill['name'] . ' ' . $skill['id'])) ?>">
+                                                <div><div class="ai-name"><?= htmlspecialchars($skill['name']) ?></div><div class="ai-muted">ID <?= $skill['id'] ?> / Lv.<?= $skill['lv'] ?></div></div>
+                                                <div class="ai-actions">
+                                                    <label><input type="checkbox" name="attack_skills[]" value="<?= $skill['id'] ?>" <?= $saved ? 'checked' : '' ?>> ใช้สกิลนี้</label>
+                                                    <label>เลเวล <input name="skill_lv[<?= $skill['id'] ?>]" class="form-control ai-small-input" type="number" min="1" max="<?= $skill['lv'] ?>" value="<?= $saved['lv'] ?? $skill['lv'] ?>"></label>
+                                                    <label>โดนรุม <input name="skill_swarm[<?= $skill['id'] ?>]" class="form-control ai-small-input" type="number" min="0" max="50" value="<?= $saved['swarm'] ?? 0 ?>"></label>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+
+                                    <div class="ai-panel">
+                                        <div class="ai-toolbar">
+                                            <h5 class="ai-title mb-0">เก็บของ / ไม่ฝากคลัง</h5>
+                                            <input class="form-control ai-search" data-ai-search="item" placeholder="ค้นหาไอเทม">
+                                        </div>
                                         <?php foreach ($inventory as $item) : ?>
-                                            <div class="col-lg-6 mb-2">
-                                                <div class="border rounded p-2">
-                                                    <div class="fw-bold"><?= htmlspecialchars($item['name']) ?> <span class="badge bg-secondary">x<?= $item['amount'] ?></span></div>
-                                                    <label class="me-2"><input type="checkbox" name="buff_items[]" value="<?= $item['id'] ?>" <?= isset($selected['buff'][$item['id']]) ? 'checked' : '' ?>> ไอเทมบัฟ</label>
-                                                    <label class="me-2"><input type="checkbox" name="pickup_items[]" value="<?= $item['id'] ?>" <?= isset($selected['pickup'][$item['id']]) ? 'checked' : '' ?>> เก็บของนี้</label>
+                                            <div class="ai-item-row ai-filter-row" data-group="item" data-name="<?= htmlspecialchars(strtolower($item['name'] . ' ' . $item['id'])) ?>">
+                                                <div><div class="ai-name"><?= htmlspecialchars($item['name']) ?></div><div class="ai-muted">ID <?= $item['id'] ?> / มี <?= $item['amount'] ?> ชิ้น</div></div>
+                                                <div class="ai-actions">
+                                                    <label><input type="checkbox" name="pickup_items[]" value="<?= $item['id'] ?>" <?= isset($selected['pickup'][$item['id']]) ? 'checked' : '' ?>> เก็บของนี้</label>
                                                     <label><input type="checkbox" name="keep_items[]" value="<?= $item['id'] ?>" <?= isset($selected['keep'][$item['id']]) ? 'checked' : '' ?>> ไม่ฝากคลัง</label>
                                                 </div>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
 
-                                    <h5 class="mt-3">สกิลโจมตี</h5>
-                                    <?php foreach ($skills as $skill) : $saved = $selected['skills'][$skill['id']] ?? null; ?>
-                                        <div class="border rounded p-2 mb-2">
-                                            <label class="fw-bold">
-                                                <input type="checkbox" name="attack_skills[]" value="<?= $skill['id'] ?>" <?= $saved ? 'checked' : '' ?>>
-                                                <?= htmlspecialchars($skill['name']) ?> <span class="badge bg-secondary">Lv.<?= $skill['lv'] ?></span>
-                                            </label>
-                                            <div class="row mt-2">
-                                                <div class="col-md-6"><input name="skill_lv[<?= $skill['id'] ?>]" class="form-control" type="number" min="1" max="<?= $skill['lv'] ?>" value="<?= $saved['lv'] ?? $skill['lv'] ?>"></div>
-                                                <div class="col-md-6"><input name="skill_swarm[<?= $skill['id'] ?>]" class="form-control" type="number" min="0" max="50" value="<?= $saved['swarm'] ?? 0 ?>" placeholder="โดนรุมกี่ตัวถึงใช้"></div>
-                                            </div>
+                                    <div class="ai-panel">
+                                        <div class="ai-toolbar">
+                                            <h5 class="ai-title mb-0">ซื้อของอัตโนมัติ</h5>
+                                            <span class="ai-muted">บอทจะกลับมาซื้อเมื่อของต่ำกว่าจำนวนขั้นต่ำ</span>
                                         </div>
-                                    <?php endforeach; ?>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">ซื้อของอัตโนมัติ</label>
-                                        <textarea name="buy_items" class="form-control" rows="5" placeholder="501,20,100"><?= htmlspecialchars(implode("\n", $selected['buy'])) ?></textarea>
-                                        <small class="text-muted">รูปแบบ: ไอดีไอเทม, เหลือน้อยกว่า, ซื้อให้ถึง เช่น 501,20,100</small>
+                                        <?php if (empty($buyItems)) : ?>
+                                            <div class="alert alert-light border">ไม่พบไอเทมใช้งานในตัวละครนี้</div>
+                                        <?php endif; ?>
+                                        <?php foreach ($buyItems as $item) : $buy = $selected['buy'][$item['id']] ?? ['min' => 0, 'target' => 0]; ?>
+                                            <div class="ai-item-row ai-filter-row" data-name="<?= htmlspecialchars(strtolower($item['name'] . ' ' . $item['id'])) ?>">
+                                                <div><div class="ai-name"><?= htmlspecialchars($item['name']) ?></div><div class="ai-muted">ID <?= $item['id'] ?> / มี <?= $item['amount'] ?> ชิ้น</div></div>
+                                                <div class="ai-actions">
+                                                    <label><input type="checkbox" name="buy_items[]" value="<?= $item['id'] ?>" <?= isset($selected['buy'][$item['id']]) ? 'checked' : '' ?>> ซื้ออัตโนมัติ</label>
+                                                    <label>เหลือน้อยกว่า <input name="buy_min[<?= $item['id'] ?>]" class="form-control ai-small-input" type="number" min="0" max="99999" value="<?= (int)$buy['min'] ?>"></label>
+                                                    <label>ซื้อให้ถึง <input name="buy_target[<?= $item['id'] ?>]" class="form-control ai-small-input" type="number" min="0" max="99999" value="<?= (int)$buy['target'] ?>"></label>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
 
                                     <button name="save_ai" value="1" type="submit" class="btn btn-primary"><i class="fas fa-save"></i> บันทึกตั้งค่า AI</button>
@@ -350,11 +461,22 @@ while ($res && ($row = $res->fetch_object())) {
                         </div>
                     </div>
                     <div class="fxt-footer">
-                        <p>คุณต้องการออกจากระบบใช่หรือไม่ ?<a href="<?= $app_url ?>/logout.php" class="switcher-text2 inline-text">คลิกที่นี้</a></p>
+                        <p>ต้องการออกจากระบบใช่ไหม ? <a href="<?= $app_url ?>/logout.php" class="switcher-text2 inline-text">คลิกที่นี่</a></p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+<script>
+document.querySelectorAll('[data-ai-search]').forEach(function (input) {
+    input.addEventListener('input', function () {
+        var group = input.getAttribute('data-ai-search');
+        var q = input.value.trim().toLowerCase();
+        document.querySelectorAll('.ai-filter-row[data-group="' + group + '"]').forEach(function (row) {
+            row.style.display = row.getAttribute('data-name').indexOf(q) >= 0 ? '' : 'none';
+        });
+    });
+});
+</script>
 <?php require '../template/footer.php'; ?>
