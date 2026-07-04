@@ -28915,7 +28915,17 @@ BUILDIN_FUNC(autoattackset)
 					if( ( item_data = item_db.find(nameid) ) == NULL )
 						return SCRIPT_CMD_FAILURE;
 
-					if(!autoattack_item_type_can_use(item_data))
+					bool check = false;
+					if(ai_item_buff.size()){
+						for(auto &itentry : ai_item_buff){
+							if(nameid == itentry.itemid) {
+								check = true;
+								break;
+							}
+						}
+					}
+
+					if(!check)
 						return SCRIPT_CMD_FAILURE;
 
 					if(!is_active){
