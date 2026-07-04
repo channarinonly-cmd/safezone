@@ -25,6 +25,7 @@
 #include <common/utils.hpp>
 #include <config/core.hpp>
 
+#include "autoattack_controller.hpp"
 #include "charconfig_controller.hpp"
 #include "emblem_controller.hpp"
 #include "http.hpp"
@@ -447,6 +448,9 @@ bool WebServer::initialize( int argc, char* argv[] ){
 
 	http_server = std::make_shared<httplib::Server>();
 	// set up routes
+	http_server->Get("/autoattack", autoattack_page);
+	http_server->Post("/autoattack/config/load", autoattack_config_load);
+	http_server->Post("/autoattack/config/save", autoattack_config_save);
 	http_server->Post("/charconfig/load", charconfig_load);
 	http_server->Post("/charconfig/save", charconfig_save);
 	http_server->Post("/emblem/download", emblem_download);
