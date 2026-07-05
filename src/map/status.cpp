@@ -16877,6 +16877,7 @@ static bool aa_flywing_only(map_session_data* sd)
 		sd->aa.last_teleport = gettick();
 		sd->aa.teleport_lock_tick = sd->aa.last_teleport;
 		sd->aa.last_warp_time = sd->aa.last_teleport;
+		pc_delinvincibletimer(sd);
 		return true;
 	}
 
@@ -16949,6 +16950,7 @@ bool aa_teleport(map_session_data *sd)
 		sd->aa.last_teleport = gettick();
 		sd->aa.teleport_lock_tick = sd->aa.last_teleport;
 		sd->aa.last_warp_time = sd->aa.last_teleport;
+		pc_delinvincibletimer(sd);
 	}
 
 	return flywing;
