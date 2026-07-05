@@ -28234,16 +28234,30 @@ static int autoattack_open_bought_boxes(map_session_data* sd, const s_autoattack
 	int opened = 0;
 
 	while (target_amount <= 0 || autoattack_count_item(sd, final_item_id) < target_amount) {
-		int safe_open_amount = autoattack_buy_weight_limited_amount(sd, final_item_id, config.amount_per_buy, config.max_weight_percent);
-		if (safe_open_amount < config.amount_per_buy)
-			break;
-
 		int box_index = pc_search_inventory(sd, config.buy_item_id);
 		if (box_index < 0)
 			break;
 
-		if (!pc_useitem(sd, box_index))
+		int final_weight = itemdb_weight(final_item_id) * config.amount_per_buy;
+		int box_weight = itemdb_weight(config.buy_item_id);
+		int64 max_allowed_weight = ((int64)sd->max_weight * cap_value(config.max_weight_percent, 1, 90)) / 100;
+
+		if ((int64)sd->weight - box_weight + final_weight > max_allowed_weight)
 			break;
+
+		struct item final_item = {};
+		final_item.nameid = final_item_id;
+		final_item.identify = 1;
+
+		struct item box_item = sd->inventory.u.items_inventory[box_index];
+
+		if (pc_delitem(sd, box_index, 1, 1, 0, LOG_TYPE_CONSUME) != 0)
+			break;
+
+		if (pc_additem(sd, &final_item, config.amount_per_buy, LOG_TYPE_NPC)) {
+			pc_additem(sd, &box_item, 1, LOG_TYPE_NPC);
+			break;
+		}
 
 		opened++;
 	}
