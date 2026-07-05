@@ -12,9 +12,11 @@ session_start();
 const SAFEZONE_AUTOATTACK_URL = 'http://43.229.151.208:31910/autoattack';
 
 $configCandidates = [
+    __DIR__ . '/../library/database.php',
     __DIR__ . '/../library/connect.php',
     __DIR__ . '/../library/config.php',
     __DIR__ . '/../config.php',
+    __DIR__ . '/../../memberid/library/database.php',
     __DIR__ . '/../../library/connect.php',
 ];
 
@@ -39,6 +41,10 @@ function safezone_member_db(): mysqli
 
 function safezone_session_user(): string
 {
+    if (empty($_SESSION['session_user'])) {
+        throw new RuntimeException('กรุณาเข้าสู่ระบบสมาชิกก่อน');
+    }
+
     foreach (['userid', 'username', 'user', 'login', 'account'] as $key) {
         if (!empty($_SESSION[$key]) && is_string($_SESSION[$key])) {
             return $_SESSION[$key];
