@@ -53,6 +53,7 @@ const t_tick MOB_MAX_DELAY = 24 * 3600 * 1000;
 // Zeny Global Configuration System (Tiered & Global Mode)
 // =========================================================
 struct ZenyBountyConfig {
+	int system_enable;
 	int map_system_enable; // <--- สวิตช์คุมระบบแมพ (0 = ทั่วเซิร์ฟ, 1 = จำกัดแมพ)
 	int level_diff;
 	int penalty_per_level;
@@ -159,6 +160,7 @@ void tame_blacklist_init() {
 }
 
 void zeny_bounty_init() {
+	zeny_conf.system_enable = 1;
 	zeny_conf.map_system_enable = 1; // ค่าเริ่มต้นคือ 1 (เปิดระบบจำกัดแมพ)
 	zeny_conf.level_diff = 15; zeny_conf.penalty_per_level = 5; zeny_conf.min_penalty = 10;
 	zeny_conf.aoe_penalty = 40; zeny_conf.mvp_mult = 20; zeny_conf.map_change_interval = 60; 
@@ -178,7 +180,8 @@ void zeny_bounty_init() {
 			ptr = val;
 			while(*ptr && isspace(*ptr)) ptr++;
 
-			if (strcmpi(key, "MapSystemEnable") == 0) zeny_conf.map_system_enable = atoi(ptr); // <--- อ่านค่าเปิดปิดแมพ
+			if (strcmpi(key, "SystemEnable") == 0) zeny_conf.system_enable = atoi(ptr);
+			else if (strcmpi(key, "MapSystemEnable") == 0) zeny_conf.map_system_enable = atoi(ptr); // <--- อ่านค่าเปิดปิดแมพ
 			else if (strcmpi(key, "LevelDiff") == 0) zeny_conf.level_diff = atoi(ptr);
 			else if (strcmpi(key, "PenaltyPerLevel") == 0) zeny_conf.penalty_per_level = atoi(ptr);
 			else if (strcmpi(key, "MinPenalty") == 0) zeny_conf.min_penalty = atoi(ptr);
@@ -204,43 +207,64 @@ void zeny_bounty_init() {
 			else if (strcmpi(key, "MapsHigh") == 0) {
 				zeny_conf.maps_high.clear(); char* p = strtok(ptr, ", "); while (p) { zeny_conf.maps_high.push_back(std::string(p)); p = strtok(NULL, ", "); }
 			}
+			else if (strcmpi(key, "Maps") == 0) {
+				zeny_conf.maps_low.clear();
+				zeny_conf.maps_mid.clear();
+				zeny_conf.maps_high.clear();
+				char* p = strtok(ptr, ", ");
+				while (p) {
+					std::string map_name(p);
+					zeny_conf.maps_low.push_back(map_name);
+					zeny_conf.maps_mid.push_back(map_name);
+					zeny_conf.maps_high.push_back(map_name);
+					p = strtok(NULL, ", ");
+				}
+			}
 		}
 	}
 	fclose(fp);
-	
 	if (zeny_conf.map_change_interval <= 0) zeny_conf.map_change_interval = 60;
-	if (zeny_conf.drop_chance <= 0) zeny_conf.drop_chance = 1; 
-
+	if (zeny_conf.drop_chance < 0) zeny_conf.drop_chance = 0;
+	if (zeny_conf.drop_chance > 100) zeny_conf.drop_chance = 100;
+	if (zeny_conf.map_system_enable != 0 && zeny_conf.maps_low.empty() && zeny_conf.maps_mid.empty() && zeny_conf.maps_high.empty()) {
+		zeny_conf.system_enable = 0;
+		ShowWarning("Zeny Bounty: MapSystemEnable is on but no maps are configured. System disabled.\n");
+	}
 	ShowInfo("Zeny Bounty: Custom configuration loaded successfully.\n");
 }
 
 
 // ฟังก์ชันส่งข้อมูลรายชื่อแมพไปให้ NPC (เวอร์ชั่นอัปเดต: Global + 3 Tiers)
 std::string get_bounty_map_string() {
-	// 1. ถ้า GM ปิดระบบแมพ (เปิดคูณเงินทุกแผนที่) ให้ส่งค่า GLOBAL ไปบอก NPC
-	if (zeny_conf.map_system_enable == 0) {
-		return "GLOBAL";
-	}
+    if (!zeny_conf.system_enable || zeny_conf.drop_chance <= 0) {
+        return "DISABLED";
+    }
 
-	// 2. ถ้า GM บังคับเลือกแมพเอง
-	if (zeny_conf.gm_override_map.length() > 0 && strcmpi(zeny_conf.gm_override_map.c_str(), "none") != 0) {
-		return "GM|" + zeny_conf.gm_override_map;
-	}
+    if (zeny_conf.map_system_enable == 0) {
+        return "GLOBAL";
+    }
 
-	// 3. ระบบสุ่มอัตโนมัติ (แยก 3 ระดับ: ต่ำ, กลาง, สูง)
-	time_t rawtime; time(&rawtime);
-	int safe_interval = (zeny_conf.map_change_interval > 0) ? zeny_conf.map_change_interval : 60;
-	int current_block = (rawtime / 60) / safe_interval; 
+    if (zeny_conf.gm_override_map.length() > 0 && strcmpi(zeny_conf.gm_override_map.c_str(), "none") != 0) {
+        return "GM|" + zeny_conf.gm_override_map;
+    }
 
-	// ฟังก์ชันช่วยสุ่ม 1 แมพจากกลุ่ม แบบอิงเวลา (ไม่ใช้ rand() เพื่อป้องกันระบบดรอปเพี้ยน)
-	auto pick_map = [&](std::vector<std::string>& v, int offset) -> std::string {
-		if (v.empty()) return "none";
-		uint32_t seed = (current_block * 1664525) + offset + 1013904223;
-		return v[seed % v.size()];
-	};
+    time_t rawtime; time(&rawtime);
+    int safe_interval = (zeny_conf.map_change_interval > 0) ? zeny_conf.map_change_interval : 60;
+    int current_block = (rawtime / 60) / safe_interval;
 
-	// ประกอบร่างข้อความที่จะส่งให้ NPC เช่น: AUTO|prt_fild08|moc_fild02|lhz_fild01
-	return "AUTO|" + pick_map(zeny_conf.maps_low, 1) + "|" + pick_map(zeny_conf.maps_mid, 2) + "|" + pick_map(zeny_conf.maps_high, 3);
+    auto pick_map = [&](std::vector<std::string>& v, int offset) -> std::string {
+        if (v.empty()) return "";
+        uint32_t seed = (current_block * 1664525) + offset + 1013904223;
+        return v[seed % v.size()];
+    };
+
+    std::string low = pick_map(zeny_conf.maps_low, 1);
+    std::string mid = pick_map(zeny_conf.maps_mid, 2);
+    std::string high = pick_map(zeny_conf.maps_high, 3);
+    if (low.empty() && mid.empty() && high.empty())
+        return "DISABLED";
+
+    return "AUTO|" + low + "|" + mid + "|" + high;
 }
 // =========================================================
 // Dynamic Mob Drops (runtime) - script controllable
@@ -3170,7 +3194,10 @@ int mob_dead(struct mob_data *md, struct block_list *src, int type)
 		bool is_bounty_map = false;
 
 		// --- เช็คสวิตช์ Global ---
-		if (zeny_conf.map_system_enable == 0) {
+		if (!zeny_conf.system_enable || zeny_conf.drop_chance <= 0) {
+			is_bounty_map = false;
+		}
+		else if (zeny_conf.map_system_enable == 0) {
 			is_bounty_map = true; // ถ้าปิดสวิตช์ ให้ถือว่าดรอปได้ทุกแมพทันที (ไม่กินแรง CPU เลย)
 		} 
 		else if (zeny_conf.gm_override_map.length() > 0 && strcmpi(zeny_conf.gm_override_map.c_str(), "none") != 0) {
@@ -3186,8 +3213,10 @@ int mob_dead(struct mob_data *md, struct block_list *src, int type)
 				return strcmpi(v[seed % v.size()].c_str(), dead_mob_map) == 0;
 			};
 
-			if (check_match(zeny_conf.maps_low, 1) || check_match(zeny_conf.maps_mid, 2) || check_match(zeny_conf.maps_high, 3)) {
-				is_bounty_map = true;
+			if (!zeny_conf.maps_low.empty() || !zeny_conf.maps_mid.empty() || !zeny_conf.maps_high.empty()) {
+				if (check_match(zeny_conf.maps_low, 1) || check_match(zeny_conf.maps_mid, 2) || check_match(zeny_conf.maps_high, 3)) {
+					is_bounty_map = true;
+				}
 			}
 		}
 		// ===============================================================
@@ -3235,7 +3264,7 @@ int mob_dead(struct mob_data *md, struct block_list *src, int type)
 			// ===============================================================
 			// Zeny System Calculation (ระบบแจกเงินพร้อมป้องกันบัคทะลุเพดาน)
 			// ===============================================================
-			if(battle_config.zeny_from_mobs && md->level) {
+			if(battle_config.zeny_from_mobs && md->level && zeny_conf.system_enable && zeny_conf.drop_chance > 0) {
 				
 				bool has_stamina = (tmpsd[i]->sc.getSCE(SC_STAMINA) != nullptr);
 				bool is_autoattack = (tmpsd[i]->sc.getSCE(SC_AUTOATTACK) != nullptr); // ตรวจสอบว่าเปิด Auto Attack อยู่หรือไม่
