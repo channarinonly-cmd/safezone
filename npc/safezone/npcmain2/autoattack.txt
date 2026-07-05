@@ -58,6 +58,8 @@ OnWeightCheck:
 	if (.@overweight || .@needbuy) {
 		getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
 		@AI_return_timer = @ai_timer;
+		@AI_return_reason = .@overweight ? 1 : 2;
+		@AI_store_retry = 0;
 		autostart(false);
 		if (#AI_self$ != "") {
 			pcstopfollow getCharID(3,#AI_self$);
@@ -79,11 +81,47 @@ OnAutoStore:
 
 	.@stored = autoattackstore();
 	.@bought = autoattackbuy();
-	if (.@stored <= 0 && .@bought <= 0) {
-		dispbottom "[AI] ไม่มีของให้ฝากและซื้อของไม่ได้ ระบบหยุดทำงาน";
+	.@overweight = (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90);
+	.@needbuy = autoattackneedbuy();
+
+	if (.@overweight) {
+		@AI_store_retry++;
+		if (@AI_store_retry < 4) {
+			dispbottom "[AI] Weight is still high, retry storage";
+			addtimer 2000, strnpcinfo(3)+"::OnAutoStore";
+			end;
+		}
+
+		dispbottom "[AI] Weight still high after storage. Check keep-list/storage full";
 		set @AI_return_map$, "";
 		set @AI_return_x, 0;
 		set @AI_return_y, 0;
+		set @AI_return_timer, 0;
+		set @AI_return_reason, 0;
+		set @AI_store_retry, 0;
+		end;
+	}
+
+	if (@AI_return_reason == 1) {
+		@AI_store_retry = 0;
+		@AI_return_reason = 2;
+	}
+
+	if (.@needbuy && .@bought <= 0) {
+		@AI_store_retry++;
+		if (@AI_store_retry < 4) {
+			dispbottom "[AI] Buy failed, retry buying";
+			addtimer 2000, strnpcinfo(3)+"::OnAutoStore";
+			end;
+		}
+
+		dispbottom "[AI] Buy failed. Check Zeny/CC/buy list";
+		set @AI_return_map$, "";
+		set @AI_return_x, 0;
+		set @AI_return_y, 0;
+		set @AI_return_timer, 0;
+		set @AI_return_reason, 0;
+		set @AI_store_retry, 0;
 		end;
 	}
 
@@ -115,6 +153,8 @@ OnAutoReturnFarm:
 	set @AI_return_x, 0;
 	set @AI_return_y, 0;
 	set @AI_return_timer, 0;
+	set @AI_return_reason, 0;
+	set @AI_store_retry, 0;
 	end;
 OnMainAI:
 	autoattackset("12;0");
