@@ -11279,6 +11279,9 @@ void clif_parse_LoadEndAck(int fd,map_session_data *sd)
 			pc_setinvincibletimer(sd,battle_config.pc_invincible_time<<1);
 		else
 			pc_setinvincibletimer(sd,battle_config.pc_invincible_time);
+
+		if (sd->sc.getSCE(SC_AUTOATTACK) && sd->aa.last_teleport && DIFF_TICK(gettick(), sd->aa.last_teleport) < 3000)
+			pc_delinvincibletimer(sd);
 	}
 
 	if( mapdata->users++ == 0 && battle_config.dynamic_mobs )
