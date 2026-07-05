@@ -494,6 +494,7 @@ struct s_autoattack {
 	bool forced_tp_done;       // 1-minute paid teleport already triggered
 	t_tick last_forced_tp_try; // anti-spam for 1-minute paid teleport attempts
 	t_tick last_emergency_wing;// anti-spam for 4-mob flywing
+	t_tick last_status_sync;   // throttle web status updates
 	bool stopmelee;
 	bool focus_mob;
 	int stay_mode;  

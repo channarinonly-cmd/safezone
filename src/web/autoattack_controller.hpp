@@ -7,6 +7,7 @@
 #include "http.hpp"
 
 HANDLER_FUNC(autoattack_page);
+HANDLER_FUNC(autoattack_status);
 HANDLER_FUNC(autoattack_config_load);
 HANDLER_FUNC(autoattack_config_save);
 

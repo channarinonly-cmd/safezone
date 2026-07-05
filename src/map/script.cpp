@@ -29576,6 +29576,22 @@ BUILDIN_FUNC(autostart)
 	return SCRIPT_CMD_SUCCESS;
 }
 
+static void autoattack_web_state(map_session_data* sd, const char* state)
+{
+	if (!sd || !state)
+		return;
+
+	char esc_state[128] = { 0 };
+	Sql_EscapeString(mmysql_handle, esc_state, state);
+
+	if (SQL_ERROR == Sql_Query(mmysql_handle,
+		"UPDATE `aa_runtime_status` SET `ai_active` = 1, `state` = '%s', `updated_at` = NOW() WHERE `char_id` = %d",
+		esc_state, sd->status.char_id)
+	) {
+		Sql_ShowDebug(mmysql_handle);
+	}
+}
+
 BUILDIN_FUNC(autoattackstore)
 {
 	TBL_PC* sd;
@@ -29606,6 +29622,7 @@ BUILDIN_FUNC(autoattackstore)
 	}
 
 	int stored = 0;
+	autoattack_web_state(sd, "storage");
 
 	for (int i = MAX_INVENTORY - 1; i >= 0; i--) {
 		struct item& inv_item = sd->inventory.u.items_inventory[i];
@@ -29924,6 +29941,7 @@ BUILDIN_FUNC(autoattackbuy)
 
 	int bought = 0;
 	auto buy_config = autoattack_read_buy_config();
+	autoattack_web_state(sd, "buy");
 
 	for (auto &entry : sd->aa.autobuyitems) {
 		if (!entry.is_active || entry.item_id <= 0 || entry.target_amount <= 0)

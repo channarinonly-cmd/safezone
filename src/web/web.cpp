@@ -449,6 +449,7 @@ bool WebServer::initialize( int argc, char* argv[] ){
 	http_server = std::make_shared<httplib::Server>();
 	// set up routes
 	http_server->Get("/autoattack", autoattack_page);
+	http_server->Post("/autoattack/status", autoattack_status);
 	http_server->Post("/autoattack/config/load", autoattack_config_load);
 	http_server->Post("/autoattack/config/save", autoattack_config_save);
 	http_server->Post("/charconfig/load", charconfig_load);

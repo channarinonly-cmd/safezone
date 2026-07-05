@@ -21,6 +21,7 @@
 #include <common/nullpo.hpp>
 #include <common/random.hpp>
 #include <common/showmsg.hpp>
+#include <common/sql.hpp>
 #include <common/strlib.hpp>
 #include <common/timer.hpp>
 #include <common/utilities.hpp>
@@ -60,6 +61,7 @@ enum e_regen {
 // --- AutoAttack helpers (forward declarations) ---
 static void aa_scan_environment(map_session_data* sd, int range, int &aggro_count, bool &found_danger, bool &hunting_boss);
 static bool aa_flywing_only(map_session_data* sd);
+static void aa_sync_web_status(map_session_data* sd, const char* state);
 
 
 static struct eri *sc_data_ers; /// For sc_data entries
@@ -78,6 +80,89 @@ std::vector<int> sort_char_bonus;
 
 #define POSITION_HISTORY_DURATION 15000
 #define AA_AOE_SIZE 3
+
+static void aa_sync_web_status(map_session_data* sd, const char* state)
+{
+	if (!sd || !state)
+		return;
+
+	static bool table_checked = false;
+
+	if (!table_checked) {
+		if (SQL_ERROR == Sql_Query(mmysql_handle,
+			"CREATE TABLE IF NOT EXISTS `aa_runtime_status` ("
+			"`char_id` INT(11) NOT NULL,"
+			"`account_id` INT(11) NOT NULL,"
+			"`char_name` VARCHAR(24) NOT NULL DEFAULT '',"
+			"`ai_active` TINYINT(1) NOT NULL DEFAULT 0,"
+			"`state` VARCHAR(64) NOT NULL DEFAULT '',"
+			"`map` VARCHAR(32) NOT NULL DEFAULT '',"
+			"`x` SMALLINT(6) NOT NULL DEFAULT 0,"
+			"`y` SMALLINT(6) NOT NULL DEFAULT 0,"
+			"`hp` INT(11) NOT NULL DEFAULT 0,"
+			"`max_hp` INT(11) NOT NULL DEFAULT 0,"
+			"`sp` INT(11) NOT NULL DEFAULT 0,"
+			"`max_sp` INT(11) NOT NULL DEFAULT 0,"
+			"`weight` INT(11) NOT NULL DEFAULT 0,"
+			"`max_weight` INT(11) NOT NULL DEFAULT 0,"
+			"`zeny` INT(11) NOT NULL DEFAULT 0,"
+			"`cash` INT(11) NOT NULL DEFAULT 0,"
+			"`target_id` INT(11) NOT NULL DEFAULT 0,"
+			"`target_name` VARCHAR(64) NOT NULL DEFAULT '',"
+			"`pickup_item_id` INT(11) NOT NULL DEFAULT 0,"
+			"`pickup_item_name` VARCHAR(64) NOT NULL DEFAULT '',"
+			"`updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
+			"PRIMARY KEY (`char_id`),"
+			"KEY `account_id` (`account_id`)"
+			") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")
+		) {
+			Sql_ShowDebug(mmysql_handle);
+			return;
+		}
+
+		table_checked = true;
+	}
+
+	char esc_name[NAME_LENGTH * 2 + 1] = { 0 };
+	char esc_state[128] = { 0 };
+	char esc_map[MAP_NAME_LENGTH_EXT * 2 + 1] = { 0 };
+	char esc_target[128] = { 0 };
+	char esc_pickup[128] = { 0 };
+	Sql_EscapeString(mmysql_handle, esc_name, sd->status.name);
+	Sql_EscapeString(mmysql_handle, esc_state, state);
+	Sql_EscapeString(mmysql_handle, esc_map, mapindex_id2name(sd->mapindex) ? mapindex_id2name(sd->mapindex) : "");
+
+	int target_id = 0;
+	struct block_list* target = sd->aa.target_id ? map_id2bl(sd->aa.target_id) : nullptr;
+	if (target && target->type == BL_MOB) {
+		mob_data* md = (mob_data*)target;
+		target_id = md->mob_id;
+		const char* target_name = md->db ? md->db->name.c_str() : status_get_name(target);
+		Sql_EscapeString(mmysql_handle, esc_target, target_name ? target_name : "");
+	}
+
+	int pickup_item_id = 0;
+	struct block_list* item_bl = sd->aa.itempick_id ? map_id2bl(sd->aa.itempick_id) : nullptr;
+	if (item_bl && item_bl->type == BL_ITEM) {
+		flooritem_data* fitem = (flooritem_data*)item_bl;
+		pickup_item_id = fitem->item.nameid;
+		std::shared_ptr<item_data> item = item_db.find(pickup_item_id);
+		const char* item_name = item ? item->ename.c_str() : "";
+		Sql_EscapeString(mmysql_handle, esc_pickup, item_name);
+	}
+
+	struct status_data* st = status_get_status_data(&sd->bl);
+	if (SQL_ERROR == Sql_Query(mmysql_handle,
+		"REPLACE INTO `aa_runtime_status` "
+		"(`char_id`,`account_id`,`char_name`,`ai_active`,`state`,`map`,`x`,`y`,`hp`,`max_hp`,`sp`,`max_sp`,`weight`,`max_weight`,`zeny`,`cash`,`target_id`,`target_name`,`pickup_item_id`,`pickup_item_name`,`updated_at`) "
+		"VALUES (%d,%d,'%s',1,'%s','%s',%d,%d,%d,%d,%d,%d,%u,%u,%d,%d,%d,'%s',%d,'%s',NOW())",
+		sd->status.char_id, sd->status.account_id, esc_name, esc_state, esc_map, sd->bl.x, sd->bl.y,
+		st ? st->hp : sd->status.hp, sd->status.max_hp, st ? st->sp : sd->status.sp, sd->status.max_sp,
+		sd->weight, sd->max_weight, sd->status.zeny, sd->cashPoints, target_id, esc_target, pickup_item_id, esc_pickup)
+	) {
+		Sql_ShowDebug(mmysql_handle);
+	}
+}
 #define MAX_ATTEMPTS 15
 
 // Function to heal party members
@@ -14266,6 +14351,7 @@ switch(type) {
 		if (--(sce->val4) > 0) {
 
 if (pc_isdead(sd)) {
+	aa_sync_web_status(sd, "dead");
 	if (sd->aa.revive_auto == 1) {
 		int item_id = 7621;
 		int item_index = pc_search_inventory(sd, item_id);
@@ -14851,6 +14937,23 @@ if (pc_isdead(sd)) {
 			} else {
 				sd->aa.lastposition.x = sd->bl.x;
 				sd->aa.lastposition.y = sd->bl.y;
+			}
+
+			if (sd->aa.last_status_sync == 0 || DIFF_TICK(last_tick, sd->aa.last_status_sync) >= 2000) {
+				const char* web_state = "searching";
+				if (pc_issit(sd))
+					web_state = "resting";
+				else if (flywing)
+					web_state = "teleport";
+				else if (sd->aa.itempick_id)
+					web_state = "pickup";
+				else if (sd->aa.target_id)
+					web_state = "attack";
+				else if (aggro > 0)
+					web_state = "danger";
+
+				aa_sync_web_status(sd, web_state);
+				sd->aa.last_status_sync = last_tick;
 			}
 
 			sce->timer = add_timer(tick + battle_config.autoattack_interval_timer, status_change_timer, bl->id, data);
