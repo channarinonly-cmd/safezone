@@ -1547,7 +1547,7 @@ Body:
     Script: |
       callfunc "F_UseStaminaPotion", 3503;
   - Id: 3504
-    AegisName: Test_Item_I
+    AegisName: AI Autobot
     Name: Test Item
     Type: Delayconsume
     Buy: 500

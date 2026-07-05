@@ -19,7 +19,6 @@ L_MainMenu:
 	mes "สถานะบอทแผนที่/ตั้งร้าน: ^0000FF" + getarraysize($FP_ChatQueue) + " ตัว^000000";
 	mes "สถานะบอทเดินวาร์ป: ^FF0000" + getarraysize($WB_GID) + " ตัว^000000";
 	mes "ระดับอาชีพที่ปล่อย: " + (($FP_ClassMode == 1) ? "^0000FF[ คลาส 1 เท่านั้น ]" : "^FF0000[ รวมคลาส 2-1 ]") + "^000000";
-	mes "Clone Density: ^00AAFF" + $FP_ClonePerUser + "x/user, max " + $FP_MaxClonePerMap + "/map^000000";
 	next;
 	switch(select(
 		"?? [1] ปล่อยบอททั่วเซิร์ฟเวอร์ (เดินเล่น/ตั้งร้าน/ลงป่า)",
@@ -28,7 +27,6 @@ L_MainMenu:
 		"?? [4] เปิดระบบโคลน AI (1คน = 5ตัว, แม็กซ์ 50/แมพ)",
 		"?? [5] ล้างบางบอททั้งหมด (Clear All)",
 		"?? [6] ตั้งค่าระดับอาชีพ (ปัจจุบัน: " + (($FP_ClassMode == 1) ? "Class 1" : "Class 1 & 2") + ")",
-		"?? [7] Advanced Settings",
 		"? ออก"
 	)) {
 		case 1: 
@@ -176,90 +174,8 @@ L_MainMenu:
 			goto L_MainMenu;
 
 		case 7:
-			goto L_AdvancedSettings;
-
-		case 8:
 			close;
 	}
-
-
-
-L_AdvancedSettings:
-    mes "[Fake Player Advanced]";
-    mes "Clone Active: " + (($FP_FieldClone_Active) ? "ON" : "OFF");
-    mes "Clone per real player: " + $FP_ClonePerUser;
-    mes "Max clone per map: " + $FP_MaxClonePerMap;
-    mes "Spawn delay: " + $FP_SpawnDelayMin + "-" + $FP_SpawnDelayMax + " ms";
-    next;
-    switch(select(
-        "Toggle clone system",
-        "Set clone per player",
-        "Set max clone per map",
-        "Set spawn delay",
-        "Performance preset: Light",
-        "Performance preset: Normal",
-        "Performance preset: Heavy",
-        "Back"
-    )) {
-        case 1:
-            $FP_FieldClone_Active = !$FP_FieldClone_Active;
-            mes "Clone system is now " + (($FP_FieldClone_Active) ? "ON" : "OFF") + ".";
-            next;
-            goto L_AdvancedSettings;
-        case 2:
-            mes "Input clone amount per real player (1-20).";
-            next;
-            input .@v;
-            if (.@v < 1) .@v = 1;
-            if (.@v > 20) .@v = 20;
-            $FP_ClonePerUser = .@v;
-            goto L_AdvancedSettings;
-        case 3:
-            mes "Input max clone per map (5-200).";
-            next;
-            input .@v;
-            if (.@v < 5) .@v = 5;
-            if (.@v > 200) .@v = 200;
-            $FP_MaxClonePerMap = .@v;
-            goto L_AdvancedSettings;
-        case 4:
-            mes "Input min delay in ms (500-10000).";
-            next;
-            input .@min;
-            mes "Input max delay in ms (min-15000).";
-            next;
-            input .@max;
-            if (.@min < 500) .@min = 500;
-            if (.@min > 10000) .@min = 10000;
-            if (.@max < .@min) .@max = .@min;
-            if (.@max > 15000) .@max = 15000;
-            $FP_SpawnDelayMin = .@min;
-            $FP_SpawnDelayMax = .@max;
-            goto L_AdvancedSettings;
-        case 5:
-            $FP_ClonePerUser = 2;
-            $FP_MaxClonePerMap = 20;
-            $FP_SpawnDelayMin = 2500;
-            $FP_SpawnDelayMax = 6000;
-            goto L_AdvancedSettings;
-        case 6:
-            $FP_ClonePerUser = 5;
-            $FP_MaxClonePerMap = 50;
-            $FP_SpawnDelayMin = 1000;
-            $FP_SpawnDelayMax = 3000;
-            goto L_AdvancedSettings;
-        case 7:
-            $FP_ClonePerUser = 8;
-            $FP_MaxClonePerMap = 80;
-            $FP_SpawnDelayMin = 500;
-            $FP_SpawnDelayMax = 1500;
-            goto L_AdvancedSettings;
-        default:
-            goto L_MainMenu;
-    }
-
-    goto L_MainMenu;
-    end;
 
 L_GetRandomJob:
 	if ($FP_ClassMode == 1) set $@bot_job, rand(1, 6);
@@ -410,7 +326,7 @@ OnCheckClone:
 	if (!.@found) $FP_CloneMaps$[getarraysize($FP_CloneMaps$)] = .@map$;
 
 	if ($@bot_force_amount > 0) .@target_bots = $@bot_force_amount;
-	else { .@target_bots = getmapusers(.@map$) * $FP_ClonePerUser; if (.@target_bots > $FP_MaxClonePerMap) .@target_bots = $FP_MaxClonePerMap; }
+	else { .@target_bots = getmapusers(.@map$) * 5; if (.@target_bots > 50) .@target_bots = 50; }
 
 	.@current_bots = mobcount(.@map$, strnpcinfo(0)+"::OnFieldDead");
 	if (.@map$ == "new_1-1") {
@@ -422,7 +338,7 @@ OnCheckClone:
 		freeloop(1);
 		for (.@j=0; .@j<.@spawn_amt; .@j++) {
 			
-			sleep rand($FP_SpawnDelayMin, $FP_SpawnDelayMax);
+			sleep rand(1000, 3000); 
 
 			if (getmapusers(.@map$) == 0) break; 
 			callsub L_GetMapConfig, .@map$;
@@ -469,12 +385,12 @@ OnFieldDead:
 		
 		callsub L_GetMapConfig, .@map$;
 		if ($@bot_force_amount > 0) .@target_bots = $@bot_force_amount;
-		else { .@target_bots = getmapusers(.@map$) * $FP_ClonePerUser; if (.@target_bots > $FP_MaxClonePerMap) .@target_bots = $FP_MaxClonePerMap; }
+		else { .@target_bots = getmapusers(.@map$) * 2; if (.@target_bots > 50) .@target_bots = 20; }
 		
 		.@current_bots = mobcount(.@map$, strnpcinfo(0)+"::OnFieldDead");
 
 		if (.@current_bots < .@target_bots) { 
-			sleep rand($FP_SpawnDelayMin, $FP_SpawnDelayMax);
+			sleep rand(1000, 3000); 
 
 			callsub L_GetMapConfig, .@map$;
 			callsub L_GetRandomJob;
@@ -615,10 +531,6 @@ L_GetRandomName:
 	return;
 
 OnInit:
-    if ($FP_ClonePerUser <= 0) $FP_ClonePerUser = 5;
-    if ($FP_MaxClonePerMap <= 0) $FP_MaxClonePerMap = 50;
-    if ($FP_SpawnDelayMin <= 0) $FP_SpawnDelayMin = 1000;
-    if ($FP_SpawnDelayMax <= 0) $FP_SpawnDelayMax = 3000;
 	setarray .Maps$[0], "prontera","payon","morocc","geffen","alberta","moc_fild12"; 
 	setarray .valid_mobs[0], 1060, 1652, 1657, 1656, 1655, 1654, 1653, 1652, 1655, 1657, 1654, 1656, 1653;
 	

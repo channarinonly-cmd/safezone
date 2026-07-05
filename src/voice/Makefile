@@ -1,4 +1,4 @@
-﻿RA_INCLUDE = -I../../
+RA_INCLUDE = -I../../
 
 JSON_DIR   = ../../3rdparty/json
 

@@ -1930,13 +1930,18 @@ int unit_skilluse_id2(struct block_list *src, int target_id, uint16 skill_id, ui
 	// New action request received, delete previous action request if not executed yet
 	if(ud->stepaction || ud->steptimer != INVALID_TIMER)
 		unit_stop_stepaction(src);
-	// Remember the skill request from the client while walking to the next cell
+// Remember the skill request from the client while walking to the next cell
 	if(src->type == BL_PC && ud->walktimer != INVALID_TIMER && (!battle_check_range(src, target, range-1) || ignore_range)) {
+		// [Custom] บังคับหยุดเดินทันทีเพื่อร่ายสกิล ไม่ต้องรอ Step Action
+		unit_stop_walking(src, 1); 
+		
+		/* คอมเมนต์ระบบ Step Action ดั้งเดิมทิ้งไปเลย
 		ud->stepaction = true;
 		ud->target_to = target_id;
 		ud->stepskill_id = skill_id;
 		ud->stepskill_lv = skill_lv;
 		return 0; // Attacking will be handled by unit_walktoxy_timer in this case
+		*/
 	}
 
 	// Check range when not using skill on yourself or is a combo-skill during attack
@@ -2260,6 +2265,11 @@ int unit_skilluse_pos2( struct block_list *src, short skill_x, short skill_y, ui
 		unit_stop_stepaction(src);
 	// Remember the skill request from the client while walking to the next cell
 	if(src->type == BL_PC && ud->walktimer != INVALID_TIMER && (!battle_check_range(src, &bl, range-1) || ignore_range)) {
+		
+		// [Custom] บังคับหยุดเดินทันทีเพื่อร่ายสกิลลงพื้น ไม่ต้องรอจบช่อง (Step Action)
+		unit_stop_walking(src, 1);
+		
+		/* --- คอมเมนต์ระบบดั้งเดิมทิ้งไปเลย ---
 		struct map_data *md = &map[src->m];
 		// Convert coordinates to target_to so we can use it as target later
 		ud->stepaction = true;
@@ -2267,6 +2277,7 @@ int unit_skilluse_pos2( struct block_list *src, short skill_x, short skill_y, ui
 		ud->stepskill_id = skill_id;
 		ud->stepskill_lv = skill_lv;
 		return 0; // Attacking will be handled by unit_walktoxy_timer in this case
+		*/
 	}
 
 	if (!ignore_range) {
