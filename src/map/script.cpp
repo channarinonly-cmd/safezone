@@ -28114,6 +28114,10 @@ enum class e_autoattack_buy_currency : uint8 {
 struct s_autoattack_buy_config {
 	e_autoattack_buy_currency currency;
 	int price;
+	t_itemid buy_item_id;
+	int amount_per_buy;
+	bool auto_open;
+	int max_weight_percent;
 };
 
 static std::string autoattack_trim_copy(std::string value)
@@ -28146,6 +28150,10 @@ static std::unordered_map<t_itemid, s_autoattack_buy_config> autoattack_read_buy
 		std::string id_text;
 		std::string currency_text;
 		std::string price_text;
+		std::string buy_id_text;
+		std::string amount_text;
+		std::string auto_open_text;
+		std::string max_weight_text;
 
 		if (!std::getline(ss, id_text, ',') || !std::getline(ss, currency_text, ',') || !std::getline(ss, price_text, ','))
 			continue;
@@ -28153,7 +28161,18 @@ static std::unordered_map<t_itemid, s_autoattack_buy_config> autoattack_read_buy
 		id_text = autoattack_trim_copy(id_text);
 		currency_text = autoattack_trim_copy(currency_text);
 		price_text = autoattack_trim_copy(price_text);
+		if (std::getline(ss, buy_id_text, ','))
+			buy_id_text = autoattack_trim_copy(buy_id_text);
+		if (std::getline(ss, amount_text, ','))
+			amount_text = autoattack_trim_copy(amount_text);
+		if (std::getline(ss, auto_open_text, ','))
+			auto_open_text = autoattack_trim_copy(auto_open_text);
+		if (std::getline(ss, max_weight_text, ','))
+			max_weight_text = autoattack_trim_copy(max_weight_text);
 		std::transform(currency_text.begin(), currency_text.end(), currency_text.begin(), [](unsigned char ch) {
+			return (char)std::tolower(ch);
+		});
+		std::transform(auto_open_text.begin(), auto_open_text.end(), auto_open_text.begin(), [](unsigned char ch) {
 			return (char)std::tolower(ch);
 		});
 
@@ -28163,16 +28182,46 @@ static std::unordered_map<t_itemid, s_autoattack_buy_config> autoattack_read_buy
 			if (item_id <= 0 || price <= 0 || !item_db.exists(item_id))
 				continue;
 
+			t_itemid buy_item_id = buy_id_text.empty() ? item_id : (t_itemid)std::stoi(buy_id_text);
+			int amount_per_buy = amount_text.empty() ? 1 : std::stoi(amount_text);
+			bool auto_open = auto_open_text == "yes" || auto_open_text == "true" || auto_open_text == "1" || auto_open_text == "open";
+			int max_weight_percent = max_weight_text.empty() ? 80 : std::stoi(max_weight_text);
+
+			if (buy_item_id <= 0 || amount_per_buy <= 0 || !item_db.exists(buy_item_id))
+				continue;
+
+			if (buy_item_id != item_id && !auto_open)
+				continue;
+
+			max_weight_percent = cap_value(max_weight_percent, 1, 90);
+
 			if (currency_text == "zeny") {
-				items[item_id] = { e_autoattack_buy_currency::ZENY, price };
+				items[item_id] = { e_autoattack_buy_currency::ZENY, price, buy_item_id, amount_per_buy, auto_open, max_weight_percent };
 			} else if (currency_text == "cc" || currency_text == "cash") {
-				items[item_id] = { e_autoattack_buy_currency::CC, price };
+				items[item_id] = { e_autoattack_buy_currency::CC, price, buy_item_id, amount_per_buy, auto_open, max_weight_percent };
 			}
 		} catch (...) {
 		}
 	}
 
 	return items;
+}
+
+static int autoattack_buy_weight_limited_amount(map_session_data* sd, t_itemid item_id, int wanted_amount, int max_weight_percent)
+{
+	if (!sd || wanted_amount <= 0)
+		return 0;
+
+	int item_weight = itemdb_weight(item_id);
+	if (item_weight <= 0)
+		return wanted_amount;
+
+	int64 max_allowed_weight = ((int64)sd->max_weight * cap_value(max_weight_percent, 1, 90)) / 100;
+	int64 free_weight = max_allowed_weight - sd->weight;
+	if (free_weight <= 0)
+		return 0;
+
+	return cap_value((int)(free_weight / item_weight), 0, wanted_amount);
 }
 
 /*
@@ -29785,7 +29834,13 @@ BUILDIN_FUNC(autoattackmenulist)
 				auto config = buy_config.find(id);
 				const char* currency = config != buy_config.end() && config->second.currency == e_autoattack_buy_currency::CC ? "CC" : "Zeny";
 				int price = config != buy_config.end() ? config->second.price : 0;
-				safesnprintf(buffer, sizeof(buffer), "%d - %s (%d %s):", id, item_name, price, currency);
+				if (config != buy_config.end() && config->second.buy_item_id != id) {
+					std::shared_ptr<item_data> buy_item = item_db.find(config->second.buy_item_id);
+					const char* buy_name = buy_item ? autoattack_item_display_name(buy_item) : "";
+					safesnprintf(buffer, sizeof(buffer), "%d - %s (%d %s / %s x%d):", id, item_name, price, currency, buy_name, config->second.amount_per_buy);
+				} else {
+					safesnprintf(buffer, sizeof(buffer), "%d - %s (%d %s):", id, item_name, price, currency);
+				}
 			} else {
 				safesnprintf(buffer, sizeof(buffer), "%d - %s x%d:", id, item_name, autoattack_count_item(sd, id));
 			}
@@ -29849,15 +29904,28 @@ BUILDIN_FUNC(autoattackbuy)
 		if (need <= 0)
 			continue;
 
-		int can_afford = config->second.currency == e_autoattack_buy_currency::CC ? sd->cashPoints / config->second.price : sd->status.zeny / config->second.price;
-		need = cap_value(need, 0, can_afford);
-		if (need <= 0)
+		int safe_need = autoattack_buy_weight_limited_amount(sd, entry.item_id, need, config->second.max_weight_percent);
+		if (safe_need <= 0)
 			continue;
 
-		int total_cost = (int)cap_value((int64)config->second.price * need, 0, INT_MAX);
+		int buy_count = (safe_need + config->second.amount_per_buy - 1) / config->second.amount_per_buy;
+		int can_afford = config->second.currency == e_autoattack_buy_currency::CC ? sd->cashPoints / config->second.price : sd->status.zeny / config->second.price;
+		buy_count = cap_value(buy_count, 0, can_afford);
+		if (buy_count <= 0)
+			continue;
+
+		if (!config->second.auto_open || config->second.buy_item_id == entry.item_id) {
+			int direct_amount = config->second.buy_item_id == entry.item_id ? buy_count * config->second.amount_per_buy : buy_count;
+			direct_amount = cap_value(direct_amount, 0, safe_need);
+			if (direct_amount <= 0)
+				continue;
+			buy_count = config->second.buy_item_id == entry.item_id ? (direct_amount + config->second.amount_per_buy - 1) / config->second.amount_per_buy : direct_amount;
+		}
+
+		int total_cost = (int)cap_value((int64)config->second.price * buy_count, 0, INT_MAX);
 
 		struct item tmp_item = {};
-		tmp_item.nameid = entry.item_id;
+		tmp_item.nameid = config->second.buy_item_id;
 		tmp_item.identify = 1;
 
 		if (config->second.currency == e_autoattack_buy_currency::CC) {
@@ -29868,7 +29936,7 @@ BUILDIN_FUNC(autoattackbuy)
 				continue;
 		}
 
-		if (pc_additem(sd, &tmp_item, need, LOG_TYPE_NPC)) {
+		if (pc_additem(sd, &tmp_item, buy_count, LOG_TYPE_NPC)) {
 			if (config->second.currency == e_autoattack_buy_currency::CC)
 				pc_getcash(sd, total_cost, 0, LOG_TYPE_NPC);
 			else
@@ -29876,7 +29944,26 @@ BUILDIN_FUNC(autoattackbuy)
 			continue;
 		}
 
-		bought += need;
+		bought += buy_count;
+
+		if (config->second.auto_open && config->second.buy_item_id != entry.item_id) {
+			for (int opened = 0; opened < buy_count; opened++) {
+				current = autoattack_count_item(sd, entry.item_id);
+				if (current >= entry.target_amount)
+					break;
+
+				int safe_open_amount = autoattack_buy_weight_limited_amount(sd, entry.item_id, config->second.amount_per_buy, config->second.max_weight_percent);
+				if (safe_open_amount < config->second.amount_per_buy)
+					break;
+
+				int box_index = pc_search_inventory(sd, config->second.buy_item_id);
+				if (box_index < 0)
+					break;
+
+				if (!pc_useitem(sd, box_index))
+					break;
+			}
+		}
 	}
 
 	script_pushint(st, bought);
