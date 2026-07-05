@@ -28120,6 +28120,8 @@ struct s_autoattack_buy_config {
 	int max_weight_percent;
 };
 
+static int autoattack_count_item(map_session_data* sd, t_itemid nameid);
+
 static std::string autoattack_trim_copy(std::string value)
 {
 	value.erase(value.begin(), std::find_if(value.begin(), value.end(), [](unsigned char ch) {
@@ -28222,6 +28224,31 @@ static int autoattack_buy_weight_limited_amount(map_session_data* sd, t_itemid i
 		return 0;
 
 	return cap_value((int)(free_weight / item_weight), 0, wanted_amount);
+}
+
+static int autoattack_open_bought_boxes(map_session_data* sd, const s_autoattack_buy_config& config, t_itemid final_item_id, int target_amount)
+{
+	if (!sd || !config.auto_open || config.buy_item_id == final_item_id)
+		return 0;
+
+	int opened = 0;
+
+	while (target_amount <= 0 || autoattack_count_item(sd, final_item_id) < target_amount) {
+		int safe_open_amount = autoattack_buy_weight_limited_amount(sd, final_item_id, config.amount_per_buy, config.max_weight_percent);
+		if (safe_open_amount < config.amount_per_buy)
+			break;
+
+		int box_index = pc_search_inventory(sd, config.buy_item_id);
+		if (box_index < 0)
+			break;
+
+		if (!pc_useitem(sd, box_index))
+			break;
+
+		opened++;
+	}
+
+	return opened;
 }
 
 /*
@@ -29892,8 +29919,13 @@ BUILDIN_FUNC(autoattackbuy)
 		if (config == buy_config.end())
 			continue;
 
+		autoattack_open_bought_boxes(sd, config->second, entry.item_id, entry.target_amount);
+
 		int current = autoattack_count_item(sd, entry.item_id);
 		if (current >= entry.min_amount)
+			continue;
+
+		if (config->second.auto_open && config->second.buy_item_id != entry.item_id && pc_search_inventory(sd, config->second.buy_item_id) >= 0)
 			continue;
 
 		std::shared_ptr<item_data> item = item_db.find(entry.item_id);
@@ -29946,24 +29978,7 @@ BUILDIN_FUNC(autoattackbuy)
 
 		bought += buy_count;
 
-		if (config->second.auto_open && config->second.buy_item_id != entry.item_id) {
-			for (int opened = 0; opened < buy_count; opened++) {
-				current = autoattack_count_item(sd, entry.item_id);
-				if (current >= entry.target_amount)
-					break;
-
-				int safe_open_amount = autoattack_buy_weight_limited_amount(sd, entry.item_id, config->second.amount_per_buy, config->second.max_weight_percent);
-				if (safe_open_amount < config->second.amount_per_buy)
-					break;
-
-				int box_index = pc_search_inventory(sd, config->second.buy_item_id);
-				if (box_index < 0)
-					break;
-
-				if (!pc_useitem(sd, box_index))
-					break;
-			}
-		}
+		autoattack_open_bought_boxes(sd, config->second, entry.item_id, entry.target_amount);
 	}
 
 	script_pushint(st, bought);

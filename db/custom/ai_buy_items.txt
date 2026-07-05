@@ -30,3 +30,4 @@
 506,zeny,40
 601,zeny,60
 602,zeny,300
+11573,cc,5,23038,100,yes,70 // White Slim Potion Box
