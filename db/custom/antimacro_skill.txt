@@ -1,0 +1,9 @@
+// --- รายการสกิล ---
+//197  // Grand Cross
+//8    // Magnum Break
+//2006 // Ignition Break
+//382  // Acid Demonstration
+//89   // Asura Strike
+
+2006  //Ignition Break
+2036  //Rolling Cutter

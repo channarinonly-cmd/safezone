@@ -1,0 +1,9 @@
+function	script	IG_CUSTOME_BOX8	{
+	if (checkweight(1201,1) == 0) || (MaxWeight - Weight < 3000) {
+		dispbottom "得迁释轰袜风了米凸橛斯选⑼Г爻",0xFF0000;
+		end;
+	}
+	getgroupitem(IG_CUSTOME_BOX8);
+	delitem 3408,1;
+	end;
+}

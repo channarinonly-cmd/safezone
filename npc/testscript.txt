@@ -1,0 +1,22 @@
+-	script	COSMIC_TEST	-1,{
+	end;
+
+OnCommand1:
+	end;
+	
+OnCommand2:
+	end;
+	
+OnCommand3:
+	end;
+	
+OnCommand4:
+	end;
+
+OnInit:
+	bindatcmd "111",strnpcinfo(0)+"::OnCommand1",99,99;
+	bindatcmd "222",strnpcinfo(0)+"::OnCommand2",99,99;
+	bindatcmd "333",strnpcinfo(0)+"::OnCommand3",99,99;
+	bindatcmd "444",strnpcinfo(0)+"::OnCommand4",99,99;
+	end;
+}

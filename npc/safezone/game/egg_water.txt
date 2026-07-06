@@ -1,0 +1,579 @@
+//======================================================
+//  ตักไข่ลอยน้ำ – Morocc + คำสั่ง GM: @egg_water
+//======================================================
+
+//------------------------------------------------------
+// 0) SHOP สำหรับดูรายการรางวัล
+//------------------------------------------------------
+-	shop	egg_water_shop	-1,999:-1
+
+
+//------------------------------------------------------
+// 1) BLOCK SETUP (GM COMMAND)
+//------------------------------------------------------
+-	script	setup_egg_water	-1,{
+
+OnCmd:
+
+	if (getgmlevel() < 99) end;
+	
+	menu	"- ทดสอบ ^009900เปิด^000000 กิจกรรมด่วน",On_Open
+		,"- ทดสอบ ^FF3300ปิด^000000 กิจกรรมด่วน",On_Close
+		,"- ทดสอบ ^FF3300รีเซ็ตรางวัล^000000 กิจกรรมด่วน",On_Open2
+		,"- เซ็ตไอเทมลง sql",OnItem;
+	end;
+	
+//---------------------------
+// เปิดกิจกรรม
+//---------------------------
+On_Open:
+	
+	announce "[ ตักไข่ลอยน้ำ ] : กิจกรรมได้เปิดให้เล่นแล้ว มีเวลาเล่น 30 นาที หรือจนกว่ารางวัลจะหมด",bc_all,0xFFFF00;
+	
+	.@name$ = "egg_water";
+	enablenpc "egg_water";
+	setd "$storage"+.@name$,0;
+	
+	for ( .@i = 2; .@i <= .am_egg_water; .@i++ ) {
+		.@name$ = "egg_water#"+.@i;
+		enablenpc .@name$;
+		setd "$storage"+.@name$,0;
+	}
+	
+	$count_egg_water          = .am_egg_water;
+	$cash_egg_water_collect   = 0;
+	$zeny_egg_water_collect   = 0;
+
+	query_sql("UPDATE `egg_water_data` SET status = 0");
+	donpcevent "egg_water::OnChecking";
+	
+	end;
+
+//---------------------------
+// รีเซ็ตรางวัลทั้งหมด
+//---------------------------
+On_Open2:
+	
+	.@name$ = "egg_water";
+	setd "$storage"+.@name$,0;
+	
+	for ( .@i = 2; .@i <= .am_egg_water; .@i++ ) {
+		.@name$ = "egg_water#"+.@i;
+		setd "$storage"+.@name$,0;
+	}
+	
+	$count_egg_water = .am_egg_water;
+	query_sql("UPDATE `egg_water_data` SET status = 0");
+	donpcevent "egg_water::OnChecking";
+	
+	end;
+
+//---------------------------
+// ปิดกิจกรรม
+//---------------------------
+On_Close:
+	
+	announce "[ ตักไข่ลอยน้ำ ] : กิจกรรมปิดตัวลงแล้ว ไว้เจอกันใหม่ครั้งหน้า",bc_all,0xFFFF00;
+	
+	query_sql("UPDATE `egg_water_data` SET status = 1");
+	
+	disablenpc "egg_water";
+	for ( .@i = 2; .@i <= .am_egg_water; .@i++ )
+		disablenpc "egg_water#"+.@i;
+	
+	donpcevent "egg_water::OnChecking";
+	end;
+
+
+//---------------------------
+// GM: เซ็ตไอเทมลง SQL
+//---------------------------
+OnItem:
+	
+	freeloop(1);
+
+	// item_id , amount , rate
+	// rate = กลุ่มประกาศสี (0 = ไม่ประกาศ, 1-4 สีต่างกัน)
+	setarray .@item[0]
+		,6635,10,1
+		,6635,5,1
+		,6635,5,1
+	// ส้ม
+		,61008,1,2
+		,61008,1,2
+		,61009,2,2
+		,61009,2,2
+	// น้ำเงิน	
+		,7619,1,3
+		,7619,2,3
+		,7619,3,3
+		,7620,1,3
+		,7620,2,3
+		,7620,3,3
+	// ฟ้า
+		,61003,1,4
+		,61003,2,4
+		,61003,3,4
+		,61003,4,4
+		,61003,5,4
+		,6287,1,4;
+
+	// ไอเทมทั่วไป ใส่สุ่มให้เต็มจำนวนไข่
+	setarray .@item2[0],604,715,716,717,984,985,12208,12264,7539,7227;
+	
+	// ล้างของเดิม
+	query_sql("TRUNCATE TABLE `egg_water_data`");
+	
+	// ใส่จากลิสต์หลัก
+	for ( .@i = 0; .@i < getarraysize(.@item); .@i += 3 ) {
+		if ( .@item[.@i] > 0 )
+			query_sql("INSERT INTO `egg_water_data` (item_id,item_amount,rate,status) VALUES ("+.@item[.@i]+","+.@item[.@i+1]+","+.@item[.@i+2]+",0)");
+	}
+
+	// เติมของสุ่มจนจำนวน row = .am_egg_water
+	.@have = getarraysize(.@item) / 3;
+	for ( .@j = .@have; .@j < .am_egg_water; .@j++ ) {
+		.@r = rand(getarraysize(.@item2));
+		.@item_or = .@item2[.@r];
+		query_sql("INSERT INTO `egg_water_data` (item_id,item_amount,rate,status) VALUES ("+.@item_or+",1,0,0)");
+	}
+	
+	donpcevent "egg_water::OnChecking";
+	end;
+
+
+//---------------------------
+// Init setup_egg_water
+//---------------------------
+OnInit:
+	
+	.am_egg_water = 150;		// จำนวนไข่ทั้งหมดใน 1 รอบ
+	
+	// แก้ bindatcmd ให้ถูก
+	bindatcmd "egg_water",strnpcinfo(3)+"::OnCmd",99,0;
+	
+	query_sql (
+		"CREATE TABLE IF NOT EXISTS `egg_water_data` ("+
+		"`id` INT(12) NOT NULL AUTO_INCREMENT,"+
+		"`item_id` INT(10) NOT NULL,"+
+		"`item_amount` INT(10) NOT NULL,"+
+		"`rate` INT(10) NOT NULL,"+
+		"`status` INT(4) NOT NULL,"+
+		"PRIMARY KEY (`id`)"+
+		") ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;"
+	);
+	query_sql (
+		"CREATE TABLE IF NOT EXISTS `egg_water_logs` ("+
+		"`id` INT(12) NOT NULL AUTO_INCREMENT,"+
+		"`char_id` INT(11) NOT NULL,"+
+		"`name` VARCHAR(30) NOT NULL,"+
+		"`mode` VARCHAR(30) NOT NULL,"+
+		"`item_id` INT(10) NOT NULL,"+
+		"`item_name` VARCHAR(255) NOT NULL,"+
+		"`item_amount` INT(4) NOT NULL,"+
+		"`play_time` DATETIME NOT NULL,"+
+		"PRIMARY KEY (`id`)"+
+		") ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;"
+	);
+	
+	// เคลียร์ร้านแล้วเติมใหม่จาก data ปัจจุบัน
+	npcshopdelitem "egg_water_shop",999;
+	query_sql("SELECT item_id,item_amount FROM `egg_water_data` WHERE `status` = 0",.@itemid,.@itemamt);
+	for ( .@i = 0; .@i < getarraysize(.@itemid); .@i++ )
+		if ( .@itemid[.@i] > 0 )
+			npcshopadditem "egg_water_shop",.@itemid[.@i],.@itemamt[.@i];
+	
+	end;
+		
+}
+
+//------------------------------------------------------
+// 2) พนักงานกาชาด
+//------------------------------------------------------
+morocc,222,61,6	script	พนักงานกาชาด	878,{
+
+Start:
+	
+	mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+	mes "ยอด Cash : "+callfunc("F_InsertComma",$cash_egg_water_collect)+" Cash";
+	mes "ยอด Zeny : "+callfunc("F_InsertComma",$zeny_egg_water_collect)+" Zeny";
+	
+	callshop "egg_water_shop",1;
+	npcshopattach "egg_water_shop";
+	
+	if (getgmlevel() >= 99)
+		dispbottom "[ระบบ GM] : เหลือ "+$count_egg_water+" เบอร์";
+	end;
+
+OnBuyItem:
+	dispbottom "[ระบบ] : ไอเทมเป็นเพียงตัวอย่าง";
+	end;
+	
+OnInit:
+	waitingroom "[#] "+strnpcinfo(0)+"",0;
+	end;
+	
+}
+
+
+
+//------------------------------------------------------
+// 3) ตัวกิจกรรมหลัก egg_water
+//------------------------------------------------------
+morocc,222,56,4	script	egg_water	1047,{
+
+Start:
+	
+	// สร้างเมนูราคา
+	.@menu$ = "";
+	for ( .@i = 0; .@i < getarraysize(.choose$); .@i++ ) {
+		if ( .choose[.@i] > 0 )
+			.@menu$ += "ใช้ ^009900"+callfunc("F_InsertComma",.choose[.@i])+"^000000 ^0099FF"+.choose$[.@i]+"^000000 เล่นกิจกรรม:";
+		else
+			.@menu$ += "ใช้ "+.choose$[.@i]+":";
+	}
+	
+	.@part = select(.@menu$) - 1;
+	
+	// เช็กว่าเห็ด/ไข่เบอร์นี้ถูกเก็บไปแล้วหรือยัง
+	if ( getd("$storage"+strnpcinfo(0)) > 0 ) {
+		mes "[ระบบ]";
+		mes "เห็ดเบอร์นี้มีผู้เล่นท่านอื่นเก็บไปแล้ว";
+		mes "อย่าช้าสิ เร็วเข้า ๆ ๆ";
+		close;
+	}
+
+	// ======== เช็กของหมดก่อนเก็บเงิน (รอบแรก) ========
+	query_sql("SELECT COUNT(*) FROM `egg_water_data` WHERE `status` = 0", .@remain);
+	if ( .@remain <= 0 ) {
+		mes "[ระบบ] ของรางวัลหมดแล้ว!";
+		close2;
+		announce "[ ตักไข่ลอยน้ำ ] : ของรางวัลหมด กิจกรรมปิดแล้ว!",bc_all,0xFFFF00;
+		donpcevent "setup_egg_water::On_Close";
+		end;
+	}
+	
+	// ==== หักค่าเล่น ====
+	if ( .@part == 0 ) {
+		// Cash
+		if ( #CASHPOINTS < .choose[.@part] ) {
+			message strcharinfo(0),"Cash ของท่านไม่เพียงพอ ข้าต้องการ "+callfunc("F_InsertComma",.choose[.@part])+" Cash";
+			end;
+		}
+		#CASHPOINTS -= .choose[.@part];
+		$cash_egg_water_collect += .choose[.@part];
+	}
+	else if ( .@part == 1 ) {
+		// Zeny
+		if ( Zeny < .choose[.@part] ) {
+			message strcharinfo(0),"Zeny ของท่านไม่เพียงพอ ข้าต้องการ "+callfunc("F_InsertComma",.choose[.@part])+" Zeny";
+			end;
+		}
+		Zeny -= .choose[.@part];
+		$zeny_egg_water_collect += .choose[.@part];
+	}
+	else if ( .@part == 2 ) {
+		// Item
+		if ( countitem(.item_use) < .choose[.@part] ) {
+			message strcharinfo(0),getitemname(.item_use)+" ของท่านไม่เพียงพอ ข้าต้องการ "+callfunc("F_InsertComma",.choose[.@part])+" ea";
+			end;
+		}
+		delitem .item_use,.choose[.@part];
+	}
+	
+//---------------------------
+// สุ่มของ (กัน rand(0))
+//---------------------------
+recheck_again:
+
+	// นับจำนวนรางวัลที่ยังไม่ถูกตัก (status = 0)
+	query_sql("SELECT COUNT(*) FROM `egg_water_data` WHERE `status` = 0", .@remain);
+
+	// ถ้าไม่มีของเหลือแล้วจริง ๆ
+	if (.@remain <= 0) {
+		mes "[ระบบ]";
+		mes "ของรางวัลหมดแล้ว!";
+		close2;
+		announce "[ ตักไข่ลอยน้ำ ] : ของรางวัลหมด กิจกรรมปิดตัวลงแล้ว!", bc_all, 0xFFFF00;
+		donpcevent "setup_egg_water::On_Close";
+		end;
+	}
+
+	// ถ้าเหลือ 1 ใบสุดท้าย -> ไม่ต้อง rand เลย หยิบใบสุดท้ายตรง ๆ
+	if (.@remain == 1) {
+		query_sql("SELECT id,item_id,item_amount,rate FROM `egg_water_data` WHERE `status` = 0 LIMIT 1",
+			.@pick_id, .@pick_itemid, .@pick_amount, .@pick_rate);
+	} else {
+		// เหลือมากกว่า 1 ใบ -> rand ตามปกติ
+		query_sql("SELECT id,item_id,item_amount,rate FROM `egg_water_data` WHERE `status` = 0",
+			.@id, .@itemid, .@itemamt, .@rate);
+
+		// กันพลาดเผื่ออนาคต (แต่ตามตรรกะตรงนี้จะไม่เป็น 0 เพราะเช็ก .@remain > 1 แล้ว)
+		if (getarraysize(.@id) <= 0) {
+			mes "[ระบบ] ของรางวัลหมดแล้ว!";
+			close2;
+			announce "[ ตักไข่ลอยน้ำ ] : ของรางวัลหมด กิจกรรมปิดตัวลงแล้ว!", bc_all, 0xFFFF00;
+			donpcevent "setup_egg_water::On_Close";
+			end;
+		}
+
+		.@idx        = rand(getarraysize(.@id));
+		.@pick_id    = .@id[.@idx];
+		.@pick_itemid = .@itemid[.@idx];
+		.@pick_amount = .@itemamt[.@idx];
+		.@pick_rate   = .@rate[.@idx];
+	}
+
+	// อัปเดตสถานะรางวัลที่หยิบไปแล้ว
+	query_sql("UPDATE `egg_water_data` SET `status` = 1 WHERE `id` = "+.@pick_id);
+
+	// นับจำนวนไข่ที่เหลือในกิจกรรม (ตัวแปร global ของมึงเดิม)
+	$count_egg_water = $count_egg_water - 1;
+
+	// กรณีไม่ได้ไอเทม (item_id = 0)
+	if (.@pick_itemid == 0) {
+		specialeffect2 155;
+		query_sql("INSERT INTO `egg_water_logs` (char_id,name,mode,item_id,item_amount,item_name,play_time) VALUES ("+
+			getcharid(0)+
+			",'"+strcharinfo(0)+
+			"','"+callfunc("F_InsertComma",.choose[.@part])+" "+.choose$[.@part]+
+			"',0,0,'No Item',NOW())");
+		npctalk "ผู้เล่น "+strcharinfo(0)+" ไม่ได้รับไอเทม จากตักไข่ลอยน้ำ";
+	}
+	// กรณีได้ไอเทม
+	if (.@pick_itemid > 0) {
+		specialeffect2 682;
+		query_sql("INSERT INTO `egg_water_logs` (char_id,name,mode,item_id,item_amount,item_name,play_time) VALUES ("+
+			getcharid(0)+
+			",'"+strcharinfo(0)+
+			"','"+callfunc("F_InsertComma",.choose[.@part])+" "+.choose$[.@part]+
+			"',"+.@pick_itemid+","+.@pick_amount+",'"+getitemname(.@pick_itemid)+"',NOW())");
+
+		getitem .@pick_itemid, .@pick_amount;
+
+		if (!.@pick_rate) {
+			announce "ผู้เล่น "+strcharinfo(0)+" ได้รับ "+getitemname(.@pick_itemid)+" จำนวน "+.@pick_amount+" ชิ้น จากตักไข่ลอยน้ำ", bc_all, 0xFF0000;
+		}
+		if (.@pick_rate == 1) {
+			announce "ผู้เล่น "+strcharinfo(0)+" ได้รับ "+getitemname(.@pick_itemid)+" จำนวน "+.@pick_amount+" ชิ้น จากตักไข่ลอยน้ำ", bc_all, 0xFFFF00;
+		}
+		if (.@pick_rate == 2) {
+			announce "ผู้เล่น "+strcharinfo(0)+" ได้รับ "+getitemname(.@pick_itemid)+" จำนวน "+.@pick_amount+" ชิ้น จากตักไข่ลอยน้ำ", bc_all, 0xFF9900;
+		}
+		if (.@pick_rate == 3) {
+			announce "ผู้เล่น "+strcharinfo(0)+" ได้รับ "+getitemname(.@pick_itemid)+" จำนวน "+.@pick_amount+" ชิ้น จากตักไข่ลอยน้ำ", bc_all, 0x0000FF;
+		}
+		if (.@pick_rate == 4) {
+			announce "ผู้เล่น "+strcharinfo(0)+" ได้รับ "+getitemname(.@pick_itemid)+" จำนวน "+.@pick_amount+" ชิ้น จากตักไข่ลอยน้ำ", bc_all, 0x0099FF;
+		}
+
+		donpcevent ""+strnpcinfo(3)+"::OnChecking";
+	}
+
+	// เซ็ตว่าเบอร์นี้ถูกตักไปแล้ว + ปิด NPC ใบนั้น
+	setd "$storage"+strnpcinfo(0),1;
+	disablenpc ""+strnpcinfo(3)+"";
+	end;
+
+
+//---------------------------
+// ซิงค์ร้าน egg_water_shop
+//---------------------------
+OnChecking:
+	
+	freeloop(1);
+		
+	query_sql("SELECT item_id,item_amount FROM `egg_water_data` WHERE `item_id` > 0", .@itemid2, .@itemamt2);
+	for ( .@i = 0; .@i < getarraysize(.@itemid2); .@i++ )
+		if ( .@itemid2[.@i] > 0 )
+			npcshopdelitem "egg_water_shop", .@itemid2[.@i];
+		
+	query_sql("SELECT item_id,item_amount FROM `egg_water_data` WHERE `status` = 0", .@itemid3, .@itemamt3);
+	for ( .@i = 0; .@i < getarraysize(.@itemid3); .@i++ )
+		if ( .@itemid3[.@i] > 0 )
+			npcshopadditem "egg_water_shop", .@itemid3[.@i], .@itemamt3[.@i];
+		
+	end;
+	
+
+//---------------------------
+// Init กิจกรรม (กำหนดค่าเล่น + ให้ NPC วิ่ง)
+//---------------------------
+OnInit:
+	
+	.item_use = 7539;	// ไอเทมใช้เล่นแบบ Item
+	deletearray .choose$;
+	setarray .choose$[0], "Cash", "Zeny", getitemname(.item_use);
+	
+	deletearray .choose;
+	//          Cash   Zeny     Item(ใช้กี่ชิ้น)
+	setarray .choose[0], 250, 259000, 3;	//  ถ้าอยากเปลี่ยนจำนวนไอเทมก็แก้เลข 3 ตรงนี้
+	
+	disablenpc strnpcinfo(3);
+	
+	while (1) {
+		.@r = rand(100,400);
+		npcspeed .@r;
+		.@x = 222;
+		.@y = 56;
+		getfreecell("morocc", .@x, .@y, .@x, .@y, 6, 6);
+		npcwalkto .@x, .@y;
+		sleep 1000;
+	}
+	
+	end;
+		
+}
+
+//------------------------------------------------------
+// 4) DUPLICATE 150 ตัว
+//------------------------------------------------------
+morocc,222,56,4	duplicate(egg_water)	egg_water#2	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#3	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#4	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#5	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#6	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#7	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#8	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#9	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#10	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#11	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#12	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#13	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#14	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#15	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#16	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#17	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#18	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#19	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#20	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#21	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#22	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#23	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#24	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#25	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#26	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#27	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#28	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#29	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#30	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#31	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#32	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#33	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#34	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#35	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#36	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#37	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#38	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#39	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#40	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#41	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#42	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#43	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#44	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#45	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#46	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#47	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#48	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#49	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#50	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#51	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#52	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#53	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#54	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#55	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#56	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#57	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#58	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#59	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#60	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#61	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#62	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#63	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#64	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#65	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#66	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#67	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#68	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#69	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#70	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#71	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#72	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#73	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#74	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#75	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#76	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#77	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#78	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#79	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#80	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#81	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#82	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#83	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#84	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#85	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#86	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#87	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#88	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#89	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#90	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#91	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#92	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#93	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#94	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#95	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#96	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#97	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#98	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#99	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#100	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#101	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#102	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#103	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#104	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#105	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#106	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#107	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#108	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#109	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#110	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#111	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#112	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#113	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#114	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#115	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#116	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#117	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#118	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#119	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#120	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#121	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#122	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#123	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#124	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#125	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#126	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#127	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#128	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#129	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#130	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#131	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#132	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#133	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#134	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#135	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#136	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#137	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#138	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#139	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#140	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#141	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#142	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#143	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#144	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#145	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#146	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#147	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#148	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#149	1047
+morocc,222,56,4	duplicate(egg_water)	egg_water#150	1047

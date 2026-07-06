@@ -1,0 +1,199 @@
+//===========================================================
+// Crimson Weapon Maker (15% Success Rate + Global Rigged)
+// ช่างตีเหล็กสร้างอาวุธ Crimson (อุดช่องโหว่หลอดร่าย & ป้องกันปั๊มของ)
+//===========================================================
+
+morocc,144,58,4	script	Crimson Blacksmith	85,{
+	.@npc_name$ = "^FF0000[Crimson Blacksmith]^000000";
+	
+	mes .@npc_name$;
+	mes "ข้าคือช่างตีเหล็กผู้เชี่ยวชาญการหลอมโลหิต!";
+	mes "ข้าสามารถสร้างอาวุธซีรีส์ ^FF0000Crimson (สีแดง)^000000 ให้เจ้าได้";
+	mes "แต่กระบวนการนี้มันอันตรายและยากมาก มีโอกาสสำเร็จเพียง ^FF0000" + .SuccessRate + "%^000000 เท่านั้น!";
+	next;
+	mes .@npc_name$;
+	mes "ในการหลอมอาวุธ 1 ครั้ง เจ้าต้องเตรียมของมาดังนี้:";
+	
+	for (.@i = 0; .@i < getarraysize(.ReqItem_ID); .@i++) {
+		mes "- ^i["+.ReqItem_ID[.@i]+"]^000000 " + getitemname(.ReqItem_ID[.@i]) + " จำนวน ^FF0000" + .ReqItem_Amt[.@i] + " ชิ้น^000000";
+	}
+	
+	mes "- ^i[985]^000000 Elunium จำนวน ^FF0000" + .ReqElu_Amt + " ก้อน^000000";
+	mes "- ^i[984]^000000 Oridecon จำนวน ^FF0000" + .ReqOri_Amt + " ก้อน^000000";
+	mes "- เงินค่าเหนื่อยข้า ^FF0000" + callfunc("F_InsertComma", .ReqZeny) + " Zeny^000000";
+	next;
+	
+	.@menu_sel = select("ข้าพร้อมแล้ว อยากสร้างอาวุธ!:ขอดูก่อนว่ามีอาวุธชิ้นไหนบ้าง:ยังไม่พร้อม");
+	if (.@menu_sel == 3) close;
+
+	// ==========================================
+	// ?? เมนูดูรายการอาวุธ
+	// ==========================================
+	if (.@menu_sel == 2) {
+		mes .@npc_name$;
+		mes "นี่คืออาวุธ Crimson ทั้งหมดที่ข้าสามารถสร้างได้:";
+		mes "-------------------------";
+		for (.@i = 0; .@i < getarraysize(.CrimsonWeapons); .@i++) {
+			mes "^i["+.CrimsonWeapons[.@i]+"]^000000 " + getitemname(.CrimsonWeapons[.@i]);
+		}
+		close;
+	}
+
+	// ==========================================
+	// ?? ตรวจสอบวัตถุดิบ (รอบแรก)
+	// ==========================================
+	mes .@npc_name$;
+	mes "ตรวจสอบของในกระเป๋าของเจ้า...";
+	
+	.@pass = 1; 
+	for (.@i = 0; .@i < getarraysize(.ReqItem_ID); .@i++) {
+		.@have = countitem(.ReqItem_ID[.@i]);
+		.@need = .ReqItem_Amt[.@i];
+		mes "- " + getitemname(.ReqItem_ID[.@i]) + " : " + .@have + " / " + .@need;
+		if (.@have < .@need) .@pass = 0;
+	}
+	
+	mes "- Elunium : " + countitem(985) + " / " + .ReqElu_Amt;
+	mes "- Oridecon : " + countitem(984) + " / " + .ReqOri_Amt;
+	mes "- Zeny : " + callfunc("F_InsertComma", Zeny) + " / " + callfunc("F_InsertComma", .ReqZeny);
+	
+	if (countitem(985) < .ReqElu_Amt || countitem(984) < .ReqOri_Amt || Zeny < .ReqZeny) .@pass = 0;
+
+	if (.@pass == 0) {
+		mes "-------------------------";
+		mes "^FF0000ของเจ้ายังไม่ครบนะ! กลับไปเตรียมมาให้พร้อมก่อนเถอะ^000000";
+		close;
+	}
+
+	next;
+	mes .@npc_name$;
+	mes "ยอดเยี่ยม! ของครบถ้วนดี";
+	mes "ทีนี้... เจ้าอยากให้ข้าหลอมอาวุธชิ้นไหนล่ะ?";
+	
+	.@menu$ = "";
+	for (.@i = 0; .@i < getarraysize(.CrimsonWeapons); .@i++) {
+		.@menu$ += getitemname(.CrimsonWeapons[.@i]) + ":";
+	}
+	.@menu$ += "^FF0000-- เปลี่ยนใจ ยกเลิก --^000000";
+
+	.@sel_wep = select(.@menu$) - 1;
+	
+	// ??? ป้องกันโปรแกรมยิง Packet ทะลุเมนู (Out of Bounds Check)
+	if (.@sel_wep < 0 || .@sel_wep >= getarraysize(.CrimsonWeapons)) close;
+
+	.@craft_id = .CrimsonWeapons[.@sel_wep];
+
+	// ==========================================
+	// ?? ยืนยันการคราฟต์
+	// ==========================================
+	next;
+	mes .@npc_name$;
+	mes "เป้าหมาย: ^i["+.@craft_id+"]^FF0000 " + getitemname(.@craft_id) + "^000000";
+	mes "โอกาสสำเร็จ: ^FF0000" + .SuccessRate + "%^000000";
+	mes "^FF0000(คำเตือน: หากล้มเหลว วัตถุดิบทั้งหมดจะหายไป!)^000000";
+	mes "เจ้ายืนยันที่จะเสี่ยงหรือไม่?";
+	if (select("ลุยเลยข้าไม่กลัว!:ขอกลับไปทำใจก่อน") == 2) close;
+
+	// ??? Double Check ก่อนร่ายเวทย์ (ดักคนเปิดหน้าต่างค้างแล้วเดลของ)
+	.@pass_check = 1;
+	for (.@i = 0; .@i < getarraysize(.ReqItem_ID); .@i++) {
+		if (countitem(.ReqItem_ID[.@i]) < .ReqItem_Amt[.@i]) .@pass_check = 0;
+	}
+	if (countitem(985) < .ReqElu_Amt || countitem(984) < .ReqOri_Amt || Zeny < .ReqZeny) .@pass_check = 0;
+
+	if (!.@pass_check) {
+		mes .@npc_name$;
+		mes "แอบเอาของไปเก็บเหรอ? ข้าไม่ทำให้แล้ว!";
+		close;
+	}
+
+	if (checkweight(.@craft_id, 1) == 0) {
+		mes .@npc_name$;
+		mes "น้ำหนักกระเป๋าของเจ้าเต็มนะ! ไปเคลียร์ก่อน";
+		close;
+	}
+
+	// ?? ให้ร่ายเวทย์ก่อน เพื่อป้องกันเดินหนีแล้วถูกหักของฟรี
+	progressbar "000000", 3; 
+
+	// ?? Triple Check (ตรวจสอบรอบสุดท้าย)
+	// ถ้าผู้เล่นพยายามหัวหมอ โยนของลงพื้นตอนที่หลอดกำลังร่าย จะโดนดักตรงนี้และไม่เกิดการปั๊มของ
+	.@pass_check2 = 1;
+	for (.@i = 0; .@i < getarraysize(.ReqItem_ID); .@i++) {
+		if (countitem(.ReqItem_ID[.@i]) < .ReqItem_Amt[.@i]) .@pass_check2 = 0;
+	}
+	if (countitem(985) < .ReqElu_Amt || countitem(984) < .ReqOri_Amt || Zeny < .ReqZeny) .@pass_check2 = 0;
+
+	if (!.@pass_check2) {
+		mes .@npc_name$;
+		mes "คิดจะตุกติกกับข้าตอนกำลังตีเหล็กงั้นรึ!? ฝันไปเถอะ!";
+		close;
+	}
+
+	// ?? หักวัตถุดิบและเงิน (หักตรงนี้ปลอดภัยที่สุดแล้ว)
+	Zeny -= .ReqZeny;
+	delitem 985, .ReqElu_Amt; // Elunium
+	delitem 984, .ReqOri_Amt; // Oridecon
+	for (.@i = 0; .@i < getarraysize(.ReqItem_ID); .@i++) {
+		delitem .ReqItem_ID[.@i], .ReqItem_Amt[.@i];
+	}
+
+	// ==========================================
+	// ?? ระบบสุ่ม & บังคับล้มเหลว 10 ครั้ง
+	// ==========================================
+	.@is_success = 0;
+
+	if ($Crimson_Fail_Count > 0) {
+		$Crimson_Fail_Count--; 
+		.@is_success = 0;      
+	} 
+	else {
+		if (rand(1, 100) <= .SuccessRate) {
+			.@is_success = 1;
+			$Crimson_Fail_Count = .GlobalFailQuota; // รีเซ็ตบัฟล้มเหลวกลับไป 10 ครั้ง
+		} else {
+			.@is_success = 0;
+		}
+	}
+
+	// ==========================================
+	// ?? ประกาศผลลัพธ์
+	// ==========================================
+	if (.@is_success) {
+		getitem .@craft_id, 1;
+		specialeffect2 153; 
+		emotion ET_BEST;
+		mes .@npc_name$;
+		mes "ตู้มมมม!!";
+		mes "ข้าทำสำเร็จ!! นี่คือสุดยอดอาวุธที่เจ้าต้องการ!";
+		mes "รับ ^i["+.@craft_id+"]^00FF00 " + getitemname(.@craft_id) + "^000000 ไปซะ!";
+		
+		announce "[ระบบสร้างอาวุธ] ยินดีด้วย! [" + strcharinfo(0) + "] หลอม " + getitemname(.@craft_id) + " สำเร็จด้วยเรท "+.SuccessRate+"%!", bc_all|bc_blue;
+	} else {
+		specialeffect2 EF_REFINE_FAIL; 
+		emotion ET_HUK;
+		mes .@npc_name$;
+		mes "เพล้งงงง!!!";
+		mes "ม่ายยยย! การคุมความร้อนพลาดไปนิดเดียว!";
+		mes "^FF0000วัตถุดิบทั้งหมดถูกเผาไหม้กลายเป็นเถ้าถ่าน...^000000";
+		mes "อย่าเพิ่งท้อนะ หากมีของอีกก็กลับมาหาข้าได้";
+	}
+	close;
+
+OnInit:
+	waitingroom "หลอมอาวุธ Crimson [เรท 15%]", 0;
+
+	.SuccessRate = 15;      
+	.GlobalFailQuota = 10;  
+
+	setarray .ReqItem_ID[0], 6000235, 35092, 3209;   
+	setarray .ReqItem_Amt[0], 10,  20,  2;   
+
+	.ReqElu_Amt = 20;       
+	.ReqOri_Amt = 50;       
+	.ReqZeny = 100000;      
+
+	setarray .CrimsonWeapons[0], 
+		28604, 28705, 28007, 1839, 16040, 1680, 13454, 2025, 28106, 21015, 18130; 
+	end;
+}

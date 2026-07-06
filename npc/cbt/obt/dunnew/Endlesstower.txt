@@ -1,0 +1,2426 @@
+//===== rAthena Script ======================================= 
+//= Endless Tower (Classic Patch 5.0 + Reward System)
+//===== By: ================================================== 
+//= L0ne_W0lf / Modified for Classic + Auto Reward System + Anti-Exploit
+//============================================================ 
+
+morocc,187,93,3	script	กัปตัน Janssen	709,{
+
+	// --- ระบบ GM ล้างคูลดาวน์ ---
+	if (getgmlevel() >= 99) {
+		mes "[GM Menu - กัปตัน Janssen]";
+		mes "ท่านต้องการล้างสถานะและ Cooldown ของ Endless Tower หรือไม่?";
+		switch(select("ไม่ เล่นตามปกติ:รีเซ็ตให้ตัวฉันเอง (คนเดียว):รีเซ็ตให้ผู้เล่นบางคน (ระบุชื่อ):รีเซ็ตให้ทุกคนทั้งเซิร์ฟเวอร์ !!")) {
+		case 1:
+			break; // ข้ามไปเล่นตามปกติ
+			
+		case 2:
+			set #etower_timer, 0;
+			set #etower_enter_time, 0;
+			set #etower_partyid, 0;
+			set #et_reward_flag, 0;
+			mes "ล้างสถานะและ Cooldown ของท่านเรียบร้อยแล้ว!";
+			close;
+
+		case 3:
+			mes "กรุณาพิมพ์ ^0000ffชื่อตัวละคร^000000 ที่ต้องการรีเซ็ตคูลดาวน์:";
+			input .@target_name$;
+			next;
+			set .@target_aid, getcharid(3, .@target_name$);
+			
+			if (.@target_aid > 0) {
+				// กรณีที่ผู้เล่นเป้าหมาย "ออนไลน์อยู่"
+				set .@gm_aid, getcharid(3); // จำ ID ของ GM ไว้
+				attachrid(.@target_aid);    // สลับสคริปต์ไปรันที่ตัวผู้เล่นเป้าหมายชั่วคราว
+				set #etower_timer, 0;
+				set #etower_enter_time, 0;
+				set #etower_partyid, 0;
+				set #et_reward_flag, 0;
+				dispbottom "[Endless Tower] GM ได้ทำการรีเซ็ตคูลดาวน์หอคอยให้คุณแล้ว!";
+				attachrid(.@gm_aid);       // สลับสคริปต์กลับมาที่ GM
+				mes "รีเซ็ตให้ผู้เล่น ^0000ff" + .@target_name$ + "^000000 (ออนไลน์) เรียบร้อยแล้ว!";
+			} else {
+				// กรณีที่ผู้เล่นเป้าหมาย "ออฟไลน์" (ไปลบในฐานข้อมูลโดยตรง)
+				query_sql "SELECT `account_id` FROM `char` WHERE `name` = '" + escape_sql(.@target_name$) + "' LIMIT 1", .@off_aid;
+				if (.@off_aid > 0) {
+					query_sql "DELETE FROM `acc_reg_num` WHERE (`key`='#etower_timer' OR `key`='#etower_enter_time' OR `key`='#etower_partyid' OR `key`='#et_reward_flag') AND `account_id`=" + .@off_aid;
+					mes "รีเซ็ตให้ผู้เล่น ^0000ff" + .@target_name$ + "^000000 (ออฟไลน์) ผ่านฐานข้อมูลเรียบร้อยแล้ว!";
+				} else {
+					mes "ไม่พบชื่อผู้เล่น ^ff0000" + .@target_name$ + "^000000 ในเซิร์ฟเวอร์ครับ";
+				}
+			}
+			close;
+			
+		case 4:
+			mes "ท่านแน่ใจหรือไม่ว่าจะล้างคูลดาวน์ให้ผู้เล่น ^FF0000ทุกคนทั้งเซิร์ฟเวอร์^000000 ?";
+			mes "การกระทำนี้จะล้างประวัติการรับของ และล้างเวลาคูลดาวน์ให้ทุกคนสามารถลงดันได้ใหม่ทันที";
+			if (select("ยกเลิก:ยืนยันการล้างทั้งเซิร์ฟเวอร์!") == 2) {
+				// ลบในฐานข้อมูล (สำหรับคนที่ออฟไลน์อยู่)
+				query_sql "DELETE FROM `acc_reg_num` WHERE `key`='#etower_timer' OR `key`='#etower_enter_time' OR `key`='#etower_partyid' OR `key`='#et_reward_flag'";
+				
+				// ประกาศให้ผู้เล่นทั้งเซิร์ฟเวอร์ทราบ
+				announce "[Endless Tower] GM ได้ทำการรีเซ็ตคูลดาวน์หอคอยให้ผู้เล่นทุกคน สามารถลุยดันเจี้ยนใหม่ได้ทันที!", bc_all|bc_blue;
+				
+				// รีเซ็ตตัวแปรให้กับทุกคนที่กำลังออนไลน์อยู่ ณ ตอนนี้
+				addrid 0;
+				set #etower_timer, 0;
+				set #etower_enter_time, 0;
+				set #etower_partyid, 0;
+				set #et_reward_flag, 0;
+				end; 
+			}
+			close;
+		}
+		next;
+	}
+	// --------------------------
+
+	if (checkweight(1201,1) == 0) {
+		mes "^008800รอซักครู่!!";
+		mes "คุณมีน้ำหนักเกินกำหนด กรุณากลับมาใหม่อีกครั้งเมือมีน้ำหนักที่เหมาะสม^000000";
+		close;
+	}
+	if (BaseLevel != 99) {
+		mes "[กัปตัน Janssen]";
+		mes "อ้าา... หอคอยแห่งนี้มันอันตรายเกินไปสำหรับนาย...";
+		mes "เฉพาะผู้ที่มีความแข็งแกร่งระดับสูงสุด ^ff0000(Lv. 99)^000000 เท่านั้น ข้าถึงจะยอมออกเรือไปส่ง";
+		close;
+	}
+	set .@name$,strcharinfo(0);
+	if (in_102tower == 1) {
+		mes "^0000ffมันน่าตื่นเต้นเป้นบ้า ลุงคนนั้นรีบวิ่งเข้าไปที่ร้านขายอุปกรณ์ออกเรือเพื่อสั่งซื้อของ ท่านไม่ร้จะทำอย่างไร นอกจากตัดสินใจถามเขาว่าจะรีบทำไม?^000000";
+		next;
+		mes "^0000ffตาลุงนั่น หลังจากที่เสร็จจากการซื้อของ ก็เดินมาหาท่าน^000000";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "ข้าแค่รู้สึกประทับใจ เมื่อท่านยอมรับข้อเสนอของข้า ชายแปลกหน้า! อย่างง่ายดาย ฮ่าๆ ท่านน่าจะเป็นคนที่ข้อไว้ใจได้ เป็นนักเดินทางที่แข็งแกร่ง ว่าแต่ท่านสนใจจะออกเรือข้ามสมุทรไปกับข้าไหม?";
+		next;
+		mes "["+.@name$+"]";
+		mes "เอ่อ.. ข้าก็เคยล่องเรือมาบ้างนะ. แต่คิดๆดูแล้ว เคยมีแค่ไม่กี่คนเองนะที่ลจะ่องเรือข้ามทวีปได้";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "ฮ่ะ แค่นั้นก็เพียงพอแล้ว  ข้าอาจจะมีแค่เบ็ดตกปลาเล็กๆอันเดียว แต่เห็นอย่างนี้ข้าเคยเป็นถึงกับตันเรือรบเชียวนะ";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "อย่างที่ท่านเคยรู้มาแหละ มีแค่ไม่กี่คนเท่านั้นที่สามารถล่องสมุทรข้ามทวีปได้ ตัวข้าเองก็ล้มเหลวมาไม่น้อยในการพิชิตมหาสมุทรนี้";
+		next;
+		mes "^0000ffMr. Janssen พูดคุยเกี่ยวกับประสบการณ์ล่องเรือข้ามสมุทรของเขาเองอยู่พักหนึ่ง ท่านเห็นว่าไม่ได้รีบร้อนอะไร จึงนั่งลง และตั้งใจฟังเรื่องราวของเขา^000000";
+		next;
+		mes "^0000ffถึงแม้ว่าเรื่องราวเกินครึ่งที่เล่ามา มันจะดูเว่อร์และเกินจริง แต่มีบางสิ่งที่สะดุดใจท่าน เป็นเรื่องราวของหอคอยลึกลับขนาดใหญ่ สูงเสียดฟ้า ที่ตั้งตระหง่านอยู่กลางมหาสมุทร^000000";
+		set in_102tower,2;
+		close;
+	} else if (in_102tower == 2) {
+		mes "[กัปตัน Janssen]";
+		mes "ในตอนนั้น หลังจากที่เรือใกล้จะล่ม ข้าได้ทอดสมอทลงี่หอคอยลึบลับนั้น พวกเราตั้งใจว่าจะพักอยู่ที่นั้นจนกว่าพายุฝนจะหยุด... แต่ดูเหมือนว่ามันไม่มีทีท่าจะหยุด";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "ลูกเรือของข้าเริ่มหิวโซ จนผู้คนบางส่วนเริ่มเดินเข้าไปในหอคอยนั่น ... แต่ไม่มีใครที่ได้กลับออกมาเลย";
+		next;
+		mes "["+.@name$+"]";
+		mes "แล้วทำไมท่าน ไม่เข้าไปกับพวกเขารึ?";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "สัญชาตญาณมันบอกน่ะ ว่าข้างในนั้นมันต้องมีอันตรายรออยู่...  แม้ว่าข้าจะอยากรู้อยากเห็น แต่ข้าก็ไม่เอาชีวิตไปเสี่ยงหรอก พวกเรารอให้เขากลับมานานถึง 7 วัน จนกระทั่งพายุฝนหยุดลง แต่ตอนนั้นก็ไม่มีใครได้กลับออกมาเลย";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "จนถึงจุดที่พวกข้าเริ่มอยากมีชีวิตรอดอย่างสิ้นคิด พวกเรายอมละทิ้งทุกอย่างเอาไว้ และออกจากหอคอยบ้านั่นพร้อมกับน้ำดื่มและพืชรอบๆหอคอยอันน้อยนิด ... ซึ่งในที่สุด .. ข้าเป็นคนเดียวที่รอดมาได้...";
+		next;
+		mes "^0000ffคุณจินตนาการได้ถึงความสูญเสียที่เกิดขึ้น การเผชิญกับลูกเรือคนสุดท้ายที่กำลังจะตาย  ชายแก่ไม่พูดอะไรต่อ แต่ใบหน้าของเขาดูเศร้าหมอง จนผ่านไปซักครู่หนึ่งเขาก็เริ่มพูดอีกครั้ง^000000";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "ข้ามีบางสิ่ง ที่อยากจะทำก่อนตาย ข้าอยากจะได้ร่างของลูกเรือที่ติดอยู่ในหอคอยนั่น พวกเขาควรจะได้รับการทำพิธีและฝังอย่างเหมาะสม";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "ข้ารุ้สึกโชคดีที่ได้พบนักเดินทางอย่างท่าน ถ้าท่านมอบเงินให้ข้านิดหน่อย ข้ามั่นใจว่าจะออกเรือไปที่หอคอยนั่นได้อีกครั้งแน่";
+		next;
+		mes "["+.@name$+"]";
+		mes "ท่านจะให้ข้าจ้างท่านเท่าไรล่ะ?";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "ขอบคุณท่านมาก แต่สถานที่นั้นมันอันตรายมาก ข้ามีหน้าที่ที่จะต้องทำให้ได้ ซึ่งจริงๆท่านก็ไม่ได้มีอะไรติดค้างกับข้าหรือพวกเขาเหล่านั้น ... ข้าไม่อยากให้คนหนุ่มอย่างท่านจะต้องมาสละชีวิตในสถานที่อันตรายแบบนั้น";
+		next;
+		mes "["+.@name$+"]";
+		mes "ไม่หรอก...";
+		mes ".";
+		mes ".";
+		mes "ข้าเป็นนักเดินทาง ข้าอยากจะรู้เกี่ยวกับสถานที่นั้น นั่นแหละคือสิ่งที่ข้าต้องการ...";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "'งั้นข้าจะรีบไปเตรียมเรือออก ท่านก็เตรียมตัวให้พร้อม ข้าจะรออยู่ที่นี่ หากท่านพร้อมเมื่อไรก็มาบอกข้าแล้วกัน";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "...OK งั้น...";
+		mes "ยินดีที่ได้ร่วมเดินทางกับท่าน";
+		set in_102tower,3;
+		close;
+	} else if (in_102tower == 3) {
+		mes "[กัปตัน Janssen]";
+		mes "พร้อมจะออกเรือหรือยัง?";
+		next;
+		switch(select("ใช่,,ไปกันเถอะ!:No, ข้ายังไม่พร้อม...")) {
+		case 1:
+			mes "[กัปตัน Janssen]";
+			mes "ดึงสมอขึ้น! ออกเรือได้!!";
+			close2;
+			set in_102tower,4;
+			warp "e_tower",70,114;
+			end;
+		case 2:
+			mes "[กัปตัน Janssen]";
+			mes "ได้สิ ไม่มีปัญหา ท่านพร้อมเมื่อไรก็บอกข้าได้";
+			close;
+		}
+	} else if (in_102tower > 3) {
+		mes "[กัปตัน Janssen]";
+		mes "เอ่อ., หากจะข้ามมหาสมุทรอีกครั้ง เราจะต้องเตรียมอุปกรณ์ใหม่ หากท่านให้ข้า 10,000 zeny ข้าจะจัดการทุกอย่างให้ทันที";
+		next;
+		switch(select("เดี๋ยวข้ากลับมาใหม่:ไปกันเลย!")) {
+		case 1:
+			mes "["+.@name$+"]";
+			mes "เอ่อ ตอนนี้ข้าไม่มีเงิน ไวเดี่ยวข้ากลับมาใหม่เมื่อเงินพอนะ";
+			next;
+			mes "[กัปตัน Janssen]";
+			mes "ได้สิ ไม่มีปัญหา ข้าจะรอท่านอยู่ที่นี่";
+			close;
+		case 2:
+			if (Zeny < 10000) {
+				mes "[กัปตัน Janssen]";
+				mes "ต้องอภัยด้วย ท่านมีเงินไม่พอ ข้าต้องการเงินเพียง 10,000 zeny ในการเตรียมอุปกรณ์สำหรับเดินทาง...";
+				close;
+			}
+			else {
+				mes "[กัปตัน Janssen]";
+				mes "เยี่ยม! งั้นพวกเราออกก็พร้อมออกเดินทางได้ ดึงสมอขึ้นแล้วไปกันเลย!";
+				set Zeny, Zeny-10000;
+				close2;
+				warp "e_tower",70,114;
+				end;
+			}
+		}
+	} else {
+		mes "[กัปตัน Janssen]";
+		mes "ขอโทษนะ ท่านเป็นนักผจญภัยรึเปล่า?";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "ข้าต้องขอโทษที่ถามแบบนั้น โดยเฉพาะคนที่เพิ่งเจอกันครั้งแรก แต่ข้าขออะไรซักอย่างได้ไหม แค่แปปเดียว";
+		next;
+		mes "[กัปตัน Janssen]";
+		mes "ข้าขอ ^0000ff10,000 Zeny^000000 จากท่านได้มั้ย? มันสำคัญกับตัวข้ามาก...";
+		next;
+		switch(select("ไม่!:อ่อ.. ได้สิ")) {
+		case 1:
+			mes "["+.@name$+"]";
+			mes "ขอโทษด้วยนะ แต่ท่านน่าจะถามผิดคนแล้วล่ะ";
+			next;
+			mes "[กัปตัน Janssen]";
+			mes "ไม่เป็นไรข้าเข้าใจ... ขอโทษที่รบกวน ข้ารู้ว่ามันอาจจะหยาบคายไปหน่อยที่ถามอะไรแบบนี้กับคนที่เพิ่งพบครั้งแรก";
+			close;
+		case 2:
+			mes "[กัปตัน Janssen]";
+			mes "หืมม? ท่านแน่ใจแล้วนะว่าจะมอบเงินนี้ให้ข้า? ขอบคุณท่านมาก!";
+			next;
+			if (Zeny < 10000) {
+				mes "[กัปตัน Janssen]";
+				mes "...ข้าขอโทษ ข้าไม่คิดว่าท่านจะมีเงินไม่ถึง 10,000 zeny ขอบคุณในความหวังดี แต่ข้าต้องใช้เงินมากกว่านั้น";
+				close;
+			} else {
+				mes "["+.@name$+"]";
+				mes "ข้าก็ไม่รู้นะ ว่าท่านจะเอาเงินไปทำอะไร แต่อ่ะ,,ข้าให้ท่าน";
+				next;
+				mes "^0000ffคุณได้มอบ 10,000 Zeny ให้กัปตัน Janssen^000000.";
+				next;
+				mes "[กัปตัน Janssen]";
+				mes "ขอบคุณท่านมาก แบบนี้ข้าก็สามารถเตรียมอุปกรณ์สำหรับเรือข้าได้แล้ว ท่านช่างเป็นคนดี คนดีจริงๆ!";
+				set Zeny, Zeny-10000;
+				set in_102tower,1;
+				close;
+			}
+		}
+	}
+}
+
+e_tower,81,105,0	script	Tower Protection Stone	406,{
+
+	if (BaseLevel != 99) {
+		mes "^ff0000[ Endless Tower ]^000000";
+		mes "อนุญาตให้เฉพาะตัวละครระดับ ^0000ffLevel 99^000000 เท่านั้น ที่สามารถเข้าร่วมดันเจี้ยนนี้ได้";
+		close;
+	}
+
+	set .@party_id,getcharid(1);
+	set .@md_name$,"Endless Tower";
+
+	if (!instance_check_party(.@party_id,1)) {
+		mes "กรุณาสร้าง หรือเข้าร่วมปาร์ตี้ที่มีสมาชิกมากกว่า 1 คนแล้วลองอีกครั้ง";
+		close;
+	}
+
+	// --- [อัปเดตใหม่] ระบบจำกัด 2 จอ ต่อ 1 เครื่อง (Gepard Hardware ID) ---
+	set .@acc_id, getcharid(3);
+	
+	// ดึง HWID ปัจจุบันของคนกดเสา (เปลี่ยนเป็น last_unique_id ตาม DB ของคุณ)
+	query_sql "SELECT `last_unique_id` FROM `login` WHERE `account_id` = " + .@acc_id, .@my_mac$;
+	
+	if (.@my_mac$ != "" && .@my_mac$ != "0") {
+		query_sql "SELECT COUNT(*) FROM `char` c LEFT JOIN `login` l ON c.`account_id` = l.`account_id` WHERE c.`online` = 1 AND c.`party_id` = " + .@party_id + " AND l.`last_unique_id` = '" + .@my_mac$ + "'", .@mac_count;
+		
+		if (.@mac_count > 2) {
+			mes "^ff0000[Gepard Shield Limit]^000000";
+			mes "ขออภัยครับ ระบบตรวจพบว่าในปาร์ตี้นี้";
+			mes "มีตัวละครที่มาจาก ^0000ffเครื่อง (PC) เดียวกัน^000000 เกิน 2 จอ";
+			mes "ไม่อนุญาตให้นำตัวละครเข้าดันเจี้ยนเกิน 2 จอต่อ 1 เครื่องครับ";
+			close;
+		}
+	}
+	// -----------------------------------------------------------------
+
+	// [ ระบบอนุญาตให้กู้คืนดันเจี้ยนข้ามปาร์ตี้ได้ในกรณีเซิร์ฟดับ ]
+	if (#etower_enter_time + 14400 > gettimetick(2)) {
+		set .@can_recreate, 0;
+		if ($etower_server_boot != #etower_instance_boot) {
+			set .@can_recreate, 1;
+		}
+
+		if (getcharid(1) == #etower_partyid || .@can_recreate) {
+			mes "ท่านมีบันทึกการลงหอคอยที่ยังไม่หมดเวลา (ดันเจี้ยน 4 ชม.)";
+			
+			if (.@can_recreate) {
+				mes "ระบบตรวจพบการ ^ff0000Restart ของเซิร์ฟเวอร์^000000";
+				mes "ท่านสามารถกู้คืนดันเจี้ยนเพื่อลุยต่อได้ทันที!";
+			} else {
+				mes "ท่านสามารถเข้าสู่ดันเจี้ยนเพื่อลุยต่อได้เลย";
+			}
+			next;
+			
+			set .@menu_res$, "เข้าสู่ดันเจี้ยน (ฟรี)";
+			if (is_party_leader() && .@can_recreate) {
+				set .@menu_res$, .@menu_res$ + ":สร้างดันเจี้ยนใหม่ (กู้คืนจากเซิร์ฟดับ)";
+			}
+			set .@menu_res$, .@menu_res$ + ":กลับสู่ Morocc";
+			
+			set .@sel_res, select(.@menu_res$);
+			
+			if (.@sel_res == 1) {
+				// ส่ง Parameter: (0 = ข้ามการตั้งคูลดาวน์ใหม่), (1 = โหมดสมาชิก), (0 = ไม่หักเงิน เพราะคือการกู้คืน)
+				callsub L_Enter, 0, 1, 0; 
+			} else if (.@sel_res == 2 && is_party_leader() && .@can_recreate) {
+				if (instance_create(.@md_name$) < 0) {
+					mes "สร้างดันเจี้ยนล้มเหลว! (ระบบอาจจะเต็ม)";
+					close;
+				}
+				// อัปเดตไอดีปาร์ตี้ใหม่ (เผื่อตั้งตี้ใหม่หลังเซิร์ฟเปิด) และเวลาบูทเซิร์ฟ
+				set #etower_partyid, getcharid(1);
+				set #etower_instance_boot, $etower_server_boot;
+				callsub L_Enter, 0, 0, 0; 
+			} else {
+				mes "ข้าจะส่งท่านกลับ Morocc";
+				close2; warp "morocc",157,89; end;
+			}
+		}
+	}
+
+	if (#etower_timer > gettimetick(2)) {
+		set .@dun_ent_t, (#etower_timer - gettimetick(2));
+		set .@dun_h, (.@dun_ent_t / 3600);
+		set .@dun_m, (.@dun_ent_t - (.@dun_h * 3600)) / 60;
+		set .@dun_s, .@dun_ent_t - ((.@dun_h * 3600) + (.@dun_m * 60));
+		mes "เนื่องจากผลข้างเคียง ไอดีของคุณจะไม่สามารถเข้าสู่หอคอยได้ชั่วคราวอีก " + .@dun_h + " ชั่วโมง " + .@dun_m + " นาที " + .@dun_s + " วินาที ";
+		next;
+		
+		// --- ตรวจสอบว่าแอดมินเปิดระบบรีเซ็ตหรือไม่ ---
+		if (.allow_reset == 1) {
+			mes "แต่เดี๋ยวก่อน... หากท่านต้องการล้างสถานะคูลดาวน์และรีเซ็ตประวัติการรับรางวัล เพื่อลงดันเจี้ยนใหม่ทันที ข้าสามารถช่วยชำระล้างให้ได้";
+			
+			if (.reset_zeny > 0) {
+				mes "ท่านจะยอมจ่ายเงิน ^0000ff" + .reset_zeny + " Zeny^000000 เป็นค่าทำพิธีหรือไม่?";
+				set .@menu_str$, "ไม่ล่ะ ข้าจะรอ และขอกลับ Morocc:จ่าย " + .reset_zeny + " Zeny รีเซ็ตทันที!";
+			} else {
+				mes "และข่าวดีคือ ตอนนี้ข้าจะทำให้ท่าน ^0000ffฟรี!^000000 ไม่คิดค่าใช้จ่าย";
+				set .@menu_str$, "ไม่ล่ะ ข้าจะรอ และขอกลับ Morocc:รีเซ็ตทันที! (ฟรี)";
+			}
+
+			switch(select(.@menu_str$)) {
+			case 1:
+				mes "ที่นี่มันอันตราย เดี๋ยวข้าไปส่งท่านที่ Morocc";
+				close2;
+				warp "morocc",157,89;
+				end;
+			case 2:
+				if (.reset_zeny > 0 && Zeny < .reset_zeny) {
+					mes "เงินของท่านไม่พอนะ กลับมาใหม่เมื่อพร้อมเถอะ";
+					close;
+				}
+				if (.reset_zeny > 0) {
+					set Zeny, Zeny - .reset_zeny; // หักเงิน
+				}
+				
+				set #etower_timer, 0; 
+				set #etower_enter_time, 0; 
+				set #etower_partyid, 0; 
+				set #et_reward_flag, 0; 
+				mes "ล้างสถานะและรีเซ็ตประวัติรับของรางวัลเรียบร้อยแล้ว! คุยกับข้าใหม่อีกครั้งเพื่อสร้างและเข้าสู่ดันเจี้ยนได้เลย";
+				close;
+			}
+		} else {
+			// ถ้าระบบรีเซ็ตถูกปิดอยู่
+			mes "ที่นี่มันอันตราย เดี๋ยวข้าไปส่งท่านที่ Morocc";
+			close2;
+			warp "morocc",157,89;
+			end;
+		}
+	}
+
+	if (is_party_leader() == true) {
+		mes "ปาร์ตี้นี้ได้รับการยืนยัน คุณต้องการที่จะสร้างทางเข้าสู่ Endless Tower หรือไม่?";
+		mes "^ff0000* ค่าเข้าดันเจี้ยน: 1,000,000 Zeny/คน (หักตอนเข้าวาร์ป) *^000000";
+		next;
+		switch(select("สร้างดันเจี้ยน "+.@md_name$+":เข้าสู่ดันเจี้ยน (1m Zeny):กลับสู่ Morocc:ยกเลิก")) {
+		case 1:
+			if (instance_create(.@md_name$) < 0) {
+				mes "ชื่อปาร์ตี้: "+ getpartyname(.@party_id);
+				mes "หัวหน้าปาร์ตี้: "+strcharinfo(0);
+				mes "^0000ff"+.@md_name$+" ^000000- การลงทะเบียนล้มเหลว!";
+				close;
+			}
+			mes "^0000ff"+.@md_name$+"^000000 - พยายามลงทะเบียน";
+			mes "หลังจากลงทะเบียนแล้ว ท่านต้องคุยกับ NPC ด้านหลัง แล้วเลือกเมนู 'เข้าสู่ดันเจี้ยน' เพื่อเข้าไปในดันเจี้ยน";
+			close;
+		case 2:
+			// ส่ง Parameter: (0 = หัวตี้เข้า), (1 = โหมดสมาชิก), (1 = หักเงิน 1m ด้วย)
+			callsub L_Enter,0,1,1;
+		case 3:
+			mes "ข้าจะส่งท่านกลับ Morocc";
+			close2;
+			warp "morocc",157,89;
+			end;
+		case 4:
+			close;
+		}
+	}
+	
+	switch(select("เข้าสู่ "+.@md_name$+" (1m Zeny):กลับสู่ Morocc:ยกเลิก")) {
+	case 1:
+		callsub L_Enter,1,1,1;
+	case 2:
+		mes "ข้าจะส่งท่านกลับ Morocc";
+		close2;
+		warp "morocc",157,89;
+		end;
+	case 3:
+		end;
+	}
+
+L_Enter:
+	// ตรวจสอบเงิน 1m กรณีเป็นการลงรอบใหม่ (getarg(2) == 1 คือรอบใหม่)
+	if (getarg(2) == 1 && Zeny < 1000000) {
+		mes "^ff0000[ Endless Tower ]^000000";
+		mes "คุณมีเงินไม่พอ! ค่าธรรมเนียมในการลงหอคอยคือ ^0000ff1,000,000 Zeny^000000";
+		close;
+	}
+
+	// === [HOTFIX] ตรวจเช็ค Gepard ก่อนสร้างดันเจี้ยน ===
+	set .@acc_id, getcharid(3);
+	query_sql "SELECT `last_unique_id` FROM `login` WHERE `account_id` = " + .@acc_id, .@my_mac$;
+	
+	if (.@my_mac$ != "" && .@my_mac$ != "0") {
+		set .@mac_count, 0;
+		getpartymember getcharid(1), 2; 
+
+		for(set .@i, 0; .@i < $@partymembercount; .@i++) {
+			if (isloggedin($@partymemberaid[.@i])) {
+				query_sql "SELECT `last_unique_id` FROM `login` WHERE `account_id` = " + $@partymemberaid[.@i], .@member_mac$;
+				if (.@member_mac$ == .@my_mac$) {
+					set .@mac_count, .@mac_count + 1;
+				}
+			}
+		}
+
+		if (.@mac_count > 2) {
+			mes "^ff0000[Gepard Shield Limit]^000000";
+			mes "ระบบป้องกันทำงาน: ตรวจพบการพยายามเข้าดันเจี้ยนเกิน 2 จอจากเครื่องเดียวกัน";
+			close;
+		}
+	}
+	// =========================================================
+
+	switch(instance_enter("Endless Tower")) {
+	case IE_OTHER:
+		mes "มีข้อผิดพลาดเกิดขึ้น";
+		close;
+	case IE_NOINSTANCE:
+		mes "The memorial dungeon Endless Tower ไม่ว่าง";
+		mes "หัวหน้าปาร์ตี้ไม่สามารถเปิดดันเจี้ยนได้ขณะนี้";
+		close;
+	case IE_NOMEMBER:
+		mes "ท่านจะเข้าดันเจี้ยนได้ ก็ต่อเมื่ออยู่ในปาร์ตี้";
+		close;
+	case IE_OK:
+		mapannounce "e_tower", strcharinfo(0) +" จากปาร์ตี้, "+ getpartyname( getcharid(1) ) +", กำลังเข้าสู่ดันเจี้ยน Endless Tower.",bc_map,"0x00ff99",FW_NORMAL,12;
+		
+		// หักเงิน 1m เฉพาะตอนลงรอบใหม่เท่านั้น (Resume จะไม่หักเงินซ้ำ)
+		if (getarg(2) == 1) {
+			set Zeny, Zeny - 1000000;
+		}
+
+		if (getarg(1)) {
+			// +86400 วินาที = คูลดาวน์ 1 วัน
+			if (#etower_timer < gettimetick(2)) {
+				set #etower_timer, gettimetick(2) + 86400; 
+				set #etower_enter_time, gettimetick(2);
+				set #etower_partyid, getcharid(1);
+				set #et_reward_flag, 0; // รีเซ็ตประวัติการรับของรางวัลรอบใหม่
+				set #et_resume_floor, 1; 
+			}
+			set #etower_instance_boot, $etower_server_boot;
+		}
+		if (getarg(0) == 0) close;
+		else end;
+	}
+	end; // จบการทำงานของ L_Enter
+
+OnInit:
+	// ==========================================
+	// [ตั้งค่าระบบรีเซ็ต Cooldown]
+	// ==========================================
+	.allow_reset = 0;     // 1 = เปิดให้ผู้เล่นรีเซ็ตดันเจี้ยนเองได้ | 0 = ปิดระบบรีเซ็ต
+	.reset_zeny  = 500000; // จำนวนเงิน Zeny ที่ต้องใช้ (ถ้าต้องการให้รีเซ็ตฟรี ให้ใส่ 0)
+	end;
+}
+
+e_tower,30,30,2	script	Huge Vortex	844,2,2,{
+	end;
+OnTouch:
+	mapannounce "e_tower","[ " + strcharinfo(0) + " ], ดูเหมือนจะถูกกลืนไปในกระแสน้ำวน",bc_map,"0x00ff99",FW_NORMAL,12;
+	warp "morocc",157,89;
+	end;
+}
+
+e_tower,1,1,2	script	#102Administrator Mode	844,{
+	callfunc "F_GM_NPC";
+	mes "กรุณากรอก Password";
+	set .@i, callfunc("F_GM_NPC","dmc2008",1);
+	next;
+	if (.@i == 1) {
+		switch(select("เสียบ Purification Stone:เอา Purification Stone ออก:ยกเลิก")) {
+		case 1:
+			mes "เสียบ Purification Stone ซึ่งจะคงอยู่เป็นเวลา 30 นาที";
+			donpcevent "Purification Stone#et1::OnEnable";
+			break;
+		case 2:
+			mes "ทำลาย Purification Stone";
+			donpcevent "Purification Stone#et1::OnDisable";
+			break;
+		case 3:
+			mes "คุณได้ยกเลิกการกระทำ";
+			break;
+		}
+		close;
+	} else {
+		mes "กรอก Password ถูกต้อง";
+		close;
+	}
+}
+
+e_tower,69,117,4	script	Purification Stone#et1	406,{
+	set etower_timer,0;
+	mes "^0000ffผลบันทึก และผลข้างเคียงจากหอคอย ได้สิ้นสุดลงแล้ว ตอนนี้ท่านสามารถลงทะเบียนเข้าสู่หอคอยได้อีกครั้ง^000000";
+	close;
+
+OnInit:
+	disablenpc "Purification Stone#et1";
+	end;
+OnEnable:
+	initnpctimer;
+	end;
+OnDisable:
+	stopnpctimer;
+	disablenpc "Purification Stone#et1";
+	end;
+OnTimer1000:
+	enablenpc "Purification Stone#et1";
+	end;
+OnTimer1740000:
+	mapannounce "e_tower", "Purification Stone กำลังจะถูกทำลายภายใน 1 นาที",bc_map,"0x00ff99";
+	end;
+OnTimer1800000:
+	disablenpc "Purification Stone#et1";
+	end;
+}
+
+e_tower,151,185,4	script	Purification Stone#et2	844,{
+	callfunc "F_GM_NPC";
+	set etower_timer,0;
+	mes "^0000ffผลบันทึก และผลข้างเคียงจากหอคอย ได้สิ้นสุดลงแล้ว ตอนนี้ท่านสามารถลงทะเบียนเข้าสู่หอคอยได้อีกครั้ง^000000";
+	close2;
+	warp "e_tower",75,108;
+	end;
+}
+
+// Core Functions
+//============================================================
+function	script	F_Tower_Monster	{
+
+	set .@level, getarg(0);
+	set .@map$, getarg(1);
+	set .@label$, getarg(2);
+
+	switch(.@level) {
+	case 1:
+		areamonster .@map$,7,351,17,387,"MARIN",1242,5,.@label$;
+		areamonster .@map$,7,351,17,387,"POPORING",1031,5,.@label$;
+		areamonster .@map$,7,351,17,387,"DROPS",1113,5,.@label$;
+		areamonster .@map$,7,351,17,387,"PORING",1002,5,.@label$;
+		break;
+	case 2:
+		areamonster .@map$,93,351,103,387,"DESERT WOLF",1106,20,.@label$;
+		areamonster .@map$,93,351,103,387,"VAGABOND WOLF",1092,1,.@label$;
+		areamonster .@map$,93,351,103,387,"BABY DESERT WOLF",1107,10,.@label$;
+		break;
+	case 3:
+		areamonster .@map$,181,351,191,387,"ARCHER SKELETON",1016,5,.@label$;
+		areamonster .@map$,181,351,191,387,"SKEL WORKER",1169,5,.@label$;
+		areamonster .@map$,181,351,191,387,"SOLDIER SKELETON",1028,5,.@label$;
+		areamonster .@map$,181,351,191,387,"ORC SKELETON",1152,5,.@label$;
+		areamonster .@map$,181,351,191,387,"PIRATE SKELETON",1071,5,.@label$;
+		areamonster .@map$,181,351,191,387,"SKELETON",1076,5,.@label$;
+		break;
+	case 4:
+		areamonster .@map$,267,351,277,387,"Argiope",1099,15,.@label$;
+		areamonster .@map$,267,351,277,387,"Mantis",1139,5,.@label$;
+		areamonster .@map$,267,351,277,387,"Argos",1100,5,.@label$;
+		areamonster .@map$,267,351,277,387,"Vocal",1088,1,.@label$;
+		areamonster .@map$,267,351,277,387,"Rocker",1052,5,.@label$;
+		areamonster .@map$,267,351,277,387,"Hornet",1004,5,.@label$;
+		break;
+	case 5:
+		areamonster .@map$,352,351,362,387,"THIEF BUG MALE",1054,15,.@label$;
+		areamonster .@map$,352,351,362,387,"THIEF BUG FEMALE",1053,15,.@label$;
+		areamonster .@map$,352,351,362,387,"THIEF BUG",1051,15,.@label$;
+		areamonster .@map$,352,351,362,387,"THIEF BUG EGG",1048,5,.@label$;
+		break;
+	case 6:
+		areamonster .@map$,9,267,19,303,"THIEF BUG EGG",1048,5,.@label$;
+		areamonster .@map$,9,267,19,303,"ANT EGG",1097,5,.@label$;
+		areamonster .@map$,9,267,19,303,"PUPA",1008,5,.@label$;
+		break;
+	case 7:
+		areamonster .@map$,93,267,103,303,"EXPLOSION",1383,15,.@label$;
+		areamonster .@map$,93,267,103,303,"DRAINLIAR",1111,15,.@label$;
+		areamonster .@map$,93,267,103,303,"FARMILIAR",1005,15,.@label$;
+		break;
+	case 8:
+		areamonster .@map$,181,267,191,303,"FIRELOCK SOLDIER",1403,15,.@label$;
+		areamonster .@map$,181,267,191,303,"CRUISER",1248,15,.@label$;
+		break;
+	case 9:
+		areamonster .@map$,267,267,277,303,"GOLEM",1040,30,.@label$;
+		areamonster .@map$,267,267,277,303,"STALACTIC GOLEM",1278,15,.@label$;
+		break;
+	case 10:
+		areamonster .@map$,352,267,362,303,"GOLDEN THIEF BUG",1086,1,.@label$;
+		areamonster .@map$,352,267,362,303,"GIANT HORNET",1303,25,.@label$;
+		areamonster .@map$,352,267,362,303,"HORNET",1004,20,.@label$;
+		
+		break;
+	case 11:
+		areamonster .@map$,9,180,19,216,"DRYAD",1493,15,.@label$;
+		areamonster .@map$,9,180,19,216,"PARASITE",1500,15,.@label$;
+		areamonster .@map$,9,180,19,216,"HERMIT PLANT",1413,15,.@label$;
+		break;
+	case 12:
+		areamonster .@map$,93,180,103,216,"Demon Pungus",1378,25,.@label$;
+		areamonster .@map$,93,180,103,216,"Punk",1199,25,.@label$;
+		break;
+	case 13:
+		areamonster .@map$,181,180,191,216,"YAO YUN",1512,20,.@label$;
+		areamonster .@map$,181,180,191,216,"BONGUNN",1188,20,.@label$;
+		areamonster .@map$,181,180,191,216,"MUNAK",1026,10,.@label$;
+		break;
+	case 14:
+		areamonster .@map$,267,180,277,216,"HIGH ORC",1213,15,.@label$;
+		areamonster .@map$,267,180,277,216,"ORC ARCHER",1189,10,.@label$;
+		areamonster .@map$,267,180,277,216,"ORC LADY",1273,10,.@label$;
+		areamonster .@map$,267,180,277,216,"ORC WARRIOR",1023,5,.@label$;
+		break;
+	case 15:
+		areamonster .@map$,352,180,362,216,"PHREEONI",1159,1,.@label$;
+		areamonster .@map$,352,180,362,216,"DENIRO",1105,15,.@label$;
+		areamonster .@map$,352,180,362,216,"PIERRE",1160,15,.@label$;
+		areamonster .@map$,352,180,362,216,"ANDRE",1095,15,.@label$;
+		areamonster .@map$,352,180,362,216,"ANT EGG",1097,5,.@label$;
+		break;
+	case 16:
+		areamonster .@map$,9,96,19,132,"RAYDRIC ARCHER",1276,10,.@label$;
+		areamonster .@map$,9,96,19,132,"ORC ARCHER",1189,10,.@label$;
+		areamonster .@map$,9,96,19,132,"GARGOYLE",1253,10,.@label$;
+		areamonster .@map$,9,96,19,132,"ARCHER SKELETON",1016,10,.@label$;
+		break;
+	case 17:
+		areamonster .@map$,93,96,103,132,"MERMAN",1264,10,.@label$;
+		areamonster .@map$,93,96,103,132,"BAPHOMET JR.",1101,10,.@label$;
+		areamonster .@map$,93,96,103,132,"STROUF",1065,15,.@label$;
+		break;
+	case 18:
+		areamonster .@map$,181,96,191,132,"CRAMP",1209,25,.@label$;
+		areamonster .@map$,181,96,191,132,"TAROU",1175,15,.@label$;
+		break;
+	case 19:
+		areamonster .@map$,267,96,277,132,"DEVIACE",1108,10,.@label$;
+		areamonster .@map$,267,96,277,132,"MEGALODON",1064,10,.@label$;
+		areamonster .@map$,267,96,277,132,"SWORDFISH",1069,10,.@label$;
+		areamonster .@map$,267,96,277,132,"PHEN",1158,10,.@label$;
+		break;
+	case 20:
+		areamonster .@map$,352,96,362,132,"DRAKE",1112,1,.@label$;
+		areamonster .@map$,352,96,362,132,"PIRATE SKELETON",1071,50,.@label$;
+		break;
+	case 21:
+		areamonster .@map$,9,9,19,45,"MISTRESS",1059,1,.@label$;
+		areamonster .@map$,9,9,19,45,"MANTIS",1139,20,.@label$;
+		areamonster .@map$,9,9,19,45,"ARGIOPE",1099,20,.@label$;
+		break;
+	case 22:
+		areamonster .@map$,93,9,103,45,"FLORA",1118,25,.@label$;
+		areamonster .@map$,93,9,103,45,"HYDRA",1068,15,.@label$;
+		areamonster .@map$,93,9,103,45,"MANDRAGORA",1020,15,.@label$;
+		break;
+	case 23:
+		areamonster .@map$,181,9,191,45,"PENOMENA",1216,15,.@label$;
+		areamonster .@map$,181,9,191,45,"OBEAUNE",1044,10,.@label$;
+		areamonster .@map$,181,9,191,45,"MARSE",1144,10,.@label$;
+		areamonster .@map$,181,9,191,45,"SWORDFISH",1069,10,.@label$;
+		areamonster .@map$,181,9,191,45,"HYDRA",1068,5,.@label$;
+		break;
+	case 24:
+		areamonster .@map$,267,9,277,45,"JOKER",1131,15,.@label$;
+		areamonster .@map$,267,9,277,45,"CARAT",1267,15,.@label$;
+		areamonster .@map$,267,9,277,45,"JAKK",1130,10,.@label$;
+		break;
+	case 25:
+		areamonster .@map$,352,9,362,45,"CAT O' NINE TAILS",1307,15,.@label$;
+		areamonster .@map$,352,9,362,45,"MOONLIGHT",1150,1,.@label$;
+		areamonster .@map$,352,9,362,45,"NINE TAIL",1180,15,.@label$;
+		break;
+	case 26:
+		areamonster .@map$,9,351,19,387,"GIBBET",1503,10,.@label$;
+		areamonster .@map$,9,351,19,387,"ENCHANTED PEACH TREE",1410,10,.@label$;
+		areamonster .@map$,9,351,19,387,"WOODEN GOLEM",1497,10,.@label$;
+		areamonster .@map$,9,351,19,387,"STONE SHOOTER",1495,10,.@label$;
+		areamonster .@map$,9,351,19,387,"ELDER WILLOW",1033,5,.@label$;
+		break;
+	case 27:
+		areamonster .@map$,93,351,103,387,"GOBLIN ARCHER",1258,10,.@label$;
+		areamonster .@map$,93,351,103,387,"GOBLIN",1122,10,.@label$;
+		areamonster .@map$,93,351,103,387,"GOBLIN",1123,5,.@label$;
+		areamonster .@map$,93,351,103,387,"GOBLIN",1124,5,.@label$;
+		areamonster .@map$,93,351,103,387,"GOBIN",1125,5,.@label$;
+		areamonster .@map$,93,351,103,387,"GOBLIN",1126,5,.@label$;
+		break;
+	case 28:
+		areamonster .@map$,181,351,191,387,"MAYA",1147,1,.@label$;
+		areamonster .@map$,181,351,191,387,"ARCLOUSE",1194,30,.@label$;
+		areamonster .@map$,181,351,191,387,"NERAID",1255,15,.@label$;
+		areamonster .@map$,181,351,191,387,"PEST",1256,15,.@label$;
+		areamonster .@map$,181,351,191,387,"KUKRE",1070,10,.@label$;
+		break;
+	case 29:
+		areamonster .@map$,267,351,277,387,"DARK FRAME",1260,10,.@label$;
+		areamonster .@map$,267,351,277,387,"THE PAPER",1375,10,.@label$;
+		areamonster .@map$,267,351,277,387,"HYLOZOIST",1510,10,.@label$;
+		areamonster .@map$,267,351,277,387,"QUVE",1508,5,.@label$;
+		areamonster .@map$,267,351,277,387,"LUDE",1509,5,.@label$;
+		areamonster .@map$,267,351,277,387,"WHISPER",1179,10,.@label$;
+		break;
+	case 30:
+		areamonster .@map$,352,351,362,387,"EVIL NYMPH",1416,30,.@label$;
+		areamonster .@map$,352,351,362,387,"MAO GUAI",1513,30,.@label$;
+		break;
+	case 31:
+		areamonster .@map$,9,267,19,303,"GIG",1387,20,.@label$;
+		areamonster .@map$,9,267,19,303,"ARGIOPE",1099,10,.@label$;
+		areamonster .@map$,9,267,19,303,"SCORPION",1001,5,.@label$;
+		break;
+	case 32:
+		areamonster .@map$,93,267,103,303,"GOBLIN LEADER",1299,1,.@label$;
+		areamonster .@map$,93,267,103,303,"GOBLIN ARCHER",1258,10,.@label$;
+		areamonster .@map$,93,267,103,303,"GOBLIN",1122,10,.@label$;
+		areamonster .@map$,93,267,103,303,"GOBLIN",1123,5,.@label$;
+		areamonster .@map$,93,267,103,303,"GOBLIN",1124,5,.@label$;
+		areamonster .@map$,93,267,103,303,"GOBLIN",1125,5,.@label$;
+		areamonster .@map$,93,267,103,303,"GOBLIN",1126,5,.@label$;
+		break;
+	case 33:
+		areamonster .@map$,181,267,191,303,"KOBOLD LEADER",1296,1,.@label$;
+		areamonster .@map$,181,267,191,303,"KOBOLD",1133,15,.@label$;
+		areamonster .@map$,181,267,191,303,"KOBOLD_ARCHER",1282,15,.@label$;
+		areamonster .@map$,181,267,191,303,"KOBOLD",1134,10,.@label$;
+		areamonster .@map$,181,267,191,303,"KOBOLD",1135,5,.@label$;
+		break;
+	case 34:
+		areamonster .@map$,267,267,277,303,"WHISPER",1179,10,.@label$;
+		areamonster .@map$,267,267,277,303,"GIANT WHISPER",1186,10,.@label$;
+		break;
+	case 35:
+		areamonster .@map$,352,267,362,303,"TURTLE GENERAL",1312,1,.@label$;
+		areamonster .@map$,352,267,362,303,"FREEZER",1319,10,.@label$;
+		areamonster .@map$,352,267,362,303,"SOLIDER",1316,10,.@label$;
+		areamonster .@map$,352,267,362,303,"HEATER",1318,10,.@label$;
+		areamonster .@map$,352,267,362,303,"PERMETER",1314,10,.@label$;
+		break;
+	case 36:
+		areamonster .@map$,9,180,19,216,"ANOLIAN",1206,30,.@label$;
+		areamonster .@map$,9,180,19,216,"ALLIGATOR",1271,10,.@label$;
+		break;
+	case 37:
+		areamonster .@map$,93,180,103,216,"CLOCK TOWER MANAGER",1270,10,.@label$;
+		areamonster .@map$,93,180,103,216,"CLOCK",1269,10,.@label$;
+		areamonster .@map$,93,180,103,216,"ALARM",1193,30,.@label$;
+		break;
+	case 38:
+		areamonster .@map$,181,180,191,216,"RIDEWORD",1195,20,.@label$;
+		areamonster .@map$,181,180,191,216,"DEATH WORD",1698,20,.@label$;
+		break;
+	case 39:
+		areamonster .@map$,267,180,277,216,"EVIL NYMPH",1416,10,.@label$;
+		areamonster .@map$,267,180,277,216,"MAO GUI",1513,10,.@label$;
+		areamonster .@map$,267,180,277,216,"TAOIST HERMIT",1412,10,.@label$;
+		areamonster .@map$,267,180,277,216,"ZHU PO LONG",1514,10,.@label$;
+		areamonster .@map$,267,180,277,216,"JIN GUAI",1517,5,.@label$;
+		break;
+	case 40:
+		areamonster .@map$,352,180,362,216,"SAMURAI SPECTER",1492,1,.@label$;
+		areamonster .@map$,352,180,362,216,"SHINOBI",1401,10,.@label$;
+		areamonster .@map$,352,180,362,216,"TENGU",1405,10,.@label$;
+		areamonster .@map$,352,180,362,216,"FIRELOCK SOLDIER",1403,5,.@label$;
+		areamonster .@map$,352,180,362,216,"MIYABI DOLL",1404,10,.@label$;
+		areamonster .@map$,352,180,362,216,"KARAKASA",1400,5,.@label$;
+		break;
+	case 41:
+		areamonster .@map$,9,96,19,132,"TAMRUAN",1584,30,.@label$;
+		areamonster .@map$,9,96,19,132,"LEAF CAT",1586,50,.@label$;
+		break;
+	case 42:
+		areamonster .@map$,93,96,103,132,"SLEEPER",1386,20,.@label$;
+		areamonster .@map$,93,96,103,132,"STING",1207,10,.@label$;
+		areamonster .@map$,93,96,103,132,"MI GAO",1516,10,.@label$;
+		areamonster .@map$,93,96,103,132,"SANDMAN",1165,5,.@label$;
+		areamonster .@map$,93,96,103,132,"HODE",1127,5,.@label$;
+		break;
+	case 43:
+		areamonster .@map$,181,96,191,132,"MEDUSA",1148,10,.@label$;
+		areamonster .@map$,181,96,191,132,"SIDEWINDER",1037,40,.@label$;
+		areamonster .@map$,181,96,191,132,"ANACONDAQ",1030,5,.@label$;
+		areamonster .@map$,181,96,191,132,"BOA",1025,5,.@label$;
+		break;
+	case 44:
+		areamonster .@map$,267,96,277,132,"BAPHOMET JR.",1101,20,.@label$;
+		areamonster .@map$,267,96,277,132,"ORC BABY",1686,1,.@label$;
+		areamonster .@map$,267,96,277,132,"BABY DESERT WOLF",1107,10,.@label$;
+		areamonster .@map$,267,96,277,132,"SAVAGE BABE",1167,10,.@label$;
+		break;
+	case 45:
+		areamonster .@map$,352,96,362,132,"OSIRIS",1038,1,.@label$;
+		areamonster .@map$,352,96,362,132,"ANCIENT MUMMY",1297,15,.@label$;
+		areamonster .@map$,352,96,362,132,"VERIT",1032,15,.@label$;
+		areamonster .@map$,352,96,362,132,"MUMMY",1041,20,.@label$;
+		break;
+	case 46:
+		areamonster .@map$,9,9,19,45,"MEGALITH",1274,20,.@label$;
+		areamonster .@map$,9,9,19,45,"TRI JOINT",1279,20,.@label$;
+		areamonster .@map$,9,9,19,45,"TAO GUNKA",1583,1,.@label$;
+		break;
+	case 47:
+		areamonster .@map$,93,9,103,45,"DELETER",1384,10,.@label$;
+		areamonster .@map$,93,9,103,45,"DELETER",1385,10,.@label$;
+		areamonster .@map$,93,9,103,45,"PETITE",1156,10,.@label$;
+		areamonster .@map$,93,9,103,45,"PETITE",1155,10,.@label$;
+		break;
+	case 48:
+		areamonster .@map$,181,9,191,45,"ANCIENT WORM",1305,10,.@label$;
+		areamonster .@map$,181,9,191,45,"ANCIENT MUMMY",1297,10,.@label$;
+		areamonster .@map$,181,9,191,45,"MIMIC",1191,10,.@label$;
+		break;
+	case 49:
+		areamonster .@map$,267,9,277,45,"Grizzly",1381,20,.@label$;
+		areamonster .@map$,267,9,277,45,"Leib Olmai",1306,7,.@label$;
+		areamonster .@map$,267,9,277,45,"Zipper Bear",1417,5,.@label$;
+		areamonster .@map$,267,9,277,45,"Sasquatch",1243,5,.@label$;
+		areamonster .@map$,267,9,277,45,"Bigfoot",1060,5,.@label$;
+		break;
+	case 50:
+		areamonster .@map$,352,9,362,45,"PHARAOH",1157,1,.@label$;
+		areamonster .@map$,352,9,362,45,"ANUBIS",1098,10,.@label$;
+		areamonster .@map$,352,9,362,45,"MARDUK",1140,10,.@label$;
+		areamonster .@map$,352,9,362,45,"MATYR",1146,10,.@label$;
+		break;
+	case 51:
+		areamonster .@map$,9,351,19,387,"Mini Demon",1292,20,.@label$;
+		areamonster .@map$,9,351,19,387,"Diabolic",1382,20,.@label$;
+		areamonster .@map$,9,351,19,387,"Deviruchi",1109,10,.@label$;
+		break;
+	case 52:
+		areamonster .@map$,93,351,103,387,"HARPY",1376,20,.@label$;
+		areamonster .@map$,93,351,103,387,"GRAND PECO",1369,10,.@label$;
+		areamonster .@map$,93,351,103,387,"BLOODY BUTTERFLY",1408,10,.@label$;
+		areamonster .@map$,93,351,103,387,"GARGOYLE",1253,10,.@label$;
+		break;
+	case 53:
+		areamonster .@map$,181,351,191,387,"ASSAULTER",1315,25,.@label$;
+		areamonster .@map$,181,351,191,387,"SHINOBI",1401,30,.@label$;
+		break;
+	case 54:
+		areamonster .@map$,267,351,277,387,"CHEPET",1250,10,.@label$;
+		areamonster .@map$,267,351,277,387,"MARIONTTE",1143,10,.@label$;
+		areamonster .@map$,267,351,277,387,"MIYABI DOLL",1404,10,.@label$;
+		break;
+	case 55:
+		areamonster .@map$,352,351,362,387,"EDDGA",1115,1,.@label$;
+		areamonster .@map$,352,351,362,387,"MEDUSA",1148,25,.@label$;
+		areamonster .@map$,352,351,362,387,"ISIS",1029,15,.@label$;
+		areamonster .@map$,352,351,362,387,"SIDEWINDER",1037,15,.@label$;
+		break;
+	case 56:
+		areamonster .@map$,9,267,19,303,"LORD OF DEATH",1373,1,.@label$;
+		areamonster .@map$,9,267,19,303,"LOLI RURI",1505,15,.@label$;
+		areamonster .@map$,9,267,19,303,"GIBBET",1503,15,.@label$;
+		areamonster .@map$,9,267,19,303,"BLOODY MURDERER",1507,15,.@label$;
+		areamonster .@map$,9,267,19,303,"DULLAHAN",1504,15,.@label$;
+		break;
+	case 57:
+		areamonster .@map$,93,267,103,303,"ARC ANGELING",1388,1,.@label$;
+		areamonster .@map$,93,267,103,303,"GHOSTRING",1120,1,.@label$;
+		areamonster .@map$,93,267,103,303,"MASTERING",1090,1,.@label$;
+		areamonster .@map$,93,267,103,303,"MARIN",1242,5,.@label$;
+		areamonster .@map$,93,267,103,303,"POPORING",1031,5,.@label$;
+		areamonster .@map$,93,267,103,303,"DROPS",1113,5,.@label$;
+		break;
+	case 58:
+		areamonster .@map$,181,267,191,303,"PHENDARK",1202,20,.@label$;
+		areamonster .@map$,181,267,191,303,"RYBIO",1201,10,.@label$;
+		areamonster .@map$,181,267,191,303,"ZOMBIE PRISONER",1197,10,.@label$;
+		areamonster .@map$,181,267,191,303,"SKELETON PRISONER",1196,5,.@label$;
+		areamonster .@map$,181,267,191,303,"INJUSTICE",1257,5,.@label$;
+		break;
+	case 59:
+		areamonster .@map$,267,267,277,303,"MIMIC",1191,40,.@label$;
+		areamonster .@map$,267,267,277,303,"MYSTCASE",1249,20,.@label$;
+		break;
+	case 60:
+		areamonster .@map$,352,267,362,303,"DOPPELGANGER",1046,1,.@label$;
+		areamonster .@map$,352,267,362,303,"BATHORY",1102,20,.@label$;
+		areamonster .@map$,352,267,362,303,"NIGHTMARE",1061,20,.@label$;
+		areamonster .@map$,352,267,362,303,"MYST",1151,10,.@label$;
+		break;
+	case 61:
+		areamonster .@map$,9,180,19,216,"MOBSTER",1313,10,.@label$;
+		areamonster .@map$,9,180,19,216,"PASANA",1154,20,.@label$;
+		areamonster .@map$,9,180,19,216,"ANUBIS",1098,20,.@label$;
+		break;
+	case 62:
+		areamonster .@map$,93,180,103,216,"HATII",1252,1,.@label$;
+		areamonster .@map$,93,180,103,216,"Wanderer",1208,25,.@label$;
+		areamonster .@map$,93,180,103,216,"ICE TITAN",1777,15,.@label$;
+		areamonster .@map$,93,180,103,216,"SNOWIER",1775,15,.@label$;
+		break;
+	case 63:
+		areamonster .@map$,181,180,191,216,"ZOMBIE MASTER",1298,10,.@label$;
+		areamonster .@map$,181,180,191,216,"ZOMBIE PRISONER",1197,20,.@label$;
+		areamonster .@map$,181,180,191,216,"ORC ZOMBIE",1153,20,.@label$;
+		areamonster .@map$,181,180,191,216,"ZOMBIE",1015,20,.@label$;
+		break;
+	case 64:
+		areamonster .@map$,267,180,277,216,"ANCIENT WORM",1305,10,.@label$;
+		areamonster .@map$,267,180,277,216,"CATERPILLAR",1300,10,.@label$;
+		areamonster .@map$,267,180,277,216,"KILLER MANTIS",1294,20,.@label$;
+		areamonster .@map$,267,180,277,216,"GIANT HORNET",1303,10,.@label$;
+		break;
+	case 65:
+		areamonster .@map$,352,180,362,216,"AMON RA",1511,1,.@label$;
+		areamonster .@map$,352,180,362,216,"SKELETON WORKER",1169,30,.@label$;
+		areamonster .@map$,352,180,362,216,"GIEARTH",1121,30,.@label$;
+		break;
+	case 66:
+		areamonster .@map$,9,96,19,132,"ORC HERO",1087,1,.@label$;
+		areamonster .@map$,9,96,19,132,"HIGH ORC",1213,20,.@label$;
+		areamonster .@map$,9,96,19,132,"ORC LADY",1273,20,.@label$;
+		break;
+	case 67:
+		areamonster .@map$,93,96,103,132,"DELETER",1384,25,.@label$;
+		areamonster .@map$,93,96,103,132,"MUTANT DRAGONOID",1262,10,.@label$;
+		areamonster .@map$,93,96,103,132,"PETITE",1156,25,.@label$;
+		break;
+	case 68:
+		areamonster .@map$,181,96,191,132,"LAVA GOLEM",1366,15,.@label$;
+		areamonster .@map$,181,96,191,132,"STALACTIC GOLEM",1278,10,.@label$;
+		areamonster .@map$,181,96,191,132,"WOODEN GOLEM",1497,15,.@label$;
+		areamonster .@map$,181,96,191,132,"GOLEM",1040,15,.@label$;
+		break;
+	case 69:
+		areamonster .@map$,267,96,277,132,"FALSE ANGEL",1371,25,.@label$;
+		areamonster .@map$,267,96,277,132,"DEVILING",1582,1,.@label$;
+		areamonster .@map$,267,96,277,132,"ANGELING",1096,1,.@label$;
+		break;
+	case 70:
+		areamonster .@map$,352,96,362,132,"ORC HERO",1087,1,.@label$;
+		areamonster .@map$,352,96,362,132,"HIGH ORC",1213,30,.@label$;
+		areamonster .@map$,352,96,362,132,"ORC LADY",1273,20,.@label$;
+		
+		break;
+	case 71:
+		areamonster .@map$,9,9,19,45,"SUCCUBUS",1370,20,.@label$;
+		areamonster .@map$,9,9,19,45,"NIGHTMARE TERROR",1379,20,.@label$;
+		areamonster .@map$,9,9,19,45,"INCUBUS",1374,20,.@label$;
+		areamonster .@map$,9,9,19,45,"NIGHTMARE",1061,5,.@label$;
+		break;
+	case 72:
+		areamonster .@map$,93,9,103,45,"LORD OF DEATH",1373,1,.@label$;
+		areamonster .@map$,93,9,103,45,"LOLI RURI",1505,20,.@label$;
+		areamonster .@map$,93,9,103,45,"BLOODY MURDERER",1507,20,.@label$;
+		areamonster .@map$,93,9,103,45,"DULLAHAN",1504,20,.@label$;
+		break;
+	case 73:
+		areamonster .@map$,181,9,191,45,"SUCCUBUS",1370,10,.@label$;
+		areamonster .@map$,181,9,191,45,"LOLI RURI",1505,20,.@label$;
+		areamonster .@map$,181,9,191,45,"ZEALOTUS",1200,5,.@label$;
+		areamonster .@map$,181,9,191,45,"ALICE",1275,5,.@label$;
+		break;
+	case 74:
+		areamonster .@map$,267,9,277,45,"ORC LORD",1190,1,.@label$;
+		areamonster .@map$,267,9,277,45,"ORC SKELETON",1152,20,.@label$;
+		areamonster .@map$,267,9,277,45,"ZENORC",1177,30,.@label$;
+		break;
+	case 75:
+		areamonster .@map$,352,9,362,45,"DARK LORD",1272,1,.@label$;
+		areamonster .@map$,352,9,362,45,"DARK ILLUSION",1302,10,.@label$;
+		break;
+	case 76:
+		areamonster .@map$,9,351,19,387,"MUTANT DRAGONOID",1262,1,.@label$;
+		areamonster .@map$,9,351,19,387,"DELETER",1384,20,.@label$;
+		areamonster .@map$,9,351,19,387,"DELETER",1385,20,.@label$;
+		areamonster .@map$,9,351,19,387,"PETITE",1155,20,.@label$;
+		break;
+	case 77:
+		areamonster .@map$,93,351,103,387,"WRAITH DEAD",1291,10,.@label$;
+		areamonster .@map$,93,351,103,387,"EVIL DRUID",1117,10,.@label$;
+		areamonster .@map$,93,351,103,387,"WRAITH",1192,10,.@label$;
+		areamonster .@map$,93,351,103,387,"WIND GHOST",1263,20,.@label$;
+		break;
+	case 78:
+		areamonster .@map$,181,351,191,387,"BLOODY KNIGHT",1268,15,.@label$;
+		areamonster .@map$,181,351,191,387,"ABYSMAL KNIGHT",1219,15,.@label$;
+		areamonster .@map$,181,351,191,387,"DULLAHAN",1504,10,.@label$;
+		areamonster .@map$,181,351,191,387,"RAYDRIC",1163,30,.@label$;
+		break;
+	case 79:
+		areamonster .@map$,267,351,277,387,"BAPHOMET",1039,1,.@label$;
+		areamonster .@map$,267,351,277,387,"BAPHOMET JR.",1101,20,.@label$;
+		areamonster .@map$,267,351,277,387,"DELETER",1385,20,.@label$;
+		areamonster .@map$,267,351,277,387,"PETITE",1155,20,.@label$;
+		break;
+	case 80:
+		areamonster .@map$,352,351,362,387,"MUTANT DRAGONOID",1262,10,.@label$;
+		areamonster .@map$,352,351,362,387,"CAT O' NINE TAILS",1307,30,.@label$;
+		
+		break;
+	case 81:
+		areamonster .@map$,9,267,19,303,"MYSTELTAINN",1203,10,.@label$;
+		areamonster .@map$,9,267,19,303,"OGRETOOTH",1204,10,.@label$;
+		areamonster .@map$,9,267,19,303,"EXECUTIONER",1205,10,.@label$;
+		break;
+	case 82:
+		areamonster .@map$,93,267,103,303,"MAYA",1147,1,.@label$;
+		areamonster .@map$,93,267,103,303,"ARGIOPE",1099,25,.@label$;
+		areamonster .@map$,93,267,103,303,"MANTIS",1139,25,.@label$;
+		break;
+	case 83:
+		areamonster .@map$,181,267,191,303,"DRACULA",1389,1,.@label$;
+		areamonster .@map$,181,267,191,303,"BATHORY",1102,20,.@label$;
+		areamonster .@map$,181,267,191,303,"NIGHTMARE",1061,20,.@label$;
+		break;
+	case 84:
+		areamonster .@map$,267,267,277,303,"SUCCUBUS",1370,10,.@label$;
+		areamonster .@map$,267,267,277,303,"DARK ILLUSION",1302,20,.@label$;
+		areamonster .@map$,267,267,277,303,"OWL DUKE",1320,10,.@label$;
+		areamonster .@map$,267,267,277,303,"OWL BARON",1295,10,.@label$;
+		areamonster .@map$,267,267,277,303,"INCUBUS",1374,10,.@label$;
+		break;
+	case 85:
+		areamonster .@map$,352,267,362,303,"EDDGA",1115,1,.@label$;
+		areamonster .@map$,352,267,362,303,"BIGFOOT",1060,30,.@label$;
+		areamonster .@map$,352,267,362,303,"GRIZZLY",1381,20,.@label$;
+		break;
+	case 86:
+		areamonster .@map$,9,180,19,216,"GRYPHON",1259,10,.@label$;
+		areamonster .@map$,9,180,19,216,"CHIMERA",1283,10,.@label$;
+		areamonster .@map$,9,180,19,216,"MAJORUROS",1310,30,.@label$;
+		break;
+	case 87:
+		areamonster .@map$,93,180,103,216,"STORMY KNIGHT",1251,1,.@label$;
+		areamonster .@map$,93,180,103,216,"ICE TITAN",1777,15,.@label$;
+		areamonster .@map$,93,180,103,216,"SNOWIER",1775,20,.@label$;
+		break;
+	case 88:
+		areamonster .@map$,181,180,191,216,"ANUBIS",1098,25,.@label$;
+		areamonster .@map$,181,180,191,216,"WRAITH DEAD",1291,20,.@label$;
+		areamonster .@map$,181,180,191,216,"ANCIENT MUMMY",1297,20,.@label$;
+		areamonster .@map$,181,180,191,216,"KHALITZBURG",1132,20,.@label$;
+		break;
+	case 89:
+		areamonster .@map$,267,180,277,216,"TURTLE GENERAL",1312,1,.@label$;
+		areamonster .@map$,267,180,277,216,"FREEZER",1319,15,.@label$;
+		areamonster .@map$,267,180,277,216,"HEATER",1318,15,.@label$;
+		break;
+	case 90:
+		areamonster .@map$,352,180,362,216,"DOPPELGANGER",1046,1,.@label$;
+		areamonster .@map$,352,180,362,216,"DARK LORD",1272,1,.@label$;
+		areamonster .@map$,352,180,362,216,"NIGHTMARE TERROR",1379,22,.@label$;
+		
+		break;
+	case 91:
+		areamonster .@map$,9,96,19,132,"MAYA PURPLE",1289,10,.@label$;
+		areamonster .@map$,9,96,19,132,"STROUF",1065,30,.@label$;
+		areamonster .@map$,9,96,19,132,"PHREEONI",1159,1,.@label$;
+		break;
+	case 92:
+		areamonster .@map$,93,96,103,132,"ELDER",1377,10,.@label$;
+		areamonster .@map$,93,96,103,132,"WIND GHOST",1263,10,.@label$;
+		areamonster .@map$,93,96,103,132,"MARDUK",1140,10,.@label$;
+		areamonster .@map$,93,96,103,132,"DRACULA",1389,1,.@label$;
+		break;
+	case 93:
+		areamonster .@map$,181,96,191,132,"BLOODY KNIGHT",1268,15,.@label$;
+		areamonster .@map$,181,96,191,132,"ABYSMAL KNIGHT",1219,20,.@label$;
+		areamonster .@map$,181,96,191,132,"WANDERER",1208,20,.@label$;
+		areamonster .@map$,181,96,191,132,"OSIRIS",1038,1,.@label$;
+		break;
+	case 94:
+		areamonster .@map$,267,96,277,132,"PHARAOH",1157,1,.@label$;
+		areamonster .@map$,267,96,277,132,"ANUBIS",1098,20,.@label$;
+		areamonster .@map$,267,96,277,132,"ANCIENT MUMMY",1297,20,.@label$;
+		break;
+	case 95:
+		areamonster .@map$,352,96,362,132,"BAPHOMET",1039,1,.@label$;
+		areamonster .@map$,352,96,362,132,"BAPHOMET JR.",1101,30,.@label$;
+		break;
+	case 96:
+		areamonster .@map$,9,9,19,45,"LORD OF DEATH",1373,1,.@label$;
+		areamonster .@map$,9,9,19,45,"BLOODY MURDERER",1507,15,.@label$;
+		areamonster .@map$,9,9,19,45,"LOLI RURI",1505,15,.@label$;
+		areamonster .@map$,9,9,19,45,"DULLAHAN",1504,15,.@label$;
+		break;
+	case 97:
+		areamonster .@map$,93,9,103,45,"DARK LORD",1272,1,.@label$;
+		areamonster .@map$,93,9,103,45,"DARK ILLUSION",1302,20,.@label$;
+		break;
+	case 98:
+		areamonster .@map$,181,9,191,45,"EDDGA",1115,1,.@label$;
+		areamonster .@map$,181,9,191,45,"MAYA",1147,1,.@label$;
+		areamonster .@map$,181,9,191,45,"MOONLIGHT",1150,1,.@label$;
+		areamonster .@map$,181,9,191,45,"ORC HERO",1087,1,.@label$;
+		break;
+	case 99:
+		areamonster .@map$,267,9,277,45,"BAPHOMET",1039,1,.@label$;
+		areamonster .@map$,267,9,277,45,"DARK LORD",1272,1,.@label$;
+		areamonster .@map$,267,9,277,45,"STORMY KNIGHT",1251,1,.@label$;
+		areamonster .@map$,267,9,277,45,"BAPHOMET JR.",1101,10,.@label$;
+		break;
+	}
+	return;
+}
+
+function	script	F_Tower_Warp	{
+
+	set .@level, getarg(0);
+	set .@map$, getarg(1);
+
+	switch(.@level) {
+		case 2: warp .@map$,136,354; break;
+		case 3: warp .@map$,224,354; break;
+		case 4: warp .@map$,310,354; break;
+		case 5: warp .@map$,395,354; break;
+		case 6: warp .@map$,52,270; break;
+		case 7: warp .@map$,136,270; break;
+		case 8: warp .@map$,224,270; break;
+		case 9: warp .@map$,310,270; break;
+		case 10: warp .@map$,395,270; break;
+		case 11: warp .@map$,52,183; break;
+		case 12: warp .@map$,136,183; break;
+		case 13: warp .@map$,224,183; break;
+		case 14: warp .@map$,310,183; break;
+		case 15: warp .@map$,395,183; break;
+		case 16: warp .@map$,52,99; break;
+		case 17: warp .@map$,136,99; break;
+		case 18: warp .@map$,224,99; break;
+		case 19: warp .@map$,310,99; break;
+		case 20: warp .@map$,395,99; break;
+		case 21: warp .@map$,52,12; break;
+		case 22: warp .@map$,136,12; break;
+		case 23: warp .@map$,224,12; break;
+		case 24: warp .@map$,310,12; break;
+		case 25: warp .@map$,395,12; break;
+
+		case 27: warp .@map$,136,354; break;
+		case 28: warp .@map$,224,354; break;
+		case 29: warp .@map$,310,354; break;
+		case 30: warp .@map$,395,354; break;
+		case 31: warp .@map$,52,270; break;
+		case 32: warp .@map$,136,270; break;
+		case 33: warp .@map$,224,270; break;
+		case 34: warp .@map$,310,270; break;
+		case 35: warp .@map$,395,270; break;
+		case 36: warp .@map$,52,183; break;
+		case 37: warp .@map$,136,183; break;
+		case 38: warp .@map$,224,183; break;
+		case 39: warp .@map$,310,183; break;
+		case 40: warp .@map$,395,183; break;
+		case 41: warp .@map$,52,99; break;
+		case 42: warp .@map$,136,99; break;
+		case 43: warp .@map$,224,99; break;
+		case 44: warp .@map$,310,99; break;
+		case 45: warp .@map$,395,99; break;
+		case 46: warp .@map$,52,12; break;
+		case 47: warp .@map$,136,12; break;
+		case 48: warp .@map$,224,12; break;
+		case 49: warp .@map$,310,12; break;
+		case 50: warp .@map$,395,12; break;
+
+		case 52: warp .@map$,136,354; break;
+		case 53: warp .@map$,224,354; break;
+		case 54: warp .@map$,310,354; break;
+		case 55: warp .@map$,395,354; break;
+		case 56: warp .@map$,52,270; break;
+		case 57: warp .@map$,136,270; break;
+		case 58: warp .@map$,224,270; break;
+		case 59: warp .@map$,310,270; break;
+		case 60: warp .@map$,395,270; break;
+		case 61: warp .@map$,52,183; break;
+		case 62: warp .@map$,136,183; break;
+		case 63: warp .@map$,224,183; break;
+		case 64: warp .@map$,310,183; break;
+		case 65: warp .@map$,395,183; break;
+		case 66: warp .@map$,52,99; break;
+		case 67: warp .@map$,136,99; break;
+		case 68: warp .@map$,224,99; break;
+		case 69: warp .@map$,310,99; break;
+		case 70: warp .@map$,395,99; break;
+		case 71: warp .@map$,52,12; break;
+		case 72: warp .@map$,136,12; break;
+		case 73: warp .@map$,224,12; break;
+		case 74: warp .@map$,310,12; break;
+		case 75: warp .@map$,395,12; break;
+
+		case 77: warp .@map$,136,354; break;
+		case 78: warp .@map$,224,354; break;
+		case 79: warp .@map$,310,354; break;
+		case 80: warp .@map$,395,354; break;
+		case 81: warp .@map$,52,270; break;
+		case 82: warp .@map$,136,270; break;
+		case 83: warp .@map$,224,270; break;
+		case 84: warp .@map$,310,270; break;
+		case 85: warp .@map$,395,270; break;
+		case 86: warp .@map$,52,183; break;
+		case 87: warp .@map$,136,183; break;
+		case 88: warp .@map$,224,183; break;
+		case 89: warp .@map$,310,183; break;
+		case 90: warp .@map$,395,183; break;
+		case 91: warp .@map$,52,99; break;
+		case 92: warp .@map$,136,99; break;
+		case 93: warp .@map$,224,99; break;
+		case 94: warp .@map$,310,99; break;
+		case 95: warp .@map$,395,99; break;
+		case 96: warp .@map$,52,12; break;
+		case 97: warp .@map$,136,12; break;
+		case 98: warp .@map$,224,12; break;
+		case 99: warp .@map$,309,12; break;
+		case 100: warp .@map$,101,72; break; 
+		case 101: warp .@map$,32,12; break;  
+	}
+	return;
+}
+
+// Levels 1-25
+//============================================================
+1@tower,50,360,0	script	เปลวเพลิงอำมฤต#	844,{
+	mes "- มีข้อความถูกแกะสลักไว้ที่คบเพลิง -";
+	mes "ผู้ใดก็ตามที่โปรย Ashes of the Darkness ในสถานที่นี้ จะก้าวเข้าใกล้สู่ Naght Sieger ราชาผู้ยิ่งใหญ่แห่งความมืดมิด...";
+	next;
+
+	setarray .@level$[1],"26th","51st","76th";
+	setarray .@map$[1],"2@tower","3@tower","4@tower";
+	set .@i, select("26th Level:51st Level:76th Level");
+
+	if (countitem(6000) < .@i) {
+		mes "-คำเตือน-";
+		mes "การจะวาร์ปไปสู่ชันที่ "+.@level$[.@i]+" คุณจะต้องมี "+.@i+" Ashes of the Darkness.";
+		close;
+	}
+	delitem 6000,.@i; //Dark_Ashes
+	mapannounce instance_mapname("1@tower"), strcharinfo(0)+". คุณจะถูกวาร์ปไปสู่ชั้นที่ "+.@level$[.@i]+" ",bc_map,"0x00ff99";
+	warp instance_mapname(.@map$[.@i]),52,354;
+	close;
+
+OnInstanceInit:
+	initnpctimer;
+	end;
+
+OnTimer10000:
+	mapannounce instance_mapname("1@tower"), "ประกาศ : การจับมอนสเตอร์เป็นสัตว์เลี้ยง จะไม่ถูกนับว่าเป็นการกำจัดมอนสเตอร์",bc_map,"0xff0000";
+	stopnpctimer;
+	end;
+}
+
+1@tower,29,365,1	script	#1F Controller	844,{
+	end;
+
+OnInstanceInit:
+	callfunc "F_Tower_Monster",
+		1,
+		instance_mapname("1@tower"),
+		instance_npcname("#1F Controller")+"::OnMyMobDead";
+	end;
+
+OnMyMobDead:
+	set .@map$, instance_mapname("1@tower");
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname("#1F Controller")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		initnpctimer;
+	} else
+		mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 1 อยู่ - "+.@mob_dead_num,bc_map,"0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce instance_mapname("1@tower"), "มอนสเตอร์ทุกตัวในชั้น 1 ถูกกำจัดหมดแล้ว",bc_map,"0xffff00";
+	donpcevent instance_npcname("1FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+1@tower,12,393,0	script	1FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	end;
+OnEnable:
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", atoi(replacestr(strnpcinfo(0),"FGate102tower","")) + 1, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_Tower_Warp", atoi(replacestr(strnpcinfo(0),"FGate102tower","")) + 1, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@level, atoi(replacestr(strnpcinfo(0),"FGate102tower","")) + 1;
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		initnpctimer;
+	} else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น "+callfunc("F_GetNumSuffix",.@level)+" อยู่ - "+.@mob_dead_num,bc_map,"0x00ff99";
+	end;
+OnTimer5000:
+	set .@level, atoi(replacestr(strnpcinfo(0),"FGate102tower","")) + 1;
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น "+callfunc("F_GetNumSuffix",.@level)+" ถูกกำจัดหมดแล้ว",bc_map,"0xffff00";
+	donpcevent instance_npcname(.@level+"FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+1@tower,96,393,0	duplicate(1FGate102tower)	2FGate102tower	45,2,2
+1@tower,184,393,0	duplicate(1FGate102tower)	3FGate102tower	45,2,2
+1@tower,270,393,0	duplicate(1FGate102tower)	4FGate102tower	45,2,2
+1@tower,355,393,0	duplicate(1FGate102tower)	5FGate102tower	45,2,2
+1@tower,12,309,0	duplicate(1FGate102tower)	6FGate102tower	45,2,2
+1@tower,96,309,0	duplicate(1FGate102tower)	7FGate102tower	45,2,2
+1@tower,184,309,0	duplicate(1FGate102tower)	8FGate102tower	45,2,2
+1@tower,270,309,0	duplicate(1FGate102tower)	9FGate102tower	45,2,2
+
+// === แจกของรางวัล 10F ===
+1@tower,355,309,0	script	10FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	setd "$et_clear_" + instance_id() + "_10", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_10", gettimetick(2);
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", 11, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 10, getd("$et_clear_" + instance_id() + "_10");
+	callfunc "F_Tower_Warp", 11, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@mob_dead_num, mobcount(.@map$, instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) initnpctimer;
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 10 อยู่ - "+.@mob_dead_num, bc_map, "0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น 10 ถูกกำจัดหมดแล้ว", bc_map, "0xffff00";
+	donpcevent instance_npcname("11FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+1@tower,12,222,0	duplicate(1FGate102tower)	11FGate102tower	45,2,2
+1@tower,96,222,0	duplicate(1FGate102tower)	12FGate102tower	45,2,2
+1@tower,184,222,0	duplicate(1FGate102tower)	13FGate102tower	45,2,2
+1@tower,270,222,0	duplicate(1FGate102tower)	14FGate102tower	45,2,2
+1@tower,355,222,0	duplicate(1FGate102tower)	15FGate102tower	45,2,2
+1@tower,12,138,0	duplicate(1FGate102tower)	16FGate102tower	45,2,2
+1@tower,96,138,0	duplicate(1FGate102tower)	17FGate102tower	45,2,2
+1@tower,184,138,0	duplicate(1FGate102tower)	18FGate102tower	45,2,2
+1@tower,270,138,0	duplicate(1FGate102tower)	19FGate102tower	45,2,2
+
+// === แจกของรางวัล 20F ===
+1@tower,355,138,0	script	20FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	setd "$et_clear_" + instance_id() + "_20", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_20", gettimetick(2);
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", 21, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 20, getd("$et_clear_" + instance_id() + "_20");
+	callfunc "F_Tower_Warp", 21, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@mob_dead_num, mobcount(.@map$, instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) initnpctimer;
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 20 อยู่ - "+.@mob_dead_num, bc_map, "0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น 20 ถูกกำจัดหมดแล้ว", bc_map, "0xffff00";
+	donpcevent instance_npcname("21FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+1@tower,12,51,0	duplicate(1FGate102tower)	21FGate102tower	45,2,2
+1@tower,96,51,0	duplicate(1FGate102tower)	22FGate102tower	45,2,2
+1@tower,184,51,0	duplicate(1FGate102tower)	23FGate102tower	45,2,2
+1@tower,270,51,0	duplicate(1FGate102tower)	24FGate102tower	45,2,2
+
+1@tower,355,51,0	script	25FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("25FGate102tower");
+	end;
+OnEnable:
+	enablenpc instance_npcname("25FGate102tower");
+	initnpctimer;
+	end;
+OnTouch_:
+	getitem 6000,1; //Dark_Ashes
+	warp instance_mapname("2@tower"),52,354;
+	end;
+OnTimer120000:
+	disablenpc instance_npcname("25FGate102tower");
+	donpcevent instance_npcname("25FGate102tower-2")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+1@tower,355,51,0	script	25FGate102tower-2	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("25FGate102tower-2");
+	end;
+OnEnable:
+	enablenpc instance_npcname("25FGate102tower-2");
+	end;
+OnTouch_:
+	warp instance_mapname("2@tower"),52,354;
+	end;
+}
+
+1@tower,71,4,0	script	#Broadcast Mode1	844,{
+	end;
+OnInstanceInit:
+	initnpctimer;
+	end;
+OnTimer15000:
+OnTimer60000:
+	mapannounce instance_mapname("1@tower"), "ประกาศ : การกำจัดมอนสเตอร์อย่างไม่โปร่งใสทุกกรณี จะทำให้คุณไม่สามารถไปยังชั้นต่อไปได้!",bc_map,"0xff0000";
+	end;
+OnTimer120000:
+	mapannounce instance_mapname("1@tower"), "ประกาศ : การกำจัดมอนสเตอร์อย่างไม่โปร่งใสทุกกรณี จะทำให้คุณไม่สามารถไปยังชั้นต่อไปได้!",bc_map,"0xff0000";
+	stopnpctimer;
+	end;
+}
+
+1@tower,71,1,0	script	#Manager Mode1	844,{
+	callfunc "F_GM_NPC";
+	mes "Please enter the password.";
+	set .@i, callfunc("F_GM_NPC","dmc2008",1);
+	next;
+	if (.@i == 1) {
+		mes "This NPC manages the tower from the 1st to the 25th Level.";
+		mes "Please enter the Level number to open.";
+		mes "(i.g.: 1F->1, 25F->25)";
+		input .@input,1,25;
+		next;
+		if (.@input < 1 || .@input > 25)
+			mes "You can only enter a number from 1 to 25.";
+		else {
+			donpcevent instance_npcname(.@input+"FGate102tower")+"::OnEnable";
+			mes "*** Level "+ .@input + " is now being opened. ***";
+		}
+	}
+	close;
+}
+
+// Levels 26-50
+//============================================================
+2@tower,29,365,2	script	Immortal Furnace#1	844,{
+	end;
+OnInstanceInit:
+	callfunc "F_Tower_Monster", 26, instance_mapname("2@tower"), instance_npcname("Immortal Furnace#1")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	set .@map$, instance_mapname("2@tower");
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname("Immortal Furnace#1")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		initnpctimer;
+	}
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 26 อยู่ - " + .@mob_dead_num,bc_map,"0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce instance_mapname("2@tower"), "มอนสเตอร์ทุกตัวในชั้น 26 ถูกกำจัดหมดแล้ว",bc_map,"0xffff00";
+	donpcevent instance_npcname("26FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+2@tower,12,393,0	duplicate(1FGate102tower)	26FGate102tower	45,2,2
+2@tower,96,393,0	duplicate(1FGate102tower)	27FGate102tower	45,2,2
+2@tower,184,393,0	duplicate(1FGate102tower)	28FGate102tower	45,2,2
+2@tower,270,393,0	duplicate(1FGate102tower)	29FGate102tower	45,2,2
+
+// === แจกของรางวัล 30F ===
+2@tower,355,393,0	script	30FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	setd "$et_clear_" + instance_id() + "_30", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_30", gettimetick(2);
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", 31, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 30, getd("$et_clear_" + instance_id() + "_30");
+	callfunc "F_Tower_Warp", 31, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@mob_dead_num, mobcount(.@map$, instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) initnpctimer;
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 30 อยู่ - "+.@mob_dead_num, bc_map, "0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น 30 ถูกกำจัดหมดแล้ว", bc_map, "0xffff00";
+	donpcevent instance_npcname("31FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+2@tower,12,309,0	duplicate(1FGate102tower)	31FGate102tower	45,2,2
+2@tower,96,309,0	duplicate(1FGate102tower)	32FGate102tower	45,2,2
+2@tower,184,309,0	duplicate(1FGate102tower)	33FGate102tower	45,2,2
+2@tower,270,309,0	duplicate(1FGate102tower)	34FGate102tower	45,2,2
+2@tower,355,309,0	duplicate(1FGate102tower)	35FGate102tower	45,2,2
+2@tower,12,222,0	duplicate(1FGate102tower)	36FGate102tower	45,2,2
+2@tower,96,222,0	duplicate(1FGate102tower)	37FGate102tower	45,2,2
+2@tower,184,222,0	duplicate(1FGate102tower)	38FGate102tower	45,2,2
+2@tower,270,222,0	duplicate(1FGate102tower)	39FGate102tower	45,2,2
+
+// === แจกของรางวัล 40F ===
+2@tower,355,222,0	script	40FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	setd "$et_clear_" + instance_id() + "_40", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_40", gettimetick(2);
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", 41, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 40, getd("$et_clear_" + instance_id() + "_40");
+	callfunc "F_Tower_Warp", 41, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@mob_dead_num, mobcount(.@map$, instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) initnpctimer;
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 40 อยู่ - "+.@mob_dead_num, bc_map, "0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น 40 ถูกกำจัดหมดแล้ว", bc_map, "0xffff00";
+	donpcevent instance_npcname("41FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+2@tower,12,138,0	duplicate(1FGate102tower)	41FGate102tower	45,2,2
+2@tower,96,138,0	duplicate(1FGate102tower)	42FGate102tower	45,2,2
+2@tower,184,138,0	duplicate(1FGate102tower)	43FGate102tower	45,2,2
+2@tower,270,138,0	duplicate(1FGate102tower)	44FGate102tower	45,2,2
+2@tower,355,138,0	duplicate(1FGate102tower)	45FGate102tower	45,2,2
+2@tower,12,51,0	duplicate(1FGate102tower)	46FGate102tower	45,2,2
+2@tower,96,51,0	duplicate(1FGate102tower)	47FGate102tower	45,2,2
+2@tower,184,51,0	duplicate(1FGate102tower)	48FGate102tower	45,2,2
+2@tower,270,51,0	duplicate(1FGate102tower)	49FGate102tower	45,2,2
+
+// === แจกของรางวัล 50F ===
+2@tower,355,51,0	script	50FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("50FGate102tower");
+	setd "$et_clear_" + instance_id() + "_50", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_50", gettimetick(2);
+	enablenpc instance_npcname("50FGate102tower");
+	initnpctimer;
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 50, getd("$et_clear_" + instance_id() + "_50");
+	getitem 6000,1; //Dark_Ashes
+	warp instance_mapname("3@tower"),52,354;
+	end;
+OnTimer120000:
+	disablenpc instance_npcname("50FGate102tower");
+	donpcevent instance_npcname("50FGate102tower-2")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+2@tower,355,51,0	script	50FGate102tower-2	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("50FGate102tower-2");
+	end;
+OnEnable:
+	enablenpc instance_npcname("50FGate102tower-2");
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 50, getd("$et_clear_" + instance_id() + "_50");
+	warp instance_mapname("3@tower"),52,354;
+	end;
+}
+
+2@tower,71,1,0	script	#Manager Mode2	844,{
+	callfunc "F_GM_NPC";
+	mes "Please enter the password.";
+	set .@i, callfunc("F_GM_NPC","dmc2008",1);
+	next;
+	if (.@i == 1) {
+		mes "This NPC manages the tower from the 26st to the 50th Level.";
+		mes "Please enter the Level number to open.";
+		mes "(i.g.: 26F->26, 50F->50)";
+		input .@input,26,50;
+		next;
+		if (.@input < 26 || .@input > 50)
+			mes "You can only enter a number from 26 to 50.";
+		else {
+			donpcevent instance_npcname(.@input+"FGate102tower")+"::OnEnable";
+			mes "*** Level "+ .@input + " is now being opened. ***";
+		}
+	}
+	close;
+}
+
+// Levels 51-75
+//============================================================
+3@tower,29,365,2	script	Immortal Furnace#2	844,{
+	end;
+OnInstanceInit:
+	callfunc "F_Tower_Monster", 51, instance_mapname("3@tower"), instance_npcname("Immortal Furnace#2")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	set .@map$, instance_mapname("3@tower");
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname("Immortal Furnace#2")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		initnpctimer;
+	}
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 51 อยู่ - " + .@mob_dead_num,bc_map,"0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce instance_mapname("3@tower"), "มอนสเตอร์ทุกตัวในชั้น 51 ถูกกำจัดหมดแล้ว",bc_map,"0xffff00";
+	donpcevent instance_npcname("51FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+3@tower,12,393,0	duplicate(1FGate102tower)	51FGate102tower	45,2,2
+3@tower,96,393,0	duplicate(1FGate102tower)	52FGate102tower	45,2,2
+3@tower,184,393,0	duplicate(1FGate102tower)	53FGate102tower	45,2,2
+3@tower,270,393,0	duplicate(1FGate102tower)	54FGate102tower	45,2,2
+3@tower,355,393,0	duplicate(1FGate102tower)	55FGate102tower	45,2,2
+3@tower,12,309,0	duplicate(1FGate102tower)	56FGate102tower	45,2,2
+3@tower,96,309,0	duplicate(1FGate102tower)	57FGate102tower	45,2,2
+3@tower,184,309,0	duplicate(1FGate102tower)	58FGate102tower	45,2,2
+3@tower,270,309,0	duplicate(1FGate102tower)	59FGate102tower	45,2,2
+
+// === แจกของรางวัล 60F ===
+3@tower,355,309,0	script	60FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	setd "$et_clear_" + instance_id() + "_60", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_60", gettimetick(2);
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", 61, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 60, getd("$et_clear_" + instance_id() + "_60");
+	callfunc "F_Tower_Warp", 61, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@mob_dead_num, mobcount(.@map$, instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) initnpctimer;
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 60 อยู่ - "+.@mob_dead_num, bc_map, "0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น 60 ถูกกำจัดหมดแล้ว", bc_map, "0xffff00";
+	donpcevent instance_npcname("61FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+3@tower,12,222,0	duplicate(1FGate102tower)	61FGate102tower	45,2,2
+3@tower,96,222,0	duplicate(1FGate102tower)	62FGate102tower	45,2,2
+3@tower,184,222,0	duplicate(1FGate102tower)	63FGate102tower	45,2,2
+3@tower,270,222,0	duplicate(1FGate102tower)	64FGate102tower	45,2,2
+3@tower,355,222,0	duplicate(1FGate102tower)	65FGate102tower	45,2,2
+3@tower,12,138,0	duplicate(1FGate102tower)	66FGate102tower	45,2,2
+3@tower,96,138,0	duplicate(1FGate102tower)	67FGate102tower	45,2,2
+3@tower,184,138,0	duplicate(1FGate102tower)	68FGate102tower	45,2,2
+3@tower,270,138,0	duplicate(1FGate102tower)	69FGate102tower	45,2,2
+
+// === แจกของรางวัล 70F ===
+3@tower,355,138,0	script	70FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	setd "$et_clear_" + instance_id() + "_70", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_70", gettimetick(2);
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", 71, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 70, getd("$et_clear_" + instance_id() + "_70");
+	callfunc "F_Tower_Warp", 71, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@mob_dead_num, mobcount(.@map$, instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) initnpctimer;
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 70 อยู่ - "+.@mob_dead_num, bc_map, "0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น 70 ถูกกำจัดหมดแล้ว", bc_map, "0xffff00";
+	donpcevent instance_npcname("71FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+3@tower,12,51,0	duplicate(1FGate102tower)	71FGate102tower	45,2,2
+3@tower,96,51,0	duplicate(1FGate102tower)	72FGate102tower	45,2,2
+3@tower,184,51,0	duplicate(1FGate102tower)	73FGate102tower	45,2,2
+3@tower,270,51,0	duplicate(1FGate102tower)	74FGate102tower	45,2,2
+
+3@tower,355,51,0	script	75FGate102tower	45,1,1,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("75FGate102tower");
+	end;
+OnEnable:
+	enablenpc instance_npcname("75FGate102tower");
+	initnpctimer;
+	end;
+OnTouch_:
+	getitem 6000,1; //Dark_Ashes
+	warp instance_mapname("4@tower"),52,354;
+	end;
+OnTimer120000:
+	disablenpc instance_npcname("75FGate102tower");
+	donpcevent instance_npcname("75FGate102tower-2")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+3@tower,355,51,0	script	75FGate102tower-2	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("75FGate102tower-2");
+	end;
+OnEnable:
+	enablenpc instance_npcname("75FGate102tower-2");
+	end;
+OnTouch_:
+	warp instance_mapname("4@tower"),52,354;
+	end;
+}
+
+3@tower,71,1,0	script	#Manager Mode3	844,{
+	callfunc "F_GM_NPC";
+	mes "Please enter the password.";
+	set .@i, callfunc("F_GM_NPC","dmc2008",1);
+	next;
+	if (.@i == 1) {
+		mes "This NPC manages the tower from the 51st to the 75th Level.";
+		mes "Please enter the Level number to open.";
+		mes "(i.g.: 51F->51, 75F->75)";
+		input .@input,51,75;
+		next;
+		if (.@input < 51 || .@input > 75)
+			mes "You can only enter a number from 51 to 75.";
+		else {
+			donpcevent instance_npcname(.@input+"FGate102tower")+"::OnEnable";
+			mes "*** Level "+ .@input + " is now being opened. ***";
+		}
+	}
+	close;
+}
+
+// Levels 76-99
+//============================================================
+4@tower,29,365,2	script	Immortal Furnace#3	844,{
+	end;
+OnInstanceInit:
+	callfunc "F_Tower_Monster", 76, instance_mapname("4@tower"), instance_npcname("Immortal Furnace#3")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	set .@map$, instance_mapname("4@tower");
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname("Immortal Furnace#3")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		initnpctimer;
+	}
+	else mapannounce .@map$,"เหลือมอนสเตอร์ในชั้น 76 อยู่ - " + .@mob_dead_num,bc_map,"0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce instance_mapname("4@tower"),"มอนสเตอร์ทุกตัวในชั้น 76 ถูกกำจัดหมดแล้ว",bc_map,"0xffff00";
+	donpcevent instance_npcname("76FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+4@tower,12,393,0	duplicate(1FGate102tower)	76FGate102tower	45,2,2
+4@tower,96,393,0	duplicate(1FGate102tower)	77FGate102tower	45,2,2
+4@tower,184,393,0	duplicate(1FGate102tower)	78FGate102tower	45,2,2
+4@tower,270,393,0	duplicate(1FGate102tower)	79FGate102tower	45,2,2
+
+// === แจกของรางวัล 80F ===
+4@tower,355,393,0	script	80FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	setd "$et_clear_" + instance_id() + "_80", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_80", gettimetick(2);
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", 81, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 80, getd("$et_clear_" + instance_id() + "_80");
+	callfunc "F_Tower_Warp", 81, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@mob_dead_num, mobcount(.@map$, instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) initnpctimer;
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 80 อยู่ - "+.@mob_dead_num, bc_map, "0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น 80 ถูกกำจัดหมดแล้ว", bc_map, "0xffff00";
+	donpcevent instance_npcname("81FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+4@tower,12,309,0	duplicate(1FGate102tower)	81FGate102tower	45,2,2
+4@tower,96,309,0	duplicate(1FGate102tower)	82FGate102tower	45,2,2
+4@tower,184,309,0	duplicate(1FGate102tower)	83FGate102tower	45,2,2
+4@tower,270,309,0	duplicate(1FGate102tower)	84FGate102tower	45,2,2
+4@tower,355,309,0	duplicate(1FGate102tower)	85FGate102tower	45,2,2
+4@tower,12,222,0	duplicate(1FGate102tower)	86FGate102tower	45,2,2
+4@tower,96,222,0	duplicate(1FGate102tower)	87FGate102tower	45,2,2
+4@tower,184,222,0	duplicate(1FGate102tower)	88FGate102tower	45,2,2
+4@tower,270,222,0	duplicate(1FGate102tower)	89FGate102tower	45,2,2
+
+// === แจกของรางวัล 90F ===
+4@tower,355,222,0	script	90FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname(strnpcinfo(0));
+	setd "$et_clear_" + instance_id() + "_90", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_90", gettimetick(2);
+	enablenpc instance_npcname(strnpcinfo(0));
+	callfunc "F_Tower_Monster", 91, strnpcinfo(4), instance_npcname(strnpcinfo(0))+"::OnMyMobDead";
+	end;
+OnTouch_:
+	callfunc "F_ET_Reward", 90, getd("$et_clear_" + instance_id() + "_90");
+	callfunc "F_Tower_Warp", 91, strnpcinfo(4);
+	end;
+OnMyMobDead:
+	set .@map$, strnpcinfo(4);
+	set .@mob_dead_num, mobcount(.@map$, instance_npcname(strnpcinfo(0))+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) initnpctimer;
+	else mapannounce .@map$, "เหลือมอนสเตอร์ในชั้น 90 อยู่ - "+.@mob_dead_num, bc_map, "0x00ff99";
+	end;
+OnTimer5000:
+	mapannounce strnpcinfo(4), "มอนสเตอร์ทุกตัวในชั้น 90 ถูกกำจัดหมดแล้ว", bc_map, "0xffff00";
+	donpcevent instance_npcname("91FGate102tower")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+4@tower,12,138,0	duplicate(1FGate102tower)	91FGate102tower	45,2,2
+4@tower,96,138,0	duplicate(1FGate102tower)	92FGate102tower	45,2,2
+4@tower,184,138,0	duplicate(1FGate102tower)	93FGate102tower	45,2,2
+4@tower,270,138,0	duplicate(1FGate102tower)	94FGate102tower	45,2,2
+4@tower,355,138,0	duplicate(1FGate102tower)	95FGate102tower	45,2,2
+4@tower,12,51,0	duplicate(1FGate102tower)	96FGate102tower	45,2,2
+4@tower,96,51,0	duplicate(1FGate102tower)	97FGate102tower	45,2,2
+4@tower,184,51,0	duplicate(1FGate102tower)	98FGate102tower	45,2,2
+
+4@tower,271,51,0	script	99FGate102tower	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("99FGate102tower");
+	end;
+OnEnable:
+	enablenpc instance_npcname("99FGate102tower");
+	initnpctimer;
+	end;
+OnTouch_:
+	getitem 6000,1; //Dark_Ashes
+	warp instance_mapname("5@tower"),101,72;
+	end;
+OnTimer120000:
+	disablenpc instance_npcname("99FGate102tower");
+	donpcevent instance_npcname("99FGate102tower-2")+"::OnEnable";
+	stopnpctimer;
+	end;
+}
+
+4@tower,271,51,0	script	99FGate102tower-2	45,2,2,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("99FGate102tower-2");
+	end;
+OnEnable:
+	enablenpc instance_npcname("99FGate102tower-2");
+	end;
+OnTouch_:
+	warp instance_mapname("5@tower"),101,72;
+	end;
+}
+
+4@tower,71,1,0	script	#Manager Mode4	844,{
+	callfunc "F_GM_NPC";
+	mes "Please enter the password.";
+	set .@i, callfunc("F_GM_NPC","dmc2008",1);
+	next;
+	if (.@i == 1) {
+		mes "This NPC manages the tower from the 76th to the 99th Level.";
+		mes "Please enter the Level number to open.";
+		mes "(i.g.: 76F->76, 99F->99)";
+		input .@input,76,99;
+		next;
+		if (.@input < 76 || .@input > 99)
+			mes "You can only enter a number from 76 to 99.";
+		else {
+			donpcevent instance_npcname(.@input+"FGate102tower")+"::OnEnable";
+			mes "*** Level "+ .@input + " is now being opened. ***";
+		}
+	}
+	close;
+}
+
+// Level 100
+//============================================================
+5@tower,106,109,2	script	Lucid Crystal#102	844,{
+	if (in_102tower < 10) {
+		mes "^0000ffมีเสียงลึกลับสะท้อนผ่านจากห้อง เมื่อท่านสัมผัสกับแสงที่ส่องสะท้อนออกมาจาก Lucid Crystal^000000";
+		next;
+		mes "[เสียงลึบลับ]";
+		mes "ยินดีต้อนรับสู่สถานที่ของข้า เจ้าผู้บุกรุก! ข้าล่ะสนุกจริงๆที่ได้ดูเจ้าผ่านด่านมาอย่างยากลำบาก ฮ่าๆ ประทับใจจริงๆ";
+		next;
+		mes "[เสียงลึบลับ]";
+		mes "ถีงยังไงก็เถอะ การโชว์สนุกๆมันได้จบลงแล้ว";
+		next;
+		mes "[เสียงลึบลับ]";
+		mes "มันยังเร็วเกินไปที่แกจะยินดีกับชัยชนะต่อลูกสมุนมือขวาของข้า 'Krothen' ฮ่าาๆ.. มันยังไม่ได้ถูกทำลายไปหรอกนะ.. !";
+		next;
+		mes "[เสียงลึบลับ]";
+		mes "ข้าจะนำมันกลับมาอีกครั้ง ในครั้งหน้าถ้าเจ้าแน่จริง! เจ้าจงกลับมาและกำจัดมันดูอีกครั้งสิ หากเจ้าทำได้ ข้าจะยอมเล่นกับเจ้าด้วยแล้วกัน";
+		next;
+		mes "[เสียงลึบลับ]";
+		mes "ล่า....ก่อน...";
+		mes "อย่าลืมล่ะ เจ้ามนุษย์ ข้าจะรอสนุกกับเจ้าอยู่ที่นี่อีกครั้ง";
+		next;
+		mes "^0000ffหลังจากสิ้นสุดเสียง มีพลังงานประหลาดยกท่านขึ้น แล้วพาท่านไปยังสถานที่บางอย่าง";
+		close2;
+		set in_102tower,10;
+		callfunc "F_ET_Reward", 100, getd("$et_clear_" + instance_id() + "_100"); // แจกของชั้น 100
+		warp "morocc",157,89;
+	}
+	else {
+		mes "^0000ffลำแสงส่องประกายจาก Crystal ดูเหมือนจะส่องกระทบท่าน เช่นเดียวกับครั้งที่แล้ว^000000";
+		next;
+		mes "[เสียงลึบลับ]";
+		mes "ดูเหมือนข้าคงประเมิณเจ้าต่ำเกินไปสินะ คิดไม่ถึงจริงๆว่าจะเจอเจ้าอีกครั้ง";
+		next;
+		mes "[เสียงลึบลับ]";
+		mes "ข้าสัมผัสได้ถึงกลิ่นเหงื่อ ได้ยินถึงเสียงหายใจหอบในการสู้รบของเจ้า อ้าา~ ชัยชนะของเจ้ามนุษย์นี่ทำเอาข้าตื่นเต้นเสียจริง";
+		next;
+		mes "[เสียงลึบลับ]";
+		mes "มาสิ ขึ้นมาเจอกับการต้อนรับจากข้า มาเจอกับ บาโฟเมต ราชันย์ผู้ยิ่งใหญ่ของโลกแห่งความมืด!";
+		close2;
+		warp instance_mapname("6@tower"),32,12;
+	}
+	end;
+
+OnInstanceInit:
+OnDisable:
+	disablenpc instance_npcname("Lucid Crystal#102");
+	setd "$et_clear_" + instance_id() + "_100", 0;
+	end;
+OnEnable:
+	setd "$et_clear_" + instance_id() + "_100", gettimetick(2);
+	enablenpc instance_npcname("Lucid Crystal#102");
+	donpcevent instance_npcname("#102Effect1")+"::OnEnable";
+	end;
+}
+
+5@tower,106,109,2	script	#102Effect1	844,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("#102Effect1");
+	end;
+OnDisable:
+	disablenpc instance_npcname("#102Effect1");
+	end;
+OnEnable:
+	enablenpc instance_npcname("#102Effect1");
+	initnpctimer;
+	end;
+OnTimer500:
+	specialeffect EF_ENHANCE;
+	stopnpctimer;
+	donpcevent instance_npcname("#102Effect2")+"::OnEnable";
+	end;
+}
+
+5@tower,106,109,2	script	#102Effect2	844,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("#102Effect2");
+	end;
+OnDisable:
+	disablenpc instance_npcname("#102Effect2");
+	end;
+OnEnable:
+	enablenpc instance_npcname("#102Effect2");
+	initnpctimer;
+	end;
+OnTimer500:
+	specialeffect EF_ENHANCE;
+	stopnpctimer;
+	donpcevent instance_npcname("#102Effect1")+"::OnEnable";
+	end;
+}
+
+5@tower,82,112,2	script	#102FShadowDust1	844,{
+	end;
+OnInstanceInit:
+	donpcevent instance_npcname("#102FShadowDust")+"::OnEnable";
+	monster instance_mapname("5@tower"),83,85,"Dark Lord",1272,1,instance_npcname("#102FShadowDust1")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	set .@map$, instance_mapname("5@tower");
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname("#102FShadowDust1")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		mapannounce .@map$, "เสียงลึบลับ: เจ้าเป็นใคร ถึงกล้ามาบุกรุกพระราชวังของข้า?!",bc_map,"0xffff00";
+		donpcevent instance_npcname("#102FShadowDust")+"::OnDisable";
+		donpcevent instance_npcname("Lucid Crystal#102")+"::OnEnable";
+	}
+	end;
+}
+
+5@tower,82,113,2	script	#102FShadowDust	844,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("#102FShadowDust");
+	end;
+OnDisable:
+	killmonsterall instance_mapname("5@tower");
+	end;
+OnEnable:
+	set .@map$, instance_mapname("5@tower");
+	monster .@map$,83,85,"DARK LORD",1272,1;
+	monster .@map$,72,93,"DARK ILLUSION",1302,1;
+	monster .@map$,70,87,"KHALITZBURG",1132,1;
+	monster .@map$,68,83,"DARK ILLUSION",1302,1;
+	monster .@map$,70,80,"KHALITZBURG",1132,1;
+	monster .@map$,74,81,"DARK ILLUSION",1302,1;
+	monster .@map$,78,72,"KHALITZBURG",1132,1;
+	monster .@map$,81,70,"DARK ILLUSION",1302,1;
+	monster .@map$,78,84,"KHALITZBURG",1132,1;
+	monster .@map$,85,72,"DARK ILLUSION",1302,1;
+	end;
+}
+
+5@tower,71,1,0	script	#Manager Mode5	844,{
+	callfunc "F_GM_NPC";
+	mes "This NPC manages the crystal on the 100th Level. Please enter the password.";
+	set .@i, callfunc("F_GM_NPC","dmc2008",1);
+	next;
+	if (.@i == 1) {
+		donpcevent instance_npcname("Lucid Crystal#102")+"::OnEnable";
+		mes "The 100th Level's crystal has been activated.";
+	} else
+		mes "Please enter the correct password.";
+	close;
+}
+
+// Level 101
+//============================================================
+6@tower,45,89,2	script	Life Spring#1	844,{
+	mes "^0066ffคุณได้จิบน้ำจากบ่อน้ำสะอาด นั่นทำให้รู้สึกมีพลังกลับมาเพิ่มขึ้น^000000";
+	heal (MaxHp-Hp),(MaxSp-Sp);
+	close;
+
+OnInstanceInit:
+	donpcevent instance_npcname("Life Spring#2")+"::OnEnable";
+	end;
+}
+
+6@tower,45,89,2	script	Life Spring#2	844,{
+	end;
+OnEnable:
+	specialeffect EF_BUBBLE;
+	initnpctimer;
+	end;
+OnTimer2000:
+	stopnpctimer;
+	donpcevent instance_npcname("Life Spring#3")+"::OnEnable";
+	end;
+}
+
+6@tower,45,89,2	script	Life Spring#3	844,{
+	end;
+OnEnable:
+	specialeffect EF_BUBBLE;
+	initnpctimer;
+	end;
+OnTimer2000:
+	stopnpctimer;
+	donpcevent instance_npcname("Life Spring#2")+"::OnEnable";
+	end;
+}
+
+6@tower,32,100,0	warp	102FGate102tower	2,2,6@tower,155,64
+
+6@tower,156,151,2	script	Tyrant's Throne#	844,{
+	end;
+OnInstanceInit:
+	areamonster instance_mapname("6@tower"),154,73,156,75,"Watcher's Son",1627,10,instance_npcname("Tyrant's Throne#")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	set .@mob_dead_num,mobcount(instance_mapname("6@tower"),instance_npcname("Tyrant's Throne#")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		donpcevent instance_npcname("#1st Beeper")+"::OnEnable";
+		disablenpc instance_npcname("Tyrant's Throne#");
+	}
+	end;
+}
+
+6@tower,156,151,2	script	#1st Beeper	844,{
+	end;
+OnEnable:
+	initnpctimer;
+	end;
+OnTimer500:
+	mapannounce instance_mapname("6@tower"),"แขกรับเชิญงั้นหรือ? ข้าหวังว่าเจ้าจะมาที่นี่โดยที่รู้นะว่าอาจไม่ได้กลับไป อ่าา,, หากเจ้าไม่รู้ละก็ ... มันสายไปแล้วล่ะ!",bc_map,"0x00ffcc";
+	end;
+OnTimer5500:
+	mapannounce instance_mapname("6@tower"),"นี่ล่ะว่าทำไม พวกเจ้านักเดินทางถึงต้องมาตายลงที่นี่.",bc_map,"0x00ffcc";
+	end;
+OnTimer10500:
+	mapannounce instance_mapname("6@tower"),"ข้าขอชื่นชมความกล้าหาญของเจ้า... ก็ได้ ข้าจะยอมเล่นกับเจ้า..",bc_map,"0x00ffcc";
+	end;
+OnTimer15500:
+	mapannounce instance_mapname("6@tower"),"เจ้ารู้อะไรรึเปล่า ข้าล่ะชอบจริงๆ เวลาที่เห็นเจ้าพวกมนุษย์วิ่งไปวิ่งมาด้วยความหวาดกลัว",bc_map,"0x00ffcc";
+	end;
+OnTimer20500:
+	set .@map$, instance_mapname("6@tower");
+	mapannounce .@map$,"ไหนดูว่าจะวิ่งได้เร็วแค่ไหน เจ้าพร้อมแล้วหรือยัง?",bc_map,"0x00ffcc";
+	stopnpctimer;
+	areamonster .@map$,151,66,153,106,"Bone Guardian",1152,50,instance_npcname("#1st Beeper")+"::OnMyMobDead";
+	areamonster .@map$,158,66,160,106,"Bone Guardian",1152,50,instance_npcname("#1st Beeper")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	set .@map$, instance_mapname("6@tower");
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname("#1st Beeper")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		donpcevent instance_npcname("#2nd Beeper")+"::OnEnable";
+	}
+	else mapannounce .@map$,"เหลือศัตรูอยู่ " + .@mob_dead_num + "ea",bc_map,"0x00ff99";
+	end;
+}
+
+6@tower,156,151,2	script	#2nd Beeper	844,{
+	end;
+OnEnable:
+	initnpctimer;
+	end;
+OnTimer500:
+	mapannounce instance_mapname("6@tower"),"ยอดเยี่ยม ดูเหมือนเจ้าโง่พวกนี้ยังไม่ท้าทายสำหรับเจ้าสินะ",bc_map,"0x00ffcc";
+	end;
+OnTimer5500:
+	mapannounce instance_mapname("6@tower"),"งั้นมาลองเร็วขึ้นอีกนิดไหม เจ้าพร้อมรึยัง?",bc_map,"0x00ffcc";
+	end;
+OnTimer10500:
+	set .@map$, instance_mapname("6@tower");
+	mapannounce .@map$,"I demand an encore!",bc_map,"0x00ffcc";
+	stopnpctimer;
+	areamonster .@map$,151,66,153,106,"Wind Guardian",1263,30,instance_npcname("#2nd Beeper")+"::OnMyMobDead";
+	areamonster .@map$,158,66,160,106,"Wind Guardian",1263,30,instance_npcname("#2nd Beeper")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	set .@map$, instance_mapname("6@tower");
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname("#2nd Beeper")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		donpcevent instance_npcname("#3rd Beeper")+"::OnEnable";
+	}
+	else mapannounce .@map$,"เหลือศัตรูอยู่ " + .@mob_dead_num + "ea",bc_map,"0x00ff99";
+	end;
+}
+
+6@tower,156,151,2	script	#3rd Beeper	844,{
+	end;
+OnEnable:
+	initnpctimer;
+	end;
+OnTimer500:
+	mapannounce instance_mapname("6@tower"),"มันต้องแบบนี้สิ ช่างน่าตื่นเต้นเสียจริง!",bc_map,"0x00ffcc";
+	end;
+OnTimer5500:
+	mapannounce instance_mapname("6@tower"),"ข้าจะจดจำเอาไว้ ว่าเจ้าเป็นผู้ที่ทำให้ข้าสนุกได้ถึงเพียงนี้",bc_map,"0x00ffcc";
+	end;
+OnTimer10500:
+	set .@map$, instance_mapname("6@tower");
+	mapannounce .@map$,"อยากจะลองอีกรอบไหมล่ะ เจ้ามนุษย์?",bc_map,"0x00ffcc";
+	stopnpctimer;
+	areamonster .@map$,151,66,153,106,"Sword Edge Guardian",1132,20,instance_npcname("#3rd Beeper")+"::OnMyMobDead";
+	areamonster .@map$,158,66,160,106,"Sword Edge Guardian",1132,20,instance_npcname("#3rd Beeper")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	set .@map$, instance_mapname("6@tower");
+	set .@mob_dead_num,mobcount(.@map$,instance_npcname("#3rd Beeper")+"::OnMyMobDead");
+	if (.@mob_dead_num < 1) {
+		donpcevent instance_npcname("#4th Beeper")+"::OnEnable";
+	}
+	else mapannounce .@map$,"เหลือศัตรูอยู่ " + .@mob_dead_num + "ea",bc_map,"0x00ff99";
+	end;
+}
+
+6@tower,156,151,2	script	#4th Beeper	844,{
+	end;
+OnEnable:
+	initnpctimer;
+	end;
+OnTimer500:
+	mapannounce instance_mapname("6@tower"),"OK มันคงถึงเวลาของข้าแล้วล่ะ!",bc_map,"0x00ffcc";
+	end;
+OnTimer5500:
+	mapannounce instance_mapname("6@tower"),"เจ้าอยากรู้จักข้านักใช่ไหม ได้?",bc_map,"0x00ffcc";
+	end;
+OnTimer10500:
+	set .@map$, instance_mapname("6@tower");
+	mapannounce .@map$,"เจ้าจะได้รู้! โฉมหน้าของความตายของเจ้า!",bc_map,"0x00ffcc";
+	stopnpctimer;
+	monster .@map$,156,147,"Baphomet",1039,1,instance_npcname("#4th Beeper")+"::OnMyMobDead";
+	end;
+OnMyMobDead:
+	donpcevent instance_npcname("วิญญาณผู้ถูกลืม#102")+"::OnEnable";
+	end;
+}
+
+6@tower,169,127,2	script	วิญญาณผู้ถูกลืม#102	796,{
+	if (checkweight(1201,1) == 0) {
+		mes "คุณมีน้ำหนักเกินกำหนด กรุณากลับมาใหม่อีกครั้งเมือมีน้ำหนักที่เหมาะสม?";
+		close;
+	}
+	mes "[วิญญาณผู้ถูกลืม]";
+	mes "ท่านเองหรือหรือ ผู้ซึ่งปลดปล่อยพวกเราจาก จอมมารมืด.";
+	next;
+	mes "[วิญญาณผู้ถูกลืม]";
+	mes "ขอบคุณท่านมาก พวกเราจะได้ออกไปจากสถานที่อันมืดมิดและหนาบเหน็บที่นี่ ... ไปสู่สรวงสวรรค์";
+	next;
+	mes "[วิญญาณผู้ถูกลืม]";
+	mes "จริงๆข้าอยากจะคุยกับท่านให้มากกว่านี้นะ แต่. มันถึงเวลาที่ข้าต้องไปแล้ว..";
+	next;
+	mes "[วิญญาณผู้ถูกลืม]";
+	mes "ลาก่อน ท่านนักผจญภัยหนุ่ม ขอให้ท่านโชคดีและปลอดภัย";
+	close2;
+	warp "morocc",157,89;
+	end;
+
+OnInstanceInit:
+	disablenpc instance_npcname("วิญญาณผู้ถูกลืม#102");
+	end;
+OnEnable:
+	initnpctimer;
+	enablenpc instance_npcname("วิญญาณผู้ถูกลืม#102");
+	donpcevent instance_npcname("#Effect30")+"::OnEnable";
+	end;
+OnTimer500:
+	mapannounce instance_mapname("6@tower"),"ไม่... เป็นไปไม่ได้! ข้าไม่เคยพ่ายแพ้!",bc_map,"0xffff00";
+	end;
+OnTimer5500:
+	mapannounce instance_mapname("6@tower"),"ม่าย! ดวงวิญญาณของข้า... เจตจำนงค์ของข้า...! ม่ายยยย~!",bc_map,"0xffff00";
+	end;
+OnTimer10500:
+	mapannounce instance_mapname("6@tower"),"ร่างของมารร้าย ได้กลายเป็นเถ้าธุลีสีดำ พัดผ่านไปกับสายลม",bc_map,"0x00ffcc";
+	stopnpctimer;
+	end;
+}
+
+6@tower,169,127,2	script	#Effect30	844,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("#Effect30");
+	end;
+OnEnable:
+	specialeffect EF_CONE;
+	initnpctimer;
+	end;
+OnTimer1000:
+	stopnpctimer;
+	donpcevent instance_npcname("#Effect31")+"::OnEnable";
+	end;
+}
+
+6@tower,169,127,2	script	#Effect31	844,{
+	end;
+OnInstanceInit:
+	disablenpc instance_npcname("#Effect31");
+	end;
+OnEnable:
+	specialeffect EF_CONE;
+	initnpctimer;
+	end;
+OnTimer1000:
+	stopnpctimer;
+	donpcevent instance_npcname("#Effect30")+"::OnEnable";
+	end;
+}
+
+//============================================================
+// ฟังก์ชันแจกรางวัลทุกๆ 10 ชั้น (Account-Based)
+//============================================================
+function	script	F_ET_Reward	{
+	set .@floor, getarg(0); 
+	set .@cleartime, 0; 
+	
+	// รับค่าเวลาที่ส่งมาจากคำสั่ง getd
+	if (getargcount() > 1) {
+		set .@cleartime, getarg(1);
+	}
+	
+	// [ระบบป้องกันบัคตัวไก่]
+	if (.@cleartime > 0 && #etower_enter_time > (.@cleartime + 10)) {
+		dispbottom "[Endless Tower] คุณเข้าร่วมปาร์ตี้หรือเข้าดันเจี้ยนหลังจากชั้นนี้ถูกเคลียร์ไปแล้ว จึงไม่สามารถรับรางวัลได้";
+		return;
+	}
+
+	// [ตั้งค่าระบบรางวัลที่นี่]
+	set .@reward_item, 35011;  //EndlessTower Coin
+	set .@base_amount, 2;    // จำนวนแจกเริ่มต้น
+
+	// เช็คว่าไอดีนี้เคยมารับของชั้นนี้ไปหรือยังในรอบปัจจุบัน
+	set .@bit, .@floor / 10; 
+
+	if (!(#et_reward_flag & (1 << .@bit))) {
+		// สุ่มของรางวัล ยิ่งชั้นสูงยิ่งได้เยอะ
+		set .@amount, (.@base_amount * .@bit) + rand(1, 3); 
+		
+		getitem .@reward_item, .@amount;
+		dispbottom "[Endless Tower] ยินดีด้วย! ไอดีของคุณได้รับรางวัลโบนัสเคลียร์ชั้น " + .@floor + " จำนวน " + .@amount + " ชิ้น";
+		
+		// ล็อคว่า "ไอดีนี้" รับของของชั้นนี้ไปแล้ว
+		set #et_reward_flag, #et_reward_flag | (1 << .@bit);
+	}
+	return;
+}
+
+e_tower,81,110,3	script	Weapon Crystal#30	564,{
+	callshop "100_dun", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " แลกของรางวัล",0;
+}
+
+// ==========================================
+// สคริปต์ป้องกันหลายจอ (เตะตัวเกินออกทันทีที่เข้าแมพ)
+// ==========================================
+1@tower	mapflag	loadevent
+2@tower	mapflag	loadevent
+3@tower	mapflag	loadevent
+4@tower	mapflag	loadevent
+5@tower	mapflag	loadevent
+6@tower	mapflag	loadevent
+
+-	script	ET_Gepard_Limit	-1,{
+OnPCLoadMapEvent:
+	.@map$ = strcharinfo(3);
+	if (.@map$ != "1@tower" && .@map$ != "2@tower" && .@map$ != "3@tower" && .@map$ != "4@tower" && .@map$ != "5@tower" && .@map$ != "6@tower") {
+		end;
+	}
+
+	.@acc_id = getcharid(3);
+	query_sql "SELECT `last_unique_id` FROM `login` WHERE `account_id` = " + .@acc_id, .@my_mac$;
+	if (.@my_mac$ == "" || .@my_mac$ == "0") end;
+
+	.@mac_count = 0;
+	.@party_id = getcharid(1);
+	
+	if (.@party_id > 0) {
+		getpartymember .@party_id, 2;
+		for (.@i = 0; .@i < $@partymembercount; .@i++) {
+			if (isloggedin($@partymemberaid[.@i]) && getmapxy(.@check_map$, .@x, .@y, 0, $@partymembername$[.@i]) == 0) {
+				if (.@check_map$ == .@map$) {
+					query_sql "SELECT `last_unique_id` FROM `login` WHERE `account_id` = " + $@partymemberaid[.@i], .@member_mac$;
+					if (.@member_mac$ == .@my_mac$) {
+						.@mac_count++;
+					}
+				}
+			}
+		}
+	}
+
+	if (.@mac_count > 2) {
+		dispbottom "[Gepard Shield] ตรวจพบการเปิดเกิน 2 จอในดันเจี้ยน ระบบส่งคุณกลับเมือง";
+		warp "morocc", 157, 89;
+	}
+	end;
+}

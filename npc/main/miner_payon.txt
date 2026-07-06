@@ -1,0 +1,1737 @@
+///////////////////////////////////////////////
+//                                          //
+//       Tharakan Khumtong Mining System     //
+//                                          //
+///////////////////////////////////////////////
+
+
+// แจก EXP ทุกครั้งที่ "ได้ของบางอย่าง" (ยกเว้นกรณีไม่ได้อะไรเลย)
+function	script	F_MiningGiveExp	{
+	if (!$Mining_exprandom) {
+		set Mining_exp, Mining_exp + $Mining_ratesexp;
+		dispbottom "ค่าประสบการณ์  : +" + $Mining_ratesexp;
+	} else {
+		set .@r, rand(1, $Mining_ratesexprandom);
+		set Mining_exp, Mining_exp + .@r;
+		dispbottom "ค่าประสบการณ์  : +" + .@r;
+	}
+	return;
+}
+
+// ดรอปเหมืองแบบ one-roll ตามเงื่อนไขที่ขอ:
+// - item รายชิ้น 5–10% (ตั้งไว้ 10,8,6,5)
+// - หินทั่วไป 50%
+// - Bitcoin ใช้ค่าจาก $miner_Cash/$miner_ratesCash เดิม
+// - ส่วนที่เหลือ = ไม่ดรอปอะไรเลย
+function	script	F_MiningReward	{
+
+	// === หาชื่อ pool จากชื่อนักขุด (หลัง #) ===
+	set .@pool$, "default";
+	set .@full$, strnpcinfo(0);
+	set .@hash, strpos(.@full$,"#");
+	if (.@hash >= 0) {
+		// substr(string, start, length)
+		set .@pool$, substr(.@full$, .@hash+1, getstrlen(.@full$)-(.@hash+1));
+	}
+
+	// โหลด pool ถ้าไม่มีให้ใช้ default
+	set .@sz, getd("$mining_item_size_"+.@pool$);
+	if (.@sz <= 0) {
+		set .@pool$, "default";
+		set .@sz, getd("$mining_item_size_default");
+	}
+
+	// คิดเป็นฐาน 10000 (สองตำแหน่งทศนิยม)
+	set .@pCash, ($miner_Cash ? $miner_ratesCash : 0) * 100; // Bitcoin (ไม่แก้)
+	set .@pStone, $mining_nonitem_rate * 100;                 // หินทั่วไป 50%
+
+	// item รายชิ้น (หน่วยเป็น %  ฐาน 100)
+	set .@pItems, 0;
+	for (set .@i,0; .@i<.@sz; set .@i,.@i+1)
+		set .@pItems, .@pItems + (getd("$mining_item_rates_"+.@pool$+"["+.@i+"]") * 100);
+
+	// ส่วนที่เหลือไม่ดรอปอะไรเลย
+	set .@pNothing, 10000 - (.@pCash + .@pItems + .@pStone);
+	if (.@pNothing < 0) set .@pNothing, 0;
+
+	// roll
+	set .@r, rand(1,10000);
+
+	// 1) Bitcoin
+	if (.@r <= .@pCash) {
+		if ($miner_Cash) {
+			set .@minerCash, rand(5);
+			announce ""+strcharinfo(0)+" ได้รับ "+.@minerCash+" Bitcoin", bc_all|bc_yellow;
+			callfunc "F_BTC_Add", .@minerCash, "mining_reward";
+			specialeffect2 10;
+			specialeffect2 610;
+			callfunc "F_MiningGiveExp";
+			return;
+		}
+	}
+
+	// 2) item รายชิ้น
+	if (.@r <= .@pCash + .@pItems) {
+		set .@r2, .@r - .@pCash;
+		set .@acc, 0;
+		for (set .@i,0; .@i<.@sz; set .@i,.@i+1) {
+			set .@rate, getd("$mining_item_rates_"+.@pool$+"["+.@i+"]") * 100;
+			set .@acc, .@acc + .@rate;
+			if (.@r2 <= .@acc) {
+				set .@id, getd("$mining_item_ids_"+.@pool$+"["+.@i+"]");
+				getitem .@id, rand(1,3);
+				specialeffect2 610;
+				callfunc "F_MiningGiveExp";
+				return;
+			}
+		}
+	}
+
+	// 3) หินทั่วไป
+	if (.@r <= .@pCash + .@pItems + .@pStone) {
+		specialeffect2 611;
+		getitem $ratesMining_nonitem, rand(1,3);
+		callfunc "F_MiningGiveExp";
+		return;
+	}
+
+	// 4) ไม่ดรอปอะไรเลย
+	specialeffect2 611;
+	dispbottom "คุณขุดแล้วแต่ไม่พบอะไรเลย!";
+	return;
+}
+
+
+// ========== Mining Spot 1 ==========
+pay_fild07,77,96,3	script	กองแร่1#pay1	1907,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+	// Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+// ========== Mining Spot 2 ==========
+pay_fild07,77,96,3	script	กองแร่2#pay2	1846,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+// ========== Mining Spot 3 ==========
+pay_fild07,77,96,3	script	กองแร่3#pay3	1846,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+// ========== Mining Spot 4 ==========
+pay_fild07,77,96,3	script	กองแร่4#pay4	1908,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+// ========== Mining Spot 5 ==========
+pay_fild07,77,96,3	script	กองแร่5#pay5	1915,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+pay_fild07,77,96,3	script	กองแร่6#pay6	1907,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+// ========== Mining Spot 2 ==========
+pay_fild07,77,96,3	script	กองแร่7#pay7	1846,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+// ========== Mining Spot 3 ==========
+pay_fild07,77,96,3	script	กองแร่8#pay8	1846,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+// ========== Mining Spot 4 ==========
+pay_fild07,77,96,3	script	กองแร่9#pay9	1908,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}
+
+// ========== Mining Spot 5 ==========
+pay_fild07,77,96,3	script	กองแร่10#pay10	1915,{
+	set .rates_nothing, 100; // กองแร่1 โอกาส 10%
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    set minerstus,0;
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.@char_id>0 || $miner_boomb==1){
+        if(countitem($miner_itemboomb)>0){
+            mes "โยน Item มุ่งร้ายใส่กองแร่";
+            next;
+            menu "ยืนยัน",ok;
+            ok:
+            delitem $miner_itemboomb,1;
+            set .Malicious,1;
+            specialeffect 70;
+            end;
+        }
+        announce "กองแร่มีคนขุดอยู่แล้ว",bc_self,0xff3333;
+        end;
+    }
+    
+npc:
+    sc_end SC_HIDING;
+    sc_end SC_CLOAKING;
+    
+    if(.minergig==0) {
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    
+    // Level up checks
+    if(Mining_exp >= $ratesMining_LV1 && Mining_LV==0){ set Mining_LV,1; set Mining_deley,1; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : 1 วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV2 && Mining_LV==1){ set Mining_LV,2; set Mining_deley,2; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV3 && Mining_LV==2){ set Mining_LV,3; set Mining_deley,3; 
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV4 && Mining_LV==3){ set Mining_LV,4; set Mining_deley,4;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    } else if(Mining_exp >= $ratesMining_LV5 && Mining_LV==4){ set Mining_LV,5; set Mining_deley,5;
+        dispbottom "ระดับขุดแร่  Level : LV "+Mining_LV+""; dispbottom "เวลาในการขุดลดลง  : "+Mining_deley+" วินาที";
+        specialeffect2 568; specialeffect2 518; 
+    }
+    
+    dispbottom "--------------------------";
+    dispbottom "ระดับขุดแร่  Level : "+Mining_LV+"";
+    dispbottom "ค่าประสบการณ์ EXP  : "+Mining_exp+"";
+    if($miner_stamina==1){ dispbottom "Satamina ของคุณ : "+stamina+""; }
+    dispbottom "--------------------------";
+    
+    // Equipment checks
+    if($miner_digH==1){
+        if(getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    } else if($miner_digH==2){
+        if(getequipid(1)!=$miner_dig || getequipid(9)!=$miner_dig){ dispbottom "[ระบบป้องกัน]  : กรุณาใส่เครื่องมือขุดก่อน "; end; }
+    }
+    
+    // Stamina checks
+    if($miner_stamina==1) {
+        if(Mining_LV == 0){
+            if(stamina < $miner_stamina_0){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_0+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_0;
+        } else if(Mining_LV == 1){
+            if(stamina < $miner_stamina_1){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_1+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_1;
+        } else if(Mining_LV == 2){
+            if(stamina < $miner_stamina_2){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_2+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_2;
+        } else if(Mining_LV == 3){
+            if(stamina < $miner_stamina_3){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_3+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_3;
+        } else if(Mining_LV == 4){
+            if(stamina < $miner_stamina_4){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_4+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_4;
+        } else if(Mining_LV == 5){
+            if(stamina < $miner_stamina_5){ announce "Stamina ไม่พอสำหรับการขุดแร่ ขั้นต่ำ "+$miner_stamina_5+"",bc_self,0xff3333; undisguise; end; }
+            set stamina,stamina-$miner_stamina_5;
+        }
+    }
+    
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    specialeffect2 797;
+    getmapxy( @map$, @x, @y, BL_PC );
+    
+    if(minerstus==0 && .@char_id==0){ addtimer 100,strnpcinfo(3) + "::OnStart2"; }
+    
+    query_sql("SELECT miner_id FROM `tharakan_miner` WHERE char_id = "+getcharid(0)+"", .@miner_id);
+    if(.@miner_id==0){ query_sql( "INSERT INTO `tharakan_miner` SET `char_id`='"+getcharid(0)+"',`miner_id`='"+.npcid+"'" ); }
+
+    disguise 848;
+    progressbar "ffff00",(10-Mining_deley);
+    set minerstus,getcharid(0);
+    set .minergig,.minergig-1;
+    
+    if(minerstus==0 && .@char_id==0){
+        addtimer 100,strnpcinfo(3) + "::OnStart";
+    }
+    
+    if(.Malicious){
+        if(rand(100)<30){
+            mOnSteR "this",-1,-1, "--ja--",1904, 1;
+            set .Malicious,0;
+        }
+    }
+    
+    // Mining rewards
+	callfunc "F_MiningReward"; // อัตโนมัติอิงชื่อกอง #pay1..#pay10
+	goto npc;
+    
+Onmovenpcxy:
+    set .minergig,rand(50,340);
+    set .minergigtotal,.minergig;
+    set .npcid,(.minergig+rand(5000));
+    
+    // Set random spawn coordinates in the map
+    set .@x, rand(50,340); // X coordinate - upper corner of Map
+    set .@y, rand(50,340); // Y coordinate - lower corner of Map
+    moveNPC ""+strnpcinfo(0) +"",.@x,.@y;
+    end;
+
+OnStart:
+    if(Hp * 100 / MaxHp < 100){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }
+    end;
+
+OnStart2:
+    getmapxy( @map2$, @x2, @y2, BL_PC );
+    if(@x2!=@x || @y2!=@x){
+        set minerstus,0;
+        undisguise;
+        query_sql("DELETE FROM `tharakan_miner` WHERE `char_id` = '"+getcharid(0)+"'");
+        end;
+    }	
+    end;
+
+OnInit:
+    if($Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; } else {
+        set .minergig,rand(50,340);
+        set .minergigtotal,.minergig;
+        set .npcid,(.minergig+rand(5000));
+    }
+
+OnTimer500:
+    query_sql("SELECT char_id FROM `tharakan_miner` WHERE miner_id = "+.npcid+"", .@char_id);
+    if(.@char_id){ sleep 1000; specialeffect 2; }
+    if(.minergig == 0 && $Mining_randomlocation==1){ donpcevent strnpcinfo(0) +"::Onmovenpcxy"; }
+    delwaitingroom; waitingroom "     ["+.minergig+"/"+.minergigtotal+"]",0;
+    initnpctimer;
+    end;
+}

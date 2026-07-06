@@ -1,0 +1,78 @@
+-	script	AutoDropController	-1,{
+
+OnInit:
+	// กำหนดค่าตั้งต้นที่ต้องการให้กลับไปเป็นเมื่อ "หมดเวลากิจกรรม"
+	// อ้างอิงจากที่คุณตั้งไว้: disable_drop_type: 30, disable_mob_type: 1
+	.default_drop_type = 30; 
+	.default_mob_type = 1;   
+	end;
+
+// ==========================================
+// ช่วงเวลา "เปิด" ให้ดรอปปกติ (ตั้งค่าเป็น 0)
+// ==========================================
+// คุณสามารถแก้ไขเวลาตรงนี้ได้เลย (เช่น 1800 คือ 18:00 น.)
+OnClock2150:
+OnClock2000:
+	
+	// ดึงค่าปัจจุบันมาเช็คก่อน ป้องกันการประกาศซ้ำซ้อน
+	.@current_drop = getbattleflag("disable_drop_type");
+	.@current_mob = getbattleflag("disable_mob_type");
+	
+	// ถ้ายังไม่ได้เป็น 0 ให้ทำการเปลี่ยนเป็น 0 (เปิดดรอปปกติ)
+	if (.@current_drop != 0 || .@current_mob != 0) {
+		setbattleflag "disable_drop_type", 0;
+		setbattleflag "disable_mob_type", 0;
+		
+		announce "[ Server ] : ขณะนี้เป็นเวลา Happy Hour มอนสเตอร์กลับมาดรอปไอเทมตามปกติแล้ว!", bc_all, 0x00FF00;
+	}
+	end;
+
+// ==========================================
+// ช่วงเวลา "ปิด" ดรอป (ปรับค่ากลับไปเป็นโหมดดักไว้)
+// ==========================================
+// คุณสามารถแก้ไขเวลาตรงนี้ได้เลย (เช่น 1900 คือ 19:00 น.)
+OnClock2155:
+OnClock2100:
+
+	setbattleflag "disable_drop_type", .default_drop_type;
+	setbattleflag "disable_mob_type", .default_mob_type;
+	
+	announce "[ Server ] : หมดเวลา Happy Hour ระบบดรอปไอเทมเข้าสู่โหมดจำกัดการดรอป", bc_all, 0xFF0000;
+	end;
+	
+// ==========================================
+// คำสั่งสำหรับ GM ไว้เทสหรือบังคับเปิด-ปิดฉุกเฉิน (พิมพ์ @dropctrl)
+// ==========================================
+OnOverride:
+	.@menu = select(
+		"เปิดการดรอปทั้งหมด (Set 0)",
+		"จำกัดการดรอปตาม Config (Set Default)",
+		"เช็คสถานะปัจจุบัน",
+		"ยกเลิก"
+	);
+	
+	if (.@menu == 1) {
+		setbattleflag "disable_drop_type", 0;
+		setbattleflag "disable_mob_type", 0;
+		announce "GM เปิดระบบดรอปไอเทมให้ทำงานตามปกติแล้ว", bc_all, 0xFFFF00;
+	} 
+	else if (.@menu == 2) {
+		setbattleflag "disable_drop_type", .default_drop_type;
+		setbattleflag "disable_mob_type", .default_mob_type;
+		announce "GM ปิดระบบดรอปไอเทมเข้าสู่โหมดจำกัดการดรอป", bc_all, 0xFFFF00;
+	}
+	else if (.@menu == 3) {
+		mes "[ สถานะการดรอปปัจจุบัน ]";
+		mes "disable_drop_type : ^0000FF" + getbattleflag("disable_drop_type") + "^000000";
+		mes "disable_mob_type : ^0000FF" + getbattleflag("disable_mob_type") + "^000000";
+		close;
+	}
+	end;
+}
+
+// ผูกคำสั่งแชท @dropctrl ให้ GM เลเวล 99 ใช้งาน NPC ตัวนี้ได้
+-	script	DropCtrl_Bind	-1,{
+OnInit:
+	bindatcmd "dropctrl", "AutoDropController::OnOverride", 99, 100;
+	end;
+}

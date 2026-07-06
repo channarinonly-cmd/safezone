@@ -1,0 +1,137 @@
+// ========================================================
+// Master OnNPCKillEvent (ส่วนกลางจัดการตอนมอนสเตอร์ตาย)
+// ========================================================
+-	script	Master_OnNPCKillEvent	-1,{
+
+OnNPCKillEvent:
+	// ================================================
+	// 1. ระบบ Anti-Bloat (กันบั๊กฆ่ามอนตัวเดิมซ้ำซ้อนในเสี้ยววิ)
+	// ================================================
+	if (killedrid) {
+		if (#SF_KC_LAST_RID == killedrid && (#SF_KC_LAST_MS + 350) > gettimetick(2)) end;
+		set #SF_KC_LAST_RID, killedrid;
+		set #SF_KC_LAST_MS, gettimetick(2);
+	}
+
+	// ================================================
+	// 2. ระบบ BotSystem Monitor
+	// ================================================
+	if (getstatus(SC_STAMINA) && !getstatus(SC_AUTOATTACK) && getgmlevel() < 99) {
+		getmapxy(.@map$, .@x, .@y, BL_PC);
+		query_sql("INSERT INTO `tharakan_opk_monitor` (char_id, name, map, x, y, ip_address, kill_count, duration_mins) " +
+				  "VALUES ("+getcharid(0)+",'"+escape_sql(strcharinfo(0))+"','"+escape_sql(.@map$)+"',"+.@x+", "+.@y+", '"+escape_sql(getcharip())+"', 1, 0) " +
+				  "ON DUPLICATE KEY UPDATE kill_count = kill_count + 1, map = VALUES(map), x = VALUES(x), y = VALUES(y)");
+	}
+
+	// ================================================
+	// 3. ระบบ SaudiMine DropSystem (เหมืองซาอุ)
+	// ================================================
+	if (strcharinfo(3) == "ra_pol01") {
+		.@roll = rand(1, 10000);
+		if (.@roll <= 500) { 
+			getitembound 985, 1, 1; 
+			dispbottom "[ระบบเหมือง]: คุณขุดพบ Elunium 1 ก้อน! (ไอเทมผูกมัดไอดี)"; 
+			specialeffect2 EF_COIN; 
+		}
+		else if (.@roll > 500 && .@roll <= 1000) { 
+			getitembound 984, 1, 1; 
+			dispbottom "[ระบบเหมือง]: คุณขุดพบ Oridecon 1 ก้อน! (ไอเทมผูกมัดไอดี)"; 
+			specialeffect2 EF_COIN; 
+		}
+		else if (.@roll == 9999) { 
+			getitembound 969, 1, 1; 
+			dispbottom "[ระบบเหมือง]: แจ็คพอต!! คุณขุดพบ Gold 1 ก้อน! (ไอเทมผูกมัดไอดี)"; 
+			specialeffect2 EF_MVPSTAR; 
+		}
+	}
+
+	// ================================================
+	// 4. ระบบ Announce (ประกาศบอส MVP)
+	// ================================================
+	if ( getmonsterinfo(killedrid, MOB_MVPEXP) ) {
+		// ประกาศเฉพาะตอนที่ ไม่ได้ อยู่ในแผนที่ Bossnia
+		if (strcharinfo(3) != "bossnia_01" && strcharinfo(3) != "bossnia_02" && strcharinfo(3) != "bossnia_03" && strcharinfo(3) != "bossnia_04") {
+			announce "[ ระบบ ] ผู้เล่น "+ strcharinfo(0) +" ได้ทำการสังหาร Boss Mvp [ "+ getmonsterinfo(killedrid,MOB_NAME) +" ]  ที่ Map [ "+ strcharinfo(3) +" ] เรียบร้อยแล้ว ",0;
+		}
+	}
+
+	// ================================================
+	// 5. ระบบ Check Stamina & Weight
+	// ================================================
+	if (@aoe_spam_tick == gettimetick(2)) end; 
+	@aoe_spam_tick = gettimetick(2);
+
+	if (getstatus(SC_STAMINA)) {
+		callfunc "check_weight_and_end_stamina";
+	}
+
+	end;
+}
+
+/*
+// พิกัด NPC เปลี่ยนได้ตามใจชอบเลยนะครับ (ตอนนี้ตั้งไว้กลาง Prontera)
+morocc,133,101,4	script	พนักงานแจกของรางวัล	113,{
+	
+	mes "[ พนักงานแจกของรางวัล ]";
+	mes "สวัสดีครับ! มารับของรางวัลพิเศษใช่ไหม?";
+	next;
+
+	// ดึงค่า Account ID ของผู้เล่นที่กำลังคุย
+	.@aid = getcharid(3);
+
+	// 1. ตรวจสอบว่าเป็น Account ID ที่มีสิทธิ์หรือไม่
+	switch(.@aid) {
+		case 2005582:
+		case 2005565:
+		case 2005572:
+		case 2005758:
+		case 2005574:
+		case 2005450:
+			// ถ้าตรงกับ ID ด้านบน ให้ผ่านไปทำขั้นตอนต่อไป
+			break;
+		default:
+			// ถ้าไม่ตรง ให้เตะออก
+			mes "[ พนักงานแจกของรางวัล ]";
+			mes "ขออภัยด้วยครับ Account ID ของคุณ ("+.@aid+")";
+			mes "^FF0000ไม่มีสิทธิ์รับของรางวัลในกิจกรรมนี้ครับ^000000";
+			close;
+	}
+
+	// 2. ตรวจสอบประวัติการรับของ (ใช้ # นำหน้าตัวแปร เพื่อให้เซิร์ฟจำระดับ Account)
+	if (#ClaimedSpecialReward == 1) {
+		mes "[ พนักงานแจกของรางวัล ]";
+		mes "^FF0000ไอดีของคุณได้รับของรางวัลไปแล้วนะครับ!^000000";
+		mes "จำกัดสิทธิ์ 1 ไอดี รับได้แค่ 1 ครั้งเท่านั้นครับ";
+		close;
+	}
+
+	// 3. ป้องกันปัญหาผู้เล่นกระเป๋าเต็ม หรือ น้ำหนักเกิน
+	if (checkweight(30000, 200) == 0) {
+		mes "[ พนักงานแจกของรางวัล ]";
+		mes "โอ๊ะ! ดูเหมือนว่าน้ำหนัก หรือ ช่องเก็บของของคุณจะเต็มนะครับ";
+		mes "กรุณาไปเคลียร์กระเป๋าให้ว่างก่อน แล้วค่อยมากดรับใหม่นะ";
+		close;
+	}
+
+	// 4. ผ่านทุกเงื่อนไข ทำการแจกของ!
+	mes "[ พนักงานแจกของรางวัล ]";
+	mes "ยินดีด้วยครับ! คุณคือผู้ถูกเลือก";
+	mes "รับไปเลย ^0000FFItem ID 30000 จำนวน 200 ชิ้น!^000000";
+	
+	// แจกไอเทม
+	getitem 30000, 200;
+	
+	// ประทับตราว่าไอดีนี้รับไปแล้ว
+	#ClaimedSpecialReward = 1;
+	
+	// ใส่เอฟเฟกต์พลุฉลองสักหน่อยให้ดูอลังการ
+	specialeffect2 51;
+	specialeffect2 52;
+	
+	next;
+	mes "[ พนักงานแจกของรางวัล ]";
+	mes "ส่งมอบของรางวัลเรียบร้อยแล้ว";
+	mes "ขอให้สนุกกับการเล่นเกมนะครับ!";
+	close;
+}
+*/

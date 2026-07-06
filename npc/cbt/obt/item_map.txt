@@ -1,0 +1,55 @@
+// ============================================================
+// Custom Atcommand: @itemmap
+// ทำหน้าที่แจกไอเทมให้ผู้เล่นทุกคนที่อยู่ในแผนที่เดียวกับ GM
+// ============================================================
+
+-	script	atcmd_itemmap	-1,{
+OnInit:
+	// ผูกคำสั่ง @itemmap ให้ใช้งานได้เฉพาะ GM ระดับ 99
+	bindatcmd "itemmap", strnpcinfo(0)+"::OnCommand", 99, 99;
+	end;
+
+OnCommand:
+	// เช็คว่า GM ใส่พารามิเตอร์มาครบไหม
+	if (.@atcmd_numparameters < 1) {
+		dispbottom "วิธีใช้งาน: @itemmap <รหัสไอเทม> <จำนวน>";
+		dispbottom "ตัวอย่าง: @itemmap 501 10  (แจก Red Potion 10 ขวดให้ทุกคนในแมพ)";
+		end;
+	}
+	
+	.@item_id = atoi(.@atcmd_parameters$[0]);
+	// ถ้าไม่ใส่จำนวนมา ให้ถือว่าแจก 1 ชิ้น
+	.@amount = (.@atcmd_numparameters > 1) ? atoi(.@atcmd_parameters$[1]) : 1;
+	
+	if (.@amount <= 0) set .@amount, 1;
+	
+	// เช็คว่าไอเทมที่พิมพ์มามีอยู่จริงใน Database ไหม
+	if (getitemname(.@item_id) == "null") {
+		dispbottom "ข้อผิดพลาด: ไม่พบไอเทมรหัส " + .@item_id + " ในระบบ";
+		end;
+	}
+	
+	// 1. ดึงชื่อแมพที่ GM ยืนอยู่
+	.@map$ = strcharinfo(3);
+	
+	// 2. ใช้คำสั่ง getmapunits (ระบุแมพ) เพื่อดึงคนที่อยู่ในแมพนี้เท่านั้น!
+	// คำสั่งนี้จะส่งจำนวนคนที่หาเจอไปเก็บไว้ใน .@count และเก็บรายชื่อใส่ใน .@players
+	.@count = getmapunits(BL_PC, .@map$, .@players[0]);
+	
+	if (.@count == 0) {
+		dispbottom "ไม่มีผู้เล่นคนอื่นในแผนที่นี้เลยครับ";
+		end;
+	}
+	
+	// 3. วนลูปแจกไอเทมให้ทุกคนที่มีรายชื่อใน Array
+	for(.@i = 0; .@i < .@count; .@i++) {
+		getitem .@item_id, .@amount, .@players[.@i];
+	}
+	
+	// รายงานผลให้ GM ทราบ
+	dispbottom "แจก [" + getitemname(.@item_id) + "] จำนวน " + .@amount + " ชิ้น ให้ผู้เล่นรวม " + .@count + " คน สำเร็จ!";
+	
+	// ประกาศตัวหนังสือกลางจอให้ทุกคนในแมพรู้
+	mapannounce .@map$, "[กิจกรรม] GM แจก " + getitemname(.@item_id) + " จำนวน " + .@amount + " ชิ้น ให้ทุกคนในแผนที่นี้!", bc_blue|bc_all;
+	end;
+}

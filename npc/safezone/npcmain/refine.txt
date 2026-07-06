@@ -1,0 +1,335 @@
+//=========================================================
+// NPC Function Base (ระบบแยกตามหน้าเพื่อรองรับ Faction และ Duplicate)
+//=========================================================
+
+// =======================================================
+// Christopher: Blacksmith Supplier (อุปกรณ์ถลุงแร่/ทั่ง)
+// =======================================================
+function	script	F_Christopher	{
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) callfunc "Check_Faction", 1; 
+	else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) callfunc "Check_Faction", 2; 
+
+	mes "[Christopher Guillenrow]";
+	mes "ยินดีต้อนรับสู่ Christopher's Workshop. ที่ร้านแห่งนี้ท่านสามารถซื้ออุปกรณ์ที่ใช้ถลุงโลหะได้";
+	mes "ท่านจะให้ข้าช่วยสิ่งใด?";
+	next;
+	switch(select("ทั่งสำหรับตีโลหะ:อุปกรณ์ในการถลุงโลหะ:โลหะ:ถลุงแร่:ยกเลิก")) {
+	case 1:
+		mes "[Christopher Guillenrow]";
+		mes "รู้ไหมทั่งที่มีคุณภาพมันสามารถเพิ่มโอกาสในการตีได้ แต่มันก็ขึ้นอยู่กับคุณภาพของทั่งด้วย ทั่งดีราคาก็แพง ท่านต้องการแบบไหน.";
+		next;
+		switch(select("Anvil - 30,000 zeny:Oridecon Anvil - 120,000 zeny:Golden Anvil - 300,000 zeny:ท่านมี Anvil ชนิดอื่นอีกไหม.:ยกเลิก.")) {
+			case 1: if(Zeny<30000){ mes "เงินไม่พอ."; close;} getitem 986,1; Zeny-=30000; mes "ขอบคุณที่ใช้บริการ."; close;
+			case 2: if(Zeny<120000){ mes "เงินไม่พอ."; close;} getitem 987,1; Zeny-=120000; mes "ขอบคุณที่ใช้บริการ."; close;
+			case 3: if(Zeny<300000){ mes "เงินไม่พอ."; close;} getitem 988,1; Zeny-=300000; mes "ขอบคุณที่ใช้บริการ."; close;
+			case 4: mes "[Christopher Guillenrow]"; mes "แต่ข้าไม่ได้มีอะไรที่จะดีกว่า Golden Anvil แล้ว."; next; mes "[Christopher Guillenrow]"; mes "ข้าคิดว่า 'Ringgel,' ตำนาน Anvil จะมีแค่อันเดียว.แต่ข้าไม่คิดว่าท่านจะหามันเจอ."; close;
+			case 5: mes "[Christopher Guillenrow]"; mes "โอเค, กลับมาเมื่อไหร่ก็ได้ที่ท่านต้องการ."; close;
+		}
+	case 2:
+		mes "[Christopher Guillenrow]";
+		mes "ช่างตีเหล็กผู้ที่มีเกียรติ ท่านสามารถเป็นหนึ่งในผู้ช่วยของข้า พวกท่านต้องการอะไรเลือกเลย.";
+		next;
+		switch(select("Mini-Furnace - 150 zeny:Iron Hammer - 1000 zeny:Golden Hammer - 3000 zeny:Oridecon Hammer - 5000 zeny:ยกเลิก.")) {
+			case 1:
+				mes "จำนวนเท่าไหร่? (ยกเลิกใส่ 0)";
+				next; input .@input; if(.@input <= 0 || .@input > 500) close;
+				if(Zeny < (.@input*150)){ mes "เงินไม่พอ"; close; }
+				if(!checkweight(612,.@input)){ mes "น้ำหนักเกิน"; close; }
+				getitem 612,.@input; Zeny-=(.@input*150); mes "ขอบคุณที่ใช้บริการ."; close;
+			case 2: if(Zeny<1000){ mes "เงินไม่พอ."; close;} getitem 613,1; Zeny-=1000; mes "ขอบคุณที่ใช้บริการ."; close;
+			case 3: if(Zeny<3000){ mes "เงินไม่พอ."; close;} getitem 614,1; Zeny-=3000; mes "ขอบคุณที่ใช้บริการ."; close;
+			case 4: if(Zeny<5000){ mes "เงินไม่พอ."; close;} getitem 615,1; Zeny-=5000; mes "ขอบคุณที่ใช้บริการ."; close;
+			case 5: close;
+		}
+	case 3:
+		mes "[Christopher Guillenrow]";
+		mes "ข้าคือคนขายโลหะ ที่มีคุณภาพ ใช้สำหรับอัพเกรดอาวุธระดับต่ำ?";
+		next;
+		switch(select("Phracon - 200z.:Emveretarcon - 1000z.:ยกเลิก.")) {
+			case 1:
+				mes "จำนวนเท่าไหร่? (ยกเลิกใส่ 0)";
+				next; input .@input; if(.@input <= 0 || .@input > 500) close;
+				if(Zeny < (.@input*200)){ mes "เงินไม่พอ"; close; }
+				if(!checkweight(1010,.@input)){ mes "น้ำหนักเกิน"; close; }
+				getitem 1010,.@input; Zeny-=(.@input*200); mes "ขอบคุณที่ใช้บริการ."; close;
+			case 2:
+				mes "จำนวนเท่าไหร่? (ยกเลิกใส่ 0)";
+				next; input .@input; if(.@input <= 0 || .@input > 500) close;
+				if(Zeny < (.@input*1000)){ mes "เงินไม่พอ"; close; }
+				if(!checkweight(1011,.@input)){ mes "น้ำหนักเกิน"; close; }
+				getitem 1011,.@input; Zeny-=(.@input*1000); mes "ขอบคุณที่ใช้บริการ."; close;
+			case 3: close;
+		}
+	case 4:
+		mes "[Christopher Guillenrow]";
+		mes "ข้าสามารถสกัดแร่ให้เป็น Oridecon และ Elunium โดยการสกัดจากก้อนหยาบ (Rough)?";
+		next;
+		switch(select("สกัด Oridecon:สกัด Elunium:ยกเลิก.")) {
+			case 1:
+				if(countitem(756) < 5){ mes "ข้าต้องการ 5 Rough Oridecons สำหรับทำ 1 Oridecon."; close; }
+				delitem 756,5; getitem 984,1; mes "นี่คือ Oridecon สำหรับท่าน."; close;
+			case 2:
+				if(countitem(757) < 5){ mes "ข้าต้องการ 5 Rough Eluniums สำหรับทำ 1 Elunium."; close; }
+				delitem 757,5; getitem 985,1; mes "นี่คือ Elunium สำหรับท่าน."; close;
+			case 3: close;
+		}
+	case 5: close;
+	}
+}
+
+
+// =======================================================
+// Material Salesmen (Phracon / Emveretarcon)
+// =======================================================
+function	script	phramain	{
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) callfunc "Check_Faction", 1; 
+	else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) callfunc "Check_Faction", 2; 
+
+	if (checkweight(1201,1) == 0) { mes "- กรุณาตรวจสอบน้ำหนัก !! -"; close; }
+	mes "[" + getarg(0) + "]";
+	mes "ข้าขายโลหะ 2 ชนิดสำหรับการตีบวกอาวุธ.";
+	mes "โลหะ ^007777Phracon^000000 สำหรับอาวุธเลเวล 1";
+	mes "และ ^007777Emveretarcon^000000 สำหรับอาวุธเลเวล 2.";
+	next;
+	switch(select("Phracon - 200 Zeny:Emveretarcon - 1000 Zeny:เกี่ยวกับโลหะ")) {
+		case 1: set .@material,1010; set .@price,200; break;
+		case 2: set .@material,1011; set .@price,1000; break;
+		case 3:
+			mes "[" + getarg(0) + "]";
+			mes "มันมีโลหะแบบอื่นอีก?";
+			mes "และมันใช้ตีบวกอาวุธหรือชุดเกราะที่มีระดับสูง มันมีชื่อว่า Oridecon และ Elunium";
+			mes "มันหาได้ยากมาก";
+			close;
+	}
+	mes "[" + getarg(0) + "]";
+	mes "ใส่จำนวนที่ท่านต้องการ หากจะยกเลิกให้ใส่ 0";
+	next;
+	input .@input;
+	if (.@input <= 0 || .@input > 500) { mes "["+getarg(0)+"]"; mes "ท่านสามารถซื้อได้ไม่เกิน 500 ชิ้นต่อครั้ง"; close; }
+	set .@sell,.@input * .@price;
+	if (Zeny < .@sell) { mes "["+getarg(0)+"]"; mes "ท่านมีเงินไม่พอ "+ .@input +" Zeny."; close; }
+	if (!checkweight(.@material,.@input)) { mes "["+getarg(0)+"]"; mes "ข้าว่าท่านควรตรวจสอบน้ำหนักก่อน?"; close; }
+	getitem .@material,.@input;
+	Zeny -= .@sell;
+	mes "[" + getarg(0) + "]";
+	mes "ขอบคุณที่ใช้บริการ!";
+	close;
+}
+
+
+// =======================================================
+// Ori/Elu Refiners (รวมแร่เล็ก)
+// =======================================================
+function	script	orimain	{
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) callfunc "Check_Faction", 1; 
+	else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) callfunc "Check_Faction", 2; 
+
+	setarray .@ori, 984, 756, 5;
+	setarray .@elu, 985, 757, 5;
+	if (checkweight(1201,1) == 0) { mes "- กรุณาตรวจสอบน้ำหนัก !! -"; close; }	
+	
+	mes "- -| "+strnpcinfo(0);
+	mes " ";
+	mes "ต้องการรวมแร่ไหมล่ะ ?";
+	mes "-: รวมแร่ "+getitemname(.@ori);
+	mes " ใช้ "+getitemname(.@ori[1])+"  "+.@ori[2]+" ea";
+	mes "-: รวมแร่ "+getitemname(.@elu);
+	mes " ใช้ "+getitemname(.@elu[1])+"  "+.@elu[2]+" ea";
+	next;
+	if(select("- รวมแร่ทั้งหมด:- ยกเลิก") == 2) close;
+	
+	set .@amount, countitem(.@ori[1])/ .@ori[2];
+	if ( .@amount ) { delitem .@ori[1], .@amount*.@ori[2]; getitem .@ori, .@amount; }
+	
+	set .@amount, countitem(.@elu[1])/ .@elu[2];
+	if ( .@amount ) { delitem .@elu[1], .@amount*.@elu[2]; getitem .@elu, .@amount; }
+	close;
+}
+
+
+// =======================================================
+// Equipment Repair Function (ซ่อมไอเทม)
+// =======================================================
+function	script	repairmain	{
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) callfunc "Check_Faction", 1; 
+	else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) callfunc "Check_Faction", 2; 
+
+	set .@repairprice,5000;
+	mes "["+getarg(0)+"]";
+	mes "เป็นอย่างไงบ้าง!";
+	mes "ท่านต้องการให้ข้าซ่อมไอเทมใช่มั้ยล่ะ?";
+	mes "งั้นก็มาถูกที่แล้ว ส่งไอเทมมาให้ข้า เดี๋ยวจะจัดการให้!";
+	next;
+	if(select("ใช่แล้ว, ข้ามีไอเทมที่ชำรุด...:ไม่ล่ะ ไม่ต้อง.") == 2) {
+		mes "["+getarg(0)+"]"; mes "เฮ่อออ..."; mes "ถ้าท่านไม่มีไอเทมจะให้ข้าซ่อมแซม อย่ามายุ่งกับข้า ข้ามีไอเทมต้องซ่อมแซมเยอะ."; close;
+	}
+
+	set .@checkitem,1;
+	while (getbrokenid(.@checkitem) != 0) { set .@checkitem,.@checkitem+1; }
+	set .@checkitem,.@checkitem-1;
+
+	if (!.@checkitem) {
+		mes "["+getarg(0)+"]"; mes "ว้าว, ท่านรักษาไอเทมได้ดีเลยทีเดียว!"; mes "ไม่มีไอเทมที่เสียหายเลยหรอไง!"; next; mes "["+getarg(0)+"]"; mes "ถ้าทุกๆคนเหมือนกับท่านหมด, ข้าก็ว่างงานกันพอดีล่ะสิ!! ฮ่าฮ่าฮ่า~!"; close;
+	}
+
+	mes "["+getarg(0)+"]";
+	mes "อืมมม...";
+	mes "มีไอเทมชำรุดในตัวท่านจำนวน " + .@checkitem + " ชิ้น";
+	set .@totalcost,.@repairprice*.@checkitem;
+	mes "ค่าใช้จ่ายในการซ่อมทั้งหมด " + .@totalcost + " Zeny! ท่านอยากจะซ่อมมันไหม?";
+	next;
+	if(select("ซ่อม:ไม่ล่ะ") == 2) { mes "["+getarg(0)+"]"; mes "แล้วค่อยกลับมาซ่อมใหม่นะ!"; close; }
+
+	if (Zeny < .@totalcost) { mes "["+getarg(0)+"]"; mes "เช็คกระเป๋าท่านก่อนว่าจะมีเงินจ่ายไหม?! ข้าไม่สามารถซ่อมให้ท่านได้หรอกเพราะท่านตังไม่พอ."; close; }
+	
+	set zeny,zeny-.@totalcost;
+	while (.@checkitem) { repair(.@checkitem); set .@checkitem,.@checkitem-1; }
+	mes "["+getarg(0)+"]"; mes "ตกลง! ทุกอย่างเสร็จแล้ว. ระวังให้ดีล่ะ ไอเทมมันมีชีวิตนะท่านรู้ไหม."; close;
+}
+
+
+// =======================================================
+// ย่อยแร่ (Puchuchartan)
+// =======================================================
+function	script	F_OreBreak	{
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) callfunc "Check_Faction", 1; 
+	else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) callfunc "Check_Faction", 2; 
+
+	if (checkweight(1201,1) == 0) { mes "[Puchuchartan]"; mes "ท่านมีไอเท็มมากเกินไป"; end; }
+	if (MaxWeight - Weight < 3000) { mes "[Puchuchartan]"; mes "ท่านมีน้ำหนักมากเกินไป"; end; }
+
+	mes "[Puchuchartan]";
+	mes "ข้าสามารถแยกธาตุใหญ่ให้เป็นแร่เล็กได้";
+	mes "(สุ่มได้รับ 2-5 ก้อนต่อการแยก 1 ครั้ง)";
+	next;
+	switch(select("Great Nature:Mistic Frozen:Flame Heart:Rough Wind")) {
+		case 1: if(countitem(997)<1){ mes "ท่านไม่มี Great Nature"; close;} getitem 993,rand(2,5); delitem 997,1; break;
+		case 2: if(countitem(995)<1){ mes "ท่านไม่มี Mistic Frozen"; close;} getitem 991,rand(2,5); delitem 995,1; break;
+		case 3: if(countitem(994)<1){ mes "ท่านไม่มี Flame Heart"; close;} getitem 990,rand(2,5); delitem 994,1; break;
+		case 4: if(countitem(996)<1){ mes "ท่านไม่มี Rough Wind"; close;} getitem 992,rand(2,5); delitem 996,1; break;
+	}
+	end;
+}
+
+
+// =======================================================
+// ย่อยหินเคลือบธาตุ (Elemental Converter)
+// =======================================================
+function	script	F_ElementConvert	{
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) callfunc "Check_Faction", 1; 
+	else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) callfunc "Check_Faction", 2; 
+
+	if (checkweight(1201,1) == 0) { mes "[คนทำหินธาตุ]"; mes "ท่านมีไอเท็มมากเกินไป"; end; }
+	if (MaxWeight - Weight < 3000) { mes "[คนทำหินธาตุ]"; mes "ท่านมีน้ำหนักมากเกินไป"; end; }
+
+	mes "[คนทำหินธาตุ]";
+	mes "ข้าสามารถแลกหิน ^ff0000เคลือบธาตุอาวุธ^000000 ให้เจ้าได้";
+	mes "อัตราการเเลกเปลี่ยนคือ แร่ธาตุเล็ก 1 ชิ้น = หินเคลือบ 1 ชิ้น";
+	next;
+	switch(select("Green Live -> ดิน:Crystal Blue -> น้ำ:Red Blood -> ไฟ:Wind Of Verdure -> ลม")) {
+		case 1: if(countitem(993)<1){ mes "ท่านไม่มี Green Live"; close;} getitem 6363,1; delitem 993,1; break;
+		case 2: if(countitem(991)<1){ mes "ท่านไม่มี Crystal Blue"; close;} getitem 6361,1; delitem 991,1; break;
+		case 3: if(countitem(990)<1){ mes "ท่านไม่มี Red Blood"; close;} getitem 6360,1; delitem 990,1; break;
+		case 4: if(countitem(992)<1){ mes "ท่านไม่มี Wind Of Verdure"; close;} getitem 6362,1; delitem 992,1; break;
+	}
+	end;
+}
+
+
+// =======================================================
+// เคลือบธาตุ (Weapon Element Buffer)
+// =======================================================
+function	script	F_WeaponElement	{
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) callfunc "Check_Faction", 1; 
+	else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) callfunc "Check_Faction", 2; 
+
+	mes "[NPC เคลือบธาตุ]";
+	mes "เคลือบธาตุอาวุธ (ระยะเวลา 30 นาที) ราคา 5,000z";
+	mes "จำเป็นต้องมีหินเคลือบของธาตุนั้นๆ 1 ชิ้น หรือ Holy Water สำหรับธาตุแสง";
+	next;
+	switch(select("ธาตุไฟ (Scarlet Point)","ธาตุน้ำ (Indigo Point)","ธาตุดิน (Lime Green Point)","ธาตุลม (Yellow Wish Point)","ธาตุแสง (Holy Water)")){
+		case 1:
+			if (Zeny < 5000){ mes "เงินของคุณไม่พอ"; close; }
+			if (countitem(6360) < 1) { mes "ท่านไม่มี Scarlet Point"; close; }
+			mes "อาวุธของคุณ เป็นธาตุไฟแล้ว"; sc_start SC_FIREWEAPON,1800000,1; Zeny -= 5000; delitem 6360,1; close;
+		case 2:
+			if (Zeny < 5000){ mes "เงินของคุณไม่พอ"; close; }
+			if (countitem(6361) < 1) { mes "ท่านไม่มี Indigo Point"; close; }
+			mes "อาวุธของคุณ เป็นธาตุน้ำแล้ว"; sc_start SC_WATERWEAPON,1800000,1; Zeny -= 5000; delitem 6361,1; close;
+		case 3:
+			if (Zeny < 5000){ mes "เงินของคุณไม่พอ"; close; }
+			if (countitem(6363) < 1) { mes "ท่านไม่มี Lime Green Point"; close; }
+			mes "อาวุธของคุณ เป็นธาตุดินแล้ว"; sc_start SC_EARTHWEAPON,1800000,1; Zeny -= 5000; delitem 6363,1; close;
+		case 4:
+			if (Zeny < 5000){ mes "เงินของคุณไม่พอ"; close; }
+			if (countitem(6362) < 1) { mes "ท่านไม่มี Yellow Wish Point"; close; }
+			mes "อาวุธของคุณ เป็นธาตุลมแล้ว"; sc_start SC_WINDWEAPON,1800000,1; Zeny -= 5000; delitem 6362,1; close;
+		case 5:
+			if (Zeny < 5000){ mes "เงินของคุณไม่พอ"; close; }
+			if (countitem(523) < 1) { mes "ท่านไม่มี  Holy Water"; close; }
+			mes "อาวุธของคุณ เป็นธาตุแสงแล้ว"; sc_start SC_ASPERSIO,1800000,1; Zeny -= 5000; delitem 523,1; close;
+	}
+	end;
+}
+
+
+// =======================================================
+// การวาง NPC ลงแผนที่ (Deployment)
+// =======================================================
+
+// Christopher (ขายทั่ง/อุปกรณ์ Blacksmith)
+morocc,180,47,3	script	Christopher#moc	99,{ callfunc "F_Christopher"; end; OnInit: }
+prontera,177,123,3	script	Christopher#prt	99,{ callfunc "F_Christopher"; end; OnInit: waitingroom "วัตถุดิบตีดาบ",0; end; }
+
+// ย่อยแร่ใหญ่ -> เล็ก
+morocc,180,43,3	script	Puchuchartan#moc	782,{ callfunc "F_OreBreak"; end; OnInit: waitingroom "ย่อยแร่",0; end; }
+prontera,177,120,3	script	Puchuchartan#prt	782,{ callfunc "F_OreBreak"; end; OnInit: waitingroom "ย่อยแร่",0; end; }
+
+// ย่อยแร่เล็ก -> หินเคลือบธาตุ
+morocc,185,43,3	script	ย่อยหินเคลือบธาตุ#moc	4_GEFFEN_11,{ callfunc "F_ElementConvert"; end; OnInit: waitingroom "ทำหินเคลือบธาตุ",0; end; }
+prontera,162,127,3	script	ย่อยหินเคลือบธาตุ#prt	4_GEFFEN_11,{ callfunc "F_ElementConvert"; end; OnInit: waitingroom "ทำหินเคลือบธาตุ",0; end; }
+
+// NPC บัพเคลือบธาตุลงอาวุธ
+morocc,190,43,3	script	เคลือบธาตุ#moc	823,{ callfunc "F_WeaponElement"; end; OnInit: waitingroom "เคลือบธาตุ 5000z",0; end; }
+prontera,177,117,3	script	เคลือบธาตุ#prt	823,{ callfunc "F_WeaponElement"; end; OnInit: waitingroom "เคลือบธาตุ 5000z",0; end; }
+
+// Material Salesmen (Phracon / Emveretarcon)
+prt_in,56,69,4	script	Vurewell	86,{ callfunc "phramain","Vurewell"; end; }
+prontera,177,114,4	script	Vurewell#1	86,{ callfunc "phramain","Vurewell"; end; }
+payon,145,178,3	script	Begnahd	88,{ callfunc "phramain","Begnahd"; end; }
+morocc_in,65,37,4	script	Sade	99,{ callfunc "phramain","Sade"; end; }
+morocc,180,50,4	script	Sade#1	99,{ callfunc "phramain","Sade"; end; }
+alberta_in,18,59,5	script	Kahlamanlith	86,{ callfunc "phramain","Kahlamanlith"; end; }
+izlude,157,130,5	script	Kahlamanlith#2	86,{ callfunc "phramain","Kahlamanlith"; end; }
+
+// Ori/Elu Refiners (รวมแร่)
+prt_in,63,69,4	script	Dietrich	84,{ callfunc "orimain","Dietrich"; end; }
+prontera,177,111,4	script	Dietrich#1	84,{ callfunc "orimain","Dietrich"; end; }
+payon,137,178,5	script	Hakhim	88,{ callfunc "orimain","Hakhim"; end; }
+morocc,190,50,4	script	Abdul	99,{ callfunc "orimain","Abdul"; end; }
+morocc_in,72,32,4	script	Abdul#2	99,{ callfunc "orimain","Abdul"; end; }
+alberta_in,21,63,5	script	Xenophon	84,{ callfunc "orimain","Xenophon"; end; }
+izlude,157,120,5	script	Xenophon#1	84,{ callfunc "orimain","Xenophon"; end; }
+
+// Equipment Repairmen (ช่างซ่อม)
+alberta_in,31,65,4	script	Repairman#alb	86,{ callfunc "repairmain","Repairman"; end; }
+morocc_in,63,31,5	script	Repairman#moc	99,{ callfunc "repairmain","Repairman"; end; }
+morocc,190,47,5	script	Repairman#moc1	798,{ callfunc "repairmain","Repairman"; end; }
+payon,143,165,4	script	Repairman#pay	88,{ callfunc "repairmain","Repairman"; end; }
+prt_in,63,54,2	script	Repairman#prt	86,{ callfunc "repairmain","Grendal"; end; }
+prontera,177,108,2	script	Repairman#prt2	86,{ callfunc "repairmain","Grendal"; end; }
+izlude,153,121,2	script	Repairman#iz	86,{ callfunc "repairmain","Grendal"; end; }
+geffen_in,34,166,3	script	Repairman#gef	99,{ callfunc "repairmain","Repairman"; end; }
+aldeba_in,38,60,3	script	Repairman#alde	86,{ callfunc "repairmain","Repairman"; end; }
+
+// Paul Spanner เมือง Einbroch ปิดไว้ (คอมเมนต์) หากไม่ได้ใช้งาน
+/*
+ein_in01,38,29,0	script	Paul Spanner	63,{ ... }
+*/

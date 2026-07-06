@@ -1,0 +1,112 @@
+// =======================================================
+// 1. Dummy Shop
+// =======================================================
+-	shop	UPG_ACC	-1,6000229:-1,6000230:-1,6000231:-1,6000232:-1,6000233:-1,6000234:-1
+
+// =======================================================
+// 2. Main NPC (ตัวหลัก เก็บ Logic ทั้งหมดไว้ที่นี่)
+// =======================================================
+morocc,132,58,3	script	Charm Skill#main	4_M_BARMUND,{
+
+	// ระบบเช็กแมพเพื่อส่งรหัสฝ่ายไปฟังก์ชันตรวจสอบ
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1; 
+	} else if (strcharinfo(3) == "prontera") {
+		callfunc "Check_Faction", 2; 
+	}
+
+	mes "[ Charm Skill ]";
+	mes "สวัสดีครับนายท่าน ";
+	next;
+	mes "[ Charm Skill ]";
+	mes "นายท่านต้องการให้ข้าช่วยเรื่องอะไร ?";
+	next;
+	switch(select("- Charm Skill :- ยกเลิกการสนทนา")) {
+		case 1: set .@shop$, "UPG_ACC"; break;
+		case 2: close;
+	}
+	close2;
+	callshop .@shop$, 1;
+	npcshopattach .@shop$;
+	end;
+
+OnBuyItem:
+	if (getarraysize(@bought_nameid) <= 0) end;
+	copyarray .@uitem[0], @bought_nameid[0], getarraysize(@bought_nameid);
+
+	deletearray @bought_nameid[0], getarraysize(@bought_nameid);
+	deletearray @bought_quantity[0], getarraysize(@bought_quantity);
+	deletearray .@itemuse[0], getarraysize(.@itemuse);
+	deletearray .@itemusemany[0], getarraysize(.@itemusemany);
+
+	set .@broken, 0;
+	set .@zenyuse, 0;
+
+	if (.@uitem[0] == 6000229) { 
+		if (Class != Job_Thief) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Thief เท่านั้น!"; close; }
+		setarray .@itemuse[0], 6000235, 921, 918; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 6000230) { 
+		if (Class != Job_Acolyte) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Acolyte เท่านั้น!"; close; }
+		setarray .@itemuse[0], 6000235, 932, 1020; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 6000231) { 
+		if (Class != Job_Swordman) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Swordman เท่านั้น!"; close; }
+		setarray .@itemuse[0], 6000235, 931, 7053; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 6000232) { 
+		if (Class != Job_Merchant) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Merchant เท่านั้น!"; close; }
+		setarray .@itemuse[0], 6000235, 960, 950; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 6000233) { 
+		if (Class != Job_Mage) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Mage เท่านั้น!"; close; }
+		setarray .@itemuse[0], 6000235, 1055, 1056; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 6000234) { 
+		if (Class != Job_Archer) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Archer เท่านั้น!"; close; }
+		setarray .@itemuse[0], 6000235, 930, 936; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else { mes "[Charm Skill]"; mes "ไม่พบสูตรสำหรับไอเท็มนี้"; close; }
+
+	mes "[Charm Skill]";
+	mes "จะสร้าง: ^0000FF"+getitemname(.@uitem[0])+"^000000 (สำเร็จ "+(100-.@broken)+"%)";
+	mes "สิ้นเปลือง:";
+	for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1) {
+		mes " - " + getitemname(.@itemuse[.@k]) + " x" + .@itemusemany[.@k];
+	}
+	mes " + Zeny " + callfunc("F_InsertComma", .@zenyuse);
+	next;
+
+	if(select("ยืนยันการสร้าง:ยกเลิก") == 2) { mes "[Charm Skill]"; mes "การสร้างถูกยกเลิก"; close; }
+
+	for (set .@k,0; .@k<getarraysize(.@itemuse); set .@k,.@k+1) {
+		if (countitem(.@itemuse[.@k]) < .@itemusemany[.@k]) { mes "[Charm Skill]"; mes "วัตถุดิบไม่เพียงพอ!"; close; }
+	}
+	if (Zeny < .@zenyuse) { mes "[Charm Skill]"; mes "เงินไม่พอ!"; close; }
+	if (!checkweight(.@uitem[0], 1)) { mes "[Charm Skill]"; mes "น้ำหนักเกิน!"; close; }
+
+	for (set .@k,0; .@k<getarraysize(.@itemuse); set .@k,.@k+1) delitem .@itemuse[.@k], .@itemusemany[.@k];
+	set Zeny, Zeny - .@zenyuse;
+
+	if (.@broken >= rand(100)) {
+		specialeffect2 155;
+		mes "^FF0000ล้มเหลว... วัตถุดิบทั้งหมดสลายไปในอากาศ!^000000";
+		close;
+	} else {
+		specialeffect2 154;
+		getitem .@uitem[0], 1;
+		mes "^0000FFสร้างสำเร็จ! ได้รับไอเทมเรียบร้อยแล้ว^000000";
+		announce "[Craft] "+strcharinfo(0)+" สร้าง "+getitemname(.@uitem[0])+" สำเร็จ!", bc_all;
+		close;
+	}
+	end;
+
+OnInit:
+	waitingroom "    Charm Skill",0;
+	end;
+}
+
+// =======================================================
+// 3. Duplicated NPCs (ดึง Logic ไปโผล่ที่ Prontera)
+// =======================================================
+prontera,147,109,5	duplicate(Charm Skill#main)	Charm Skill#prt	4_M_BARMUND

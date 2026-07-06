@@ -1,0 +1,883 @@
+/////////shop sale buy
+///////morocc
+morocc,151,99,5	script	Tool Dealer	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+	    case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(150,166);
+		set .@runy,rand(92,101);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+
+morocc,172,50,5	script	Tool Dealer#2	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+	    case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(168,178);
+		set .@runy,rand(47,49);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+/*
+morocc,214,67,5	script	Tool Dealer#3	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+	    case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(204,216);
+		set .@runy,rand(64,67);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+*/
+/*
+morocc,239,53,5	script	Tool Dealer#4	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+	    case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(224,238);
+		set .@runy,rand(49,53);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+*/
+/*
+morocc,194,93,5	script	Tool Dealer#5	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+	    case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(182,192);
+		set .@runy,rand(90,93);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+*/
+morocc,151,242,5	script	Tool Dealer#6	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+         case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(150,154);
+		set .@runy,rand(243,256);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+/*
+morocc,152,187,5	script	Tool Dealer#7	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+         case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(144,153);
+		set .@runy,rand(185,189);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+*/
+/*
+morocc,127,76,5	script	Tool Dealer#8	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+         case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(126,130);
+		set .@runy,rand(71,76);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+*/
+/*
+morocc,94,49,5	script	Tool Dealer#9	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+         case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(87,98);
+		set .@runy,rand(48,50);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+*/
+/////////////-----------------prontera
+prontera,147,92,5	script	Tool Dealer#08	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+         case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(146,147);
+		set .@runy,rand(92,98);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+//= Sale Shop///////////////////////////////////////////////////////////////////////////////
+-	shop	Selling_Items	HIDDEN_NPC,512:-1
+//-----อาหาร-------\\
+-	shop	Mine_Shop	HIDDEN_NPC,1010:200,1011:1000,970:10000,971:10000,972:12000,7433:4000,612:200,613:5000,614:10000,615:15000,986:100000,987:200000,988:300000,723:10000,724:10000,718:30000,719:10000,720:10000,721:10000,722:10000,725:10000,726:10000,727:10000,728:10000,729:10000
+-	shop	toolpet4	HIDDEN_NPC,531:-1,532:-1,511:-1,507:-1,1002:-1,716:-1,711:-1,537:-1,929:-1,911:-1,7821:-1,7822:-1,7823:-1,7824:-1,643:-1,10002:-1,10003:-1,10004:-1,10005:-1,10006:-1,10007:-1,10008:-1,10009:-1,10010:-1,10011:-1,10012:-1,10013:-1,10014:-1,10015:-1,10016:-1,10017:-1,10018:-1,10019:-1,10020:-1,643:-1
+-	shop	Buying_Items	HIDDEN_NPC,18000:-1,1750:-1,611:-1,501:-1,502:-1,503:-1,504:-1,506:-1,645:-1,656:-1,657:-1,3212:-1,601:-1,602:-1,717:-1,1065:-1,2242:-1
+-	shop	Buying_Arrow	HIDDEN_NPC,1750:-1,1770:3:-1,1751:5:-1,1752:5:-1,1754:5:-1,1755:5:-1,1756:5:-1,1757:5:-1,1767:5:-1,1762:5:-1,1065:-1:-1
+-	shop	Buying_Homon	HIDDEN_NPC,713:500,1092:4,1093:10,7134:8,973:800,974:800,7127:100000,7128:100000,7129:100000,7130:100000,7131:100000,7132:100000,7133:240000,7144:100000,7419:48000,12040:1200000,7142:100000,7140:100000
+-	shop	Buying_Blacksmith	HIDDEN_NPC,1010:200,1011:1000,970:10000,971:10000,972:12000,7433:4000,612:200,613:5000,614:10000,615:15000,986:100000,987:200000,988:300000,723:10000,724:10000,718:30000,719:10000,720:10000,721:10000,722:10000,725:10000,726:10000,727:10000,728:10000,729:10000
+/////////////////////////////////////////
+////////นอกเมือง////////////////////////
+prt_fild08,341,219,5	script	Tool Dealer#001	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+	    case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(341,346);
+		set .@runy,rand(216,219);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+
+izlude,130,150,5	script	Tool Dealer#002	31994,{
+	mes "[Tool Dealer]";
+	mes "ควยไรท่าน!!";
+	mes "จะซื้อของ หรือมึงจะขายของ";
+	next;
+	switch(select("ซื้อของ", "ขายของ", "ซื้อลูกธนู", "ทำซองลูกธนู", "ของปรุงยา/โฮมุน", "อุปกรณ์ตีดาบ","อุปกรณ์สัตว์เลี้ยง", "เสือก")) {
+	    case 1:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ ซื้อเหี้ยไรดี";
+	        close2;
+	        callshop "Buying_Items",1;
+	        break;
+	    case 2:
+	        mes "[Tool Dealer]";
+	        mes "ได้ดิ มึงจะขายควยไร บอกหมอดิ๊";
+	        close2;
+	        callshop "Selling_Items",2;
+	        break;
+		case 3:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมลูกธนูให้";
+	        close2;
+	        callshop "Buying_Arrow",1;
+	        break;
+	    case 4:
+	        mes "[Tool Dealer]";
+	        mes "จะเตรียมซองธนูให้";
+	        close2;
+	        callshop "Quiver_Archer",1;
+	        break;
+         case 5:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Homon",1;
+	        break;
+         case 6:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "Buying_Blacksmith",1;
+	        break;
+	    case 7:
+	        mes "[Tool Dealer]";
+	        mes "อยากได้ไรดูเอา";
+	        close2;
+	        callshop "toolpet4",1;
+	        break;
+	    case 8:
+	        mes "[Tool Dealer]";
+	        mes "ปากเหี้ยนะมึงเนี่ย";
+	        close2;
+	        break;
+	}
+	end;
+
+OnTimer30000:
+		npcspeed 120;
+		set .@runx,rand(130,135);
+		set .@runy,rand(147,149);
+		npcwalkto .@runx,.@runy;
+
+OnInit:
+	initnpctimer;
+	sleep 2000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 10000;
+	showscript "ร้านขายของใช้ทั่วไป";
+	sleep 2000;
+	end;
+}
+
+
+

@@ -1,0 +1,314 @@
+-	script	Payment	-1,{
+	end;
+	
+OnInit:
+
+//======================== NOMAL REFILL ===================================
+	// ITEM ID (สามารถใส่หลายชิ้นได้ โดยคั่นด้วยลูกน้ำ)
+	setarray .payment_item_id_50[0], 23038; 
+	setarray .payment_item_id_90[0], 23038; 
+	setarray .payment_item_id_150[0], 23038; 
+	setarray .payment_item_id_300[0], 30006,35008; 
+	setarray .payment_item_id_500[0], 35005;
+	setarray .payment_item_id_1000[0], 35077;  
+	// --- [โปร 1500] กรุณาเปลี่ยนตัวเลข 11111 ถึง 99999 เป็น ITEM ID จริงของเซิร์ฟเวอร์คุณ ---
+	// ลำดับ: Rare Coin, Slim Box, Safezone Coin, Aegis, BSB, Weapon Box, Helm, Aura, Guard, Wing
+	setarray .payment_item_id_1500[0], 35217; 
+	
+	setarray .payment_item_id_2000[0], 30006,35008; 
+	
+	// --- [โปร 2500] กรุณาเปลี่ยนตัวเลข 11111 ถึง 99999 เป็น ITEM ID จริงของเซิร์ฟเวอร์คุณ ---
+	// ลำดับ: Rare Coin, Slim Box, Safezone Coin, Aegis, BSB, Weapon Box, Helm, Aura, Guard, Wing
+	setarray .payment_item_id_2500[0], 35104; 
+	
+	setarray .payment_item_id_3000[0], 30006,35008; // (ถ้าโปร 3000 ของคุณแจกเท่ากัน ก๊อปปี้ไอดีด้านบนมาใส่ตรงนี้ได้เลยครับ)
+	setarray .payment_item_id_5000[0], 30006,35008; 
+	setarray .payment_item_id_10000[0], 30006,35008; 
+	
+	// AMOUNT (จำนวน ต้องใส่ให้ตรงกับลำดับ ITEM ID ด้านบนเป๊ะๆ)
+	setarray .payment_item_amount_50[0], 1;
+	setarray .payment_item_amount_90[0], 2;
+	setarray .payment_item_amount_150[0], 3;
+	setarray .payment_item_amount_300[0], 2,3;
+	setarray .payment_item_amount_500[0], 1;
+	setarray .payment_item_amount_1000[0], 1;
+	
+	// --- [โปร 1500] จำนวนของแถม ตรงตามสัดส่วนที่คุณต้องการ ---
+	setarray .payment_item_amount_1500[0], 1;
+	
+	
+	setarray .payment_item_amount_2000[0], 20,20;
+	
+	// --- [โปร 2500] จำนวนของแถม ตรงตามสัดส่วนที่คุณต้องการ ---
+	setarray .payment_item_amount_2500[0], 1;
+	
+	setarray .payment_item_amount_3000[0], 32,30;
+	setarray .payment_item_amount_5000[0], 55,50;
+	setarray .payment_item_amount_10000[0], 120,100;
+	
+//======================== FIRST REFILL ===================================
+	
+	// ITEMID
+//	setarray .cash_first50_item_id, 0;
+//	setarray .cash_first90_item_id, 0;
+//	setarray .cash_first150_item_id, 0;
+//	setarray .cash_first300_item_id, 0;
+//	setarray .cash_first500_item_id, 0;
+//	setarray .cash_first500_item_id_2, 0;
+	
+	// 
+//	setarray .cash_first50_amount, 0;
+//	setarray .cash_first90_amount, 0;
+//	setarray .cash_first150_amount, 0;
+//	setarray .cash_first300_amount, 0;
+//	setarray .cash_first500_amount, 0;
+//	setarray .cash_first500_amount_2, 0;
+	
+//===========================================================
+	
+	//Item  ( 0   Item)
+//	setarray .cash_bonus3000_item_id[0], 0;
+//	setarray .cash_bonus5000_item_id[0], 0;
+//	setarray .cash_bonus7000_item_id[0], 0;
+//	setarray .cash_bonus10000_item_id[0], 0;
+//	
+//	// Item  ( 0   Item)
+//	setarray .cash_bonus3000_amount[0], 0;
+//	setarray .cash_bonus5000_amount[0], 0;
+//	setarray .cash_bonus7000_amount[0], 0;
+//	setarray .cash_bonus10000_amount[0], 0;
+	
+//========================= MEMBER ==================================
+	
+	// %  ( 0 )
+	setarray .@member_extra_multiple[0], 0;
+	setarray .@member_extra_multiple[1], 0;
+	setarray .@member_extra_multiple[2], 0;
+	setarray .@member_extra_multiple[3], 0;
+	setarray .@member_extra_multiple[4], 0;
+	setarray .@member_extra_multiple[5], 0;
+	setarray .@member_extra_multiple[6], 0;
+	setarray .@member_extra_multiple[7], 0;
+	setarray .@member_extra_multiple[8], 0;
+	
+	// %  ( 1 ,  0 )
+	set .@member_extra_cash, 0; //-  CASH
+	set .@member_extra_bonus, 0; //-  BONUS
+
+	// %  ( 1 ,  0 )
+	set .@hat_extra_cash_5k, 0; //-  CASH
+	set .@hat_extra_cash_percent_5k, 0; // %  CASH
+	// %  ( 1 ,  0 )
+	set .@hat_extra_cash_10k, 0; //-  CASH
+	set .@hat_extra_cash_percent_10k, 0; // %  CASH
+	// %  ( 1 ,  0 )
+	set .@hat_extra_cash_20k, 0; //-  CASH
+	set .@hat_extra_cash_percent_20k, 0; // %  CASH
+	// %  ( 1 ,  0 )
+	set .@hat_extra_cash_40k, 0; //-  CASH
+	set .@hat_extra_cash_percent_40k, 0; // %  CASH
+	// #HAT_CASH_EQUIP_5k // 
+	// #HAT_CASH_EQUIP_10k // 
+	// #HAT_CASH_EQUIP_20k // 
+	// #HAT_CASH_EQUIP_40k // 
+
+//===========================================================
+	
+	while (1)
+	{
+		query_sql "SELECT `scb_id`,`amount`,`user_id` FROM `payment` WHERE `status` = '00' ORDER BY RAND() LIMIT 100",.scbId$,.pay_amount,.pay_user_id;
+		sleep 500;
+		set .@s, getarraysize(.scbId$);
+		if (.@s > 0) {
+			for (set .i, 0; .i < .@s; set .i, .i + 1) {
+				set .cash_bonus_amount, 0;
+				set .cash_real_amount, 0;
+				if(.pay_amount[.i] && .pay_amount[.i] > 0){
+					set .cash_real_amount, .pay_amount[.i];
+				}
+				
+				switch(.pay_amount[.i]) {
+					case 50:
+						set .pay_amount[.i], 50;
+						set .cash_bonus_amount, 0;
+						break;
+					case 90:
+						set .pay_amount[.i], 90;
+						set .cash_bonus_amount, 0;
+						break;
+					case 150:
+						set .pay_amount[.i], 150;
+						set .cash_bonus_amount, 0;
+						break;
+					case 300:
+						set .pay_amount[.i], 300;
+						set .cash_bonus_amount, 0;
+						break;
+					case 500:
+						set .pay_amount[.i], 50; 
+						set .cash_bonus_amount, 0;
+						break;
+					case 1000:
+						set .pay_amount[.i], 100; 
+						set .cash_bonus_amount, 0;
+						break;
+					case 1500:
+						set .pay_amount[.i], 1; 
+						set .cash_bonus_amount, 0;
+						break;
+					case 2000:
+						set .pay_amount[.i], 2000;
+						set .cash_bonus_amount, 0;
+						break;
+					case 2500:
+						set .pay_amount[.i], 500;
+						set .cash_bonus_amount, 0;
+						break;
+					case 3000:
+						set .pay_amount[.i], 3000;
+						set .cash_bonus_amount, 0;
+						break;
+					case 5000:
+						set .pay_amount[.i], 5000;
+						set .cash_bonus_amount, 0;
+						break;
+					case 10000:
+						set .pay_amount[.i], 10000;
+						set .cash_bonus_amount, 0;
+						break;
+				}
+				
+				// IF USER ONLINE WILL GET CASH & ITEM
+				if(.pay_amount[.i] > 0 && attachrid(.pay_user_id[.i]))
+				{									
+					// SET PLAYER CASHPOINT
+					set #CASHPOINTS,(#CASHPOINTS + .pay_amount[.i]);
+					set #CASHBONUS,(#CASHBONUS + .cash_bonus_amount);
+					dispbottom "[Payment Center System]  " + .pay_amount[.i] + " Cash";
+
+					// GET ITEM EXACT AMOUNT
+					switch(.cash_real_amount){
+						case 50:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_50); set .@j, .@j+1) {
+								if(.payment_item_id_50[.@j] > 0 && .payment_item_amount_50[.@j] > 0){
+									getitem .payment_item_id_50[.@j], .payment_item_amount_50[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_50[.@j]) + "  " + .payment_item_amount_50[.@j] + " ea";
+								}
+							}
+							break;
+						case 90:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_90); set .@j, .@j+1) {
+								if(.payment_item_id_90[.@j] > 0 && .payment_item_amount_90[.@j] > 0){
+									getitem .payment_item_id_90[.@j], .payment_item_amount_90[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_90[.@j]) + "  " + .payment_item_amount_90[.@j] + " ea";
+								}
+							}
+							break;
+						case 150:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_150); set .@j, .@j+1) {
+								if(.payment_item_id_150[.@j] > 0 && .payment_item_amount_150[.@j] > 0){
+									getitem .payment_item_id_150[.@j], .payment_item_amount_150[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_150[.@j]) + "  " + .payment_item_amount_150[.@j] + " ea";
+								}
+							}
+							break;
+						case 300:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_300); set .@j, .@j+1) {
+								if(.payment_item_id_300[.@j] > 0 && .payment_item_amount_300[.@j] > 0){
+									getitem .payment_item_id_300[.@j], .payment_item_amount_300[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_300[.@j]) + "  " + .payment_item_amount_300[.@j] + " ea";
+								}
+							}
+							break;
+						case 500:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_500); set .@j, .@j+1) {
+								if(.payment_item_id_500[.@j] > 0 && .payment_item_amount_500[.@j] > 0){
+									getitem .payment_item_id_500[.@j], .payment_item_amount_500[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_500[.@j]) + "  " + .payment_item_amount_500[.@j] + " ea";
+								}
+							}
+							break;
+						case 1000:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_1000); set .@j, .@j+1) {
+								if(.payment_item_id_1000[.@j] > 0 && .payment_item_amount_1000[.@j] > 0){
+									getitem .payment_item_id_1000[.@j], .payment_item_amount_1000[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_1000[.@j]) + "  " + .payment_item_amount_1000[.@j] + " ea";
+								}
+							}
+							break;
+						case 1500: // [โปร 1500] ระบบจะแจก 10 รายการตาม Array ที่ตั้งค่าไว้ด้านบน
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_1500); set .@j, .@j+1) {
+								if(.payment_item_id_1500[.@j] > 0 && .payment_item_amount_1500[.@j] > 0){
+									getitem .payment_item_id_1500[.@j], .payment_item_amount_1500[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_1500[.@j]) + "  " + .payment_item_amount_1500[.@j] + " ea";
+								}
+							}
+							break;
+						case 2000:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_2000); set .@j, .@j+1) {
+								if(.payment_item_id_2000[.@j] > 0 && .payment_item_amount_2000[.@j] > 0){
+									getitem .payment_item_id_2000[.@j], .payment_item_amount_2000[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_2000[.@j]) + "  " + .payment_item_amount_2000[.@j] + " ea";
+								}
+							}
+							break;
+						case 2500: // [โปร 2500] ระบบจะแจก 10 รายการตาม Array ที่ตั้งค่าไว้ด้านบน
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_2500); set .@j, .@j+1) {
+								if(.payment_item_id_2500[.@j] > 0 && .payment_item_amount_2500[.@j] > 0){
+									getitem .payment_item_id_2500[.@j], .payment_item_amount_2500[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_2500[.@j]) + "  " + .payment_item_amount_2500[.@j] + " ea";
+								}
+							}
+							break;
+						case 3000:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_3000); set .@j, .@j+1) {
+								if(.payment_item_id_3000[.@j] > 0 && .payment_item_amount_3000[.@j] > 0){
+									getitem .payment_item_id_3000[.@j], .payment_item_amount_3000[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_3000[.@j]) + "  " + .payment_item_amount_3000[.@j] + " ea";
+								}
+							}
+							break;
+						case 5000:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_5000); set .@j, .@j+1) {
+								if(.payment_item_id_5000[.@j] > 0 && .payment_item_amount_5000[.@j] > 0){
+									getitem .payment_item_id_5000[.@j], .payment_item_amount_5000[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_5000[.@j]) + "  " + .payment_item_amount_5000[.@j] + " ea";
+								}
+							}
+							break;
+						case 10000:
+							for(set .@j, 0; .@j < getarraysize(.payment_item_id_10000); set .@j, .@j+1) {
+								if(.payment_item_id_10000[.@j] > 0 && .payment_item_amount_10000[.@j] > 0){
+									getitem .payment_item_id_10000[.@j], .payment_item_amount_10000[.@j];
+									dispbottom "[Refill Center System]  Bonus Item " + getitemname(.payment_item_id_10000[.@j]) + "  " + .payment_item_amount_10000[.@j] + " ea";
+								}
+							}
+							break;
+					}
+
+					// #CASHBONUS && #CASHPOINTS  GLOBAL PLAYER  
+/*					if (#CASHBONUS >= 3000 && #CASHBONUS_3000_REWARD_STATUS == 0) 
+					{
+						set #CASHBONUS_3000_REWARD_STATUS, 1;
+						for (set .@i, 0; .@i < getarraysize(.cash_bonus3000_item_id); set .@i, .@i + 1)
+						{
+							if (.cash_bonus3000_item_id[.@i] > 0 && .cash_bonus3000_amount[.@i] > 0)
+							{
+								getitem .cash_bonus3000_item_id[.@i], .cash_bonus3000_amount[.@i];
+								dispbottom "[Refill Center System]  Item " + getitemname(.cash_bonus3000_item_id[.@i]) + "  " + .cash_bonus3000_amount[.@i] + " ea ";
+							}
+						}
+					}
+*/
+					query_sql "UPDATE `payment` SET `status` = '02' WHERE `scb_id` = " + .scbId$[.i];
+					detachrid;
+				}
+			}
+			deletearray .scbId$[0], .@s;
+			deletearray .pay_amount[0], .@s;
+			deletearray .pay_user_id[0], .@s;
+		}
+		sleep 1000;
+	}
+	end;
+}

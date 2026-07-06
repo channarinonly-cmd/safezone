@@ -1,0 +1,378 @@
+// =======================================================
+// 1. Core Logic (ระบบเจาะรูหลัก)
+// =======================================================
+-	script	Slot_Enchant_Core	-1,{
+	// --- ระบบเช็กแมพเพื่อส่งรหัสฝ่ายไปฟังก์ชันตรวจสอบ ---
+	.@map$ = strcharinfo(3);
+	if (compare(.@map$, "morocc") || compare(.@map$, "moc_")) {
+		callfunc "Check_Faction", 1; 
+	} else if (compare(.@map$, "prontera") || compare(.@map$, "prt_")) {
+		callfunc "Check_Faction", 2; 
+	}
+
+	mes "[Seiyablem]";
+	mes "ฉันคือวิศวกรที่สามารถเพิ่ม Slot ให้กับอาวุธและชุดเกราะคุณได้.";
+	mes "ฉันทำไห้ไม่ฟรีหรอกนะ และอีกอย่างใช่ว่าจะสำเร็จเสมอไป มันก็ยังมีสิทธิ์ล้มเหลวได้.";
+	next;
+	mes "[Seiyablem]";
+	mes "มันอาจจะดูเหมือนง่ายนะ แต่ที่จริงแล้วมันมีความซับซ้อนมาก.";
+	mes "ถ้าคุณสนใจในบริการของเรา ก็ไปลุยกันได้เลย.";
+	next;
+	switch(select("- ระดับ C :- ระดับ B :- ระดับ A :- ระดับ S :- ยกเลิกการสนทนา")) {
+		case 1: set .@shop$, "SLOT_C"; break;
+		case 2: set .@shop$, "SLOT_B"; break;
+		case 3: set .@shop$, "SLOT_A"; break;
+		case 4: set .@shop$, "SLOT_S"; break;
+		case 5: close;
+	}
+	close2;
+	// เรียกหน้าต่างร้านค้าลับขึ้นมาให้ผู้เล่นเลือกไอเทมที่จะเจาะ
+	callshop .@shop$, 1;
+	npcshopattach .@shop$;
+	end;
+
+OnBuyItem:
+	set .@i, 0;
+	copyarray .@uitem[0], @bought_nameid[0], getarraysize(@bought_nameid);
+	deletearray @bought_nameid[0], getarraysize(@bought_nameid);
+	deletearray @bought_quantity[0], getarraysize(@bought_quantity);
+	deletearray .@itemuse[0], getarraysize(.@itemuse);
+	deletearray .@itemusemany[0], getarraysize(.@itemusemany);
+	set .@broken, 0;
+	set .@zenyuse, 0;
+	
+	if (.@uitem[.@i] == 1461) {
+		setarray .@itemuse[0], 1460 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1951) {
+		setarray .@itemuse[0], 1950 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1902) {
+		setarray .@itemuse[0], 1901 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1568) {
+		setarray .@itemuse[0], 1553 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1569) {
+		setarray .@itemuse[0], 1554 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1570) {
+		setarray .@itemuse[0], 1555 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1571) {
+		setarray .@itemuse[0], 1556 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1520) {
+		setarray .@itemuse[0], 1519 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1220) {
+		setarray .@itemuse[0], 1219 ,984 ,999; setarray .@itemusemany[0], 1 , 1 , 5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1716) {
+		setarray .@itemuse[0], 1714 ,984 ,999; setarray .@itemusemany[0], 1 , 1 , 5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1408) {
+		setarray .@itemuse[0], 1407 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1128) {
+		setarray .@itemuse[0], 1123 ,984 ,999; setarray .@itemusemany[0], 1 , 2 , 5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1906) {
+		setarray .@itemuse[0], 1905 ,1011; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1955) {
+		setarray .@itemuse[0], 1954 ,1011; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1802) {
+		setarray .@itemuse[0], 1801 ,1010; setarray .@itemusemany[0], 1 ,10; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1715) {
+		setarray .@itemuse[0], 1713 ,984 ,999; setarray .@itemusemany[0], 1 ,2 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1309) {
+		setarray .@itemuse[0], 1304 ,984; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1114) {
+		setarray .@itemuse[0], 1113 ,984; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 1538) {
+		setarray .@itemuse[0], 1523 ,984; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 1726) {
+		setarray .@itemuse[0], 1718 ,984 ,999; setarray .@itemusemany[0], 1 ,2 ,10; set .@broken, 60; set .@zenyuse, 500000;
+		
+		} else if (.@uitem[.@i] == 21003) {
+		setarray .@itemuse[0], 1164 ,984 ,985 ,999; setarray .@itemusemany[0], 1 ,5 ,5 ,50; set .@broken, 60; set .@zenyuse, 700000;
+		
+		
+	} else if (.@uitem[.@i] == 1620) {
+		setarray .@itemuse[0], 1619 ,984 ,999; setarray .@itemusemany[0], 1 ,2 ,10; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1171) {
+		setarray .@itemuse[0], 1168 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 800000;
+	} else if (.@uitem[.@i] == 1149) {
+		setarray .@itemuse[0], 1129 ,984 ,999; setarray .@itemusemany[0], 1 ,2 ,10; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1266) {
+		setarray .@itemuse[0], 1261 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 700000;
+	} else if (.@uitem[.@i] == 1727) {
+		setarray .@itemuse[0], 1722 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1532) {
+		setarray .@itemuse[0], 1522 ,984 ,999; setarray .@itemusemany[0], 1 ,2 ,10; set .@broken, 60; set .@zenyuse, 700000;
+	} else if (.@uitem[.@i] == 1816) {
+		setarray .@itemuse[0], 1814 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 700000;
+	} else if (.@uitem[.@i] == 1172) {
+		setarray .@itemuse[0], 1163 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 700000;
+	} else if (.@uitem[.@i] == 13030) {
+		setarray .@itemuse[0], 13001 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1275) {
+		setarray .@itemuse[0], 1256 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1276) {
+		setarray .@itemuse[0], 1257 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1277) {
+		setarray .@itemuse[0], 1258 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1278) {
+		setarray .@itemuse[0], 1259 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1539) {
+		setarray .@itemuse[0], 1524 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1922) {
+		setarray .@itemuse[0], 1918 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1976) {
+		setarray .@itemuse[0], 1970 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1479) {
+		setarray .@itemuse[0], 1477 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1178) {
+		setarray .@itemuse[0], 1167 ,984; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 1418) {
+		setarray .@itemuse[0], 1413 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 13016) {
+		setarray .@itemuse[0], 1239 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 13017) {
+		setarray .@itemuse[0], 1230 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 2000000;
+	} else if (.@uitem[.@i] == 13018) {
+		setarray .@itemuse[0], 1236 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 13019) {
+		setarray .@itemuse[0], 13002 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 13400) {
+		setarray .@itemuse[0], 1135 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 1476) {
+		setarray .@itemuse[0], 1466 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 1618) {
+		setarray .@itemuse[0], 1617 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 2000000;
+	} else if (.@uitem[.@i] == 1481) {
+		setarray .@itemuse[0], 1468 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 13032) {
+		setarray .@itemuse[0], 1225 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 13031) {
+		setarray .@itemuse[0], 1224 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 13033) {
+		setarray .@itemuse[0], 1232 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 1540) {
+		setarray .@itemuse[0], 1528 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 1179) {
+		setarray .@itemuse[0], 1169 ,984 ,999; setarray .@itemusemany[0], 1 ,5 ,10; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2308) {
+		setarray .@itemuse[0], 2307 ,999; setarray .@itemusemany[0], 1 ,3; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 2310) {
+		setarray .@itemuse[0], 2309 ,999; setarray .@itemusemany[0], 1 ,3; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 2233) {
+		setarray .@itemuse[0], 2232 ,999; setarray .@itemusemany[0], 1 ,3; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 2217) {
+		setarray .@itemuse[0], 2216 ,999; setarray .@itemusemany[0], 1 ,3; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 5351) {
+		setarray .@itemuse[0], 2253 ,999; setarray .@itemusemany[0], 1 ,3; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 5347) {
+		setarray .@itemuse[0], 5012 ,999; setarray .@itemusemany[0], 1 ,3; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 5348) {
+		setarray .@itemuse[0], 2244 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 5349) {
+		setarray .@itemuse[0], 5016 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 200000;
+	} else if (.@uitem[.@i] == 2108) {
+		setarray .@itemuse[0], 2107 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 250000;
+	} else if (.@uitem[.@i] == 2315) {
+		setarray .@itemuse[0], 2314 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 250000;
+	} else if (.@uitem[.@i] == 2326) {
+		setarray .@itemuse[0], 2325 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2322) {
+		setarray .@itemuse[0], 2321 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2406) {
+		setarray .@itemuse[0], 2405 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2404) {
+		setarray .@itemuse[0], 2403 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2504) {
+		setarray .@itemuse[0], 2503 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2102) {
+		setarray .@itemuse[0], 2101 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2104) {
+		setarray .@itemuse[0], 2103 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2106) {
+		setarray .@itemuse[0], 2105 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 250000;
+	} else if (.@uitem[.@i] == 5168) {
+		setarray .@itemuse[0], 5046 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 250000;
+	} else if (.@uitem[.@i] == 2715) {
+		setarray .@itemuse[0], 2609 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2432) {
+		setarray .@itemuse[0], 2409 ,999; setarray .@itemusemany[0], 1 ,5; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 2231) {
+		setarray .@itemuse[0], 2230 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 5120) {
+		setarray .@itemuse[0], 5114 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2121) {
+		setarray .@itemuse[0], 2109 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2331) {
+		setarray .@itemuse[0], 2330 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2342) {
+		setarray .@itemuse[0], 2341 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2317) {
+		setarray .@itemuse[0], 2316 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2336) {
+		setarray .@itemuse[0], 2335 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2412) {
+		setarray .@itemuse[0], 2411 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 5093) {
+		setarray .@itemuse[0], 5092 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2506) {
+		setarray .@itemuse[0], 2505 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2229) {
+		setarray .@itemuse[0], 2228 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2359) {
+		setarray .@itemuse[0], 2337 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 5157) {
+		setarray .@itemuse[0], 2299 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2525) {
+		setarray .@itemuse[0], 2507 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 5158) {
+		setarray .@itemuse[0], 2251 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 5159) {
+		setarray .@itemuse[0], 2246 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 2625) {
+		setarray .@itemuse[0], 2605 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 400000;
+	} else if (.@uitem[.@i] == 5167) {
+		setarray .@itemuse[0], 2264 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 300000;
+	} else if (.@uitem[.@i] == 5350) {
+		setarray .@itemuse[0], 2287 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 2434) {
+		setarray .@itemuse[0], 2425 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 500000;
+	} else if (.@uitem[.@i] == 5160) {
+		setarray .@itemuse[0], 2256 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 2000000;
+	} else if (.@uitem[.@i] == 5161) {
+		setarray .@itemuse[0], 2258 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 2000000;
+	} else if (.@uitem[.@i] == 5162) {
+		setarray .@itemuse[0], 5017 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 2000000;
+	} else if (.@uitem[.@i] == 5163) {
+		setarray .@itemuse[0], 5019 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 2000000;
+	} else if (.@uitem[.@i] == 5165) {
+		setarray .@itemuse[0], 2235 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 2000000;
+	} else if (.@uitem[.@i] == 5164) {
+		setarray .@itemuse[0], 2234 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 2000000;
+	} else if (.@uitem[.@i] == 5166) {
+		setarray .@itemuse[0], 5053 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2360) {
+		setarray .@itemuse[0], 2343 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2622) {
+		setarray .@itemuse[0], 2602 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2621) {
+		setarray .@itemuse[0], 2601 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2671) {
+		setarray .@itemuse[0], 2619 ,985; setarray .@itemusemany[0], 1 ,2; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2372) {
+		setarray .@itemuse[0], 2334 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2373) {
+		setarray .@itemuse[0], 2327 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2128) {
+		setarray .@itemuse[0], 2111 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2523) {
+		setarray .@itemuse[0], 2522 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 1000000;
+	} else if (.@uitem[.@i] == 2371) {
+		setarray .@itemuse[0], 2339 ,985; setarray .@itemusemany[0], 1 ,1; set .@broken, 60; set .@zenyuse, 1000000;
+	} else {
+		mes "[Seiyablem]";
+		mes "ไม่พบไอเท็ม รอสักครู่";
+		close;
+	}
+	
+	mes "[Seiyablem]";
+	mes "เยี่ยม.อันที่จริงฉันไม่ค่อยมีศิลปะ ในการเพิ่ม Slot สักเท่าไหร่";
+	mes "มันเป็นกระบวนการที่ซับซ้อน และส่งผลกระทบมากมาย.";
+	mes "ฉันจะบอกอะไรให้นะ";
+	next;
+	mes "[Seiyablem]";
+	mes "ในบางเมือง, มันจะมีความสำเร็จตามระดับของอุปกรณ์ ที่มีความยากง่ายในการหา.";
+	mes "ในเมืองอื่นๆ มักจะทำตรงข้ามกับความเป็นจริง.";
+	mes "มันไม่ได้มีความพิเศษอะไรเลย ไอการเพิ่ม Slot เนี่ย";
+	next;
+	mes "[Seiyablem]";
+	mes "โอ้ว..เกือบลืม ยังมีสิ่งสำคัญอีกสิ่งทีคุณควรจะรู้.";
+	mes "ถ้าคุณให้ฉันเพิ่ม Slot ในอุปกรณ์บางอย่าง, คุณต้องเช๊คให้แน่ใจว่าคุณไม่ได้สวมใส่มันอยู่.";
+	next;
+	mes "[Seiyablem]";
+	mes "นี่คือตัวอย่าง:ถ้าคุณมี +7 Manteau และ Manteau ที่แสนจะธรรมดา อยู่ในช่องสวมใส่ของคุณ, ฉันจะสุ่มเลือกใน 2 ชิ้นนี้มาทำการเพิ่ม Slot.";
+	mes "ฉะนั้น จำไว้ ระวังให้ดี ถ้าฉันสุ่มเอา +7 ของคุณมา อย่ามาโทษฉันละกัน เพราะฉันเตือนแล้ว.";
+	next;
+	mes "[Seiyablem]";
+	mes "อีกรอบนะ, ^FF0000โปรดระวังอุปกรณ์ที่คุณต้องการให้เพิ่ม Slot ดูให้แน่ใจว่า ถอดแล้วหรือยัง^000000.";
+	mes "อุปกรณ์ที่มีชื่อเดียวกันกับสิ่งที่คุณจะเพิ่ม Slot ควรเก็บของเหล่านั้นไว้ในช่องเก็บของใน Kafra, เก็บมันซะ";
+	next;
+	mes "[Seiyablem]";
+	mes "คุณต้องการสร้าง :";
+	mes "^i["+.@uitem[.@i]+"]^FFFFFF_^000000"+getitemname(.@uitem[.@i])+"["+getitemslots(.@uitem[.@i])+"]";
+	mes "กี่ครั้ง ?";
+	mes "ไอเทมที่จำเป็น '^FF0000ต่อครั้ง^000000' : ";
+	for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1)
+		mes (.@k + 1) + ". ^i["+.@itemuse[.@k]+"]^FFFFFF_^000000"+getitemname(.@itemuse[.@k])+""+(getiteminfo(.@itemuse[.@k], 2) == 4 || getiteminfo(.@itemuse[.@k], 2) == 5?"["+getitemslots(.@itemuse[.@k])+"]":"")+" "+.@itemusemany[.@k]+" อัน"; 
+	mes "Zeny : "+callfunc("F_InsertComma",.@zenyuse)+"";
+	mes "โอกาสสำเร็จ : "+(100-.@broken)+"%";
+	next;
+	mes "[ Craft Item ]";
+	mes "กรุณาระบุจำนวนครั้ง ที่นายท่านต้องการสร้าง :";
+	next;
+	input .@count;
+	if (.@count == 0) close;
+	
+	mes "[Seiyablem]";
+	mes "คุณต้องการสร้าง :";
+	mes ""+getitemname(.@uitem[.@i])+"["+getitemslots(.@uitem[.@i])+"]";
+	
+	set .@j, 0;
+	while (.@j != .@count) {
+		for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1) {
+			if (countitem(.@itemuse[.@k]) < .@itemusemany[.@k]) {
+				next;
+				mes "[Seiyablem]";
+				mes "คุณมีไอเทมไม่เพียงพอ !";
+				close;
+			}
+		}
+		if (Zeny < .@zenyuse) {
+			next;
+			mes "[Seiyablem]";
+			mes "คุณมีเงินไม่เพียงพอ !";
+			close;
+		}
+		
+		// ลบไอเทมที่ใช้เจาะรู รวมถึงเงิน
+		for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1)
+			delitem .@itemuse[.@k], .@itemusemany[.@k];
+		set Zeny, Zeny - .@zenyuse;
+		
+		// สุ่มความสำเร็จ
+		if (.@broken >= rand(100)) { // กรณีล้มเหลว
+			specialeffect2 155;
+			mes "^FF0000อัพเกรดครั้งที่ "+(1+.@j)+" ล้มเหลว !^000000";
+			mes "[Seiyablem]";
+			mes "หวาาาาาาาาา...ขอโทษที มันไม่สำเร็จ.";
+			mes "อย่างไรก็ตาม, ฉันจะทำตัวเป็นเหมือนไม่รู้ไม่เห็นอะไรเลยละกัน.";
+			mes "นี่คือโชคชะตาของคุณ, และเป็นสิ่งที่พระเจ้ากำหนดมาแล้ว, เข้าใจไหม?";
+			next;
+			mes "[Seiyablem]";
+			mes "ฉันหวังว่า รอบหน้า คุณจะโชคดีนะ";
+			// <--- (จุดที่ผมลบโค้ดขยะ delitem getarg() ออกให้แล้วครับ)
+		} else { // กรณีสำเร็จ
+			specialeffect2 154;
+			mes "[Seiyablem]";
+			mes "เยี่ยม, มันสำเร็จและผ่านไปด้วยดี";
+			mes "ยินดีด้วยกับความสำเร็จครั้งนี้ ! ";
+			mes "^0000FFอัพเกรดครั้งที่ "+(1+.@j)+" สำเร็จ !^000000";
+			getitem .@uitem[.@i], 1; // ได้รับของแบบมี Slot คืน
+		}
+		set .@j, .@j + 1;
+	}
+	end;
+
+OnInit:
+	waitingroom "เจาะรูอุปกรณ์",0; 
+	end;
+}
+
+// =======================================================
+// 2. Hidden Shops (ข้อมูลร้านค้าซ่อน)
+// =======================================================
+-	shop	SLOT_C	HIDDEN_NPC,1461:-1,1951:-1,1902:-1,1568:-1,1569:-1,1570:-1,1571:-1,2308:-1,2310:-1,2233:-1,2217:-1,5351:-1,5347:-1,5348:-1,5349:-1
+-	shop	SLOT_B	HIDDEN_NPC,1520:-1,1220:-1,1716:-1,1408:-1,1128:-1,1906:-1,1955:-1,1802:-1,1715:-1,1309:-1,1114:-1,1538:-1,2108:-1,2315:-1,2326:-1,2322:-1,2406:-1,2404:-1,2504:-1,2102:-1,2104:-1,2106:-1,5168:-1,2715:-1,2432:-1
+-	shop	SLOT_A	HIDDEN_NPC,21003:-1,1726:-1,1620:-1,1171:-1,1149:-1,1266:-1,1727:-1,1532:-1,1816:-1,1172:-1,13030:-1,1275:-1,1276:-1,1277:-1,1278:-1,1539:-1,1922:-1,1976:-1,1479:-1,1178:-1,2231:-1,5120:-1,2121:-1,2331:-1,2342:-1,2317:-1,2336:-1,2412:-1,5093:-1,2506:-1,2229:-1,2359:-1,5157:-1,2525:-1,5158:-1,5159:-1,2625:-1,5167:-1,5350:-1,2434:-1
+-	shop	SLOT_S	HIDDEN_NPC,1418:-1,13016:-1,13017:-1,13018:-1,13019:-1,13400:-1,1476:-1,1618:-1,1481:-1,13032:-1,13031:-1,13033:-1,1540:-1,1179:-1,5160:-1,5161:-1,5162:-1,5163:-1,5165:-1,5164:-1,5166:-1,2360:-1,2622:-1,2621:-1,2671:-1,2372:-1,2373:-1,2128:-1,2523:-1,2371:-1
+
+// =======================================================
+// 3. การวาง NPC (Deployment)
+// =======================================================
+morocc,119,54,3	duplicate(Slot_Enchant_Core)	เจาะรู#moc	1_M_PAY_ELDER
+prontera,181,126,3	duplicate(Slot_Enchant_Core)	เจาะรู#prt	1_M_PAY_ELDER // เปลี่ยนพิกัด Prontera ได้ตามต้องการ

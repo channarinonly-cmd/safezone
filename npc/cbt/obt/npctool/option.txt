@@ -1,0 +1,412 @@
+// ===================================================
+// ไฟล์: refine_option_main.txt (อัปเดต: หมวก Slot 1 ออฟฟรี ไม่ใช้ไอเทม/Zeny แบบเช็คตรง 100%)
+// ===================================================
+morocc,111,54,3	script	สุ่มออฟชั่น#1	813,{
+	.@nameopts$ = "สุ่มออฟชั่น";
+	.@req_zeny = 35000;
+	.@fail_rate = 35; // โอกาสแตก (ล้มเหลว) 35%
+	.@fail_type = 2;  // (1) แตกแล้วของหาย | (2) แตกแล้วของไม่หายแต่ออฟไม่เปลี่ยน | (3) แตกแล้วเริ่มใหม่
+
+	disable_items;
+	if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 3000)) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "^9400D3ช่องเก็บของหรือน้ำหนักเกิน! เอาไปเก็บก่อน!^000000";
+		close;
+	}
+
+	setarray .@eq[1], EQI_HEAD_TOP, EQI_ARMOR, EQI_HAND_R, EQI_HAND_L, EQI_GARMENT, EQI_SHOES;
+	setarray .@eq_name$[1], "หมวก", "เสื้อ", "อาวุธ", "โล่/อาวุธซ้าย", "ผ้าคลุม", "รองเท้า";
+	
+	.@menu$ = "";
+	.@valid_cnt = 0;
+	for(.@i = 1; .@i <= 6; .@i++) {
+		if(getequipisequiped(.@eq[.@i])) {
+			if (.@eq[.@i] == EQI_HAND_L && getequipid(EQI_HAND_R) == getequipid(EQI_HAND_L)) {
+				continue; 
+			}
+			.@valid_cnt++;
+			.@valid_part[.@valid_cnt] = .@eq[.@i]; 
+			.@menu$ += .@eq_name$[.@i] + " -> [ ^0000FF" + getequipname(.@eq[.@i]) + "^000000 ]:";
+		}
+	}
+	
+	if (.@valid_cnt == 0) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "คุณไม่ได้สวมใส่อุปกรณ์ที่สามารถทำออฟชั่นได้เลย!";
+		close;
+	}
+	
+	.@select_idx = select(.@menu$);
+	.@part = .@valid_part[.@select_idx]; 
+
+	// ?? หินวัตถุดิบแยกตามส่วน
+	switch(.@part) {
+		case EQI_HEAD_TOP: .@req_item = 35090; .@req_amt = 5; break;
+		case EQI_ARMOR:    .@req_item = 35091; .@req_amt = 5; break;
+		case EQI_HAND_R:   .@req_item = 35092; .@req_amt = 5; break;
+		case EQI_HAND_L:   .@req_item = 35093; .@req_amt = 5; break;
+		case EQI_GARMENT:  .@req_item = 35094; .@req_amt = 5; break;
+		case EQI_SHOES:    .@req_item = 35095; .@req_amt = 5; break;
+	}
+
+	.@equip_uid$ = getequipuniqueid(.@part);
+	.@equip_id   = getequipid(.@part);
+	.@refine_lv = getequiprefinerycnt(.@part);
+	
+	// ==========================================
+	// ?? กำหนด Option Group ล่วงหน้า
+	// ==========================================
+	.@item_type = getiteminfo(.@equip_id, ITEMINFO_TYPE);
+	.@grp = 0;
+
+	if (.@item_type == IT_WEAPON) {
+		.@w_type = getiteminfo(.@equip_id, ITEMINFO_SUBTYPE);
+		switch(.@w_type) {
+			case W_DAGGER: .@grp = 901; break;
+			case W_BOW: .@grp = 902; break;
+			case W_STAFF: .@grp = 903; break;
+			case W_2HSTAFF: .@grp = 904; break;
+			case W_1HSWORD: .@grp = 905; break;
+			case W_2HSWORD: .@grp = 906; break;
+			case W_MACE: case W_2HMACE: .@grp = 907; break;
+			case W_KATAR: .@grp = 908; break;
+			case W_1HSPEAR: .@grp = 909; break;
+			case W_2HSPEAR: .@grp = 910; break;
+			case W_1HAXE: case W_2HAXE: .@grp = 911; break;
+			case W_MUSICAL: .@grp = 912; break;
+			case W_WHIP: .@grp = 913; break;
+			case W_BOOK: .@grp = 914; break;
+			case W_KNUCKLE: .@grp = 915; break;
+		}
+	} else {
+		switch(.@part) {
+			case EQI_GARMENT: .@grp = 916; break;
+			case EQI_ARMOR: .@grp = 917; break;
+			case EQI_HAND_L: .@grp = 918; break;
+			case EQI_SHOES: .@grp = 919; break;
+			case EQI_HEAD_TOP: .@grp = 920; break;
+		}
+	}
+
+	if (.@grp == 0) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "ไม่พบตารางออฟชั่นสำหรับอุปกรณ์ชิ้นนี้!";
+		close;
+	}
+
+	// -----------------------------------------------------
+	// โหลด Database ของกลุ่มต่างๆเข้า Array ชั่วคราว
+	// -----------------------------------------------------
+	deletearray .@o_id; deletearray .@o_min; deletearray .@o_max; deletearray .@o_rate; deletearray .@o_name$;
+	if (.@grp == 901) { // OP_Dagger
+		setarray .@o_id[0], 311, 321, 323, 302, 322, 324, 326, 301, 319, 328, 327;
+		setarray .@o_min[0], 1, 1, 2, 1, 1, 1, 1, 3, 1, 1, 1;
+		setarray .@o_max[0], 2, 10, 20, 10, 5, 15, 10, 15, 5, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 1000, 2000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "ATK", "CRI", "ATK %", "ASPD %", "CRI DMG %", "Damage All Size %", "Damage Boss %", "Variable Cast Time -%", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 902) { // OP_Bow
+		setarray .@o_id[0], 316, 312, 317, 321, 322, 301, 332, 325, 329, 328, 327;
+		setarray .@o_min[0], 2, 1, 1, 2, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 20, 2, 10, 20, 5, 10, 10, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 500, 100;
+		setarray .@o_name$[0], "LUK", "AGI", "FLEE", "ATK", "ASPD %", "Damage Boss %", "SP Recovery %", "Long Range ATK %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 903) { // OP_OH_Staff
+		setarray .@o_id[0], 314, 315, 313, 335, 303, 320, 333, 319, 334, 345, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 500, 1, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 2, 6, 5000, 5, 5, 4, 5, 6, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 3000, 500, 100;
+		setarray .@o_name$[0], "INT", "DEX", "VIT", "Max Weight", "MATK %", "Delay -%", "Resist Demi-Human/Player %", "Variable Cast Time -%", "Heal Power %", "Jupitel Thunder %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 904) { // OP_TH_Staff
+		setarray .@o_id[0], 314, 315, 313, 305, 303, 320, 333, 319, 334, 346, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 40, 1, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 2, 4, 400, 7, 10, 7, 10, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 3000, 500, 100;
+		setarray .@o_name$[0], "INT", "DEX", "VIT", "MaxHP", "MATK %", "Delay -%", "Resist Demi-Human/Player %", "Variable Cast Time -%", "Heal Power %", "Storm Gust %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 905) { // OP_OH_Sword
+		setarray .@o_id[0], 311, 312, 305, 321, 302, 349, 350, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 40, 1, 1, 9, 1, 1, 1, 1, 1, 1;
+		setarray .@o_max[0], 2, 2, 400, 10, 10, 30, 2, 5, 10, 10, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 1000, 1000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "MaxHP", "ATK", "ATK %", "HP Gain on Kill", "SP Gain on Kill", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 906) { // OP_TH_Sword
+		setarray .@o_id[0], 311, 313, 318, 301, 323, 302, 349, 350, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 3, 2, 1, 9, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 2, 2, 15, 20, 20, 10, 30, 2, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 2000, 5000, 1000, 1000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "VIT", "HIT", "Damage Boss %", "CRI", "ATK %", "HP Gain on Kill", "SP Gain on Kill", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 13;
+	} else if (.@grp == 907) { // OP_Mace
+		setarray .@o_id[0], 311, 312, 318, 317, 301, 302, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 2, 2, 3, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 2, 2, 20, 20, 20, 10, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "HIT", "FLEE", "Damage Boss %", "ATK %", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 908) { // OP_Katar
+		setarray .@o_id[0], 311, 312, 323, 317, 324, 301, 302, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 2, 1, 3, 3, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 2, 2, 20, 10, 15, 20, 10, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "CRI", "FLEE", "CRI DMG %", "Damage Boss %", "ATK %", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 909) { // OP_OH_Spear
+		setarray .@o_id[0], 311, 312, 318, 325, 322, 332, 349, 350, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 1, 1, 1, 9, 1, 1, 1, 1, 1;
+		setarray .@o_max[0], 3, 3, 15, 15, 4, 10, 30, 2, 10, 10, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 2000, 2000, 1000, 1000, 1000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "HIT", "Long Range ATK %", "ASPD %", "SP Recovery %", "HP Gain on Kill", "SP Gain on Kill", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 910) { // OP_TH_Spear
+		setarray .@o_id[0], 311, 312, 318, 325, 322, 332, 349, 350, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 1, 1, 1, 9, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 3, 15, 15, 4, 10, 30, 2, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 2000, 2000, 1000, 1000, 1000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "HIT", "Long Range ATK %", "ASPD %", "SP Recovery %", "HP Gain on Kill", "SP Gain on Kill", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 911) { // OP_Axe
+		setarray .@o_id[0], 311, 317, 320, 329, 326, 322, 349, 306, 350, 347, 348, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 3, 1, 1, 9, 20, 1, 1, 1, 1, 1;
+		setarray .@o_max[0], 2, 15, 10, 15, 10, 5, 30, 200, 2, 15, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 2000, 2000, 2000, 2000, 1000, 1000, 1000, 3000, 3000, 500, 100;
+		setarray .@o_name$[0], "STR", "FLEE", "Delay -%", "Damage Demi-Human/Player %", "Damage All Size %", "ASPD %", "HP Gain on Kill", "MaxSP", "SP Gain on Kill", "Cart Revolution %", "Mammonite %", "EXP %", "Drop Rate %";
+		.@pool_size = 13;
+	} else if (.@grp == 912 || .@grp == 913) { // OP_Musical & OP_Whip (Same)
+		setarray .@o_id[0], 316, 312, 317, 321, 322, 301, 332, 325, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 2, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 3, 10, 20, 5, 10, 10, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 500, 100;
+		setarray .@o_name$[0], "LUK", "AGI", "FLEE", "ATK", "ASPD %", "Damage Boss %", "SP Recovery %", "Long Range ATK %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 914) { // OP_Book
+		setarray .@o_id[0], 314, 315, 313, 335, 303, 320, 333, 319, 334, 351, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 500, 1, 1, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 3, 6, 5000, 10, 5, 5, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 2000, 2000, 2000, 1000, 3000, 500, 100;
+		setarray .@o_name$[0], "INT", "DEX", "VIT", "Max Weight", "MATK %", "Delay -%", "Resist Demi-Human/Player %", "Variable Cast Time -%", "Heal Power %", "Magnus Exorcismus %", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 915) { // OP_Knuckle
+		setarray .@o_id[0], 311, 312, 318, 317, 301, 302, 322, 326, 329, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 2, 3, 1, 1, 1, 3, 1, 1;
+		setarray .@o_max[0], 3, 3, 20, 20, 20, 10, 5, 10, 15, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 2000, 1000, 2000, 2000, 2000, 500, 100;
+		setarray .@o_name$[0], "STR", "AGI", "HIT", "FLEE", "Damage Boss %", "ATK %", "ASPD %", "Damage All Size %", "Damage Demi-Human/Player %", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 916) { // OP_GARMENT
+		setarray .@o_id[0], 317, 305, 321, 322, 320, 319, 331, 332, 335, 328, 327;
+		setarray .@o_min[0], -15, -400, -10, 1, -5, -5, -10, -10, -5000, -7, -5;
+		setarray .@o_max[0], 15, 400, 10, 5, 5, 5, 10, 10, 5000, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 1000, 1000, 2000, 2000, 2000, 3000, 500, 100;
+		setarray .@o_name$[0], "FLEE", "MaxHP", "ATK", "ASPD %", "Delay -%", "Variable Cast Time -%", "Damage/MDMG Demi-Human/Player %", "SP Recovery %", "Max Weight", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 917) { // OP_ARMOR
+		setarray .@o_id[0], 317, 305, 308, 303, 302, 319, 333, 304, 335, 328, 327;
+		setarray .@o_min[0], 1, 40, 1, 1, 1, 1, 1, 1, 500, 1, 1;
+		setarray .@o_max[0], 15, 400, 10, 5, 5, 5, 5, 10, 5000, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 1000, 1000, 2000, 2000, 2000, 3000, 500, 100;
+		setarray .@o_name$[0], "FLEE", "MaxHP", "MDEF", "MATK %", "ATK %", "Variable Cast Time -%", "Resist Demi-Human/Player %", "Max HP/SP %", "Max Weight", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 918) { // OP_SHIELD
+		setarray .@o_id[0], 307, 305, 321, 308, 320, 310, 309, 332, 335, 328, 327;
+		setarray .@o_min[0], 1, 40, 1, 1, 1, 2, 1, 1, 500, 1, 1;
+		setarray .@o_max[0], 10, 400, 10, 5, 5, 20, 10, 10, 5000, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 1000, 1000, 2000, 2000, 2000, 3000, 500, 100;
+		setarray .@o_name$[0], "DEF", "MaxHP", "ATK", "MDEF", "Delay -%", "Resist Boss %", "Resist Neutral %", "SP Recovery %", "Max Weight", "EXP %", "Drop Rate %";
+		.@pool_size = 11;
+	} else if (.@grp == 919) { // OP_SHOES
+		setarray .@o_id[0], 317, 321, 305, 304, 309, 303, 326, 333, 332, 335, 328, 327;
+		setarray .@o_min[0], 1, 1, 40, 1, 1, 1, 1, 1, 1, 500, 1, 1;
+		setarray .@o_max[0], 15, 10, 400, 10, 7, 7, 5, 7, 10, 5000, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 2000, 1000, 1000, 2000, 2000, 2000, 3000, 500, 100;
+		setarray .@o_name$[0], "FLEE", "ATK", "MaxHP", "Max HP/SP %", "Resist Neutral %", "MATK %", "Damage All Size %", "Resist Demi-Human/Player %", "SP Recovery %", "Max Weight", "EXP %", "Drop Rate %";
+		.@pool_size = 12;
+	} else if (.@grp == 920) { // OP_HEADTOP
+		setarray .@o_id[0], 311, 312, 313, 314, 315, 316, 319, 302, 303, 325, 326, 335, 349, 350, 328, 327;
+		setarray .@o_min[0], 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 500, 1, 1, 1, 1;
+		setarray .@o_max[0], 3, 3, 3, 3, 3, 3, 5, 10, 10, 10, 10, 5000, 3, 3, 7, 5;
+		setarray .@o_rate[0], 5000, 5000, 5000, 5000, 5000, 5000, 1000, 1000, 1000, 1000, 1000, 3000, 800, 800, 800, 500;
+		setarray .@o_name$[0], "STR", "AGI", "VIT", "INT", "DEX", "LUK", "Variable Cast Time -%", "ATK %", "MATK %", "Long Range ATK %", "Damage All Size %", "Max Weight", "HP Gain on Kill", "SP Gain on Kill", "EXP %", "Drop Rate %";
+		.@pool_size = 16;
+	}
+
+	// -----------------------------------------------------
+	// ถ้าเป็นหมวกที่ไม่มีออฟชั่นช่อง 1 ให้ข้ามไปสุ่มออฟชั่นช่อง 1 เลย
+	// -----------------------------------------------------
+	if (.@part == EQI_HEAD_TOP && getequiprandomoption(.@part, 0, ROA_ID) == 0) {
+		.@target_idx = 0; 
+		goto Process_Option;
+	}
+
+// ==========================================
+// ?? ส่วนดำเนินการเลือกสล็อต (Preview ด้านบนสุด)
+// ==========================================
+Select_Slot:
+	mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+	mes "เป้าหมาย : ^0000FF" + getequipname(.@part) + "^000000 (+"+.@refine_lv+")";
+	mes "เลือกการกระทำ หรือเลือกช่อง SLOT ที่ต้องการสุ่ม:";
+	next;
+
+	// สร้างเมนูแบบ Dynamic
+	.@slot_menu$ = "^008000?? ดูตารางโอกาสได้รับออฟชั่น (Preview)^000000:";
+	deletearray .@slot_map;
+	.@slot_map[1] = 0; 
+	.@menu_idx = 2;
+
+	// อนุญาตให้เลือกทำ SLOT [1] ได้เฉพาะส่วนหัวเท่านั้น
+	if (.@part == EQI_HEAD_TOP) {
+		.@slot_menu$ += "^FF0000•^000000 เสริม SLOT [1]:";
+		.@slot_map[.@menu_idx] = 1;
+		.@menu_idx++;
+	}
+
+	if (.@refine_lv >= 6) { .@slot_menu$ += "^FF0000•^000000 เสริม SLOT [2]:"; .@slot_map[.@menu_idx] = 2; .@menu_idx++; }
+	if (.@refine_lv >= 7) { .@slot_menu$ += "^FF0000•^000000 เสริม SLOT [3]:"; .@slot_map[.@menu_idx] = 3; .@menu_idx++; }
+	if (.@refine_lv >= 8) { .@slot_menu$ += "^FF0000•^000000 เสริม SLOT [4]:"; .@slot_map[.@menu_idx] = 4; .@menu_idx++; }
+	if (.@refine_lv >= 9) { .@slot_menu$ += "^FF0000•^000000 เสริม SLOT [5]:"; .@slot_map[.@menu_idx] = 5; .@menu_idx++; }
+
+	.@slot_menu$ += "^FF0000ยกเลิก^000000";
+	
+	.@select_menu = select(.@slot_menu$);
+	
+	if (.@select_menu == 1) goto Show_Preview;
+	if (.@select_menu == .@menu_idx) close; 
+	
+	.@actual_slot = .@slot_map[.@select_menu];
+	.@target_idx = .@actual_slot - 1; 
+
+	if (.@target_idx > 0) {
+		if (getequiprandomoption(.@part, .@target_idx - 1, ROA_ID) == 0) {
+			mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+			mes "^FF0000ต้องมีออฟชั่นใน SLOT ["+ .@target_idx +"] อยู่ก่อน ถึงจะทำช่องถัดไปได้!^000000";
+			close;
+		}
+	}
+
+Process_Option:
+	// ==========================================
+	// ? ห้ามสุ่มทับในช่องที่มีออฟชั่นอยู่แล้ว
+	// ==========================================
+	if (getequiprandomoption(.@part, .@target_idx, ROA_ID) != 0) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "^FF0000SLOT ["+ (.@target_idx + 1) +"] มีออฟชั่นอยู่แล้ว ไม่สามารถสุ่มทับหรืออัปเกรดซ้ำได้!^000000";
+		close;
+	}
+
+	mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+	
+	// ==========================================
+	// ?? ตรวจสอบว่าเป็นการทำออฟชั่นฟรีหรือไม่ (เฉพาะหมวก Slot 1)
+	// ==========================================
+	if (.@part == EQI_HEAD_TOP && .@target_idx == 0) {
+		mes "^008000( หมวกที่ยังไม่มีออฟชั่น จะถูกดำเนินการสุ่มใน SLOT [1] ทันที )^000000";
+		mes "^008000? พิเศษ! สุ่มออฟชั่น SLOT [1] สำหรับหมวก ฟรี!! ไม่ใช้ไอเทมและ Zeny ?^000000";
+	} else {
+		mes "ใช้ : ^FF0000" + getitemname(.@req_item) + "^000000 จำนวน " + .@req_amt + " ชิ้น";
+		mes "ใช้ ^FF0000" + .@req_zeny + "^000000 Zeny";
+	}
+	next;
+
+	if (getequipid(.@part) != .@equip_id || getequipuniqueid(.@part) != .@equip_uid$) {
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "ตรวจพบความพยายามสลับไอเทมระหว่างดำเนินการ!";
+		delequip .@part; getitem 909, 1; sc_start SC_CURSE, 300000, 5; specialeffect EF_POISON;
+		close;
+	}
+
+	// ==========================================
+	// ?? ระบบหัก Zeny และ ไอเทม (การันตี 100% ว่าถ้าเป็นหมวก Slot 1 จะไม่ถูกดึงของ)
+	// ==========================================
+	if (.@part != EQI_HEAD_TOP || .@target_idx != 0) {
+		if (countitem(.@req_item) < .@req_amt || Zeny < .@req_zeny) {
+			mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+			mes "ไอเทมวัตถุดิบ หรือ Zeny ไม่เพียงพอ";
+			close;
+		}
+		Zeny -= .@req_zeny;
+		delitem .@req_item, .@req_amt;
+	}
+
+	// ==========================================
+	// ?? คำนวณโอกาสล้มเหลว
+	// ==========================================
+	if (rand(1, 100) <= .@fail_rate) {
+		specialeffect 155; 
+		mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+		mes "^FF0000กระบวนการล้มเหลว...^000000 ";
+		if(.@fail_type == 1){ mes "^FF0000อุปกรณ์ของคุณถูกทำลาย!^000000"; failedrefitem .@part; }
+		if(.@fail_type == 2){ mes "^FF0000โชคดีที่ออฟชั่นเดิมไม่หายไป พยายามใหม่นะ.^000000"; }
+		if(.@fail_type == 3){ mes "^FF0000คุณสมบัติถูกรีเซ็ต อุปกรณ์กลับเป็นสถานะเดิม.^000000"; failedrefitem .@part; getitem .@equip_id,1; }
+		close;
+		end;
+	}
+
+	// ==========================================
+	// ?? สุ่มออฟชั่นตาม Rate (Weight)
+	// ==========================================
+	.@total_rate = 0;
+	for(.@i = 0; .@i < .@pool_size; .@i++) {
+		.@total_rate += .@o_rate[.@i];
+	}
+
+	.@roll = rand(1, .@total_rate);
+	.@acc = 0;
+	.@opt_id = 0; .@opt_val = 0; .@opt_max = 0; .@opt_name$ = "";
+
+	for(.@i = 0; .@i < .@pool_size; .@i++) {
+		.@acc += .@o_rate[.@i];
+		if (.@roll <= .@acc) {
+			.@opt_id = .@o_id[.@i];
+			.@opt_val = rand(.@o_min[.@i], .@o_max[.@i]);
+			.@opt_max = .@o_max[.@i];
+			.@opt_name$ = .@o_name$[.@i];
+			break;
+		}
+	}
+
+	// ==========================================
+	// ? สลักออฟชั่นลงในไอเทม
+	// ==========================================
+	specialeffect 154; 
+	setrandomoption(.@part, .@target_idx, .@opt_id, .@opt_val, 0, getcharid(0)); 
+	
+	if (.@opt_val == .@opt_max) {
+		announce "[ข่าวลือออฟชั่น] : สุดยอด! ผู้เล่น ["+strcharinfo(0)+"] สุ่มได้ค่าระดับสูงสุด "+.@opt_name$+" "+.@opt_val+" ให้กับ ["+getequipname(.@part)+"]!", 0, 0x00FF00;
+		query_sql("INSERT INTO `web_option_log` (`char_name`, `item_name`, `option_name`, `option_value`, `log_time`) VALUES ('" + escape_sql(strcharinfo(0)) + "', '" + escape_sql(getequipname(.@part)) + "', '" + escape_sql(.@opt_name$) + "', " + .@opt_val + ", NOW())");
+	}
+	
+	mes "[ ^FF0000"+.@nameopts$+"^000000 ]";
+	mes "ได้รับพลังแฝงเรียบร้อยแล้ว!";
+	mes "ได้รับพลัง: ^0000FF" + .@opt_name$ + "^000000 ค่า: ^FF0000" + .@opt_val + "^000000"; 
+	close;
+
+// ==========================================
+// ?? ส่วนแสดงหน้าต่าง Preview ออฟชั่น (ดึงข้อมูล Dynamic)
+// ==========================================
+Show_Preview:
+	mes "[ ^FF0000ตารางเรทออฟชั่น^000000 ]";
+	mes "อุปกรณ์: ^0000FF" + getequipname(.@part) + "^000000";
+	mes "เมื่อทำการสุ่ม คุณมีโอกาสได้รับ 1 ในพลังต่อไปนี้:";
+	mes "----------------------------------";
+	
+	.@total_rate = 0;
+	for(.@i = 0; .@i < .@pool_size; .@i++) {
+		.@total_rate += .@o_rate[.@i];
+	}
+
+	for(.@i = 0; .@i < .@pool_size; .@i++) {
+		.@pct = (.@o_rate[.@i] * 100) / .@total_rate;
+		mes "^0000FF• "+.@o_name$[.@i]+"^000000 [ ^FF0000"+.@o_min[.@i]+"^000000 ถึง ^008000"+.@o_max[.@i]+"^000000 ] ("+.@pct+"%)";
+	}
+	
+	mes "----------------------------------";
+	next;
+	goto Select_Slot;
+
+OnInit:
+	waitingroom "สุ่มออฟชั่น 5 สล็อต", 0;
+	end;
+}

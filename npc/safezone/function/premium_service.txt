@@ -1,0 +1,90 @@
+//= Function Script Premium Service By [SPY]
+//= 06/04/2024 (Fixed Integer Overflow)
+
+-	script	Premium_Service	-1,{
+	end;
+
+OnPCLoginEvent:
+	// ==================================================
+	// ป้องกันปัญหาตัวเลขเกิน (Overflow) กรณี VIP นานกว่า 24 วัน
+	// ลิมิตเวลาดึงบัฟไว้ที่ 2,000,000 วินาที (~23 วัน)
+	// ==================================================
+	.@time_remain = #PREMIUM_SERVICE_TIME - gettimetick(2);
+	if (.@time_remain > 2000000) .@time_remain = 2000000;
+
+	.@exp_remain = #PREMIUM_SERVICE_EXP - gettimetick(2);
+	if (.@exp_remain > 2000000) .@exp_remain = 2000000;
+
+	.@item_remain = #PREMIUM_SERVICE_ITEM - gettimetick(2);
+	if (.@item_remain > 2000000) .@item_remain = 2000000;
+
+	.@dead_remain = #PREMIUM_SERVICE_DEAD - gettimetick(2);
+	if (.@dead_remain > 2000000) .@dead_remain = 2000000;
+	// ==================================================
+
+	//= PREMIUM SERVICE END & START
+	if(#PREMIUM_SERVICE_TIME > gettimetick(2)){
+		sc_end SC_AID_PERIOD_ADDSTOREITEMCOUNT;
+		sc_end SC_AID_PERIOD_PLUSEXP_2ND;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_2ND_ETC;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_2ND_USABLE;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_2ND_EQUIP;
+		
+		sc_start SC_AID_PERIOD_ADDSTOREITEMCOUNT, (.@time_remain * 1000), 300;
+		sc_start SC_AID_PERIOD_PLUSEXP_2ND, (.@time_remain * 1000), 20;
+		
+		//= ,30,30; = 30 ตัวหน้าคือหลอก @mi ว่า Drop เพิ่ม 30% / 30 ตัวหลังคือ drop เพิ่ม 30%
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_2ND_ETC, (.@time_remain * 1000), 30, 15;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_2ND_USABLE, (.@time_remain * 1000), 30, 15;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_2ND_EQUIP, (.@time_remain * 1000), 30, 15;
+	} else {
+	//= PREMIUM SERVICE END
+		sc_end SC_AID_PERIOD_ADDSTOREITEMCOUNT;
+		sc_end SC_AID_PERIOD_PLUSEXP_2ND;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_2ND_ETC;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_2ND_USABLE;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_2ND_EQUIP;
+	}
+
+	//= EXP END & START
+	if(#PREMIUM_SERVICE_EXP > gettimetick(2)){
+		sc_end SC_AID_PERIOD_PLUSEXP;
+		sc_start SC_AID_PERIOD_PLUSEXP, (.@exp_remain * 1000), 30;
+	} else {
+	//= EXP END
+		sc_end SC_AID_PERIOD_PLUSEXP;
+	}
+
+	//= DROP ITEM END & START
+	if(#PREMIUM_SERVICE_ITEM > gettimetick(2)){
+		sc_end SC_AID_PERIOD_RECEIVEITEM_ETC;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_USABLE;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_EQUIP;
+
+		//= ,30,30; = 30 ตัวหน้าคือหลอก @mi ว่า Drop เพิ่ม 30% / 30 ตัวหลังคือ drop เพิ่ม 30%
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_ETC, (.@item_remain * 1000), 30, 15;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_USABLE, (.@item_remain * 1000), 30, 15;
+		sc_start2 SC_AID_PERIOD_RECEIVEITEM_EQUIP, (.@item_remain * 1000), 30, 15;
+	} else {
+	//= DROP ITEM END
+		sc_end SC_AID_PERIOD_RECEIVEITEM_ETC;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_USABLE;
+		sc_end SC_AID_PERIOD_RECEIVEITEM_EQUIP;
+	}
+
+	//= DEADPENALTY END & START
+	if(#PREMIUM_SERVICE_DEAD > gettimetick(2)){
+		sc_end SC_AID_PERIOD_DEADPENALTY;
+		sc_start SC_AID_PERIOD_DEADPENALTY, (.@dead_remain * 1000), 50;
+	} else {
+	//= DEADPENALTY END
+		sc_end SC_AID_PERIOD_DEADPENALTY;
+	}
+	end;
+}
+
+//= PREMIUM SERVICE CHECK
+function	script	Premium_Service_Check	{
+    dispbottom "มีเอฟเฟกต์ซ้อนทับกันอยู่ ไม่สามารถใช้งานได้",0xFFFFFF;
+	end;
+}

@@ -1,0 +1,164 @@
+// ==========================================
+// 1. ตัวสคริปต์หลัก (Floating NPC))@set $CraftLimit_6634 0
+// ==========================================
+-	script	Craft_Item_bbs	-1,{
+	// ล็อกไอเทม ป้องกันผู้เล่นสลับของ/โยนของขณะคุย
+	disable_items;
+
+	// ระบบเช็กแมพเพื่อส่งรหัสฝ่ายไปฟังก์ชันตรวจสอบ
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1; 
+	} else if (strcharinfo(3) == "prontera") {
+		callfunc "Check_Faction", 2; 
+	}
+	
+	mes "[ Craft Item ]";
+	mes "สวัสดีครับนายท่าน ";
+	next;
+	
+	if ($CraftLimit_6634 >= 100) {
+		mes "[ Craft Item ]";
+		mes "^FF0000ขออภัยนายท่าน ตอนนี้โควต้าไอเทมกันแตก 100 ชิ้น^000000";
+		mes "^FF0000ถูกสร้างจนหมดเกลี้ยงแล้วครับ ปิดทำการชั่วคราว!^000000";
+		enable_items;
+		close;
+	}
+
+	mes "[ Craft Item ]";
+	mes "นายท่านต้องการใช้สูตรไหนในการสร้าง ^FF0000ไอเทมกันแตก^000000 ?";
+	mes "^0000FF(โควต้าคงเหลือ: "+(100 - $CraftLimit_6634)+" / 100 ชิ้น)^000000";
+	next;
+	
+	// ตั้งเมนูให้เลือก 2 สูตร
+	.@sel = select(
+		"- ใช้ Oridecon 3 ก้อน + 50,000z (โอกาส 30%)",
+		"- ใช้ Elunium 2 ก้อน + 50,000z (โอกาส 30%)",
+		"- ยกเลิกการสนทนา"
+	);
+
+	if (.@sel == 3) {
+		enable_items;
+		close;
+	}
+
+	// กำหนดตัวแปรตามสูตรที่เลือก (ปรับแก้ให้ตรงกับเมนูแล้ว)
+	if (.@sel == 1) {
+		.@req_item = 984; // Oridecon
+		.@req_amount = 3; // ใช้ 3 ก้อน
+	} else {
+		.@req_item = 985; // Elunium
+		.@req_amount = 2; // ใช้ 2 ก้อน
+	}
+	
+	.@req_zeny = 50000;
+	.@chance = 30; // โอกาสติด 30%
+	.@target_item = 6634; // ไอเทมกันแตก
+
+	mes "[ Craft Item ]";
+	mes "สูตรที่เลือก: ใช้ ^FF0000"+getitemname(.@req_item)+" "+.@req_amount+" ก้อน^000000";
+	mes "Zeny ต่อครั้ง: ^FF0000"+callfunc("F_InsertComma", .@req_zeny)+" Zeny^000000";
+	mes "โอกาสสำเร็จ: ^0000FF"+.@chance+"%^000000";
+	next;
+	
+	mes "[ Craft Item ]";
+	mes "กรุณาระบุจำนวนครั้งที่ต้องการคราฟ :";
+	mes "^0000FF(สามารถคราฟได้สูงสุด "+(100 - $CraftLimit_6634)+" ครั้ง)^000000";
+	next;
+	input .@count;
+	
+	if (.@count <= 0) {
+		enable_items;
+		close;
+	}
+
+	// ดักจำนวนไม่ให้คราฟเกินโควต้าที่เหลืออยู่
+	if ($CraftLimit_6634 + .@count > 100) {
+		mes "[ Craft Item ]";
+		mes "^FF0000คุณระบุจำนวนคราฟเกินโควต้าที่เหลืออยู่!^000000";
+		mes "ตอนนี้เหลือโควต้าให้คราฟได้อีกเพียง ^0000FF"+(100 - $CraftLimit_6634)+" ชิ้น^000000 เท่านั้น";
+		enable_items;
+		close;
+	}
+
+	// ดักเช็คของและเงินแบบรวบยอดก่อนเริ่มคราฟ
+	if (countitem(.@req_item) < .@req_amount * .@count) {
+		mes "[ Craft Item ]";
+		mes "คุณมี ^FF0000"+getitemname(.@req_item)+"^000000 ไม่เพียงพอ!";
+		mes "ต้องการทั้งหมด "+(.@req_amount * .@count)+" ก้อน";
+		enable_items;
+		close;
+	}
+	if (Zeny < .@req_zeny * .@count) {
+		mes "[ Craft Item ]";
+		mes "คุณมี ^FF0000Zeny^000000 ไม่เพียงพอ!";
+		mes "ต้องการทั้งหมด "+callfunc("F_InsertComma", .@req_zeny * .@count)+" Zeny";
+		enable_items;
+		close;
+	}
+
+	// [สำคัญ!] ดักน้ำหนักและช่องเก็บของเต็ม (ป้องกันไอเทมตกพื้นแล้วโดนขโมย/ปั๊มบั๊ก)
+	if (checkweight(.@target_item, .@count) == 0) {
+		mes "[ Craft Item ]";
+		mes "^FF0000น้ำหนัก หรือ ช่องเก็บของ ของคุณไม่เพียงพอ!^000000";
+		mes "กรุณาจัดระเบียบกระเป๋าก่อนทำการคราฟครับ";
+		enable_items;
+		close;
+	}
+
+	mes "[ Craft Item ]";
+	mes "กำลังเริ่มทำการคราฟจำนวน "+.@count+" ครั้ง...";
+	
+	.@success = 0;
+	.@fail = 0;
+
+	// ลูปทำการคราฟทีละชิ้นแบบประมวลผลเร็ว
+	for (.@j = 0; .@j < .@count; .@j++) {
+		// ป้องกันกรณีมีคนอื่นคราฟตัดหน้าจนโควต้าหมดระหว่างที่ลูปกำลังทำงาน
+		if ($CraftLimit_6634 >= 100) {
+			mes "^FF0000โควต้ารวมหมดระหว่างคราฟ! ขอหยุดการคราฟไว้เพียงเท่านี้^000000";
+			break;
+		}
+
+		delitem .@req_item, .@req_amount;
+		Zeny -= .@req_zeny;
+
+		if (rand(100) < .@chance) {
+			getitem .@target_item, 1;
+			$CraftLimit_6634++;
+			.@success++;
+		} else {
+			.@fail++;
+		}
+	}
+	
+	// ==========================================
+	// แสดงเอฟเฟกต์รวม และประกาศชื่อ
+	// ==========================================
+	if (.@success > 0) {
+		specialeffect2 154; // เอฟเฟกต์สำเร็จ (วิ้งๆ)
+		specialeffect2 338; // เอฟเฟกต์พลุฉลอง
+		announce "[ Craft Item ] : ยินดีด้วย! คุณ ["+strcharinfo(0)+"] คราฟ 'กันแตก' สำเร็จจำนวน "+.@success+" ชิ้น! (โควต้าคงเหลือ "+(100 - $CraftLimit_6634)+"/100)", bc_blue|bc_all;
+	} else {
+		specialeffect2 155; // เอฟเฟกต์ล้มเหลว (ควันดำ)
+	}
+	
+	next;
+	mes "[ Craft Item ]";
+	mes "สรุปผลการคราฟทั้งหมด:";
+	mes "สำเร็จ: ^0000FF"+.@success+" ครั้ง^000000";
+	mes "ล้มเหลว: ^FF0000"+.@fail+" ครั้ง^000000";
+	mes "โควต้าส่วนกลางคงเหลือ: ^0000FF"+(100 - $CraftLimit_6634)+" / 100 ชิ้น^000000";
+	
+	enable_items;
+	close;
+
+OnInit:
+	waitingroom "  คราฟกันแตก 100 ก้อน",0;
+	end;
+}
+
+// ==========================================
+// 2. รายชื่อเมืองที่ต้องการให้ NPC ไปยืน (Duplicate)
+// ==========================================
+morocc,159,105,3	duplicate(Craft_Item_bbs)	BBS Item#mor	115
+prontera,147,102,5	duplicate(Craft_Item_bbs)	BBS Item#pro	115

@@ -1,0 +1,214 @@
+###########################################################################
+# Whispering Rain
+###########################################################################
+# Char Bonus DB
+###########################################################################
+#  - Job: All
+#    LevelNeed: 99
+#    Icon: EFST_ENDURE
+#    BonusScript: |
+#      bonus bMaxSP,10000;
+
+
+Header:
+  Type: CHAR_BONUS_DB
+  Version: 1
+Body:
+  - Job: Swordman
+    LevelNeed: 50
+    BonusScript: |
+      bonus bMaxHPrate,1;
+#MaxHP +1% สำหรับ Swordman Lv.50"
+  
+  - Job: Swordman
+    LevelNeed: 70
+    BonusScript: |
+      bonus bMaxHPrate,1;
+      bonus bDefRate,1;
+#MaxHP +2%, DEF +1 สำหรับ Swordman Lv.70"
+  
+  - Job: Swordman
+    LevelNeed: 80
+    BonusScript: |
+      bonus bMaxHPrate,1;
+      bonus bDefRate,1;
+#MaxHP +3%, DEF +2 สำหรับ Swordman Lv.80"
+  
+  - Job: Swordman
+    LevelNeed: 90
+    BonusScript: |
+      bonus bMaxHPrate,1;
+      bonus bDefRate,1;
+#MaxHP +4%, DEF +3 สำหรับ Swordman Lv.90"
+  
+  - Job: Swordman
+    LevelNeed: 99
+    BonusScript: |
+      bonus bMaxHPrate,1;
+      bonus bDefRate,1;
+#MaxHP +5%, DEF +3 สำหรับ Swordman Lv.99"
+  
+  - Job: Mage
+    LevelNeed: 50
+    BonusScript: |
+      bonus bMaxSPrate,1;
+#MaxSP +1% สำหรับ Mage Lv.50"
+  
+  - Job: Mage
+    LevelNeed: 70
+    BonusScript: |
+      bonus bMaxSPrate,1;
+      bonus bMatkRate,1;
+#MaxSP +2%, MATK +1% สำหรับ Mage Lv.70"
+  
+  - Job: Mage
+    LevelNeed: 80
+    BonusScript: |
+      bonus bMaxSPrate,1;
+      bonus bMatkRate,1;
+#MaxSP +3%, MATK +2% สำหรับ Mage Lv.80"
+  
+  - Job: Mage
+    LevelNeed: 90
+    BonusScript: |
+      bonus bMaxSPrate,1;
+      bonus bMatkRate,1;
+#MaxSP +4%, MATK +3% สำหรับ Mage Lv.90"
+  
+  - Job: Mage
+    LevelNeed: 99
+    BonusScript: |
+      bonus bMaxSPrate,1;
+      bonus bMatkRate,1;
+#MaxSP +5%, MATK +5% สำหรับ Mage Lv.99"
+  
+  - Job: Archer
+    LevelNeed: 50
+    BonusScript: |
+      bonus bAspdRate,1;
+#ASPD +1% สำหรับ Archer Lv.50"
+  
+  - Job: Archer
+    LevelNeed: 70
+    BonusScript: |
+      bonus bAspdRate,1;
+      bonus bHit,5;
+#ASPD +2%, HIT +5 สำหรับ Archer Lv.70"
+  
+  - Job: Archer
+    LevelNeed: 80
+    BonusScript: |
+      bonus bAspdRate,1;
+      bonus bHit,2;
+#ASPD +3%, HIT +7 สำหรับ Archer Lv.80"
+  
+  - Job: Archer
+    LevelNeed: 90
+    BonusScript: |
+      bonus bAspdRate,1;
+      bonus bHit,3;
+#ASPD +4%, HIT +10 สำหรับ Archer Lv.90"
+  
+  - Job: Archer
+    LevelNeed: 99
+    BonusScript: |
+      bonus bAspdRate,1;
+      bonus bHit,2;
+      bonus bLongAtkRate,5;
+#ASPD +5%, HIT +12, โจมตีระยะไกล +5% สำหรับ Archer Lv.99"
+  
+  - Job: Acolyte
+    LevelNeed: 50
+    BonusScript: |
+      bonus bHealPower,1;
+#เพิ่มพลัง Heal +1% สำหรับ Acolyte Lv.50"
+  
+  - Job: Acolyte
+    LevelNeed: 70
+    BonusScript: |
+      bonus bHealPower,2;
+      bonus bMaxSPrate,1;
+#เพิ่มพลัง Heal +2%, MaxSP +1% สำหรับ Acolyte Lv.70"
+  
+  - Job: Acolyte
+    LevelNeed: 80
+    BonusScript: |
+      bonus bHealPower,1;
+      bonus bMaxSPrate,1;
+#เพิ่มพลัง Heal +3%, MaxSP +2% สำหรับ Acolyte Lv.80"
+  
+  - Job: Acolyte
+    LevelNeed: 90
+    BonusScript: |
+      bonus bHealPower,1;
+      bonus bMaxSPrate,1;
+#เพิ่มพลัง Heal +4%, MaxSP +3% สำหรับ Acolyte Lv.90"
+  
+  - Job: Acolyte
+    LevelNeed: 99
+    BonusScript: |
+      bonus bHealPower,1;
+#เพิ่มพลัง Heal +5%, MaxSP +3% สำหรับ Acolyte Lv.99"
+  
+  - Job: Thief
+    LevelNeed: 50
+    BonusScript: |
+      bonus bFlee2,1;
+#Flee +1 สำหรับ Thief Lv.50"
+  
+  - Job: Thief
+    LevelNeed: 70
+    BonusScript: |
+      bonus bFlee2,1;
+      bonus bCritical,1;
+#Flee +2, Critical +1 สำหรับ Thief Lv.70"
+  
+  - Job: Thief
+    LevelNeed: 80
+    BonusScript: |
+      bonus bFlee2,1;
+      bonus bCritical,1;
+#Flee +3, Critical +2 สำหรับ Thief Lv.80"
+  
+  - Job: Thief
+    LevelNeed: 90
+    BonusScript: |
+      bonus bFlee2,1;
+      bonus bCritical,1;
+#Flee +4, Critical +3 สำหรับ Thief Lv.90"
+  
+  - Job: Thief
+    LevelNeed: 99
+    BonusScript: |
+      bonus bFlee2,1;
+#Flee +5, Critical +3 สำหรับ Thief Lv.99"
+  
+  - Job: Merchant
+    LevelNeed: 50
+    BonusScript: |
+      bonus bAddMaxWeight,500;
+#เพิ่ม Weight Limit +50 สำหรับ Merchant Lv.50"
+  
+  - Job: Merchant
+    LevelNeed: 70
+    BonusScript: |
+      bonus bAddMaxWeight,500;
+#เพิ่ม Weight Limit +100 สำหรับ Merchant Lv.70"
+  
+  - Job: Merchant
+    LevelNeed: 80
+    BonusScript: |
+      bonus bAddMaxWeight,500;
+#เพิ่ม Weight Limit +150 สำหรับ Merchant Lv.80"
+  
+  - Job: Merchant
+    LevelNeed: 90
+    BonusScript: |
+      bonus bAddMaxWeight,500;
+#เพิ่ม Weight Limit +200 สำหรับ Merchant Lv.90"
+  
+  - Job: Merchant
+    LevelNeed: 99
+    BonusScript: |
+      bonus bAddMaxWeight,500;
+#เพิ่ม Weight Limit +250 สำหรับ Merchant Lv.99"

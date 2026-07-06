@@ -1,0 +1,2434 @@
+//= Script Job Change Class 1 | Class 2 By [SPY]
+
+//= Function
+function	script	Remove_Device	{
+	set .@pyname$, strcharinfo(0);
+	atcommand "@fullstrip " + .@pyname$;
+	end;
+}
+
+//= Warp
+morocc,154,113,5	script	JobMaster	811,{
+	mes "[JobMaster]";
+	mes "สวัสดี";
+	mes "หากท่านต้องการเปลี่ยนอาชีพแล้วล่ะก็";
+	mes "ข้าสามารถพาท่านไปยังสถานที่เปลี่ยนอาชีพ";
+	mes "ของอาชีพนั้นๆได้เลย แบบรวดเร็วทันใจ";
+	next;
+	switch(select("ไปยังสถานที่เปลี่ยนอาชีพ","ยกเลิกบทสนทนา")){
+		case 1:
+			if (Class == Job_Novice){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Acolyte","~ Archer","~ Mage","~ Merchant","~ Swordman","~ Thief")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Acolyte";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "prt_church",183,36;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Archer";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "payon_in02",64,67;
+						end;
+					case 4:
+						mes "[JobMaster]";
+						mes "Job : Mage";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "geffen_in",161,122;
+						end;
+					case 5:
+						mes "[JobMaster]";
+						mes "Job : Merchant";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "alberta_in",57,43;
+						end;
+					case 6:
+						mes "[JobMaster]";
+						mes "Job : Swordman";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "izlude_in",74,167;
+						end;
+					case 7:
+						mes "[JobMaster]";
+						mes "Job : Thief";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "moc_prydb1",42,124;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Acolyte){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Priest","~ Monk")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Priest";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "prt_church",16,37;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Monk";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "monk_in",99,55;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Archer){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Hunter",""+ ( Sex ? "~ Bard" : "~ Dancer" ) +"")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Hunter";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "hu_in01",382,372;
+						end;
+					case 3:
+						if(Sex == SEX_MALE){
+							mes "[JobMaster]";
+							mes "Job : Bard";
+							mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+							mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+							mes "ของอาชีพนี้ใช่ไหม?";
+							next;
+							if(select("ใช่","ยกเลิก") == 2){
+								close;
+							}
+							mes "[JobMaster]";
+							mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+							close2;
+							warp "comodo",225,128;
+							end;
+						}
+						if(Sex == SEX_FEMALE){
+							mes "[JobMaster]";
+							mes "Job : Dancer";
+							mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+							mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+							mes "ของอาชีพนี้ใช่ไหม?";
+							next;
+							if(select("ใช่","ยกเลิก") == 2){
+								close;
+							}
+							mes "[JobMaster]";
+							mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+							close2;
+							warp "job_duncer",88,91;
+							end;
+						}
+				}
+				close;
+			}
+			if (Class == Job_Mage){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Wizard","~ Sage")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Wizard";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "gef_tower",111,33;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Sage";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "yuno_in02",41,61;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Merchant){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Blacksmith","~ Alchemist")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Blacksmith";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "ein_in01",18,23;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Alchemist";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "alde_alche",27,181;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Swordman){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Knight","~ Crusader")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Knight";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "prt_in",83,101;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Crusader";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "prt_in",76,96;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Thief){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Assassin","~ Rogue")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Assassin";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "in_moc_16",19,29;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Rogue";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "in_rogue",363,116;
+						end;
+				}
+				close;
+			}
+			mes "[JobMaster]";
+			mes "สายอาชีพของท่านสูงสุดแล้วในตอนนี้";
+			close;
+		case 2:
+			close;
+	}
+	close;
+}
+
+//= Warp Morocc
+-	script	Warp_Morocc	-1,{
+	mes "^0000FFต้องการกลับไปยัง Morocc หรือไม่?^000000";
+	next;
+	if(select("ต้องการ","ยกเลิก") == 2){
+		close;
+	}
+	warp "morocc",158,92;
+	end;
+}
+
+prt_church,187,36,3	duplicate(Warp_Morocc)	Warp#1	1_M_WIZARD
+payon_in02,68,66,2	duplicate(Warp_Morocc)	Warp#2	1_M_WIZARD
+geffen_in,164,121,2	duplicate(Warp_Morocc)	Warp#3	1_M_WIZARD
+alberta_in,56,48,4	duplicate(Warp_Morocc)	Warp#4	1_M_WIZARD
+izlude_in,81,166,2	duplicate(Warp_Morocc)	Warp#5	1_M_WIZARD
+moc_prydb1,38,122,6	duplicate(Warp_Morocc)	Warp#6	1_M_WIZARD
+in_moc_16,14,30,4	duplicate(Warp_Morocc)	Warp#7	1_M_WIZARD
+ein_in01,13,23,4	duplicate(Warp_Morocc)	Warp#8	1_M_WIZARD
+hu_in01,377,373,4	duplicate(Warp_Morocc)	Warp#9	1_M_WIZARD
+prt_in,84,106,4	duplicate(Warp_Morocc)	Warp#10	1_M_WIZARD
+prt_church,19,37,2	duplicate(Warp_Morocc)	Warp#11	1_M_WIZARD
+gef_tower,106,36,4	duplicate(Warp_Morocc)	Warp#12	1_M_WIZARD
+alde_alche,32,182,5	duplicate(Warp_Morocc)	Warp#13	1_M_WIZARD
+monk_in,105,55,1	duplicate(Warp_Morocc)	Warp#14	1_M_WIZARD
+in_rogue,368,120,4	duplicate(Warp_Morocc)	Warp#15	1_M_WIZARD
+yuno_in02,40,66,5	duplicate(Warp_Morocc)	Warp#16	1_M_WIZARD
+job_duncer,91,97,4	duplicate(Warp_Morocc)	Warp#17	1_M_WIZARD
+comodo,222,120,4	duplicate(Warp_Morocc)	Warp#18	1_M_WIZARD
+
+
+//= Class 1 ========================
+
+//= Acolyte
+prt_church,184,41,4	script	Cleric#aco	60,{
+	mes "[Father Mareusis]";
+	mes "ท่านกำลังหาอะไรอยู่หรือ?";
+	next;
+	switch(select("หลวงพ่อ ข้าต้องการเป็น Acolyte:ข้าแค่มาดูโน่นดูนี่เท่านั้นเอง")) {
+	case 1:
+		if(BaseJob == Job_Novice) {
+			if (Archer_J == 1) || (Mage_J == 1) || (Thief_J == 1) || (Merchant_J == 1) || (Swordman_J == 1){
+				mes "[Father Mareusis]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			goto father_mareusis;
+			close;
+		}
+		mes "[Father Mareusis]";
+		if(BaseJob == Job_Acolyte)
+			mes "แต่ท่านเป็น Acolyte อยู่แล้ว?";
+		else
+			mes "อาชีพที่ท่านเป็นอยู่ ไม่ดีงั้นเหรอ?";
+		close;
+	case 2:
+		close;
+	}
+	close;
+
+father_mareusis:
+	mes "[Father Mareusis]";
+	mes "ท่านต้องการจะเป็นข้ารับใช้ของพระผู้";
+	mes "เป็นเจ้าจริงหรือ?";
+	mes "งั้นขอข้าดูก่อนว่าท่านพร้อมหรือยัง";
+	mes ".. อืมมม...";
+	next;
+	if (!callfunc("F_CanChangeJob")) {
+		mes "[Father Mareusis]";
+		mes "เอ่อ...";
+		mes "ท่านควรเรียนรู้ Basic Skill ทั้งหมดก่อนจึงจะสามารถเป็น Acolyte ได้";
+		close;
+	}
+	mes "[Father Mareusis]";
+	mes "อืมมม... Job Level";
+	mes "มากเพียงพอแล้ว... ดีล่ะ";
+	mes "ตอนนี้ข้าจะถือว่าท่านมีคุณสมบัติที่";
+	mes "จะเป็น Acolyte แล้ว";
+	next;
+	mes "[Father Mareusis]";
+	mes "อย่าลืมขอบคุณพระผู้เป็นเจ้า";
+	mes "ผู้ทรงเอาใจใส่พวกเราตลอดมา";
+	mes "ที่ทำให้เรามีโอกาสอันดีที่จะรับใช้";
+	mes "ท่าน...ต่อไปเมื่อเจ้าเผชิญกับปัญหา";
+	mes "จงเชื่อในพระองค์";
+	mes "ผู้ซึ่งรักท่านตลอดมาและตลอดไป";
+	next;
+	mes "[Father Mareusis]";
+	mes "ท้ายที่สุด";
+	mes "ข้าขอยินดีกับท่านด้วยใจจริงที่ไม่";
+	mes "ย่อท้อต่อการทดสอบ จนถึงขั้นสุดท้าย";
+	Acolyte_J = 1;
+	getitem 1545,1;
+	callfunc "Job_Change",Job_Acolyte;
+	callfunc "Remove_Device";
+	close;
+}
+
+//= Archer
+payon_in02,64,71,4	script	Archer Guildsman#archer	85,{
+	mes "[Archer Guildsman]";
+	mes "สวัสดี มีอะไรให้ช่วยไหม?";
+	next;
+	switch(select("ข้าอยากจะเป็น Archer:ไม่หรอก ขอบคุณ")) {
+	case 1:
+		if(BaseJob == Job_Novice) {
+			if (Acolyte_J == 1) || (Mage_J == 1) || (Thief_J == 1) || (Merchant_J == 1) || (Swordman_J == 1){
+				mes "[Archer Guildsman]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			goto archer_guildsman;
+			close;
+		}
+		mes "[Archer Guildsman]";
+		if(BaseJob == Job_Archer)
+			mes "แต่เจ้าเป็น Archer อยู่แล้ว?";
+		else
+			mes "อาชีพที่เจ้าเป็นอยู่ ไม่ดีงั้นเหรอ?";
+		close;
+	case 2:
+		mes "[Archer Guildsman]";
+		mes "โชคดี";
+		close;
+	}
+	close;
+	
+archer_guildsman:
+	mes "[Archer Guildsman]";
+	mes "เจ้าชื่อ "+strcharinfo(0)+" ใช่ไหม?";
+	next;
+	if (!callfunc("F_CanChangeJob")) {
+		mes "[Archer Guildsman]";
+		mes "เอ่อ...";
+		mes "เจ้าควรเรียนรู้ Basic Skill ทั้งหมดก่อนจึงจะสามารถเป็น Archer ได้";
+		close;
+	}
+	mes "[Archer Guildsman]";
+	mes "Basic Skill ของเจ้าเพียงพอแล้ว..";
+	mes "อืม..";
+	mes "งั้นตอนนี้เจ้าก็พร้อมจะเป็น Archer แล้ว";
+	mes "ข้าจะดำเนินการขั้นต่อไปทันที";
+	next;
+	mes "[Archer Guildsman]";
+	mes "ยินดีด้วย! ตอนนี้เจ้าเป็น Archer แล้ว!";
+	getitem 1742,1; // N_Composite_Bow
+	getitem 12004,1; // Arrow_Container
+	getitem 12009,1; // Silver_Arrow_Container
+	getitem 12008,1; // Fire_Arrow_Container
+	Archer_J = 1;
+	callfunc "Job_Change",Job_Archer;
+	callfunc "Remove_Device";
+	next;
+	mes "[Archer Guildsman]";
+	mes "มีธนูและลูกธนู ตอนนี้เจ้าเป็น";
+	mes "Archer เต็มตัวแล้ว";
+	mes "ข้าหวังว่าจะได้ยินข่าวดีจากเจ้านะ";
+	mes "โชคดี";
+	close;
+}
+
+
+//= Mage
+geffen_in,164,124,4	script	Mage Guildsman#mage	123,{
+	mes "[Mage Guildsman]";
+	mes "เฮ้?";
+	next;
+	switch(select("ข้าอยากเป็น Mage:ไม่มีอะไรหรอก")) {
+		case 1:
+			if(BaseJob == Job_Novice) {
+				if (Archer_J == 1) || (Acolyte_J == 1) || (Thief_J == 1) || (Merchant_J == 1) || (Swordman_J == 1){
+					mes "[Mage Guildsman]";
+					mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+					mes "ที่ท่านเคยเป็นมาก่อน";
+					close;
+				}
+				goto mage_guildsman;
+				close;
+			}
+			mes "[Mage Guildsman]";
+			if(BaseJob == Job_Mage)
+				mes "แต่เจ้าเป็น Mage อยู่แล้ว?";
+			else
+				mes "อาชีพที่เจ้าเป็นอยู่ ไม่ดีงั้นเหรอ?";
+			close;
+		case 2:
+			mes "[Mage Guildsman]";
+			mes "ไม่มีอะไร...?";
+			close;
+	}
+	close;
+
+mage_guildsman:
+	mes "[Mage Guildsman]";
+	mes "อยากเป็น Mage หืมม....";
+	next;
+	mes "[Mage Guildsman]";
+	mes "...เฮ้";
+	mes "ดูท่านสิ..ข้าว่าท่านน่ารักดีนะ?";
+	mes "แม้ว่าจะไม่ใช่แบบที่ข้าชอบก็เถอะ";
+	mes "ท่านบอกว่าต้องการเป็น Mage ใช่ไหม?";
+	next;
+	if(select("ข้าต้องการเป็น Mage") == 1) {
+		mes "[Mage Guildsman]";
+		mes "เรียบร้อย..";
+		mes "ลงชื่อในใบสมัคร....ว้าว~";
+		mes "ลายมือสวยดีนี่! เอาล่ะๆ พอแล้วๆ";
+		mes "ท่านชื่อ... "+strcharinfo(0)+"";
+	}
+	next;
+	if (!callfunc("F_CanChangeJob")) {
+		mes "[Mage Guildsman]";
+		mes "เอ่อ...";
+		mes "เจ้าควรเรียนรู้ Basic Skill ทั้งหมดก่อนจึงจะสามารถเป็น Mage ได้";
+		close;
+	}
+	mes "[Mage Guildsman]";
+	mes ".... อืมม";
+	mes "ข้าเห็นแล้วว่าท่านได้พยายามเต็มที่";
+	mes "แม้ว่ามันจะไม่ค่อยราบรื่นก็ตาม";
+	mes "แต่ว่า..ข้าคิดว่านั่นดีพอแล้ว!";
+	mes "ดีล่ะ ฝึกพื้นฐานเอาไว้เป็นสิ่งที่ดีที่สุด";
+	next;
+	mes "[Mage Guildsman]";
+	mes "ฮาๆ..! ตอนนี้ท่านเป็น Mage แล้ว";
+	mes "หนึ่งในพี่น้องของเรา!";
+	mes "พวกเรายินดีต้อนรับสู่สมาคม";
+	mes "Magician เพื่อนใหม่ของเรา!";
+	next;
+	mes "[Mage Guildsman]";
+	mes "ยินดีต้อนรับเข้าสู่สมาคม Magician~";
+	mes "ข้าก็แค่ยืมคำพูดที่ข้าเคยได้ยิน";
+	mes "ในร้านอาหารชื่อดัง เอาล่ะ";
+	mes "ข้าแค่ต้องการที่จะทักทายเท่านั้น~";
+	getitem 1639,1;
+	Mage_J = 1;
+	callfunc "Job_Change",Job_Mage;
+	callfunc "Remove_Device";
+	close;
+}
+
+//= Merchant
+alberta_in,53,43,6	script	Merchant#mer	86,{
+	mes "[Chief Mahnsoo]";
+	mes "เฮ้ เจ้ามาที่นี่ทำไม?";
+	next;
+	switch(select("ข้าต้องการเป็น Merchant:ไม่มีอะไร")) {
+	case 1:
+		if(BaseJob == Job_Novice) {
+			if (Archer_J == 1) || (Mage_J == 1) || (Thief_J == 1) || (Acolyte_J == 1) || (Swordman_J == 1){
+				mes "[Chief Mahnsoo]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			goto chief_mahnsoo;
+			close;
+		}
+		mes "[Chief Mahnsoo]";
+		if(BaseJob == Job_Merchant)
+			mes "แต่เจ้าเป็น Merchant อยู่แล้ว?";
+		else
+			mes "อาชีพที่เจ้าเป็นอยู่ ไม่ดีงั้นเหรอ?";
+		close;
+	case 2:
+		close;
+	}
+	end;
+	
+chief_mahnsoo:
+	mes "ต้องการเป็น Merchant อย่างนั้นหรือ?";
+	mes "อืมม...";
+	next;
+	if (!callfunc("F_CanChangeJob")) {
+		mes "[Chief Mahnsoo]";
+		mes "เอ่อ...";
+		mes "เจ้าควรเรียนรู้ Basic Skill ทั้งหมดก่อนจึงจะสามารถเป็น Merchant ได้";
+		close;
+	}
+	mes "[Chief Mahnsoo]";
+	mes "ดีมาก";
+	mes "ข้าคิดว่าเจ้าพร้อมแล้วโดยดูจาก";
+	mes "Basic Skill ของเจ้า";
+	mes "ตอนนี้ข้าอนุญาตให้เจ้าเป็น Merchant ได้";
+	next;
+	mes "[Chief Mahnsoo]";
+	mes "ยินดีด้วยที่ได้เป็น Merchant!";
+	mes "ยินดีด้วยอีกครั้งที่ได้เป็นสมาชิกของสมาคม Merchant";
+	mes "และเป็นหนึ่งในเพื่อนร่วมงานของเรา";
+	mes "ข้าหวังว่าเจ้าจะตั้งใจช่วยเหลือพวกเรานะ!";
+	getitem 1381,1;
+	Merchant_J = 1;
+	callfunc "Job_Change",Job_Merchant;
+	callfunc "Remove_Device";
+	close;
+}
+
+//= Swordman
+izlude_in,74,172,4	script	Swordman#swd	119,{
+	mes "[Swordman Guildsman]";
+	mes "ยินดีต้อนรับสู่สมาคม Swordman!";
+	mes "แล้ว.. เจ้ามีอะไรหรือถึงมาหาเรา?";
+	next;
+	switch(select("ข้าต้องการเป็น Swordman:ไม่มีอะไร")) {
+	case 1:
+		if(BaseJob == Job_Novice) {
+			if (Archer_J == 1) || (Mage_J == 1) || (Thief_J == 1) || (Acolyte_J == 1) || (Merchant_J == 1){
+				mes "[Swordman Guildsman]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			goto swordman_guildsman;
+			close;
+		}
+		mes "[Swordman Guildsman]";
+		if(BaseJob == Job_Swordman)
+			mes "แต่เจ้าเป็น Swordman อยู่แล้ว?";
+		else 
+			mes "อาชีพที่เจ้าเป็นอยู่ ไม่ดีงั้นเหรอ?";
+		close;
+	case 2:
+		mes "[Swordman Guildsman]";
+		mes "!?";
+		close;
+	}
+	end;
+	
+swordman_guildsman:
+	if (!callfunc("F_CanChangeJob")) {
+		mes "[Swordman Guildsman]";
+		mes "เอ่อ...";
+		mes "เจ้าควรเรียนรู้ Basic Skill ทั้งหมดก่อนจึงจะสามารถเป็น Swordman ได้";
+		close;
+	}
+	mes "[Swordman Guildsman]";
+	mes "ดีล่ะ เจ้าต้องการจะเป็น Swordman";
+	mes "เดี๋ยวนี้เลยไหม?";
+	next;
+	if(select("ใช่ ข้าต้องการ:ไม่ต้องการ") == 1) {
+		mes "[Swordman Guildsman]";
+		mes "ยินดีด้วย! จากนี้ไป";
+		mes "เจ้ากำลังจะได้ใช้ชีวิตอย่าง Swordman";
+		mes "เริ่มมันตั้งแต่ตอนนี้เลย!";
+		next;
+		mes "[Swordman Guildsman]";
+		mes "ยินดีด้วยอีกครั้งกับการได้เป็น";
+		mes "Swordman";
+		mes "และข้าหวังว่าเจ้าจะเข้าร่วมงานต่างๆ";
+		mes "ของทางสมาคมเรา";
+		Swordman_J = 1;
+		getitem 13415,1;
+		callfunc "Job_Change",Job_Swordman;
+		callfunc "Remove_Device";
+		close;
+	}
+	close;
+}
+
+
+//= Thief
+moc_prydb1,39,129,2	script	Thief Guide#thief	69,{
+	mes "[Thief Guide]";
+	mes "ลมอะไรพัดเจ้ามาหาข้าที่นี่";
+	mes "นี่เป็นที่สำหรับโจร?..เจ้ารู้ใช่ไหม?";
+	next;
+	switch(select("ข้ามาเพื่อเป็น Thief!:ข้าแค่มาดูรอบๆ:")) {
+	case 1:
+		if(BaseJob == Job_Novice) {
+			if (Archer_J == 1) || (Mage_J == 1) || (Acolyte_J == 1) || (Merchant_J == 1) || (Swordman_J == 1){
+				mes "[Thief Guide]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			goto thief_guide;
+			close;
+		}
+		mes "[Thief Guide]";
+		if(BaseJob == Job_Thief)
+			mes "แต่เจ้าเป็น Thief อยู่แล้ว?";
+		else 
+			mes "อาชีพที่เจ้าเป็นอยู่ ไม่ดีงั้นเหรอ?";
+		close;
+	case 2:
+		mes "[Thief Guide]";
+		mes "อ๋อ โอเค...";
+		close;
+	}
+	close;
+
+thief_guide:
+	mes "[Thief Guide]";
+	mes "เจ้าชื่อ "+strcharinfo(0)+" ใช่ไหม?";
+	next;
+	mes "[Thief Guide]";
+	mes "โอเค ถ้าเจ้าอยากเป็นเหมือนพวกข้า";
+	next;
+	mes "[Thief Guide]";
+	mes "วู้ว...";
+	mes "เจ้าอยากจะเป็นจริงๆงั้นรึ";
+	next;
+	if (select("ถูกต้อง") == 1) {
+		mes "[Thief Guide]";
+		mes "จริงหรือ...";
+	}
+	next;
+	mes "[Thief Guide]";
+	mes "เจ้าต้องการที่จะเป็น";
+	mes "ส่วนหนึ่งกับเราหรือไม่?";
+	next;
+	if (select("ใช่แล้ว") == 1) {
+		if (!callfunc("F_CanChangeJob")) {
+			mes "[Thief Guide]";
+			mes "เอ่อ...";
+			mes "เจ้าควรเรียนรู้ Basic Skill ทั้งหมดก่อนจึงจะสามารถเป็น Thief ได้";
+			close;
+		}
+		mes "[Thief Guide]";
+		mes "ยินดีด้วย! ตอนนี้เจ้าเป็น Thief แล้ว!";
+		getitem 13041,1;
+		Thief_J = 1;
+		callfunc "Job_Change",Job_Thief;
+		callfunc "Remove_Device";
+		close;
+	}
+	close;
+}
+
+//= Class 2-1 ========================
+
+//= Assassin
+in_moc_16,19,33,1	script	Guildsman#asn	55,{
+	if (Class == Job_Thief) {
+		mes "[Veteran Assassin Hyuie]";
+		mes ".....เฮ้ เจ้า";
+		mes "เจ้ารู้สึกถึงพลังจากเบื้องบนบางอย่างใช่ไหม";
+		mes "ไม่คิดอยากจะเป็น Assassin บ้างเหรอ?";
+		next;
+		switch(select("เงื่อนไขการเปลี่ยนอาชีพ Assassin ?","ไม่ล่ะ")) {
+			case 1:
+				if (JobLevel < 40){
+					mes "[Veteran Assassin Hyuie]";
+					mes "หากต้องการเปลี่ยนอาชีพ Assassin";
+					mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+					close;
+				}
+				mes "[Veteran Assassin Hyuie]";
+				mes "จริง ๆ ต้องไปทำการทดสอบอย่างเข้มข้นนะ";
+				next;
+				mes "[Veteran Assassin Hyuie]";
+				mes "แต่ระดับประมาณเจ้า";
+				mes "ไม่ต้องทดสอบขนาดนั้นก็ได้";
+				mes "เจ้าสามารถเปลี่ยนเป็น Assassin";
+				mes "ได้เลยนะ";
+				next;
+				mes "[Veteran Assassin Hyuie]";
+				mes "เป็นไง? เปลี่ยนอาชีพเป็น Assassin";
+				mes "เลยไหม?";
+				next;
+				if (select("ทำการเปลี่ยนอาชีพ:ยกเลิก") == 1) {
+					if (Blacksmith_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+						mes "[Veteran Assassin Hyuie]";
+						mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+						mes "ที่ท่านเคยเป็นมาก่อน";
+						close;
+					}
+					if (SkillPoint) {
+						mes "[Veteran Assassin Hyuie]";
+						mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+						mes "แล้วค่อยกลับมานะ!";
+						close;
+					}
+					mes "[Veteran Assassin Hyuie]";
+					mes "เอาล่ะ! จงเดินไปยังหนทางสู่";
+					mes "Assassin!";
+					mes "อย่างลืมความเชื่อมั่นในตัวเองล่ะ";
+					mes "ไม่ว่าจะเมื่อไหร่ก็ตาม";
+					mes "ยินดีด้วยที่เปลี่ยนอาชีพแล้ว";
+					Assassin_J = 1;
+					callfunc "Job_Change",Job_Assassin;
+					callfunc "F_ClearJobVar";
+					callfunc "Remove_Device";
+					close;
+				}
+				mes "[Veteran Assassin Hyuie]";
+				mes "กลับมาหาข้าได้ตลอด";
+				mes "หากเจ้าเปลี่ยนใจ...";
+				close;
+			case 2:
+				mes "[Veteran Assassin Hyuie]";
+				mes "กลับมาหาข้าได้ตลอด";
+				mes "หากเจ้าเปลี่ยนใจ...";
+				close;
+		}
+		close;
+	}
+	mes "[Veteran Assassin Hyuie]";
+	mes "หืมม? ท่านมาทำอะไรในที่มืด ๆ อย่างนี้";
+	mes "ท่านคงไม่ได้มาหลอกข้าหรอกใช่ไหม?";
+	mes "หือ?!";
+	close;
+}
+
+//= Blacksmith
+ein_in01,18,28,4	script	Guildsman#BLS	731,{
+	if (Class == Job_Merchant) {
+		mes "[เจ้าหน้าที่ Blacksmith Altazen]";
+		mes "ยินดีต้อนรับสู่สมาคม Blacksmith";
+		mes "เราคือเหล่าผู้ที่สามารถควบคุมโลหะทั้งหลาย";
+		next;
+		mes "[เจ้าหน้าที่ Blacksmith Altazen]";
+		mes "เราหลอมวัตถุและสร้างไอเท็มขึ้นมาใหม่";
+		mes "มันคือศิลปะแห่งการสร้าง!!";
+		next;
+		mes "[Altazen]";
+		mes "ท่านคงเหนื่อยกับอาชีพ Merchant";
+		mes "เข้าร่วมกับเราและเรียนรู้ศาสตร์แห่ง";
+		mes "เปลวไฟ...";
+		mes "เพื่อที่จะเปลี่ยนอาชีพ";
+		mes "โปรดเขียนชื่อและ Job Level ของท่าน";
+		next;
+		switch(select("ทำการเปลี่ยนอาชีพ","อะไรคือเงื่อนไขของการเปลี่ยนอาชีพ","เอาไว้ก่อนแล้วกัน...")){
+			case 1:
+				if (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+					mes "[Altazen]";
+					mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+					mes "ที่ท่านเคยเป็นมาก่อน";
+					close;
+				}
+				if (JobLevel < 40){
+					mes "[Altazen]";
+					mes "หากต้องการเปลี่ยนอาชีพ Blacksmith";
+					mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+					close;
+				}
+				if (SkillPoint) {
+					mes "[Altazen]";
+					mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+					mes "แล้วค่อยกลับมานะ!";
+					close;
+				}
+				mes "[Altazen]";
+				mes "โอะ อะไรนี่...";
+				mes "ความสามารถระดับเจ้า เป็น Blacksmith";
+				mes "เลยก็ไม่น่าจะมีปัญหาอะไรนะ!";
+				mes "ข้าจะให้สิทธิ์แก่เจ้าในการประสบความ";
+				mes "สำเร็จในความสวยงามของเปลวไฟ";
+				next;
+				mes "[Altazen]";
+				mes "แต่อย่าลืมล่ะ";
+				mes "พวกเรานั้นเป็นคนที่จะนำความงดงามสู่";
+				mes "เหล็กกล้า ...";
+				mes "จงดื่มด่ำกับผลงานของตนเอง";
+				mes "อย่าหลงทางไปหละ!!!";
+				next;
+				mes "[Altazen]";
+				mes "สิ่งนี้...ถือเป็นของขวัญแล้วกัน!!";
+				mes "ยินดีกับการเปลี่ยนอาชีพด้วย!!!";
+				getitem 999,5;
+				Blacksmith_J = 1;
+				callfunc "Job_Change",Job_Blacksmith;
+				callfunc "F_ClearJobVar";
+				callfunc "Remove_Device";
+				close;
+			case 2:
+				mes "[Altazen]";
+				mes "เงื่อนไขหรือ? ก่อนอื่น Job Level 40 และท่านต้องผ่านการทดสอบงาน...";
+				mes "แค่นั้นแหละ เอ่อ...การทดสอบอาจยุ่งยากสักนิดแต่";
+				mes "ก็ไม่ได้ยากเกินไปที่จะผ่าน";
+				close;
+			case 3:
+				mes "[Altazen]";
+				mes "กลับมาหาข้าได้ตลอด";
+				mes "หากเจ้าเปลี่ยนใจ...";
+				close;
+		}
+		close;
+	}
+	mes "[เจ้าหน้าที่ Blacksmith Altazen]";
+	mes "เฮ้เจ้าน่ะ";
+	mes "ข้าขอถามอะไรเจ้าหน่อยได้ไหม";
+	mes "เจ้ามีอะไรกับที่นี่รึเปล่า";
+	next;
+	mes "[เจ้าหน้าที่ Blacksmith Altazen]";
+	mes "เดี๋ยว..ข้าว่าข้าจำเจ้าได้";
+	mes "ฮืมมมม";
+	mes "อืมมม";
+	next;
+	mes "[เจ้าหน้าที่ Blacksmith Altazen]";
+	mes "เจ้าใช่คนที่ทำดาบข้าแตกแล้วหนีไปรึเปล่า";
+	mes "หรือเป็นคนที่คอยเซ้าซี้จะให้ข้าตีดาบให้";
+	mes "อืมมม";
+	next;
+	mes "[เจ้าหน้าที่ Blacksmith Altazen]";
+	mes ".......";
+	mes "...ข้าจำไม่ได้";
+	mes ".....หรือว่านี่คือ De-ja vu!?";
+	next;
+	mes "[เจ้าหน้าที่ Blacksmith Altazen]";
+	mes "ข้าจำไม่ได้";
+	mes "ข้ารู้สึกว่าเจ้านี่มันต้องมีอะไรบางอย่าง";
+	mes "...... เอาเถอะ โชคดีละกัน";
+	close;
+}
+
+//= Hunter
+hu_in01,386,373,4	script	Hunter Guildsman#hnt	727,{
+	if (Class == Job_Archer) {
+		mes "[Hunter Guildsman]";
+		mes "อาฮ่า...นักธนูสินะ! ลองดูๆแล้ว";
+		mes "เจ้าสะสมความความสามารถของนักธนูมาเต็มที่แล้วนะ!";
+		mes "มาหาข้าเพื่อจะเปลี่ยนอาชีพเป็น Hunter";
+		mes "ใช่หรือไม่?";
+		next;
+		if (select("ตกลง เปลี่ยนอาชีพ","... ยังก่อนแล้วกัน") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+				mes "[Hunter Guildsman]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (JobLevel < 40){
+				mes "[Hunter Guildsman]";
+				mes "หากต้องการเปลี่ยนอาชีพ Hunter";
+				mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+				close;
+			}
+			if (SkillPoint) {
+				mes "[Hunter Guildsman]";
+				mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+				mes "แล้วค่อยกลับมานะ!";
+				close;
+			}
+			mes "[Hunter Guildsman]";
+			mes "เอาล่ะ...ถ้างั้น ข้าจะเปลี่ยนอาชีพ";
+			mes "Hunter ให้เจ้าเอง~";
+			next;
+			mes "[Hunter Guildsman]";
+			mes "ว้าว~ ยินดีด้วยนะ!";
+			mes "เจ้ากับชุด Hunter";
+			mes "ช่างเข้ากันดีจริงๆ~";
+			Hunter_J = 1;
+			callfunc "Job_Change",Job_Hunter;
+			callfunc "F_ClearJobVar";
+			callfunc "Remove_Device";
+			next;
+			mes "[Hunter Guildsman]";
+			mes "ทำตัวให้สมกับชุดสุดเท่ของเจ้าด้วยล่ะ";
+			mes "จงแสดงให้เห็นถึงความรักในธรรมชาติ";
+			mes "ในฐานะของ Hunter ล่ะ~";
+			close;
+		}
+		mes "[Hunter Guildsman]";
+		mes "กลับมาหาข้าได้ตลอด";
+		mes "หากเจ้าเปลี่ยนใจ...";
+		close;
+	}
+	mes "[Hunter Guildsman]";
+	mes "สวัสดี ว่าไง ?";
+	mes "เจ้าเป็นไงบ้างไม่ได้เจอกันตั้งนาน";
+	next;
+	mes "[Hunter Guildsman]";
+	mes "....อื๋อ... ?";
+	mes "โอ้..ข้าต้องขอโทษที";
+	mes "เจ้าคงไม่ใช่คนที่ข้ารู้จัก";
+	next;
+	mes "[Hunter Guildsman]";
+	mes "......";
+	mes ".....ข้าว่าข้าเคยเจอเจ้ามาก่อนนะ..";
+	next;
+	mes "[Hunter Guildsman]";
+	mes "ข้าจำไม่ได้เลยจริงๆข้าต้องขอโทษด้วย";
+	mes "ปกติข้าไม่ค่อยจะพลาดเรื่องพวกนี้นะ";
+	mes "..ยังไงก็โชคดีละกัน";
+	close;
+}
+
+//= Knight
+prt_in,88,101,4	script	Captain Herman#knt	56,{
+	if (Class == Job_Swordman) {
+		mes "[Captain Herman]";
+		mes "นี่คือ Prontera";
+		mes "มีอะไรให้ช่วยหรือเปล่า?";
+		next;
+		switch(select("ข้าต้องการเป็น Knight","แค่แวะมาดูเฉยๆ")){
+			case 1:
+				mes "[Captain Herman]";
+				mes "ยินดีอย่างยิ่งที่ได้พบผู้กล้าที่พร้อม";
+				mes "จะเป็น Knight!!";
+				mes "ข้า อัศวินแห่ง Prontera";
+				mes "จะอยู่เคียงข้างเจ้าตลอดไป";
+				next;
+				mes "[Captain Herman]";
+				mes "เราจะยอมรับเฉพาะ Swordman ผู้ที่มี";
+				mes "Job Level เกิน 40 เท่านั้น";
+				mes "ผู้อีกนัยหนึ่งก็คือ";
+				mes "นักสู้ที่มีคุณสมบัติเท่านั้นที่เราต้องการ";
+				next;
+				if (JobLevel < 40){
+					mes "[Captain Herman]";
+					mes "หากต้องการเปลี่ยนอาชีพ Swordman";
+					mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+					close;
+				}
+				mes "[Captain Herman]";
+				mes "ข้าคือ Hermann von Ephesus";
+				mes "ข้าเป็นหัวหน้าของ Knight Guild แห่ง";
+				mes "Prontera";
+				mes "การได้เห็นคนที่มุ่งมั่นเช่นเจ้า";
+				mes "คือสิ่งที่ข้าปรารถนายิ่ง";
+				next;
+				mes "[Captain Herman]";
+				mes "ตกลง เจ้าต้องกรอกใบสมัครก่อน";
+				mes "เจ้าต้องการทำเดี๋ยวนี้เลยไหม?";
+				next;
+				if (select("ครับท่าน","ข้าขอเวลาคิดดูสักนิดก่อน") == 1) {
+					if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+						mes "[Captain Herman]";
+						mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+						mes "ที่ท่านเคยเป็นมาก่อน";
+						close;
+					}
+					if (SkillPoint) {
+						mes "[Captain Herman]";
+						mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+						mes "แล้วค่อยกลับมานะ!";
+						close;
+					}
+					mes "[Captain Herman]";
+					mes "โอะโอะ... เจ้า..";
+					mes "รับรู้ได้ถึงทักษะความสามารถที่สะสม";
+					mes "มาเต็มที่ในฐานะของนักดาบเลยล่ะ";
+					mes "จริงๆต้องให้บททดสอบแก่เจ้า";
+					mes "แต่ว่าคงไม่จำเป็นแล้ว";
+					mes "เจ้ามีความสามารถเพียงพอแล้วล่ะ!";
+					next;
+					mes "[Captain Herman]";
+					mes "นี่คือเหตุผลที่คุณเป็นส่วนหนึ่งของ";
+					mes "สมาคมนักดาบแห่ง Prontera ของเรา";
+					mes "ปกป้องคนที่อ่อนแอกว่า";
+					mes "และใช้ชีวิตอย่างภาคภูมิใจ มีเกียรติ";
+					Knight_J = 1;
+					callfunc "Job_Change",Job_Knight;
+					callfunc "F_ClearJobVar";
+					callfunc "Remove_Device";
+					next;
+					mes "[Captain Herman]";
+					mes "แล้วก็ข้าได้เตรียมของขวัญสำหรับ";
+					mes "เปลี่ยนอาชีพมาให้เจ้า";
+					mes "ปกป้องคนที่อ่อนแอกว่า";
+					mes "และใช้ชีวิตอย่างภาคภูมิใจ มีเกียรติ";
+					getitem 656,7;
+					next;
+					mes "[Captain Herman]";
+					mes "ไปได้แล้ว!";
+					mes "อนาคตขอเจ้ารออยู่ข้างหน้า!";
+					close;
+				}
+				mes "[Captain Herman]";
+				mes "กลับมาหาข้าได้ตลอด";
+				mes "หากเจ้าเปลี่ยนใจ...";
+				close;
+			case 2:
+				mes "[Captain Herman]";
+				mes "อืม..";
+				close;
+		}
+	}
+	mes "[Captain Herman]";
+	mes "อืม...เจ้ามีพลังอะไรแปลกประหลาดอยู่ในตัว";
+	mes "ข้าเป็น Knight มาก็นานแล้ว";
+	mes "แต่ข้าไม่รู้ว่าเจ้าคืออะไร";
+	next;
+	mes "[Captain Herman]";
+	mes "ข้าขอภาวนาให้วิญญาณและความรุ่งเรือง";
+	mes "ในตัวเจ้า";
+	mes "ข้าปรารถนาให้เจ้ามีความแข็งแกร่ง";
+	mes "และสอนความมีสปิรืตให้กับผู้อื่น";
+	close;
+}
+
+//= Priest
+prt_church,16,41,4	script	High Bishop#prst	60,{
+	if (Class == Job_Acolyte) {
+		mes "[Tomas Bishop]";
+		mes "ท่านจะได้รับความคุ้มครองจากสวรรค์";
+		mes "พี่น้อง";
+		mes "วัตถุประสงค์ของท่านในการมาที่นี้คือ";
+		mes "อะไร?";
+		next;
+		switch(select("ข้ามาที่นี่เพื่อเป็น Priest","จบการสนทนา")){
+			case 1:
+				mes "[Tomas Bishop]";
+				mes "โอ....ท่านต้องการเป็น Priest หรือ";
+				mes "พระเจ้าจะอวยพรให้แก่การตัดสินใจของท่าน";
+				next;
+				mes "[Tomas Bishop]";
+				mes "ข้าคือ Tomas Serbbanter ผู้ซึ่งเป็น";
+				mes "Bishop แห่ง Prontera";
+				mes "เป็นตำแหน่งที่มีความรับผิดชอบสูงมาก";
+				next;
+				mes "[Tomas Bishop]";
+				mes "ถ้าท่านต้องการเป็น Priest";
+				mes "งั้นท่านต้องได้รับการทดสอบ";
+				mes "แต่ก่อนการทดสอบ ท่านต้องเป็น";
+				mes "Acolyte Job Level 40 แล้ว...";
+				next;
+				if (JobLevel < 40){
+					mes "[Tomas Bishop]";
+					mes "หากต้องการเปลี่ยนอาชีพ Hunter";
+					mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+					close;
+				}
+				mes "[Tomas Bishop]";
+				mes "ก่อนอื่นท่านต้องลงทะเบียนเสียก่อน";
+				mes "จะลงทะเบียนเลยไหม?";
+				next;
+				if (select("ใช่ ข้าต้องการทดสอบเดี๋ยวนี้","ข้าขอคิดดูหน่อยนะ") == 1) {
+					if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+						mes "[Tomas Bishop]";
+						mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+						mes "ที่ท่านเคยเป็นมาก่อน";
+						close;
+					}
+					if (SkillPoint) {
+						mes "[Tomas Bishop]";
+						mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+						mes "แล้วค่อยกลับมานะ!";
+						close;
+					}
+					mes "[Tomas Bishop]";
+					mes "เจ้าดูใช้ชีวิตมาอย่างซื่อสัตตย์มาดีแล้วล่ะ";
+					mes "ข้าจะเปลี่ยนอาชีพ Priest";
+					mes "ให้กับเจ้าโดยไม่มีบททดสอบใดๆ";
+					next;
+					mes "[Tomas Bishop]";
+					mes "พระเจ้าได้มอบอำนาจให้กับเจ้า";
+					mes "ให้เป็นผู้รับใช้อีกคนหนึ่งที่คอยดูแลอนาคต";
+					mes "จงสร้างความเข้มแข็งและเกียรติยศ";
+					mes "เจตจำนงที่ลึกซึ้งของเจ้าในโลกใบนี้";
+					next;
+					mes "[Tomas Bishop]";
+					mes "อีกทั้งด้วยเหตุผลนี้";
+					mes "ก็จะให้กำเนิดผู้รู้เหตุการณ์ล่วงหน้าขึ้นมา";
+					mes "เพื่อช่วยเป็นที่พักพิงให้กับพี่น้องทั้งหลาย";
+					mes "ช่วยให้โลกใบนี้เกิดปาฏิหาริย์บนแผ่นดิน";
+					next;
+					mes "[Tomas Bishop]";
+					mes "และด้วยเหตุผลนี้ เลยทำให้เกิด";
+					mes "Priest ใหม่ขึ้นหนึ่งคคน";
+					mes "ยินดีด้วยนะ";
+					mes "คอยช่วยเหลือผู้เล่นคนอื่นๆไปด้วยจิตใจที่ดีงามต่อไป";
+					Priest_J = 1;
+					callfunc "Job_Change",Job_Priest;
+					callfunc "F_ClearJobVar";
+					callfunc "Remove_Device";
+					next;
+					mes "[Tomas Bishop]";
+					mes "แล้วก็";
+					mes "เพื่อเป็นของที่ระลึกเปลี่ยนอาชีพ";
+					mes "ข้าให้ไบเบิ้ลแก่เจ้า";
+					mes "นี่จะเป็นแนวทางของเจ้าในการเผยแพร่คำสอนของพระเจ้าไปยังทุกคน";
+					next;
+					mes "[Tomas Bishop]";
+					mes "เอาล่ะ";
+					mes "งั้นขั้นตอนการเปลี่ยนอาชีพก็จะประมาณเท่านี้";
+					mes "ทำดีมาก จงไปตามทางของเจ้าต่อ";
+					close;
+				}
+				close;
+			case 2:
+				close;
+		}
+	}
+	mes "[Tomas Bishop]";
+	mes "เจ้าได้เกิดใหม่อีกครั้ง";
+	mes "โบสถ์แห่ง Prontera";
+	mes "คอยเฝ้ามองเจ้าอยู่เสมอ";
+	next;
+	mes "[Tomas Bishop]";
+	mes "จงอย่ากลัวในการทดสอบ";
+	mes "เจ้ามีความแข็งแกร่งและความกล้าอันยิ่งใหญ่นัก";
+	mes "ขอพระผู้เป็นเจ้าจงอวยพรท่าน";
+	close;
+}
+
+//= Wizard
+gef_tower,111,37,4	script	Wizard Guildsman	70,{
+	if (Class == Job_Mage) {
+		mes "[Magic Guildsman]";
+		mes "ท่านมาทำอะไรที่นี่...?";
+		mes "มีอะไรให้ข้าช่วยหรือเปล่า?";
+		next;
+		if (select("ข้าต้องการเป็น Wizard","...ไม่มีอะไร") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+				mes "[Magic Guildsman]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (SkillPoint) {
+				mes "[Magic Guildsman]";
+				mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+				mes "แล้วค่อยกลับมานะ!";
+				close;
+			}
+			mes "[Magic Guildsman]";
+			mes "ข้าเข้าใจล่ะ ...";
+			mes "ว่าเหตุใดผู้คนต่างพากันมาที่นี่";
+			mes "เอ่อ ยินดีต้อนรับ";
+			mes "ข้าคิดว่าข้าน่าจะช่วยท่านได้";
+			next;
+			mes "[Magic Guildsman]";
+			mes "ข้าคือ Katrine Medichi";
+			mes "ข้าเพิ่งจะเปลี่ยนอาชีพเป็น Wizard";
+			mes "ท่านจะเรียกข้าว่า Katrine ก็ได้นะ";
+			next;
+			mes "[Katrine]";
+			mes "มีหลายคนที่ต้องการเป็น Wizard";
+			mes "แต่ไม่ใช่ทุกคนที่จะเป็นได้";
+			mes "เพราะการทดสอบเพื่อนเปลี่ยนอาชีพนั้น";
+			mes "ยากทีเดียว....";
+			next;
+			mes "[Katrine]";
+			mes "และท่านควรมี Job Level มากกว่า 40";
+			mes "ซึ่งเป็นข้อกำหนดขั้นต่ำของผู้สมัคร....";
+			next;
+			mes "[Katrine]";
+			mes "แล้วข้าจะบอกรายละเอียดท่านเมื่อท่าน";
+			mes "สมัครเป็น Wizard";
+			mes "สมัครเลยไหม?";
+			next;
+			if (select("สมัครเลย","ข้าจะกลับมาใหม่อีกครั้ง") == 1) {
+				if (JobLevel < 40){
+					mes "[Katrine]";
+					mes "หากต้องการเปลี่ยนอาชีพ Wizard";
+					mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+					close;
+				}
+				mes "[Katrine]";
+				mes "ตกลง ข้าจะลงชื่อท่านไว้";
+				mes "ชื่อของท่านคือ .. "+strcharinfo(0)+"?";
+				mes "ใช่ไหม?";
+				next;
+				mes "[Katrine]";
+				mes "เจ้า...Job Lv. เกิน 40 ...";
+				mes "เกินจากที่ข้าคาดไว้มากเลยนะ?";
+				mes "ถ้าเจ้าไม่มีประสบการณ์มากพอ";
+				mes "ก็จะไม่สามารถใช้เวทมนต์ได้ในระดับนี้";
+				mes "ดีมาก ข้าจะเปลี่ยนอาชีพ Wizard";
+				mes "ให้เจ้าโดยไม่มีเงื่อนไขใดๆ!";
+				next;
+				mes "[Katrine]";
+				mes "ตอนนี้ เจ้าก็ได้เป็น Wizard แล้ว";
+				mes "เจ้ารู้ใช่ไหมว่า Wizard";
+				mes "เขาจะทำอะไรกัน ?";
+				mes "พวกเราต้องระวังให้มาก";
+				mes "เท่ากับที่เจ้าร่ายเวทมนต์ที่ทรงพลัง";
+				mes "เหล่านั้นออกไปในฐานะ Wizard นะ";
+				Wizard_J = 1;
+				callfunc "Job_Change",Job_Wizard;
+				callfunc "F_ClearJobVar";
+				callfunc "Remove_Device";
+				next;
+				mes "[Katrine]";
+				mes "เวทมนต์ใช้ในเมืองไม่ได้";
+				mes "เพราะถ้าไปร่ายใส่ใครอาจจะทำให้เกิด";
+				mes "ความวุ่นวายได้";
+				mes "เวทมนต์ของ Wizard";
+				mes "มันสามารถใช้กับเหล่ามอนสเตอร์หรือการต่อสู้ได้เท่านั้น...";
+				next;
+				mes "[Katrine]";
+				mes "อยากให้เจ้าเติมใหญ่โดยการตั้งปาร์ตี้อยู่";
+				mes "กับเหล่าเพื่อนฝูง";
+				mes "แล้วก็...อะ สักครู่นนะ";
+				mes "ข้าเตรียมของขวัญเปลี่ยนอาชีพไว้ให้";
+				mes "รอก่อน";
+				next;
+				mes "[Katrine]";
+				mes "พรึบพับ...";
+				mes "พรึบพับ...";
+				next;
+				mes "[Katrine]";
+				mes "เก็บไว้ใช้ตอนที่จำเป็นนะ";
+				mes "ข้าเป็นคนให้เองกับมือ";
+				mes "อย่าเอาไปขายล่ะ ใช้มันซะ";
+				mes "เข้าใจไหม?";
+				getitem 505,6;
+				next;
+				mes "[Katrine]";
+				mes "เอาล่ะ, ถ้างั้น... จงเติมใหญ่เป็น";
+				mes "Wizard ที่เท่าสุดๆไปเลย!";
+				close;
+			}
+			close;
+		}
+		close;
+	}
+	mes "[Katrine]";
+	mes "หืม... เราเคยพบกันมาก่อนรึเปล่า";
+	mes "เจ้าเปลี่ยนไปมากนะเกิดอะไรขึ้นกับเจ้า";
+	next;
+	mes "[Katrine]";
+	mes "ข้ารู้สึกถึงพลังเวทย์อันยิ่งใหญ่จากตัวเจ้า";
+	mes "แต่ใครจะสนกันล่ะ ขอให้โชคดี";
+	close;
+}
+
+//= Class 2-2 ========================
+
+//= Alchemist
+alde_alche,27,185,5	script	Alchemist Guildsman#am	744,{
+	if (Class == Job_Merchant) {
+		mes "[Parmy Gianino]";
+		mes "ยินดีต้อนรับ ที่นี่คือสมาคม";
+		mes "Alchemist";
+		mes "ให้ข้าช่วยอะไรไหม?";
+		next;
+		if (select("ข้าต้องการเป็น Alchemist","...ไม่มีอะไร") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+				mes "[Parmy Gianino]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (SkillPoint) {
+				mes "[Parmy Gianino]";
+				mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+				mes "แล้วค่อยกลับมานะ!";
+				close;
+			}
+			mes "[Parmy Gianino]";
+			mes "เป็นอย่างนั้นรึ";
+			mes "ดีใจจริงๆที่ได้พบท่าน";
+			mes "ข้าชื่อ Parmy Gianino";
+			mes "เจ้าหน้าที่ของสมาคม Alchemist";
+			next;
+			mes "[Parmy Gianino]";
+			mes "ท่านสามารถเข้าร่วมการวิจัยและเป็น";
+			mes "Alchemist ได้";
+			mes "ถ้าท่านลงทะเบียนกับสมาคมของเรา";
+			mes "และผ่านการทดสอบ";
+			next;
+			mes "[Parmy Gianino]";
+			mes "อย่างไรก็ตาม เรายังไม่ได้รับใคร";
+			mes "ท่านต้องทำการวิจัยอย่างหนักด้วยความ";
+			mes "พยายามอย่างไม่ลดละ";
+			next;
+			mes "[Parmy Gianino]";
+			mes "ท่านต้องผ่านข้อกำหนดเพื่อลงทะเบียน";
+			mes "กับสมาคมของเรา...";
+			mes "ข้าจะบอกข้อกำหนดแก่ท่านหลังจากท่านลงชื่อ";
+			next;
+			mes "[Parmy Gianino]";
+			mes "ท่านต้องการลงชื่อหรือไม่?";
+			next;
+			if (select("แน่นอน","ขอคิดอีกทีก่อนแล้วกัน") == 1) {
+				if (JobLevel < 40){
+					mes "[Parmy Gianino]";
+					mes "หากต้องการเปลี่ยนอาชีพ Alchemist";
+					mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+					close;
+				}
+				mes "[Parmy Gianino]";
+				mes "โอะ, เจ้า Job Lv เกิน 40 แล้วสินะ";
+				mes "ข้าจะเปลี่ยนอาชีพ Alchemist";
+				mes "ให้เลยโดยไม่ต้องทำการทดสอบแล้วกัน!";
+				next;
+				mes "[Parmy Gianino]";
+				mes "ต่อไปนี้เจ้าจะได้กลายเป็น";
+				mes "Alchemist ที่ดี";
+				mes "ขอให้เจ้าออกไปเรียนรู้และวิจัยเพิ่ม";
+				mes "พูมความรู้มากขึ้น";
+				Alchemist_J = 1;
+				callfunc "Job_Change",Job_Alchemist;
+				callfunc "F_ClearJobVar";
+				callfunc "Remove_Device";
+				next;
+				mes "[Parmy Gianino]";
+				mes "เจอกันใหม่ครั้งหน้า";
+				mes "ในฐานะ Alchemist";
+				mes "ข้าหวังว่าท่านจะไม่ลืมความภาคภูมิใจของท่าน";
+				close;
+			}
+			close;
+		}
+		close;
+	}
+	mes "[Parmy Gianino]";
+	mes "ยินดีต้อนรับสู่ Alchemist Guild...";
+	mes "เห...เป็นไปไม่ได้เจ้า..";
+	next;
+	mes "[Parmy Gianino]";
+	mes ".....ไม่สิเป็นไปไม่ได้เจ้าดูเหมือน";
+	mes "ใครซักคนที่ข้ารู้จัก";
+	mes "ต้องมีอะไรผิดพลาดแน่ๆ";
+	close;
+}
+
+//= Crusader
+prt_in,72,96,6	script	Senior Crusader	4_M_CRU_OLD,{
+	if (Class == Job_Swordman) {
+		mes "[Michael Halig]";
+		mes "พวกเราคือ Crusader";
+		mes "ที่ได้รับเลือกให้เตรียมการสงครามศักดิ์สิทธิ์";
+		mes "ครั้งนี้ตามประสงค์ของเทพโอดิน...";
+		mes "ท่านมาที่นี่ด้วยเหตุใด?";
+		next;
+		if (select("ข้าต้องการเข้าร่วมกับท่าน","ไม่มีอะไร") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Monk_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+				mes "[Michael Halig]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (SkillPoint) {
+				mes "[Michael Halig]";
+				mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+				mes "แล้วค่อยกลับมานะ!";
+				close;
+			}
+			mes "[Michael Halig]";
+			mes "ท่านต้องการเป็น Crusader";
+			mes "อย่างนั้นรึ...";
+			mes "จะเข้าร่วมกับเรา...";
+			mes "ไม่ใช่เรื่องง่ายเลยนะ";
+			next;
+			mes "[Michael Halig]";
+			mes "นามของข้าคือ Michele Cantonyon";
+			mes "หนึ่งในสมาชิกผู้เตรียมการสงครามศักดิ์สิทธิ์";
+			mes "พวกเราฝึกตรด้วยความศรัทธาและความจงรักภักดีอยู่เสมอ";
+			next;
+			mes "[Michael Halig]";
+			mes "เราเลือกรับผู้เข้าร่วมจาก";
+			mes "Swordman... หรือ";
+			mes "เลือกผู้ที่เกิดมาเพื่อนเป็นนักรบตาม";
+			mes "พระประสงค์ของเทพโอดิน";
+			next;
+			mes "[Michael Halig]";
+			mes "ข้าไม่รู้ว่าท่านมีความสามารถแค่ไหน...";
+			mes "แต่ข้าจะให้โอกาสท่าน";
+			mes "ต้องการลงทะเบียนเลยไหม?";
+			next;
+			if (select("แน่นอน","ขอคิดดูก่อน") == 1) {
+				if (JobLevel < 40){
+					mes "[Michael Halig]";
+					mes "หากต้องการเปลี่ยนอาชีพ Crusader";
+					mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+					close;
+				}
+				mes "[Michael Halig]";
+				mes "เจ้าได้เตรียมพร้อมเพื่อนจะเป็น";
+				mes "Crusader แล้วสินะ";
+				mes "เปลี่ยนอาชีพได้เลยไม่ต้องทำการทดสอบ";
+				mes "เลยแบบนี้";
+				next;
+				mes "[Michael Halig]";
+				mes "ยินดีกับเจ้าด้วย";
+				mes "ในที่สุดก็พาตัวเองผ่านการฝึกฝนมาอย่างหนักได้ดี";
+				mes "ในตอนนี้ได้เวลาเริ่มใหม่ไปกับพวกเรา";
+				mes "แล้วกับของศักดิ์สิทธิ์ที่เตรียมไว้ให้";
+				Crusader_J = 1;
+				callfunc "Job_Change",Job_Crusader;
+				callfunc "F_ClearJobVar";
+				callfunc "Remove_Device";
+				next;
+				mes "[Michael Halig]";
+				mes "แล้วก็สิ่งนี้,";
+				mes "จงใช้ในเวลาฉุกเฉินล่ะ";
+				mes "พวกเราขอมอบพลังให้กับพวกเจ้า";
+				mes "Crusader";
+				getitem 504,12;
+				next;
+				mes "[Michael Halig]";
+				mes "อย่าลืมว่าเจ้าเข้าใกล้พระวิหารศักดิ์สิทธิ์";
+				mes "มากเต็มทีแล้ว จงสู้ต่อไป!";
+				mes "พระเจ้าโอดิน จะสถิตอยู่กับท่าน!";
+				mes "จงสู้ต่อไป!";
+				close;
+			}
+			close;
+		}
+		close;
+	}
+	mes "[Michael Halig]";
+	mes "พวกเราคือ Crusader";
+	mes "พวกเรานั้นเตรียมตัวพร้อมสำหรับสงครามศักดิ์สิทธิ์ ตามปรารถนาของท่าน Odin";
+	mes "เฉกเช่นเมื่อ 1000 ปีก่อน ปีศาจต้องถูกกำกัดอีกครั้ง";
+	next;
+	mes "[Michael Halig]";
+	mes "ที่แห่งนี้ไม่ใช่ที่ของเจ้า";
+	mes "จงอย่าหยุด และจงฝึกฝนต่อไป";
+	close;
+}
+
+//= Monk
+monk_in,99,58,1	script	Sensei Muhae#mk	60,{
+	if (Class == Job_Acolyte) {
+		mes "[Sensei Muhae]";
+		mes "บางทีจิตใจอันบริสุทธิ์ของเจ้าอาจทำให้";
+		mes "พบพระเจ้าด้วยตนเอง....!!";
+		mes "มานี่สิ ให้ข้าช่วยอะไรไหม?";
+		next;
+		mes "[Sensei Muhae]";
+		mes "เด็กน้อย... เป็นยังไงบ้าง";
+		mes "เจ้าอยากเป็น Monk....? ใช่ไหม?";
+		next;
+		if (select("ถูก","ไม่ใช่") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Rogue_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+				mes "[Sensei Muhae]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (JobLevel < 40){
+				mes "[Sensei Muhae]";
+				mes "หากต้องการเปลี่ยนอาชีพ Monk";
+				mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+				close;
+			}
+			if (SkillPoint) {
+				mes "[Sensei Muhae]";
+				mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+				mes "แล้วค่อยกลับมานะ!";
+				close;
+			}
+			mes "[Sensei Muhae]";
+			mes "โอ้...";
+			mes "ไม่น่าเชื่อเลยว่ายังมีวัยรุ่นที่คำนึง";
+			mes "ถึงพวกเราอยู่อีก...";
+			mes "ยินดีต้อนรับ หนุ่มน้อย!";
+			next;
+			mes "[Sensei Muhae]";
+			mes "พลังนี้...";
+			mes "ทำให้รู้สึกถึงความยากลำบากที่ผ่านมา";
+			mes "เจ้ามีความสามารถเพียงพอที่จะเป็น Monk";
+			mes "ได้แล้วนะ ข้าจะเปลี่ยนอาชีพ";
+			mes "Monk ให้กับเจ้าเอง!";
+			mes "โดยเจ้าไม่ต้องทดสอบอะไรเลย!!";
+			next;
+			mes "[Sensei Muhae]";
+			mes "ถ้าอย่างนั้น,";
+			mes "ก็ต้องเฉลิมฉลองการเปลี่ยนแปลงได้เลย..";
+			next;
+			mes "[Sensei Muhae]";
+			mes "เอาล่ะ...ตอนนี้";
+			mes "ข้าจะเริ่้มทำการปรับเปลี่ยน";
+			mes "เส้นเลือดใหญ่ทั้ง 365 เส้น";
+			mes "และเส้นเลือดอีก 1129 เส้น";
+			mes "ภายในร่างกายเจ้านับแต่บัดนี้";
+			next;
+			mes "[Sensei Muhae]";
+			mes "อ๊าาาาาาาาา.......";
+			next;
+			mes "[Sensei Muhae]";
+			mes "ฮึกกกกกกกกก...";
+			next;
+			mes "["+strcharinfo(0)+"]";
+			mes "- เจ้าลองหายใจเข้าลึกๆ -";
+			next;
+			mes "["+strcharinfo(0)+"]";
+			mes "- ข้าจะเริ่มพิธีแล้วนะ -";
+			next;
+			mes "[Sensei Muhae]";
+			mes "อ๊า~~~ทาทาทาทา!!!";
+			next;
+			mes "[Sensei Muhae]";
+			mes "ทาทาทาดา!!!";
+			next;
+			mes "[Sensei Muhae]";
+			mes "อา~~~~ทาดา!!!";
+			next;
+			mes "[Sensei Muhae]";
+			mes "มาล่ะ!!!!";
+			next;
+			mes "[Sensei Muhae]";
+			mes "ฮู่วววววว.........";
+			next;
+			mes "[Sensei Muhae]";
+			mes ".....เจ้า";
+			mes "ได้เปลี่ยนอาชีพเรียบร้อยแล้ว";
+			next;
+			mes "[Sensei Muhae]";
+			mes "แค่กแค่ก!";
+			Monk_J = 1;
+			callfunc "Job_Change",Job_Monk;
+			callfunc "F_ClearJobVar";
+			callfunc "Remove_Device";
+			next;
+			mes "[Sensei Muhae]";
+			mes "เฮ้อ...แก่ขึ้นหรือเปล่านะ...แรงหายไป";
+			mes "เยอะเลย...ข้าเกือบจะชราแล้วสินะ..";
+			next;
+			mes "[Sensei Muhae]";
+			mes "...เอาล่ะ เจ้าตอนนี้เป็น Monk แล้ว";
+			mes "ยินดีด้วยนะ!";
+			next;
+			mes "[Sensei Muhae]";
+			mes "อนาคตอย่าลืมสหายอย่างข้า..";
+			next;
+			mes "[Sensei Muhae]";
+			mes "รักษาศรัทธาของเจ้าไว้และอย่างละเลย";
+			mes "ความสมบูรณ์ของร่างกาย";
+			next;
+			mes "[Sensei Muhae]";
+			mes "เอาล่ะ...ทีนี้จงไปตามทางของ";
+			mes "Monk ได้เลย";
+			close;
+		}
+		close;
+	}
+	mes "[Sensei Muhae]";
+	mes "บางทีจิตใจอันบริสุทธิ์ของเจ้าอาจทำให้";
+	mes "พบพระเจ้าด้วยตนเอง....!!";
+	close;
+}
+
+//= Rogue
+in_rogue,363,122,4	script	Rogue Guildsman#rg	747,{
+	if (Class == Job_Thief) {
+		mes "[Rogue Guildsman]";
+		mes "เฮ้.. เจ้ามาทำอะไรที่นี่?";
+		mes "น้องชาย อยากเป็น Rogue รึ?";
+		next;
+		mes "[Rogue Guildsman]";
+		mes "สวัสดี! ข้าชื่อ 'Marky'";
+		mes "เจ้าหน้าที่ในสมาคม Rogue Guild~";
+		mes "เจ้าชื่ออะไรน่ะ?";
+		next;
+		mes "[Marky]";
+		mes "เอ่อ....? "+strcharinfo(0)+" รึ?";
+		mes "ชื่อดีนี่นา.. ฮึ ฮึ";
+		next;
+		mes "[Marky]";
+		mes "อืม...";
+		mes "ทำไมเจ้าถึงอยากเข้าร่วมกับสมาคมของเรา?";
+		mes "เจ้าดูเป็นคนดีทีเดียว";
+		mes "เพราะเจ้าตอบคำถามของข้าหมดเลย..";
+		next;
+		mes "[Marky]";
+		mes "เจ้าไม่ควรบอกชื่อของเจ้าให้ใครรู้นะ";
+		mes "~ เพราะมันอาจทำร้ายเจ้าได้ ~";
+		mes "เจ้าควรระวังเมื่ออยู่ด้านนอกของสมาคม Rogue Guild";
+		next;
+		mes "[Marky]";
+		mes "ข้าขอถามเป็นรอบสุดท้าย";
+		mes "เจ้ามาเพื่อเปลี่ยนเป็น Rogue";
+		mes "ใช่หรือไม่?";
+		next;
+		if (select("ใช่","ไม่ใช่") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1)  || (Sage_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+				mes "[Marky]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (JobLevel < 40){
+				mes "[Marky]";
+				mes "หากต้องการเปลี่ยนอาชีพ Rogue";
+				mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+				close;
+			}
+			if (SkillPoint) {
+				mes "[Marky]";
+				mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+				mes "แล้วค่อยกลับมานะ!";
+				close;
+			}
+			mes "[Marky]";
+			mes "เจ้า... ไม่ใช่คนธรรมดาสินะ";
+			mes "ข้ารู้สึกได้ถึงพลังที่เต็มเปี่ยมของเจ้า";
+			mes "เจ้ามีความสามารถพอที่จะเปลี่ยนอาชีพ";
+			mes "เป็น Rogue ได้แล้ว";
+			mes "ข้าจะเปลี่ยนอาชีพให้เจ้าเองเลย!";
+			next;
+			mes "[Marky]";
+			mes "หลับตาลงสักครู่นะ...";
+			mes "ถ้าลืมตาขึ้นมาอีกครั้ง";
+			mes "เจ้าจะได้เห็นร่างใหม่";
+			next;
+			mes "[Marky]";
+			mes "อะ ลืมตาได้เลย!";
+			mes "เอาล่ะ! ยินดีด้วยเปลี่ยนเป็น Rogue แล้ว~";
+			mes "อนาคตก็แวะเข้ามาหาบ่อยๆก็ได้";
+			mes "ขอให้เจ้าใช้ชีวิตอย่างอิสระเลยนะ~";
+			Rogue_J = 1;
+			callfunc "Job_Change",Job_Rogue;
+			callfunc "F_ClearJobVar";
+			callfunc "Remove_Device";
+			next;
+			mes "[Marky]";
+			mes "แต่ว่า...อิสระ มันต่างกับความรับผิดชอบนะ?";
+			mes "ถ้าเจ้าคิดว่า อิสระของเจ้ามันสำคัญ";
+			mes "ก็อย่าลืมเคารพความเป็นอิสระของคนอื่นด้วยล่ะ";
+			mes "เอาล่ะ~ ถ้าอย่างนั้น! ทำดีมาก~~~!!";
+			close;
+		}
+		close;
+	}
+	mes "[Marky]";
+	mes "เอ เจ้า....";
+	mes "เราเคยเจอกันมาก่อนรึเปล่า";
+	next;
+	mes "[Marky]";
+	mes "............";
+	mes "อ่าแย่จริงข้าผิดเอง";
+	mes "เจ้าไม่ใช่คนที่ข้ารู้จักหรอก";
+	next;
+	mes "[Marky]";
+	mes "............";
+	mes "............แปลกจริง อืม............";
+	next;
+	mes "[Marky]";
+	mes "โทษทีข้าคงจำผิดไป ดูแลตัวเองล่ะ";
+	close;
+}
+
+//= Sage
+yuno_in02,38,61,5	script	Dean of the Academy#sa	743,{
+	if (Class == Job_Mage) {
+		mes "[Kayron Grig]";
+		mes "อา ผู้หลงใหลเวทมนต์! เชิญ!";
+		mes "เจ้ามาที่นี่ด้วยเหตุใด?";
+		next;
+		if (select("ข้าต้องการเป็น Sage","ไม่มีอะไร") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1)  || (Rogue_J == 1) || (Bard_J == 1) || (Dancer_J == 1){
+				mes "[Kayron Grig]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (JobLevel < 40){
+				mes "[Kayron Grig]";
+				mes "หากต้องการเปลี่ยนอาชีพ Sage";
+				mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+				close;
+			}
+			if (SkillPoint) {
+				mes "[Kayron Grig]";
+				mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+				mes "แล้วค่อยกลับมานะ!";
+				close;
+			}
+			mes "[Kayron Grig]";
+			mes "อืม? เจ้าต้องการเป็น Sage ใช่ไหม?";
+			mes "การเปลี่ยนอาชีพ... ถึงอย่างนั้น";
+			mes "สิ่งที่เจ้าต้องเปลี่ยนก่อนคือความคิด";
+			next;
+			mes "[Kayron Grig]";
+			mes "Sage";
+			mes "เป็นบุคคลที่พัฒนาโลกด้วยการวิจัยและ";
+			mes "ศึกษาสิ่งของบนโลกนี้อย่างไม่สิ้นสุด";
+			mes "การเป็น Sage";
+			mes "มิได้เป็นเพียงแค่การเปลี่ยนชุดที่สวมใส่";
+			next;
+			mes "[Kayron Grig]";
+			mes "........อะ เดี๋ยวก่อน";
+			mes "........";
+			mes "........";
+			next;
+			mes "[Kayron Grig]";
+			mes "ฮืม.....เฮ้อ......";
+			mes "เจ้ามาเพื่อเปลี่ยนเป็น Sage เหรอ?";
+			mes "จริงๆเจ้าก็มีความสามารถพอจะเปลี่ยน";
+			mes "เป็น Sage แล้วนะ";
+			next;
+			mes "[Kayron Grig]";
+			mes "สามารถเปลี่ยนให้ได้เลยไม่ต้องมีการทดสอบ!";
+			next;
+			mes "[Kayron Grig]";
+			mes "ต่อไปนี้จงใช้ชีวิตในฐานะของ Sage";
+			mes "อย่าลืมความตั้งใจของ Sage แล้วกัน";
+			mes "...";
+			Sage_J = 1;
+			callfunc "Job_Change",Job_Sage;
+			callfunc "F_ClearJobVar";
+			callfunc "Remove_Device";
+			next;
+			mes "[Kayron Grig]";
+			mes "เอาล่ะ, ถ้าอย่างนั้น...";
+			mes "ขอให้เส้นทางของเจ้าเต็มไปด้วยความรู้";
+			mes "ตั้งใจฝึกฝนต่อไป!!";
+			close;
+		}
+		close;
+	}
+	mes "[Kayron Grig]";
+	mes "ฮืมข้าพบเห็นผู้คนมามากมาย...";
+	mes "แต่เจ้านี่...ช่างมีพลังและความสามารถโดเด่นจริง";
+	next;
+	mes "[Kayron Grig]";
+	mes "เจ้าไม่เหมาะกับที่นี่หรอก";
+	mes "เจ้าเหมาะสมกับโลกที่กว้างใหญ๋กว่านี้";
+	mes "ที่ๆเหมาะกับความสามารถของเจ้า";
+	mes "และจงอย่าลืมความตั้งใจแต่แรกของเจ้า";
+	close;
+}
+
+comodo,226,123,5	script	Wandering Bard	741,{
+	if (Class == Job_Archer) {
+		if(Sex == SEX_FEMALE){
+			mes "[Ayealo]";
+			mes "ตัวละครผู้หญิงไม่สามารถเป็น Bard ได้";
+			end;
+		}
+		mes "[Ayealo]";
+		mes "สวัสดี! สหายข้า";
+		mes "นักธนูที่น่าปลื้มปิติ";
+		mes "ท่านต้องการอะไรจากคนร่อนเร่อย่างข้า?";
+		next;
+		if (select("อยากเปลี่ยนอาชีพเป็น Bard","ยกเลิก") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1) || (Dancer_J == 1){
+				mes "[Ayealo]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (JobLevel < 40){
+			mes "[Ayealo]";
+			mes "หากต้องการเปลี่ยนอาชีพ Bard";
+			mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+			end;
+			}
+			if (SkillPoint) {
+			mes "[Ayealo]";
+			mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+			mes "แล้วค่อยกลับมานะ!";
+			end;
+			}
+			mes "[Ayealo]";
+			mes "ว่าไงนะ? เจ้ามี Job Lv เกิน 40";
+			mes "แล้วนี่!";
+			mes "ความโรแมนติกของนักกวีอย่างเช่น Bard";
+			mes "ข้าคงไม่มีอะไรจะสอนเจ้าต่ออีกแล้ว";
+			mes "ข้าจะเปลี่ยนอาชีพให้เจ้าเลยแล้วกัน!";
+			next;
+			mes "[Ayealo]";
+			mes "อย่างนั้นรึ!";
+			mes "ขอให้เจ้าเพลิดเพลินไปกับการร้องเพลง";
+			mes "แล้วกัน";
+			mes "ใช้ชีวิตอย่างลมอย่างเมฆแล้วกัน!";
+			Bard_J = 1;
+			callfunc "Job_Change",Job_Bard;
+			callfunc "F_ClearJobVar";
+			callfunc "Remove_Device";
+			next;
+			mes "[Ayealo]";
+			mes "เจอกันใหม่โอกาสหน้า! สหายข้า";
+			close;
+		}
+		end;
+	}
+	mes "[Ayealo]";
+	mes "บางคนเกิดมาเพียงเพื่อบางสิ่ง";
+	mes "พวกเขาท่องไปทั่วโลก";
+	mes "พวกเขาลืมความเป็นไปได้และโชคซะตา";
+	mes "พวกเขาอยากจะเพียงแค่มีชีวิตธรรมดา";
+	next;
+	mes "[Ayealo]";
+	mes "ลมและเมฆต่างกระจายออกไป";
+	mes "ผู้คนที่รักการดื่มและความร่ำรวย";
+	mes "นั่นไม่ใช่ชีวิตของเจ้า";
+	mes "เจ้าได้ลืมเป้าหมายไปแล้ว";
+	close;
+}
+
+job_duncer,95,93,4	script	Bijou#da	101,{
+	if (Class == Job_Archer) {
+		if(Sex == SEX_MALE){
+			mes "[Borwaju]";
+			mes "ตัวละครผู้ชายไม่สามารถเป็น Dancer ได้";
+			end;
+		}
+		mes "[Borwaju]";
+		mes "เฮ้~ เจ้าสมัครเข้าโรงเรียนของเรา";
+		next;
+		mes "[Borwaju]";
+		mes "อี๋~~!!! ดูพุงของเจ้าสิ";
+		mes "ต้องใช้เวลาเท่าไหร่เนื่ย";
+		mes "กว่าจะลดน้ำหนักของเจ้าได้...";
+		mes "ดูตัวเจ้าสิ.... ตอนที่ข้ายังสาว";
+		mes "รูปร่างข้าต่างกับเจ้าลิบลับ";
+		next;
+		if (select("อยากเปลี่ยนอาชีพเป็น Dancer","ยกเลิก") == 1) {
+			if (Blacksmith_J == 1) || (Assassin_J == 1) || (Hunter_J == 1) || (Knight_J == 1) || (Priest_J == 1) || (Wizard_J == 1) || (Alchemist_J == 1) || (Crusader_J == 1) || (Monk_J == 1) || (Rogue_J == 1) || (Bard_J == 1){
+				mes "[Borwaju]";
+				mes "กรุณาเปลี่ยนอาชีพให้ตรงสาย";
+				mes "ที่ท่านเคยเป็นมาก่อน";
+				close;
+			}
+			if (JobLevel < 40){
+			mes "[Borwaju]";
+			mes "หากต้องการเปลี่ยนอาชีพ Dancer";
+			mes "เจ้าต้องมี ^FF0000Job Level 40^000000 ขึ้นไปนะ";
+			end;
+			}
+			if (SkillPoint) {
+			mes "[Borwaju]";
+			mes "เรียนรู้ทักษะ ด้วยแต้มที่มีก่อน";
+			mes "แล้วค่อยกลับมานะ!";
+			end;
+			}
+			mes "[Borwaju]";
+			mes "ว่าไงนะ? เจ้ามี Job Lv เกิน 40";
+			mes "แล้วนี่!";
+			mes "ข้าคงไม่มีอะไรจะสอนเจ้าต่ออีกแล้ว";
+			mes "ข้าจะเปลี่ยนอาชีพให้เจ้าเลยแล้วกัน!";
+			next;
+			mes "[Borwaju]";
+			mes "เยี่ยม!";
+			mes "การเต้นรำของข้าเป็นของเจ้าแล้ว";
+			mes "เจ้าเยี่ยมยอดเป็นหนึ่ง";
+			next;
+			mes "[Borwaju]";
+			mes "เจ้ามีพรสวรรค์ในการเป็น Dancer~~~";
+			mes "เอาล่ะ... ข้าจะเปลี่ยนอาชีพให้เจ้า";
+			next;
+			mes "[Borwaju]";
+			mes "พระเจ้าประทานพรให้เจ้า";
+			next;
+			mes "[Borwaju]";
+			mes "และท่านจะเป็น Dancers";
+			mes "ที่สร้างความสุขให้กับทุกคน..";
+			next;
+			mes "[Borwaju]";
+			mes "ในทุกที่ที่เจ้าไปถึง";
+			next;
+			mes "[Borwaju]";
+			mes "ผู้คนจะได้รับความสุขและเสียงหัวเราะไม่รู้จบ!";
+			Dancer_J = 1;
+			callfunc "Job_Change",Job_Dancer;
+			callfunc "F_ClearJobVar";
+			callfunc "Remove_Device";
+			end;
+		}
+		end;
+	}
+	mes "[Borwaju]";
+	mes "เฮ้~ ชาวต่างชาติ";
+	mes "ท่านมาที่นี่เพื่อดูการเต้นรำ";
+	mes "ที่น่าอัศจรรย์ของข้า~";
+	next;
+	mes "[Borwaju]";
+	mes "ข้าไม่รู้จะพูดยังไง...";
+	mes "แต่ข้าเลิกเต้นรำแล้ว";
+	mes "ตอนนีั้ข้าสอนเต้นให้พวกสาวๆ~";
+	mes "มีนักเรียนมากมายที่เชี่ยวชาญการเต้นรำของข้า~";
+	close;
+}
+
+//= Warp
+moc_fild12,164,378,3	script	JobMaster#2	4_F_VALKYRIE,{
+	mes "[JobMaster]";
+	mes "สวัสดี";
+	mes "หากท่านต้องการเปลี่ยนอาชีพแล้วล่ะก็";
+	mes "ข้าสามารถพาท่านไปยังสถานที่เปลี่ยนอาชีพ";
+	mes "ของอาชีพนั้นๆได้เลย แบบรวดเร็วทันใจ";
+	next;
+	switch(select("ไปยังสถานที่เปลี่ยนอาชีพ","ยกเลิกบทสนทนา")){
+		case 1:
+			if (Class == Job_Novice){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Acolyte","~ Archer","~ Mage","~ Merchant","~ Swordman","~ Thief")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Acolyte";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "prt_church",183,36;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Archer";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "payon_in02",64,67;
+						end;
+					case 4:
+						mes "[JobMaster]";
+						mes "Job : Mage";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "geffen_in",161,122;
+						end;
+					case 5:
+						mes "[JobMaster]";
+						mes "Job : Merchant";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "alberta_in",57,43;
+						end;
+					case 6:
+						mes "[JobMaster]";
+						mes "Job : Swordman";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "izlude_in",74,167;
+						end;
+					case 7:
+						mes "[JobMaster]";
+						mes "Job : Thief";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "moc_prydb1",42,124;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Acolyte){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Priest","~ Monk")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Priest";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "prt_church",16,37;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Monk";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "monk_in",99,55;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Archer){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Hunter",""+ ( Sex ? "~ Bard" : "~ Dancer" ) +"")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Hunter";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "hu_in01",382,372;
+						end;
+					case 3:
+						if(Sex == SEX_MALE){
+							mes "[JobMaster]";
+							mes "Job : Bard";
+							mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+							mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+							mes "ของอาชีพนี้ใช่ไหม?";
+							next;
+							if(select("ใช่","ยกเลิก") == 2){
+								close;
+							}
+							mes "[JobMaster]";
+							mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+							close2;
+							warp "comodo",225,128;
+							end;
+						}
+						if(Sex == SEX_FEMALE){
+							mes "[JobMaster]";
+							mes "Job : Dancer";
+							mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+							mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+							mes "ของอาชีพนี้ใช่ไหม?";
+							next;
+							if(select("ใช่","ยกเลิก") == 2){
+								close;
+							}
+							mes "[JobMaster]";
+							mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+							close2;
+							warp "job_duncer",88,91;
+							end;
+						}
+				}
+				close;
+			}
+			if (Class == Job_Mage){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Wizard","~ Sage")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Wizard";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "gef_tower",111,33;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Sage";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "yuno_in02",41,61;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Merchant){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Blacksmith","~ Alchemist")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Blacksmith";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "ein_in01",18,23;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Alchemist";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "alde_alche",27,181;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Swordman){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Knight","~ Crusader")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Knight";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "prt_in",83,101;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Crusader";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "prt_in",76,96;
+						end;
+				}
+				close;
+			}
+			if (Class == Job_Thief){
+				mes "[JobMaster]";
+				mes "เลือกอาชีพ";
+				mes "ที่ท่านต้องการไปยังสถานที่เปลี่ยน";
+				next;
+				switch(select("ยกเลิก","~ Assassin","~ Rogue")){
+					case 1:
+						close;
+					case 2:
+						mes "[JobMaster]";
+						mes "Job : Assassin";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "in_moc_16",19,29;
+						end;
+					case 3:
+						mes "[JobMaster]";
+						mes "Job : Rogue";
+						mes "ข้าจะถามเป็นครั้งสุดท้ายนะ";
+						mes "ท่านต้องการไปยังสถานที่เปลี่ยนอาชีพ";
+						mes "ของอาชีพนี้ใช่ไหม?";
+						next;
+						if(select("ใช่","ยกเลิก") == 2){
+							close;
+						}
+						mes "[JobMaster]";
+						mes "งั้นก็โชคดีนะ ไว้เจอกันใหม่";
+						close2;
+						warp "in_rogue",363,116;
+						end;
+				}
+				close;
+			}
+			mes "[JobMaster]";
+			mes "สายอาชีพของท่านสูงสุดแล้วในตอนนี้";
+			close;
+		case 2:
+			close;
+	}
+	close;
+OnInit:
+	
+	waitingroom "    เปลี่ยนอาชีพ",0;
+	
+	end;
+}

@@ -1,0 +1,132 @@
+prontera,137,125,4	script	Cash Item Guide#prontera::cashmall_warper	4_M_HUMAN_02,{
+	mes "[Guide]";
+	mes "สวัสดี~";
+	mes "ข้าคือคนที่จะคอยมาแนะนำ";
+	mes "สถานที่สุดพิเศษแก่ทุกคน";
+	mes "อยากรู้ว่าเป็นที่ไหนน่ะรึ?";
+	next;
+	mes "[Guide]";
+	mes "ที่นั่นก็เต็มไปด้วยไอเท็มลึกลับ";
+	mes "ที่มีวางขายให้เลือกสรรจำนวนมาก";
+	mes "แต่เพื่อจะซื้อของพวกนั้น";
+	mes "ก็ต้องใช้เงินพิเศษขึ้นมาหน่อยล่ะ";
+	next;
+	mes "[Guide]";
+	mes "เตรียมตัวพร้อมจะไปที่นั้นแล้วใชไหม?";
+	next;
+	if (select( "ใช่", "ไม่" ) == 2) {
+		mes "[Guide]";
+		mes "ซะอย่างงั้น~";
+		mes "แต่ไม่ต้องกังวลไป";
+		mes "ยังคงมีโอกาสอีก~";
+		close;
+	}
+	mes "[Guide]";
+	mes "เอาล่ะ~ เตรียมตัวพร้อมแล้วสินะ";
+	mes "งั้นก็ไปเลือกไอเท็มดีๆกันได้เลย~";
+	mes "อะ แต่ลืมไปเรื่องนึง ตอนออกมา";
+	mes "จะกลับมายังที่นี่ใหม่อีกครั้ง";
+	mes "อย่าลืมล่ะ~";
+	close2;
+	setarray .@maparray$[0], "prontera", "morocc", "moc_ruins", "geffen", "payon", "lighthalzen", "rachel";
+	.@return = inarray(.@maparray$[0], strcharinfo(3));
+
+	if (.@return > 0)
+		cashmall_return = .@return;
+	else // Default to Prontera if not found
+		cashmall_return = 0;
+
+	warp "itemmall",22,43;
+	end;
+}
+morocc,164,39,4	duplicate(cashmall_warper)	Cash Item Guide#morocc	4_M_HUMAN_02
+moc_ruins,115,143,4	duplicate(cashmall_warper)	Cash Item Guide#moc_ruins	4_M_HUMAN_02
+geffen,115,168,4	duplicate(cashmall_warper)	Cash Item Guide#geffen	4_M_HUMAN_02
+payon,164,157,4	duplicate(cashmall_warper)	Cash Item Guide#payon	4_M_HUMAN_02
+lighthalzen,206,144,4	duplicate(cashmall_warper)	Cash Item Guide#lighthalzen	4_M_HUMAN_02
+rachel,128,144,4	duplicate(cashmall_warper)	Cash Item Guide#rachel	4_M_HUMAN_02
+
+itemmall,21,45,4	script	Entrance Guide#cashmall_exit	4_M_HUMAN_02,{
+	mes "[Guide]";
+	mes "ได้มีช่วงเวลาดีๆแล้วใช่ไหมล่ะ?";
+	mes "ขอบคุณมากจริงๆที่เลือกใช้";
+	mes "ไอเท็มของพวกเรา";
+	mes "หวังว่าจะได้เจอกันอีก";
+	mes "พร้อมไอเท็มดีๆ";
+	next;
+	mes "[Guide]";
+	mes "กลับไปยังที่ที่ท่านมาเลยหรือไม่?";
+	next;
+	if (select( "ใช่", "ไม่" ) == 2) {
+		mes "[Guide]";
+		mes "ยังคงอยากเลือกซื้อต่อละสิ";
+		mes "ใช้เวลาให้เต็มที่เลย";
+		close;
+	}
+	mes "[Guide]";
+	mes "ขอบคุณที่ใช้บริการ";
+	mes "ข้าจะส่งกลับไปยังที่ที่เจ้ามาล่ะ";
+	close2;
+	switch(cashmall_return) {
+		default:
+		case 0:
+			.@returnmap$ = "prontera";
+			setarray .@xy[0],116,72;
+			break;
+		case 1:
+			.@returnmap$ = "morocc";
+			setarray .@xy[0],159,46;
+			break;
+		case 2:
+			.@returnmap$ = "moc_ruins";
+			setarray .@xy[0],109,137;
+			break;
+		case 3:
+			.@returnmap$ = "geffen";
+			setarray .@xy[0],120,38;
+			break;
+		case 4:
+			.@returnmap$ = "payon";
+			setarray .@xy[0],161,58;
+			break;
+		case 5:
+			.@returnmap$ = "lighthalzen";
+			setarray .@xy[0],159,95;
+			break;
+		case 6:
+			.@returnmap$ = "rachel";
+			setarray .@xy[0],115,125;
+			break;
+	}
+	cashmall_return = 0;
+	warp .@returnmap$,.@xy[0],.@xy[1];
+	end;
+}
+
+itemmall,24,74,5	script	Basta#pr	4_M_DWARF,{
+	mes "[Basta]";
+	mes "ฉันได้ครอบครองผลงานทั้งหมดของ Mite";
+	mes "Hammer, Broke และ Shadow Blacksmith";
+	mes "และฉันจะยุ่งมากแน่ๆในอนาคต";
+	close2;
+	refineui();
+	end;
+}
+
+itemmall,19,74,5	script	Stylist#cash	91,{
+	mes "[Jeremy]";
+	mes "สวัสดี คนน่ารักทั้งหลาย~";
+	mes "เรียกข้าว่า Jeremy";
+	mes "ผู้นำสไตลิสต์ก็ได้นะ";
+	next;
+	if( select( "เปลี่ยนการแต่งกาย:จบการสนทนา" ) == 2 ){
+		mes "[Jeremy]";
+		mes "ร้านข้าเปิดตลอด";
+		mes "แวะมาเมื่อไหร่ก็ได้นะ";
+		close;
+	}
+	close2;
+	openstylist();
+	end;
+
+}

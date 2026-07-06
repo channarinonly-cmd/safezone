@@ -1,0 +1,22 @@
+//===== AutoAttack Buy Whitelist ================================================
+// Only items listed here can be bought by AutoAttack.
+// Format:
+// item_id,currency,price
+//
+// currency:
+// zeny = pay with Zeny
+// cc   = pay with #CASHPOINTS
+//
+// Examples:
+// 501,zeny,50
+// 14592,cc,10
+//==============================================================================
+
+501,zeny,50
+502,zeny,200
+503,zeny,550
+504,zeny,500
+505,zeny,500
+506,zeny,40
+601,zeny,60
+602,zeny,300

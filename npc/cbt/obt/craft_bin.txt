@@ -1,0 +1,203 @@
+// ==========================================
+// 1. ตัวสคริปต์หลัก (Floating NPC)
+// ==========================================
+-	script	Craft_Item_Main	-1,{
+
+	// ระบบเช็กแมพเพื่อส่งรหัสฝ่ายไปฟังก์ชันตรวจสอบ
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1; 
+	} else if (strcharinfo(3) == "prontera") {
+		callfunc "Check_Faction", 2; 
+	}
+	
+	mes "[ Craft Item ]";
+	mes "สวัสดีครับนายท่าน ";
+	next;
+	mes "[ Craft Item ]";
+	mes "นายท่านต้องการให้ข้าช่วยเรื่องอะไร ?";
+	next;
+	switch(select("- Craft Item :- ยกเลิกการสนทนา")) {
+		case 1:
+			set .@shop$, "UPG_ACC6";
+			break;
+		case 2:
+			close;
+	}
+	close2;
+	callshop .@shop$, 1;
+	npcshopattach .@shop$;
+	end;
+
+	OnBuyItem:
+		set .@i, 0;
+		// คัดลอกข้อมูลไอเทมที่เลือกซื้อมาจากหน้า Shop
+		copyarray .@uitem[0], @bought_nameid[0], getarraysize(@bought_nameid);
+		deletearray @bought_nameid[0], getarraysize(@bought_nameid);
+		deletearray @bought_quantity[0], getarraysize(@bought_quantity);
+		
+		// ล้างค่าตัวแปรใช้ชั่วคราว
+		deletearray .@itemuse[0], getarraysize(.@itemuse);
+		deletearray .@itemusemany[0], getarraysize(.@itemusemany);
+		set .@broken, 0;
+		set .@zenyuse, 0;
+		
+		// --- ตั้งค่าวัตถุดิบตาม ID ไอเทม ---
+		if (.@uitem[.@i] == 5388) {
+			setarray .@itemuse[0], 3209, 2221, 926, 954, 937;
+			setarray .@itemusemany[0], 2, 1, 300, 300, 100;
+			set .@broken, 85; set .@zenyuse, 200000;
+		}
+		else if (.@uitem[.@i] == 5286) {
+			setarray .@itemuse[0], 3209, 7101, 925;
+			setarray .@itemusemany[0], 2, 300, 150;
+			set .@broken, 85; set .@zenyuse, 150000;
+		}
+		else if (.@uitem[.@i] == 5293) {
+			setarray .@itemuse[0], 3209, 2285, 1019;
+			setarray .@itemusemany[0], 2, 2, 150;
+			set .@broken, 85; set .@zenyuse, 150000;
+		}
+		else if (.@uitem[.@i] == 35078) {
+			setarray .@itemuse[0], 3209, 991, 7054;
+			setarray .@itemusemany[0], 5, 100, 500;
+			set .@broken, 85; set .@zenyuse, 350000;
+		}
+		else if (.@uitem[.@i] == 18666) {
+			setarray .@itemuse[0], 3209, 994, 995, 996, 997, 999;
+			setarray .@itemusemany[0], 5, 20, 20, 20, 20, 100;
+			set .@broken, 85; set .@zenyuse, 350000;
+		}
+		else if (.@uitem[.@i] == 5564) {
+			setarray .@itemuse[0], 3209, 1045, 7054;
+			setarray .@itemusemany[0], 5, 200, 200;
+			set .@broken, 85; set .@zenyuse, 350000;
+		}
+		else if (.@uitem[.@i] == 35099) {
+			setarray .@itemuse[0], 5388, 3209, 2221, 926, 954, 937;
+			setarray .@itemusemany[0], 1, 5, 1, 500, 350, 200;
+			set .@broken, 85; set .@zenyuse, 400000;
+		}
+		else if (.@uitem[.@i] == 5359) {
+			setarray .@itemuse[0], 3209, 6000235, 7054, 7005;
+			setarray .@itemusemany[0], 10, 10, 500, 200;
+			set .@broken, 85; set .@zenyuse, 400000;
+		}
+		else if (.@uitem[.@i] == 8550023) {
+			setarray .@itemuse[0], 5359, 3209, 6000235, 7054, 7005;
+			setarray .@itemusemany[0], 1, 20, 20, 2000, 500;
+			set .@broken, 85; set .@zenyuse, 600000;
+		}
+		else if (.@uitem[.@i] == 5208) {
+			setarray .@itemuse[0], 3209, 6000235, 7054, 7446;
+			setarray .@itemusemany[0], 20, 20, 300, 500;
+			set .@broken, 85; set .@zenyuse, 400000;
+		}
+		else if (.@uitem[.@i] == 18752) {
+			setarray .@itemuse[0], 5208,3209, 6000235, 7054, 7447;
+			setarray .@itemusemany[0],1 , 20, 20, 1000, 600;
+			set .@broken, 85; set .@zenyuse, 600000;
+		}
+		else {
+			mes "[ Craft Item ]";
+			mes "ไม่พบข้อมูลไอเท็มนี้ในระบบ";
+			close;
+		}
+
+		// แสดงรายละเอียดไอเทมที่ต้องใช้
+		mes "[ Craft Item ]";
+		mes "คุณต้องการสร้าง :";
+		mes "^i["+.@uitem[.@i]+"]^FFFFFF_^000000"+getitemname(.@uitem[.@i])+"["+getitemslots(.@uitem[.@i])+"]";
+		mes " ";
+		mes "วัตถุดิบที่ใช้ (ต่อครั้ง) : ";
+		for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1) {
+			mes "- " + getitemname(.@itemuse[.@k]) + " " + .@itemusemany[.@k] + " อัน";
+		}
+		mes "เงิน Zeny : " + callfunc("F_InsertComma", .@zenyuse) + " Z";
+		mes "โอกาสสำเร็จ : ^0000FF" + (100 - .@broken) + "%^000000";
+		next;
+		
+		mes "[ Craft Item ]";
+		mes "กรุณาระบุจำนวนครั้งที่ต้องการสร้าง :";
+		next;
+		input .@count;
+		if (.@count <= 0) close;
+
+		// ==========================================================
+		// ระบบตรวจสอบความปลอดภัย: ป้องกันการดึงไอเทมที่สวมใส่อยู่ไปคราฟ
+		// ==========================================================
+		getinventorylist;
+		for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1) {
+			for (set .@inv, 0; .@inv < @inventorylist_count; set .@inv, .@inv + 1) {
+				// ถ้า Item ID ตรงกับวัตถุดิบ และ @inventorylist_equip ไม่เท่ากับ 0 (แปลว่าใส่อยู่)
+				if (@inventorylist_id[.@inv] == .@itemuse[.@k] && @inventorylist_equip[.@inv] != 0) {
+					mes "[ Craft Item ]";
+					mes "^FF0000!!! ตรวจพบปัญหา !!!^000000";
+					mes "คุณกำลังสวมใส่ไอเทมที่เป็นวัตถุดิบ:";
+					mes "^0000FF- " + getitemname(.@itemuse[.@k]) + "^000000";
+					mes " ";
+					mes "กรุณาถอดไอเทมออก หรือนำชิ้นที่ไม่อยากเสีย";
+					mes "ไปเก็บไว้ในโกดัง (Storage) ก่อนดำเนินการครับ";
+					close;
+				}
+			}
+		}
+		// ==========================================================
+
+		// เข้าสู่ลูปการคราฟตามจำนวนที่กรอก
+		set .@j, 0;
+		while (.@j < .@count) {
+			// ตรวจสอบไอเทมก่อนหักจริงในแต่ละรอบ
+			for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1) {
+				if (countitem(.@itemuse[.@k]) < .@itemusemany[.@k]) {
+					mes "[ Craft Item ]";
+					mes "ไอเทมวัตถุดิบไม่เพียงพอสำหรับการสร้างครั้งที่ " + (.@j + 1);
+					close;
+				}
+			}
+			// ตรวจสอบเงิน
+			if (Zeny < .@zenyuse) {
+				mes "[ Craft Item ]";
+				mes "คุณมีเงินไม่เพียงพอสำหรับการสร้างครั้งที่ " + (.@j + 1);
+				close;
+			}
+			
+			// ตรวจสอบน้ำหนักและช่องเก็บของ
+			if (checkweight(.@uitem[.@i], 1) == 0) {
+				mes "[ Craft Item ]";
+				mes "น้ำหนักเกินหรือช่องเก็บของเต็ม";
+				close;
+			}
+
+			// เริ่มหักไอเทมและเงิน
+			for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1)
+				delitem .@itemuse[.@k], .@itemusemany[.@k];
+			set Zeny, Zeny - .@zenyuse;
+
+			// สุ่มผลการคราฟ
+			if (rand(100) < .@broken) {
+				specialeffect2 155; // เอฟเฟกต์ล้มเหลว
+				mes "^FF0000ครั้งที่ " + (1 + .@j) + " ล้มเหลว !^000000";
+			} else {
+				specialeffect2 154; // เอฟเฟกต์สำเร็จ
+				mes "^0000FFครั้งที่ " + (1 + .@j) + " สำเร็จ !^000000";
+				getitem .@uitem[.@i], 1;
+			}
+			set .@j, .@j + 1;
+		}
+		close;
+
+	OnInit:
+		waitingroom "    คราฟ Item", 0;
+		end;
+}
+
+// ==========================================
+// 2. จุดติดตั้ง NPC ในเมืองต่างๆ
+// ==========================================
+morocc,138,58,3	duplicate(Craft_Item_Main)	Craft Item#mor	4_M_BARMUND
+prontera,147,106,5	duplicate(Craft_Item_Main)	Craft Item#pro	4_M_BARMUND
+
+// ==========================================
+// 3. Shop Definition (รายการไอเทมในหน้า Shop)
+// ==========================================
+-	shop	UPG_ACC6	-1,5388:-1,5286:-1,5293:-1,35078:-1,18666:-1,5564:-1,35099:-1,5359:-1,8550023:-1,5208:-1,18752:-1

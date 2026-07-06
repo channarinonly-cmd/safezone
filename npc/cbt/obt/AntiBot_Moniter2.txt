@@ -1,0 +1,61 @@
+-	script	BotSystem_Monitor	-1,{
+/*
+// ⚔️ 1. ตอนมอนตาย: นับยอดคิลไว้ในใจ (ย้ายไปรวมใน Master_OnNPCKillEvent แล้ว)
+// อย่าลืมไปใส่ #opk_temp_kills++; ในไฟล์ Master ด้วยนะครับ
+*/
+
+// 🚪 2. เริ่มทำงานตอนล็อกอิน
+OnPCLoginEvent:
+	if (getgmlevel() < 99) {
+		#opk_temp_kills = 0; // [แก้ไข] เปลี่ยนเป็น # ให้ตรงกับข้างล่าง
+		@opk_is_safe = 0; // รีเซ็ตสถานะปลอดภัยตอนล็อกอิน
+		deltimer strnpcinfo(3)+"::OnMonitorCheck";
+		addtimer 60000, strnpcinfo(3)+"::OnMonitorCheck";
+	}
+	end;
+
+// ⏱️ 3. ลูปตรวจจับและอัปเดตเว็บ (ทุกๆ 1 นาที)
+OnMonitorCheck:
+	// ถ้าผู้เล่นคนนี้พิสูจน์แล้วว่าบริสุทธิ์ (ผ่าน 20 นาทีแล้วฆ่าน้อย) ให้ข้ามไปเลย ไม่ต้องเอาขึ้นเว็บอีก
+	if (@opk_is_safe) {
+		addtimer 60000, strnpcinfo(3)+"::OnMonitorCheck";
+		end;
+	}
+	
+	// 🧹 เงื่อนไขที่ 1: ตาย, ยืนนิ่งเกิน 5 นาที, ปิด Stamina, เปิด AutoAttack
+	if (!getstatus(SC_STAMINA) || getstatus(SC_AUTOATTACK) || isdead() || checkidle() >= 300 || getgmlevel() >= 99) {
+		query_sql("DELETE FROM `tharakan_opk_monitor` WHERE char_id = " + getcharid(0));
+	} else {
+		// --- อัปเดตข้อมูลขึ้นเว็บ ---
+		getmapxy(.@map$, .@x, .@y, BL_PC);
+		
+		.@kills = #opk_temp_kills; // ดึงยอดคิลจากตัวแปรถาวรมา
+		#opk_temp_kills = 0; // รีเซ็ตยอดคิลทันทีเพื่อเริ่มนับนาทีต่อไป
+		
+		query_sql("INSERT INTO `tharakan_opk_monitor` (char_id, name, map, x, y, ip_address, kill_count, duration_mins) " +
+				  "VALUES ("+getcharid(0)+",'"+escape_sql(strcharinfo(0))+"','"+escape_sql(.@map$)+"',"+.@x+", "+.@y+", '"+escape_sql(getcharip())+"', "+.@kills+", 1) " +
+				  "ON DUPLICATE KEY UPDATE duration_mins = duration_mins + 1, kill_count = kill_count + "+.@kills+", map = VALUES(map), x = VALUES(x), y = VALUES(y), ip_address = VALUES(ip_address)");
+		
+		// 🧹 เงื่อนไขที่ 2: ระบบคัดกรองออโต้ (อยู่มา 20 นาที แต่ฆ่าไม่ถึง 20 ตัว)
+		// [แก้ไข] ประกาศตัวแปร Array มารับค่า SQL ให้รัดกุมขึ้น ป้องกันบั๊ก
+		.@dur[0] = 0;
+		.@total_kills[0] = 0;
+		query_sql("SELECT duration_mins, kill_count FROM `tharakan_opk_monitor` WHERE char_id = " + getcharid(0), .@dur[0], .@total_kills[0]);
+		
+		if (.@dur[0] >= 20 && .@total_kills[0] < 20) {
+			// ลบชื่อออกจากตารางมอนิเตอร์ทันที
+			query_sql("DELETE FROM `tharakan_opk_monitor` WHERE char_id = " + getcharid(0));
+			
+			// ล็อกสถานะว่าคนนี้ "ปลอดภัย" (เพื่อที่นาทีต่อไป สคริปต์จะได้ไม่เอาชื่อกลับไปขึ้นเว็บใหม่ให้รก)
+			@opk_is_safe = 1; 
+		}
+	}
+	
+	addtimer 60000, strnpcinfo(3)+"::OnMonitorCheck";
+	end;
+
+// 🏃‍♂️ 4. เคลียร์ชื่อออกตอนออฟไลน์
+OnPCLogoutEvent:
+	query_sql("DELETE FROM `tharakan_opk_monitor` WHERE char_id = " + getcharid(0));
+	end;
+}

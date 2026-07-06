@@ -1,0 +1,441 @@
+// ==============================================================================
+// NPC Name : Top Spender Statue
+// Description : รูปปั้นประชันอันดับ 1-3 + ระบบรับของขั้นบันไดแบบ "วนลูปไม่จำกัด + รับของหลายชิ้น!"
+// ==============================================================================
+morocc,159,144,4	script	Top Spender Statue	116,{
+
+		mes "[ตู้ Top Spender]";
+	mes "ยินดีต้อนรับสู่ศึก Top Spender ประจำสัปดาห์!";
+	mes "ขณะนี้ปิดให้บริการ กรุณารอรอบถัดไป";
+	close;
+	
+	// ==========================================
+	// ?? ตั้งค่าของรางวัลแชมป์อันดับ 1
+	// ==========================================
+	set .req_item, 35008;    
+	set .reward_item, 3206;  
+	set .reward_amt, 1;      
+	set .start_hour, 17;     
+
+	// ==========================================
+	// ?? ตั้งค่าของรางวัลสะสมขั้นบันได (Milestone แจกเป็นเซ็ต)
+	// ==========================================
+	set .mile1_req, 5;    // เป้าหมายที่ 1 เปลี่ยนเป็น 5
+	setarray .mile1_item[0], 12210, 12208; // ใส่ ID ไอเทมเรียงกันไปเรื่อยๆ ได้เลย
+	setarray .mile1_amt[0],  5,  5;   // ใส่จำนวนให้ตรงกับลำดับไอเทมด้านบน
+
+	set .mile2_req, 20;   // เป้าหมายที่ 2 เปลี่ยนเป็น 20
+	setarray .mile2_item[0], 12997, 12998;    
+	setarray .mile2_amt[0],     2,   2;
+
+	set .mile3_req, 30;   // เป้าหมายที่ 3 เปลี่ยนเป็น 30
+	setarray .mile3_item[0], 12997, 12997, 6634;    
+	setarray .mile3_amt[0],   3,     3, 5;
+	// ==========================================
+
+	if (#Promo_My_Week != $Promo_Week) {
+		#Promo_My_Pts = 0;
+		#Promo_Loop = 0;
+		#Promo_Claim_1 = 0;
+		#Promo_Claim_2 = 0;
+		#Promo_Claim_3 = 0;
+		#Promo_My_Week = $Promo_Week;
+	}
+
+L_Main:
+	mes "[ตู้ Top Spender]";
+	mes "ยินดีต้อนรับสู่ศึก Top Spender ประจำสัปดาห์!";
+	mes "ใครหยอดเหรียญเยอะที่สุด รับรางวัลสุดแรร์ไปเลย!";
+	mes "--------------------------------";
+
+	if ($PromoTop_Pts[0] > 0) {
+		mes "[อันดับ 1]: ^0000FF" + $PromoTop_Name$[0] + "^000000 (" + $PromoTop_Pts[0] + " ชิ้น)";
+		if ($PromoTop_Pts[1] > 0) mes "[อันดับ 2]: ^0000FF" + $PromoTop_Name$[1] + "^000000 (" + $PromoTop_Pts[1] + " ชิ้น)";
+		if ($PromoTop_Pts[2] > 0) mes "[อันดับ 3]: ^0000FF" + $PromoTop_Name$[2] + "^000000 (" + $PromoTop_Pts[2] + " ชิ้น)";
+	} else {
+		mes "สัปดาห์นี้ยังไม่มีใครครองแชมป์!";
+		mes "รีบหยอดเป็นคนแรกเพื่อยึดบัลลังก์สิครับ!";
+	}
+
+	mes "--------------------------------";
+	mes "แต้มสะสมทั้งหมดของคุณ: ^009900" + #Promo_My_Pts + " ชิ้น^000000";
+	next;
+
+	if (getgmlevel() >= 99) {
+		set .@menu$, "หยอดเหรียญประชันแชมป์:ดูของรางวัลแชมป์:ดูของรางวัลขั้นบันได:^009900รับรางวัลขั้นบันได (รับได้เรื่อยๆ)^000000:ยกเลิก:^FF0000[GM] รีเซ็ตล้างกระดาน (ไม่แจก)^000000:^0000FF[GM] ตัดจบแจกรางวัล (Test)^000000";
+	} else {
+		set .@menu$, "หยอดเหรียญประชันแชมป์:ดูของรางวัลแชมป์:ดูของรางวัลขั้นบันได:^009900รับรางวัลขั้นบันได (รับได้เรื่อยๆ)^000000:ยกเลิก";
+	}
+
+	set .@s, select(.@menu$);
+	
+	if (.@s == 1) goto L_Deposit;
+	if (.@s == 2) {
+		mes "[ตู้ Top Spender]";
+		mes "ของรางวัลสำหรับ ^FF0000แชมป์อันดับ 1^000000 ประจำสัปดาห์นี้คือ:";
+		mes "^i[" + .reward_item + "]^FFFFFF_^000000 " + getitemname(.reward_item) + " จำนวน " + .reward_amt + " ea";
+		mes " ";
+		mes "ระบบจะเปิดให้หยอดเหรียญทุกวันเวลา ^FF0000" + .start_hour + ":00 น.^000000";
+		mes "และจะส่งของรางวัลเข้าจดหมายให้แชมป์";
+		mes "ทุกๆ ^FF0000วันอาทิตย์ เวลา 23:59 น.^000000 ครับ";
+		next;
+		goto L_Main;
+	}
+	if (.@s == 3) {
+		mes "[ตู้ Top Spender]";
+		mes "เซ็ตรางวัลพิเศษสำหรับผู้ที่สะสมยอดหยอดถึงกำหนด:";
+		mes " ";
+		
+		// แสดงรายการของขั้นที่ 1
+		mes "เป้าหมาย ^009900" + .mile1_req + "^000000 ชิ้น รับทันที:";
+		for (set .@i, 0; .@i < getarraysize(.mile1_item); .@i++) {
+			mes "^i[" + .mile1_item[.@i] + "]^FFFFFF_^000000 " + getitemname(.mile1_item[.@i]) + " จำนวน " + .mile1_amt[.@i] + " ea";
+		}
+		mes " ";
+		
+		// แสดงรายการของขั้นที่ 2
+		mes "เป้าหมาย ^009900" + .mile2_req + "^000000 ชิ้น รับทันที:";
+		for (set .@i, 0; .@i < getarraysize(.mile2_item); .@i++) {
+			mes "^i[" + .mile2_item[.@i] + "]^FFFFFF_^000000 " + getitemname(.mile2_item[.@i]) + " จำนวน " + .mile2_amt[.@i] + " ea";
+		}
+		mes " ";
+		
+		// แสดงรายการของขั้นที่ 3
+		mes "เป้าหมาย ^009900" + .mile3_req + "^000000 ชิ้น รับทันที:";
+		for (set .@i, 0; .@i < getarraysize(.mile3_item); .@i++) {
+			mes "^i[" + .mile3_item[.@i] + "]^FFFFFF_^000000 " + getitemname(.mile3_item[.@i]) + " จำนวน " + .mile3_amt[.@i] + " ea";
+		}
+		next;
+		goto L_Main;
+	}
+	if (.@s == 4) goto L_Milestone;
+	if (.@s == 5) close;
+	if (.@s == 6) goto L_GM_Reset;
+	if (.@s == 7) goto L_GM_ForceEnd;
+
+// ==============================================================================
+// ?? ระบบกดรับรางวัลขั้นบันไดแบบลูป (แจกเป็น Array)
+// ==============================================================================
+L_Milestone:
+	set .@cur_pts, #Promo_My_Pts - (#Promo_Loop * .mile3_req);
+
+	mes "[ตู้ Top Spender]";
+	mes "แต้มสะสมทั้งหมดของคุณ: ^009900" + #Promo_My_Pts + " ชิ้น^000000";
+	mes "แต้มในรอบนี้ (รอบที่ "+(#Promo_Loop+1)+"): ^0000FF" + .@cur_pts + " / " + .mile3_req + "^000000";
+	mes "--------------------------------";
+	mes "สะสมครบเป้าหมายที่ 3 แล้ว ระบบจะวนลูป";
+	mes "ให้คุณสามารถกดรับของได้ใหม่อีกครั้ง!";
+	mes "--------------------------------";
+	
+	set .@menu_mile$, "";
+	
+	if (#Promo_Claim_1 == 1) set .@menu_mile$, .@menu_mile$ + "^777777[รับแล้ว] ขั้นที่ 1 ("+.mile1_req+" ชิ้น)^000000:";
+	else if (.@cur_pts >= .mile1_req) set .@menu_mile$, .@menu_mile$ + "^009900[กดรับ] ขั้นที่ 1 ("+.mile1_req+" ชิ้น)^000000:";
+	else set .@menu_mile$, .@menu_mile$ + "^FF0000[ยังไม่ถึง] ขั้นที่ 1 ("+.mile1_req+" ชิ้น)^000000:";
+
+	if (#Promo_Claim_2 == 1) set .@menu_mile$, .@menu_mile$ + "^777777[รับแล้ว] ขั้นที่ 2 ("+.mile2_req+" ชิ้น)^000000:";
+	else if (.@cur_pts >= .mile2_req) set .@menu_mile$, .@menu_mile$ + "^009900[กดรับ] ขั้นที่ 2 ("+.mile2_req+" ชิ้น)^000000:";
+	else set .@menu_mile$, .@menu_mile$ + "^FF0000[ยังไม่ถึง] ขั้นที่ 2 ("+.mile2_req+" ชิ้น)^000000:";
+
+	if (#Promo_Claim_3 == 1) set .@menu_mile$, .@menu_mile$ + "^777777[รับแล้ว] ขั้นที่ 3 ("+.mile3_req+" ชิ้น)^000000:";
+	else if (.@cur_pts >= .mile3_req) set .@menu_mile$, .@menu_mile$ + "^009900[กดรับ] ขั้นที่ 3 ("+.mile3_req+" ชิ้น) (ล้างลูป!)^000000:";
+	else set .@menu_mile$, .@menu_mile$ + "^FF0000[ยังไม่ถึง] ขั้นที่ 3 ("+.mile3_req+" ชิ้น)^000000:";
+
+	set .@menu_mile$, .@menu_mile$ + "กลับเมนูหลัก";
+	
+	set .@sel, select(.@menu_mile$);
+
+	if (.@sel == 4) goto L_Main;
+
+	if (.@sel == 1) {
+		if (#Promo_Claim_1 == 1) { mes "รับไปแล้วนะครับบอส!"; close; }
+		if (.@cur_pts < .mile1_req) { mes "แต้มในรอบนี้ยังไม่ถึงนะครับ!"; close; }
+		
+		// ตรวจสอบน้ำหนักสำหรับไอเทมทุกชิ้น
+		for (set .@i, 0; .@i < getarraysize(.mile1_item); .@i++) {
+			if (checkweight(.mile1_item[.@i], .mile1_amt[.@i]) == 0) { mes "กระเป๋าเต็มครับ ไปเคลียร์ก่อนนะ!"; close; }
+		}
+		
+		// แจกของ
+		for (set .@i, 0; .@i < getarraysize(.mile1_item); .@i++) {
+			getitem .mile1_item[.@i], .mile1_amt[.@i];
+		}
+
+		#Promo_Claim_1 = 1;
+		mes "รับเซ็ตรางวัลขั้นที่ 1 เรียบร้อยแล้วครับ!";
+		next; goto L_Milestone; 
+	}
+	else if (.@sel == 2) {
+		if (#Promo_Claim_2 == 1) { mes "รับไปแล้วนะครับบอส!"; close; }
+		if (#Promo_Claim_1 == 0) { mes "กรุณารับรางวัลขั้นที่ 1 ก่อนนะครับ!"; close; } 
+		if (.@cur_pts < .mile2_req) { mes "แต้มในรอบนี้ยังไม่ถึงนะครับ!"; close; }
+		
+		for (set .@i, 0; .@i < getarraysize(.mile2_item); .@i++) {
+			if (checkweight(.mile2_item[.@i], .mile2_amt[.@i]) == 0) { mes "กระเป๋าเต็มครับ ไปเคลียร์ก่อนนะ!"; close; }
+		}
+		
+		for (set .@i, 0; .@i < getarraysize(.mile2_item); .@i++) {
+			getitem .mile2_item[.@i], .mile2_amt[.@i];
+		}
+
+		#Promo_Claim_2 = 1;
+		mes "รับเซ็ตรางวัลขั้นที่ 2 เรียบร้อยแล้วครับ!";
+		next; goto L_Milestone;
+	}
+	else if (.@sel == 3) {
+		if (#Promo_Claim_3 == 1) { mes "รับไปแล้วนะครับบอส!"; close; }
+		if (#Promo_Claim_2 == 0) { mes "กรุณารับรางวัลขั้นที่ 2 ก่อนนะครับ!"; close; } 
+		if (.@cur_pts < .mile3_req) { mes "แต้มในรอบนี้ยังไม่ถึงนะครับ!"; close; }
+		
+		for (set .@i, 0; .@i < getarraysize(.mile3_item); .@i++) {
+			if (checkweight(.mile3_item[.@i], .mile3_amt[.@i]) == 0) { mes "กระเป๋าเต็มครับ ไปเคลียร์ก่อนนะ!"; close; }
+		}
+		
+		for (set .@i, 0; .@i < getarraysize(.mile3_item); .@i++) {
+			getitem .mile3_item[.@i], .mile3_amt[.@i];
+		}
+		
+		#Promo_Loop++;      
+		#Promo_Claim_1 = 0; 
+		#Promo_Claim_2 = 0;
+		#Promo_Claim_3 = 0;
+		
+		mes "รับเซ็ตรางวัลขั้นที่ 3 เรียบร้อยแล้วครับ!";
+		mes " ";
+		mes "^FF6600[ ยินดีด้วย! คุณสะสมครบ 1 รอบเต็มแล้ว ]^000000";
+		mes "ระบบได้ทำการวนลูปให้คุณสามารถกดรับ";
+		mes "รางวัลขั้นบันไดได้ใหม่อีกครั้งแล้วครับ!";
+		next; goto L_Milestone; 
+	}
+	close;
+
+// ==============================================================================
+// ?? ระบบหยอดเหรียญ
+// ==============================================================================
+L_Deposit:
+	if (gettime(3) < .start_hour && getgmlevel() < 99) { 
+		mes "[ตู้ Top Spender]";
+		mes "ใจเย็นๆ ครับบอส! ตู้ยังไม่เปิดรับเหรียญนะครับ";
+		mes "ตู้จะเปิดให้หยอดได้ตั้งแต่เวลา ^FF0000" + .start_hour + ":00 น.^000000 เป็นต้นไปครับ";
+		close;
+	}
+
+	set .@have, countitem(.req_item);
+	if (.@have < 1) {
+		mes "[ตู้ Top Spender]";
+		mes "คุณไม่มี ^0000FF" + getitemname(.req_item) + "^000000 เลยนะครับบอส!";
+		close;
+	}
+
+	mes "[ตู้ Top Spender]";
+	mes "คุณมีไอเทมอยู่ทั้งหมด ^009900" + .@have + " ชิ้น^000000";
+	mes "ต้องการหยอดกี่ชิ้นครับ?";
+	next;
+	input .@amount;
+
+	if (.@amount < 1 || .@amount > countitem(.req_item)) {
+		mes "[ตู้ Top Spender]";
+		mes "จำนวนไม่ถูกต้อง หรือคุณมีไอเทมไม่พอนะครับ!";
+		close;
+	}
+
+	if (#Promo_My_Pts + .@amount < 0 || #Promo_My_Pts + .@amount > 2000000000) {
+		mes "[ตู้ Top Spender]";
+		mes "แต้มของคุณเยอะเกินขีดจำกัดของเซิร์ฟเวอร์แล้วครับ!";
+		mes "กรุณาติดต่อ GM";
+		close;
+	}
+
+	delitem .req_item, .@amount;
+	#Promo_My_Pts += .@amount;
+
+	mes "[ตู้ Top Spender]";
+	mes "หยอดเรียบร้อย! แต้มสะสมของคุณคือ ^009900" + #Promo_My_Pts + " ชิ้น^000000";
+	mes " ";
+	mes "อย่าลืมแวะไปกดรับรางวัลขั้นบันไดในเมนูด้วยนะครับ!";
+
+	// =========================================================
+	// ?? ลอจิกจัดอันดับ Top 3
+	// =========================================================
+	set .@my_aid, getcharid(3);   
+	set .@my_cid, getcharid(0);   
+	set .@my_name$, strcharinfo(0);
+	set .@found_idx, -1;
+
+	for (set .@i, 0; .@i < 3; .@i++) {
+		if ($PromoTop_AID[.@i] == .@my_aid) {
+			set .@found_idx, .@i;
+			break;
+		}
+	}
+
+	if (.@found_idx != -1) {
+		set $PromoTop_Pts[.@found_idx], #Promo_My_Pts;
+		set $PromoTop_CID[.@found_idx], .@my_cid; 
+		set $PromoTop_Name$[.@found_idx], .@my_name$; 
+	} else {
+		if (#Promo_My_Pts > $PromoTop_Pts[2] || $PromoTop_AID[2] == 0) {
+			set $PromoTop_Pts[2], #Promo_My_Pts;
+			set $PromoTop_AID[2], .@my_aid;
+			set $PromoTop_CID[2], .@my_cid;
+			set $PromoTop_Name$[2], .@my_name$;
+		}
+	}
+
+	for (set .@i, 0; .@i < 3; .@i++) {
+		for (set .@j, .@i + 1; .@j < 3; .@j++) {
+			if ($PromoTop_Pts[.@i] < $PromoTop_Pts[.@j]) {
+				set .@tmp_pts, $PromoTop_Pts[.@i];
+				set $PromoTop_Pts[.@i], $PromoTop_Pts[.@j];
+				set $PromoTop_Pts[.@j], .@tmp_pts;
+				
+				set .@tmp_aid, $PromoTop_AID[.@i];
+				set $PromoTop_AID[.@i], $PromoTop_AID[.@j];
+				set $PromoTop_AID[.@j], .@tmp_aid;
+
+				set .@tmp_cid, $PromoTop_CID[.@i];
+				set $PromoTop_CID[.@i], $PromoTop_CID[.@j];
+				set $PromoTop_CID[.@j], .@tmp_cid;
+				
+				set .@tmp_name$, $PromoTop_Name$[.@i];
+				set $PromoTop_Name$[.@i], $PromoTop_Name$[.@j];
+				set $PromoTop_Name$[.@j], .@tmp_name$;
+			}
+		}
+	}
+
+	if ($PromoTop_AID[0] == .@my_aid && $PromoTop_Pts[0] == #Promo_My_Pts) {
+		$Promo_Top_Class      = Class;
+		$Promo_Top_Sex        = Sex;
+		$Promo_Top_Hair       = getlook(1);
+		$Promo_Top_HairColor  = getlook(6);
+		$Promo_Top_ClothColor = getlook(7);
+		$Promo_Top_HeadTop    = getlook(4);
+		$Promo_Top_HeadMid    = getlook(5);
+		$Promo_Top_HeadBot    = getlook(3);
+		$Promo_Top_Weapon     = getlook(2);
+		$Promo_Top_Shield     = getlook(8);
+		$Promo_Top_Robe       = getlook(12);
+
+		callsub S_UpdateStatue;
+
+		if (.@found_idx != 0) {
+			announce "[ โค่นแชมป์! ] ["+.@my_name$+"] แซงขึ้นเป็นอันดับ 1 ในศึก Top Spender ด้วยยอด "+#Promo_My_Pts+" ชิ้นแล้ว!!", bc_all, 0xFFCE00;
+		}
+	}
+	close;
+
+// ==============================================================================
+// เมนูลับ: รีเซ็ตตู้ (ไม่แจกรางวัล)
+// ==============================================================================
+L_GM_Reset:
+	mes "[ระบบจัดการ GM]";
+	mes "คุณต้องการล้างข้อมูล Top Spender";
+	mes "^FF0000(ข้อมูลจะหายทันที โดยไม่มีการแจกรางวัล)^000000";
+	next;
+	if (select("ใช่ ล้างกระดานเลย!:ยกเลิก") == 2) close;
+	callsub S_ClearData;
+	mes "[ระบบจัดการ GM]";
+	mes "กระดานถูกรีเซ็ตเรียบร้อยแล้วครับบอส!";
+	close;
+
+// ==============================================================================
+// เมนูลับ: ตัดจบและแจกรางวัลทันที (Test)
+// ==============================================================================
+L_GM_ForceEnd:
+	mes "[ระบบจัดการ GM]";
+	mes "ต้องการตัดจบกิจกรรม แจกรางวัลให้อันดับ 1";
+	mes "และเริ่มสัปดาห์ใหม่ ^0000FFทันที^000000 ใช่ไหมครับ?";
+	next;
+	if (select("ใช่ ตัดจบและแจกรางวัลเลย!:ยกเลิก") == 2) close;
+	callsub S_GiveReward;
+	mes "[ระบบจัดการ GM]";
+	mes "ระบบได้แจกรางวัลให้แชมป์และล้างกระดานเรียบร้อยแล้ว!";
+	close;
+
+// ==============================================================================
+// ฟังก์ชันสำหรับแจกรางวัลแชมป์
+// ==============================================================================
+S_GiveReward:
+	if ($PromoTop_CID[0] > 0) {
+		setarray .@mail_item[0], .reward_item;
+		setarray .@mail_amt[0], .reward_amt;
+		
+		announce "[ จบศึก Top Spender รอบนี้! ] แชมป์คือ ["+$PromoTop_Name$[0]+"] ยอดสูงสุด "+$PromoTop_Pts[0]+" ชิ้น!!", bc_all, 0xFFCE00;
+		mail $PromoTop_CID[0], "Top Spender", "รางวัล Top Spender", "ยินดีด้วยครับบอส! คุณคือที่ 1 ของรอบนี้ รับของรางวัลสุดแรร์ไปเลย!", 0, .@mail_item, .@mail_amt;
+	}
+	callsub S_ClearData;
+	return;
+
+// ==============================================================================
+// ฟังก์ชันสำหรับล้างข้อมูลกระดานและคืนร่าง NPC
+// ==============================================================================
+S_ClearData:
+	$Promo_Week++; 
+	
+	deletearray $PromoTop_Pts[0], 3;
+	deletearray $PromoTop_AID[0], 3;
+	deletearray $PromoTop_CID[0], 3;
+	deletearray $PromoTop_Name$[0], 3;
+	
+	$Promo_Top_Class      = 116; 
+	$Promo_Top_Sex        = 0;
+	$Promo_Top_Hair       = 0;
+	$Promo_Top_HairColor  = 0;
+	$Promo_Top_ClothColor = 0;
+	$Promo_Top_HeadTop    = 0;
+	$Promo_Top_HeadMid    = 0;
+	$Promo_Top_HeadBot    = 0;
+	$Promo_Top_Weapon     = 0;
+	$Promo_Top_Shield     = 0;
+	$Promo_Top_Robe       = 0;
+	
+	callsub S_UpdateStatue;
+	return;
+
+// ==============================================================================
+// ฟังก์ชันสำหรับแปลงโฉมและเปลี่ยนชื่อรูปปั้น
+// ==============================================================================
+S_UpdateStatue:
+	set .@nid, getnpcid(0); 
+	set .@ori_name$, strnpcinfo(0); 
+	
+	setunitdata .@nid, UNPC_CLASS,      $Promo_Top_Class;
+	setunitdata .@nid, UNPC_SEX,        $Promo_Top_Sex;
+	setunitdata .@nid, UNPC_HAIRSTYLE,  $Promo_Top_Hair;
+	setunitdata .@nid, UNPC_HAIRCOLOR,  $Promo_Top_HairColor;
+	setunitdata .@nid, UNPC_CLOTHCOLOR, $Promo_Top_ClothColor;
+	setunitdata .@nid, UNPC_HEADTOP,    $Promo_Top_HeadTop;
+	setunitdata .@nid, UNPC_HEADMIDDLE, $Promo_Top_HeadMid;
+	setunitdata .@nid, UNPC_HEADBOTTOM, $Promo_Top_HeadBot;
+	setunitdata .@nid, UNPC_WEAPON,     $Promo_Top_Weapon;
+	setunitdata .@nid, UNPC_SHIELD,     $Promo_Top_Shield;
+	setunitdata .@nid, UNPC_ROBE,       $Promo_Top_Robe;
+
+	if ($PromoTop_Name$[0] != "") {
+		setnpcdisplay .@ori_name$, $PromoTop_Name$[0];
+	} else {
+		setnpcdisplay .@ori_name$, .@ori_name$;
+	}
+
+	delwaitingroom; 
+	waitingroom "[ สะสมโบนัสเติมเงิน ]", 0;
+	return;
+
+// ==============================================================================
+// ทำงานตอนโหลดเซิร์ฟเวอร์
+// ==============================================================================
+OnInit:
+	if ($Promo_Top_Class == 0) {
+		$Promo_Top_Class = 116; 
+	}
+	callsub S_UpdateStatue;
+	end;
+
+// ==============================================================================
+// ระบบตัดจบสัปดาห์ (ทำงานอัตโนมัติ ทุกวันอาทิตย์ เวลา 23:59 น.)
+// ==============================================================================
+OnSun2359:
+	callsub S_GiveReward;
+	end;
+}

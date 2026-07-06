@@ -1,0 +1,448 @@
+//======================================================
+// DEF Quest – ซ่อมเสาหลักเมืองเมือง Morocc (ผูกกับตัวละคร)
+// - เควชคนเดียว ทำซ้ำได้ (มีคูลดาวน์รอบต่อไป)
+// - แผนที่ใช้: moc_fild11 (ปรับได้)
+// - จุดซ่อมเสาหลักเมืองสุ่มตำแหน่ง (แต่ละตัวละครนับแยกกัน)
+// - ใช้แร่หลายชนิดแบบสุ่มต่อจุด (ตัวอย่าง: 999, 1019)
+// - ของรางวัลตัวอย่าง: DEF Stone (6000241) + โอกาสดรอปของแรร์
+//======================================================
+
+//----------------------------------------
+// CONFIG ส่วนกลาง
+//----------------------------------------
+-	script	DEF_Wall_Core	-1,{
+
+OnInit:
+	// แผนที่ที่ใช้เควช (ปรับชื่อแมพได้)
+	.Map$ = "moc_fild11";
+
+	// จำนวนจุดเสาหลักเมืองที่ให้ซ่อม (อย่างน้อย 1 และไม่เกินจำนวน NPC ด้านล่าง)
+	.TargetCount = 3;
+
+	// ---------- เซ็ตไอเท็มที่ใช้ซ่อม + จำนวนต่อจุด (สุ่ม 1 เซตต่อการซ่อม) ----------
+	// ตัวอย่าง : 999 = Red Potion, 1019 = Trunk (แค่ตัวอย่าง ID)
+	// ถ้าจะเพิ่มก็เติมต่อท้ายได้ เช่น 999,1019,xxxx
+	setarray .OreID[0],      999, 1019;
+	setarray .OrePerWall[0], 50,  100;
+	.OreCount = getarraysize(.OreID); // เอาไว้ให้ func ใช้สุ่ม
+
+	// รางวัลหลักต่อเควช (ทำครบ TargetCount แล้วกลับไปส่งงาน)
+	.RewardItemID    = 6000241; // DEF Stone
+	.RewardItemAmt   = 1;
+	.RewardZeny      = 0;
+
+	// คูลดาวน์ในการเริ่มเควชรอบใหม่ (วินาที) – ปรับได้
+	.CooldownSec     = 1800; // 600 = 10 นาที
+
+	// ขอบเขตสุ่มพิกัดในแมพ (ต้องอยู่ใน range จริงของแมพ)
+	.MinX = 50;
+	.MaxX = 350;
+	.MinY = 50;
+	.MaxY = 350;
+
+	// สุ่มตำแหน่งให้เสาหลักเมืองทุกจุดตอนโหลดสคริปต์
+	donpcevent "DEF_Wall#1::OnRandomPos";
+	donpcevent "DEF_Wall#2::OnRandomPos";
+	donpcevent "DEF_Wall#3::OnRandomPos";
+	donpcevent "DEF_Wall#4::OnRandomPos";
+	donpcevent "DEF_Wall#5::OnRandomPos";
+	end;
+
+// ถ้าอยากสุ่มใหม่ทั้งชุดตอนส่งเควชเสร็จ
+OnReRandom:
+	detachrid; // ตัด RID ผู้เล่นออก ป้องกัน npc_checknear
+	donpcevent "DEF_Wall#1::OnRandomPos";
+	donpcevent "DEF_Wall#2::OnRandomPos";
+	donpcevent "DEF_Wall#3::OnRandomPos";
+	donpcevent "DEF_Wall#4::OnRandomPos";
+	donpcevent "DEF_Wall#5::OnRandomPos";
+	end;
+	
+}
+
+//----------------------------------------
+// NPC รับเควช / ส่งเควช – อยู่ใน Morocc เมือง
+//----------------------------------------
+morocc,166,77,3	script	ช่างซ่อมเสาหลักเมือง	4_M_CHILD1,{
+
+	// ตัวแปรเควช (ผูกกับตัวละคร)
+	// #DEFWall_Q_State   : 0 = ยังไม่รับ / จบแล้ว, 1 = กำลังทำ, 2 = ทำครบ รอส่ง
+	// #DEFWall_Q_Count   : จำนวนจุดที่ซ่อมแล้วในรอบนี้
+	// #DEFWall_Fixed[i]  : ซ่อมจุดที่ i แล้วหรือยัง (ต่อคน)
+	// #DEFWall_NextTime  : เวลา Unix (gettimetick(2)) ที่จะเริ่มรับเควชใหม่ได้
+
+	.@state = #DEFWall_Q_State;
+	.@count = #DEFWall_Q_Count;
+
+	// ดึง Config จาก Core
+	.@target = getvariableofnpc(.TargetCount, "DEF_Wall_Core");
+	.@map$   = getvariableofnpc(.Map$,        "DEF_Wall_Core");
+
+	mes "[ช่างซ่อมเสาหลักเมือง]";
+	mes "เสาหลักเมืองนอกเมือง Morocc โดนมอนสเตอร์โจมตีจนแตกร้าวหลายจุด...";
+	mes "กองทัพต้องการคนช่วยซ่อมจากฝั่งพลเมืองด้วย";
+	next;
+
+	// -------------------------------------------------
+	// สถานะยังไม่รับเควช (หรือจบรอบเก่าแล้ว)  เช็คคูลดาวน์ก่อน
+	// -------------------------------------------------
+	if (.@state == 0) {
+
+		.@now = gettimetick(2);
+		.@cd  = getvariableofnpc(.CooldownSec, "DEF_Wall_Core");
+
+		if (#DEFWall_NextTime > .@now) {
+			.@remain = #DEFWall_NextTime - .@now;
+			.@min = .@remain / 60;
+			.@sec = .@remain % 60;
+
+			mes "[ช่างซ่อมเสาหลักเมือง]";
+			mes "ตอนนี้คุณต้องรออีกสักพักก่อนจะรับเควชซ่อมเสาหลักเมืองรอบใหม่ได้";
+			if (.@min > 0)
+				mes "เหลือเวลาประมาณ " + .@min + " นาที " + .@sec + " วินาที";
+			else
+				mes "เหลือเวลาประมาณ " + .@sec + " วินาที";
+			close;
+		}
+
+		mes "[ช่างซ่อมเสาหลักเมือง]";
+		mes "ถ้าคุณสนใจช่วยซ่อมเสาหลักเมือง";
+		mes "แค่เอาแร่ที่เหมาะสมไปซ่อมรอยแตกให้ครบ ^00FF00" + .@target + " จุด^000000";
+		mes "บริเวณแผนที่รอบเมือง: ^0000FF" + .@map$ + "^000000";
+		next;
+		mes "[ช่างซ่อมเสาหลักเมือง]";
+		mes "เมื่อทำเควชสำเร็จจะได้รับ";
+		mes "^i[6000241]^FFFFFF_^000000 ^ff0000 Def Stone 1 ea ^000000";
+		mes "";
+		mes "______________";
+		mes "";
+		mes "และมีโอกาส 50% ที่จะได้รับ";
+		mes "^i[985]^FFFFFF_^000000 ^ff0000 Elunium 1 ea ^000000";
+		mes "^i[984]^FFFFFF_^000000 ^ff0000 Oridecon 1 ea ^000000";
+		mes "^i[756]^FFFFFF_^000000 ^ff0000 Rough Elunium 1 ea ^000000";
+		mes "^i[757]^FFFFFF_^000000 ^ff0000 Rough Elunium 1 ea ^000000";
+		mes "^i[969]^FFFFFF_^000000 ^ff0000 Gold 1 ea ^000000";
+		mes "หลังจบเควช";
+		next;
+		if (select("รับเควชซ่อมเสาหลักเมือง:ไม่เอาดีกว่า") == 2) {
+			mes "[ช่างซ่อมเสาหลักเมือง]";
+			mes "ถ้าเปลี่ยนใจเมื่อไหร่กลับมาคุยได้เสมอ";
+			close;
+		}
+
+		// เริ่มเควชใหม่
+		#DEFWall_Q_State = 1;
+		#DEFWall_Q_Count = 0;
+		deletearray #DEFWall_Fixed[0], 10; // ล้างสถานะจุดเสาหลักเมืองเก่า (รองรับ 0..9)
+
+		mes "[ช่างซ่อมเสาหลักเมือง]";
+		mes "เรียบร้อย! ระบบได้ตั้งเควชให้คุณแล้ว";
+		mes "ออกไปที่แผนที่ ^0000FF" + .@map$ + "^000000";
+		mes "แล้วหาจุดเสาหลักเมืองพัง (จะมีสัญลักษณ์ให้เห็นบนแผนที่)";
+		mes "ซ่อมให้ครบ ^00FF00" + .@target + " จุด^000000 แล้วกลับมารายงานข้าอีกครั้ง";
+		close;
+	}
+
+	// กำลังทำอยู่ ยังไม่ครบ
+	if (.@state == 1) {
+		mes "[ช่างซ่อมเสาหลักเมือง]";
+		mes "ตอนนี้คุณซ่อมเสาหลักเมืองไปแล้ว ^00FF00" + .@count + " / " + .@target + "^000000 จุด";
+		mes "ยังเหลืออีกนิดเดียว ลองเดินหาในแผนที่ " + .@map$ + " ดูนะ";
+		close;
+	}
+
+	// ทำครบแล้ว รอส่งงาน
+	if (.@state == 2) {
+		.@RewardItemID  = getvariableofnpc(.RewardItemID,  "DEF_Wall_Core");
+		.@RewardItemAmt = getvariableofnpc(.RewardItemAmt, "DEF_Wall_Core");
+		.@RewardZeny    = getvariableofnpc(.RewardZeny,    "DEF_Wall_Core");
+		.@cd            = getvariableofnpc(.CooldownSec,   "DEF_Wall_Core");
+
+		mes "[ช่างซ่อมเสาหลักเมือง]";
+		mes "เยี่ยมเลย! ได้ข่าวมาว่าเสาหลักเมืองด้านนอกกลับมามั่นคงขึ้นแล้ว";
+		mes "ขอรับมอบหมายงานของคุณว่าเสร็จสมบูรณ์";
+		next;
+
+		if (checkweight(.@RewardItemID, .@RewardItemAmt) == 0) {
+			mes "[ช่างซ่อมเสาหลักเมือง]";
+			mes "น้ำหนักของคุณเต็มเกินไป รับรางวัลไม่ได้";
+			mes "ลองเคลียร์ของในตัวก่อนแล้วมาคุยใหม่อีกครั้งนะ";
+			close;
+		}
+
+		if (.@RewardZeny > 0)
+			Zeny += .@RewardZeny;
+		if (.@RewardItemID > 0 && .@RewardItemAmt > 0)
+			getitem .@RewardItemID, .@RewardItemAmt;
+
+		// -----------------------------------------------------
+		// BONUS REWARD: โอกาส 5% ได้รับไอเท็มพิเศษ 1 ชิ้นแบบสุ่ม
+		// -----------------------------------------------------
+		if (rand(100) < 50) {    // 5% โอกาส
+			setarray .@bonus_items[0], 985, 984, 756, 757, 969;  // Elu, Ori, Rough Elu, Rough Ori, Gold
+			.@pick = rand(5);
+			getitem .@bonus_items[.@pick], 1;
+
+			mes "[ช่างซ่อมเสาหลักเมือง]";
+			mes "โชคดีจริง! ข้าเจอของดีติดมากับเศษเสาหลักเมืองที่ซ่อม";
+			mes "รับไปเลย: ^00FF00" + getitemname(.@bonus_items[.@pick]) + "^000000 1 ea";
+			next;
+		}
+
+		mes "[ช่างซ่อมเสาหลักเมือง]";
+		mes "นี่คือรางวัลตอบแทนความเสียสละของคุณ";
+
+		// ตั้งคูลดาวน์รอบต่อไป
+		#DEFWall_NextTime = gettimetick(2) + .@cd;
+
+		// ถ้ายังอยากสุ่มตำแหน่งใหม่ทั้งชุดก็เรียกได้
+		donpcevent "DEF_Wall_Core::OnReRandom";
+
+		mes "รอบหน้าตำแหน่งรอยแตกร้าวจะเปลี่ยนไปอีก ลองมาช่วยกันอีกได้เสมอ";
+
+		// รีเซ็ตให้ทำใหม่ได้ (หลังคูลดาวน์หมด)
+		#DEFWall_Q_State = 0;
+		#DEFWall_Q_Count = 0;
+		deletearray #DEFWall_Fixed[0], 10;
+		close;
+	}
+	close;
+	OnInit:
+	waitingroom "ช่างซ่อมเสาหลักเมือง" , 0;
+}
+
+//----------------------------------------
+// NPC จุดเสาหลักเมืองพัง – ใช้ร่วมกันทั้งเซิร์ฟ แต่ผูกสถานะกับตัวละคร
+// หลังซ่อมเสร็จ  รอ 3 วิ  ย้ายตำแหน่งใหม่อัตโนมัติ
+//----------------------------------------
+
+// ---------- จุดที่ 1 ----------
+moc_fild11,0,0,0	script	DEF_Wall#1	4_4JOB_SEALSTONE,{
+
+	.@idx = 0; // index จุดที่ 1
+	callfunc("F_DEFWall_HandleWall", .@idx);
+	end;
+
+OnRandomPos:
+	.@map$ = getvariableofnpc(.Map$, "DEF_Wall_Core");
+	.@minx = getvariableofnpc(.MinX, "DEF_Wall_Core");
+	.@maxx = getvariableofnpc(.MaxX, "DEF_Wall_Core");
+	.@miny = getvariableofnpc(.MinY, "DEF_Wall_Core");
+	.@maxy = getvariableofnpc(.MaxY, "DEF_Wall_Core");
+
+	.@x = rand(.@minx, .@maxx);
+	.@y = rand(.@miny, .@maxy);
+	movenpc strnpcinfo(3), .@x, .@y;
+	end;
+
+OnStartRespawn:
+	detachrid;      // ตัดผู้เล่นออกก่อนเริ่มจับเวลา ป้องกัน npc_checknear
+	initnpctimer;
+	end;
+
+OnTimer3000: // 3 วิ
+	donpcevent strnpcinfo(3)+"::OnRandomPos";
+	stopnpctimer;
+	end;
+}
+
+// ---------- จุดที่ 2 ----------
+moc_fild11,0,0,0	script	DEF_Wall#2	4_4JOB_SEALSTONE,{
+
+	.@idx = 1; // index จุดที่ 2
+	callfunc("F_DEFWall_HandleWall", .@idx);
+	end;
+
+OnRandomPos:
+	.@map$ = getvariableofnpc(.Map$, "DEF_Wall_Core");
+	.@minx = getvariableofnpc(.MinX, "DEF_Wall_Core");
+	.@maxx = getvariableofnpc(.MaxX, "DEF_Wall_Core");
+	.@miny = getvariableofnpc(.MinY, "DEF_Wall_Core");
+	.@maxy = getvariableofnpc(.MaxY, "DEF_Wall_Core");
+
+	.@x = rand(.@minx, .@maxx);
+	.@y = rand(.@miny, .@maxy);
+	movenpc strnpcinfo(3), .@x, .@y;
+	end;
+
+OnStartRespawn:
+	detachrid;
+	initnpctimer;
+	end;
+
+OnTimer3000:
+	donpcevent strnpcinfo(3)+"::OnRandomPos";
+	stopnpctimer;
+	end;
+}
+
+// ---------- จุดที่ 3 ----------
+moc_fild11,0,0,0	script	DEF_Wall#3	4_4JOB_SEALSTONE,{
+
+	.@idx = 2; // index จุดที่ 3
+	callfunc("F_DEFWall_HandleWall", .@idx);
+	end;
+
+OnRandomPos:
+	.@map$ = getvariableofnpc(.Map$, "DEF_Wall_Core");
+	.@minx = getvariableofnpc(.MinX, "DEF_Wall_Core");
+	.@maxx = getvariableofnpc(.MaxX, "DEF_Wall_Core");
+	.@miny = getvariableofnpc(.MinY, "DEF_Wall_Core");
+	.@maxy = getvariableofnpc(.MaxY, "DEF_Wall_Core");
+
+	.@x = rand(.@minx, .@maxx);
+	.@y = rand(.@miny, .@maxy);
+	movenpc strnpcinfo(3), .@x, .@y;
+	end;
+
+OnStartRespawn:
+	detachrid;
+	initnpctimer;
+	end;
+
+OnTimer3000:
+	donpcevent strnpcinfo(3)+"::OnRandomPos";
+	stopnpctimer;
+	end;
+}
+
+// ---------- จุดที่ 4 ----------
+moc_fild11,0,0,0	script	DEF_Wall#4	4_4JOB_SEALSTONE,{
+
+	.@idx = 3; // index จุดที่ 4
+	callfunc("F_DEFWall_HandleWall", .@idx);
+	end;
+
+OnRandomPos:
+	.@map$ = getvariableofnpc(.Map$, "DEF_Wall_Core");
+	.@minx = getvariableofnpc(.MinX, "DEF_Wall_Core");
+	.@maxx = getvariableofnpc(.MaxX, "DEF_Wall_Core");
+	.@miny = getvariableofnpc(.MinY, "DEF_Wall_Core");
+	.@maxy = getvariableofnpc(.MaxY, "DEF_Wall_Core");
+
+	.@x = rand(.@minx, .@maxx);
+	.@y = rand(.@miny, .@maxy);
+	movenpc strnpcinfo(3), .@x, .@y;
+	end;
+
+OnStartRespawn:
+	detachrid;
+	initnpctimer;
+	end;
+
+OnTimer3000:
+	donpcevent strnpcinfo(3)+"::OnRandomPos";
+	stopnpctimer;
+	end;
+}
+
+// ---------- จุดที่ 5 ----------
+moc_fild11,0,0,0	script	DEF_Wall#5	4_4JOB_SEALSTONE,{
+
+	.@idx = 4; // index จุดที่ 5
+	callfunc("F_DEFWall_HandleWall", .@idx);
+	end;
+
+OnRandomPos:
+	.@map$ = getvariableofnpc(.Map$, "DEF_Wall_Core");
+	.@minx = getvariableofnpc(.MinX, "DEF_Wall_Core");
+	.@maxx = getvariableofnpc(.MaxX, "DEF_Wall_Core");
+	.@miny = getvariableofnpc(.MinY, "DEF_Wall_Core");
+	.@maxy = getvariableofnpc(.MaxY, "DEF_Wall_Core");
+
+	.@x = rand(.@minx, .@maxx);
+	.@y = rand(.@miny, .@maxy);
+	movenpc strnpcinfo(3), .@x, .@y;
+	end;
+
+OnStartRespawn:
+	detachrid;
+	initnpctimer;
+	end;
+
+OnTimer3000:
+	donpcevent strnpcinfo(3)+"::OnRandomPos";
+	stopnpctimer;
+	end;
+}
+
+//----------------------------------------
+// ฟังก์ชันกลาง: handle ตอนกดเสาหลักเมือง
+//----------------------------------------
+function	script	F_DEFWall_HandleWall	{
+
+	.@idx = getarg(0); // index จุดเสาหลักเมือง
+
+	// ถ้ายังไม่ได้รับเควช
+	if (#DEFWall_Q_State != 1) {
+		mes "[เสาหลักเมืองแตกร้าว]";	
+		mes "เสาหลักเมืองนี้ดูเหมือนจะพัง แต่ตอนนี้คุณไม่ได้รับมอบหมายให้ซ่อม";
+		mes "ลองกลับไปคุยกับช่างซ่อมเสาหลักเมืองในเมือง Morocc ดูก่อนนะ";
+		close;
+	}
+
+	// ถ้าจุดนี้ซ่อมแล้วสำหรับ "ตัวละครนี้"
+	if (#DEFWall_Fixed[.@idx]) {
+		mes "[เสาหลักเมืองแตกร้าว]";
+		mes "คุณได้ซ่อมเสาหลักเมืองจุดนี้เรียบร้อยแล้ว";
+		mes "ลองมองหาจุดอื่นในแผนที่แทน";
+		close;
+	}
+
+	// ---------- ดึง config + สุ่มชนิดแร่ที่ใช้ซ่อม ----------
+	.@cnt = getvariableofnpc(.OreCount, "DEF_Wall_Core");
+	if (.@cnt <= 0) {
+		mes "[เสาหลักเมืองแตกร้าว]";
+		mes "ขณะนี้ระบบแร่สำหรับซ่อมยังไม่ได้ตั้งค่าอย่างถูกต้อง แจ้ง GM ด้วยนะ";
+		close;
+	}
+
+	.@pick       = rand(.@cnt); // สุ่ม index 0..(OreCount-1)
+	.@NeedID     = getvariableofnpc(.OreID[.@pick],      "DEF_Wall_Core");
+	.@NeedAmount = getvariableofnpc(.OrePerWall[.@pick], "DEF_Wall_Core");
+
+	.@target     = getvariableofnpc(.TargetCount, "DEF_Wall_Core");
+
+	mes "[เสาหลักเมืองแตกร้าว]";
+	mes "เสาหลักเมืองบริเวณนี้แตกร้าวอย่างหนัก ถ้าปล่อยไว้เมืองอาจโดนตีแตกเมื่อไรก็ได้!";
+	mes "ต้องใช้ไอเท็มต่อไปนี้ในการซ่อม:";
+	mes "^0000FF" + getitemname(.@NeedID) + "^000000 จำนวน ^00FF00" + .@NeedAmount + " ea^000000";
+	next;
+
+	if (countitem(.@NeedID) < .@NeedAmount) {
+		mes "[เสาหลักเมืองแตกร้าว]";
+		mes "คุณมี ^0000FF" + getitemname(.@NeedID) + "^000000 ไม่เพียงพอ";
+		mes "ต้องใช้ทั้งหมด " + .@NeedAmount + " ea สำหรับการซ่อมจุดนี้";
+		close;
+	}
+
+	if (select("เริ่มซ่อมเสาหลักเมือง:ยกเลิก") == 2) close;
+
+	// หักแร่ + แสดงเอฟเฟกต์
+	delitem .@NeedID, .@NeedAmount;
+	specialeffect EF_REPAIRWEAPON;
+	specialeffect EF_HIT2;
+
+	#DEFWall_Fixed[.@idx] = 1;
+	#DEFWall_Q_Count++;
+
+	// หลังซ่อมสำเร็จ สั่งให้เสาหลักเมืองจุดนี้เริ่มนับเวลา respawn (~3 วิ)
+	donpcevent strnpcinfo(3)+"::OnStartRespawn";
+
+	mes "[เสาหลักเมืองแตกร้าว]";
+	mes "คุณซ่อมเสาหลักเมืองจุดนี้เรียบร้อยแล้ว!";
+	mes "จำนวนที่ซ่อมทั้งหมดตอนนี้: ^00FF00" + #DEFWall_Q_Count + " / " + .@target + "^000000 จุด";
+	next;
+
+	if (#DEFWall_Q_Count >= .@target) {
+		#DEFWall_Q_State = 2;
+		mes "[เสาหลักเมืองแตกร้าว]";
+		mes "คุณได้ซ่อมเสาหลักเมืองครบตามจำนวนที่ได้รับมอบหมายแล้ว!";
+		mes "กลับไปแจ้งช่างซ่อมเสาหลักเมืองที่เมือง Morocc เพื่อรับรางวัลได้เลย";
+	} else {
+		mes "[เสาหลักเมืองแตกร้าว]";
+		mes "ยังเหลือเสาหลักเมืองอีกบางจุดที่ต้องซ่อมต่อ";
+		mes "ลองเดินสำรวจรอบ ๆ แผนที่ดูนะ";
+	}
+	close;
+}

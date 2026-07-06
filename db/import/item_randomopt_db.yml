@@ -1,0 +1,251 @@
+# This file is a part of rAthena.
+#   Copyright(C) 2021 rAthena Development Team
+#   https://rathena.org - https://github.com/rathena
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+###########################################################################
+# Item Random Option Database
+###########################################################################
+#
+# Item Random Option Settings
+#
+###########################################################################
+# - Id          Item Random Option ID matching the ID defined in enumvar.lub in the client.
+#   Option      Item Random Option constant.
+#   Script      Bonus script used for option.
+###########################################################################
+
+Header:
+  Type: RANDOM_OPTION_DB
+  Version: 1
+
+Body:
+#  - Id: 301
+#    Option: REFINEUI_DMG_BOSS
+#    Script: |
+#      bonus2 bAddClass,Class_Boss,getrandomoptinfo(ROA_VALUE);
+#      bonus2 bMagicAddClass,Class_Boss,getrandomoptinfo(ROA_VALUE);
+#  - Id: 302
+#    Option: REFINEUI_ATKRATE
+#    Script: |
+#      bonus bAtkRate,getrandomoptinfo(ROA_VALUE);
+#  - Id: 303
+#    Option: REFINEUI_MATKRATE
+#    Script: |
+#      bonus bMatkRate,getrandomoptinfo(ROA_VALUE);
+#  - Id: 304
+#    Option: REFINEUI_MAX_HPSPRATE
+#    Script: |
+#      bonus bMaxHPrate,getrandomoptinfo(ROA_VALUE);
+#      bonus bMaxSPrate,getrandomoptinfo(ROA_VALUE);
+#  - Id: 305
+#    Option: REFINEUI_MAXHP
+#    Script: |
+#      bonus bMaxHP,getrandomoptinfo(ROA_VALUE);
+#  - Id: 306
+#    Option: REFINEUI_MAXSP
+#    Script: |
+#      bonus bMaxSP,getrandomoptinfo(ROA_VALUE);
+#  - Id: 307
+#    Option: REFINEUI_DEF
+#    Script: |
+#      bonus bDef,getrandomoptinfo(ROA_VALUE);
+#  - Id: 308
+#    Option: REFINEUI_MDEF
+#    Script: |
+#      bonus bMdef,getrandomoptinfo(ROA_VALUE);
+#  - Id: 309
+#    Option: REFINEUI_SUB_NEUTRAL
+#    Script: |
+#      bonus2 bSubEle,Ele_Neutral,getrandomoptinfo(ROA_VALUE);
+#  - Id: 310
+#    Option: REFINEUI_SUB_BOSS
+#    Script: |
+#      bonus2 bSubClass,Class_Boss,getrandomoptinfo(ROA_VALUE);
+#  - Id: 311
+#    Option: REFINEUI_STR
+#    Script: |
+#      bonus bStr,getrandomoptinfo(ROA_VALUE);
+#  - Id: 312
+#    Option: REFINEUI_AGI
+#    Script: |
+#      bonus bAgi,getrandomoptinfo(ROA_VALUE);
+#  - Id: 313
+#    Option: REFINEUI_VIT
+#    Script: |
+#      bonus bVit,getrandomoptinfo(ROA_VALUE);
+#  - Id: 314
+#    Option: REFINEUI_INT
+#    Script: |
+#      bonus bInt,getrandomoptinfo(ROA_VALUE);
+#  - Id: 315
+#    Option: REFINEUI_DEX
+#    Script: |
+#      bonus bDex,getrandomoptinfo(ROA_VALUE);
+#  - Id: 316
+#    Option: REFINEUI_LUK
+#    Script: |
+#      bonus bLuk,getrandomoptinfo(ROA_VALUE);
+#  - Id: 317
+#    Option: REFINEUI_FLEE
+#    Script: |
+#      bonus bFlee,getrandomoptinfo(ROA_VALUE);
+#  - Id: 318
+#    Option: REFINEUI_HIT
+#    Script: |
+#      bonus bHit,getrandomoptinfo(ROA_VALUE);
+#  - Id: 319
+#    Option: REFINEUI_VCT
+#    Script: |
+#      bonus bVariableCastrate,-getrandomoptinfo(ROA_VALUE);
+#  - Id: 320
+#    Option: REFINEUI_DELAY
+#    Script: |
+#      bonus bDelayrate,-getrandomoptinfo(ROA_VALUE);
+#  - Id: 321
+#    Option: REFINEUI_ATK
+#    Script: |
+#      bonus bBaseAtk,getrandomoptinfo(ROA_VALUE);
+#  - Id: 322
+#    Option: REFINEUI_ASPDRATE
+#    Script: |
+#      bonus bAspdRate,getrandomoptinfo(ROA_VALUE);
+#  - Id: 323
+#    Option: REFINEUI_CRI
+#    Script: |
+#      bonus bCritical,getrandomoptinfo(ROA_VALUE);
+#  - Id: 324
+#    Option: REFINEUI_CRIDMG
+#    Script: |
+#      bonus bCritAtkRate,getrandomoptinfo(ROA_VALUE);
+#  - Id: 325
+#    Option: REFINEUI_LONGRATE
+#    Script: |
+#      bonus bLongAtkRate,getrandomoptinfo(ROA_VALUE);
+#  - Id: 326
+#    Option: REFINEUI_ALLSIZE
+#    Script: |
+#      bonus2 bAddSize,Size_All,getrandomoptinfo(ROA_VALUE);
+#      bonus2 bMagicAddSize,Size_All,getrandomoptinfo(ROA_VALUE);
+#  - Id: 327
+#    Option: REFINEUI_DROP
+#    Script: |
+#      bonus2 bDropAddRace,RC_ALL,getrandomoptinfo(ROA_VALUE);
+#  - Id: 328
+#    Option: REFINEUI_EXP
+#    Script: |
+#      bonus2 bEXPAddRace,RC_All,getrandomoptinfo(ROA_VALUE);
+#  - Id: 329
+#    Option: REFINEUI_RC_HUMAN
+#    Script: |
+#      bonus2 bAddRace,RC_DemiHuman,getrandomoptinfo(ROA_VALUE);
+#      bonus2 bAddRace,RC_Player_Human,getrandomoptinfo(ROA_VALUE);
+#  - Id: 330
+#    Option: REFINEUI_MRC_HUMAN
+#    Script: |
+#      bonus2 bMagicAddRace,RC_DemiHuman,getrandomoptinfo(ROA_VALUE);
+#      bonus2 bMagicAddRace,RC_Player_Human,getrandomoptinfo(ROA_VALUE);
+#  - Id: 331
+#    Option: REFINEUI_RC_HUMAN_AM
+#    Script: |
+#      bonus2 bAddRace,RC_DemiHuman,getrandomoptinfo(ROA_VALUE);
+#      bonus2 bMagicAddRace,RC_DemiHuman,getrandomoptinfo(ROA_VALUE);
+#      bonus2 bAddRace,RC_Player_Human,getrandomoptinfo(ROA_VALUE);
+#      bonus2 bMagicAddRace,RC_Player_Human,getrandomoptinfo(ROA_VALUE);
+#  - Id: 332
+#    Option: REFINEUI_SP_RECOVER
+#    Script: |
+#      bonus bSPrecovRate,getrandomoptinfo(ROA_VALUE);
+#  - Id: 333
+#    Option: REFINEUI_RC_SHUMAN
+#    Script: |
+#      bonus2 bSubRace,RC_DemiHuman,getrandomoptinfo(ROA_VALUE);
+#      bonus2 bSubRace,RC_Player_Human,getrandomoptinfo(ROA_VALUE);
+#  - Id: 334
+#    Option: REFINEUI_HEAL
+#    Script: |
+#      bonus bHealPower,getrandomoptinfo(ROA_VALUE);
+#  - Id: 335
+#    Option: REFINEUI_MAX_WEIGHT_50
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 336
+#    Option: REFINEUI_MAX_WEIGHT_100
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 337
+#    Option: REFINEUI_MAX_WEIGHT_150
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 338
+#    Option: REFINEUI_MAX_WEIGHT_200
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 339
+#    Option: REFINEUI_MAX_WEIGHT_250
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 340
+#    Option: REFINEUI_MAX_WEIGHT_300
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 341
+#    Option: REFINEUI_MAX_WEIGHT_350
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 342
+#    Option: REFINEUI_MAX_WEIGHT_400
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 343
+#    Option: REFINEUI_MAX_WEIGHT_450
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 344
+#    Option: REFINEUI_MAX_WEIGHT_500
+#    Script: |
+#      bonus bAddMaxWeight,getrandomoptinfo(ROA_VALUE);
+#  - Id: 345
+#    Option: REFINEUI_JUPITEL_T
+#    Script: |
+#      bonus2 bSkillAtk,"WZ_JUPITEL",getrandomoptinfo(ROA_VALUE);
+#  - Id: 346
+#    Option: REFINEUI_STORMGUST
+#    Script: |
+#      bonus2 bSkillAtk,"WZ_STORMGUST",getrandomoptinfo(ROA_VALUE);
+#  - Id: 347
+#    Option: REFINEUI_CARTREVOLUTION
+#    Script: |
+#      bonus2 bSkillAtk,"MC_CARTREVOLUTION",getrandomoptinfo(ROA_VALUE);
+#  - Id: 348
+#    Option: REFINEUI_MAMMONITE
+#    Script: |
+#      bonus2 bSkillAtk,"MC_MAMMONITE",getrandomoptinfo(ROA_VALUE);
+#  - Id: 349
+#    Option: REFINEUI_HP_GAIN
+#    Script: |
+#      bonus bHPGainValue,getrandomoptinfo(ROA_VALUE);
+#      bonus bLongHPGainValue,getrandomoptinfo(ROA_VALUE);
+#      bonus bMagicHPGainValue,getrandomoptinfo(ROA_VALUE);
+#  - Id: 350
+#    Option: REFINEUI_SP_GAIN
+#    Script: |
+#      bonus bSPGainValue,getrandomoptinfo(ROA_VALUE);
+#      bonus bLongSPGainValue,getrandomoptinfo(ROA_VALUE);
+#      bonus bMagicSPGainValue,getrandomoptinfo(ROA_VALUE);
+#  - Id: 351
+#    Option: REFINEUI_MAGNUS
+#    Script: |
+#      bonus2 bSkillAtk,"PR_MAGNUS",getrandomoptinfo(ROA_VALUE);

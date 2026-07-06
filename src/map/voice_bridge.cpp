@@ -1,0 +1,615 @@
+#include "voice_bridge.hpp"
+#include "clif.hpp"
+#include "script.hpp"
+#include "unit.hpp"
+#include "../common/timer.hpp"
+
+#ifdef _WIN32
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+#  pragma comment(lib, "ws2_32.lib")
+   using socket_t = SOCKET;
+   static constexpr socket_t INVALID_SOCK = INVALID_SOCKET;
+   inline void close_socket(socket_t s) { closesocket(s); }
+   inline bool wsa_init() { WSADATA w{}; return WSAStartup(MAKEWORD(2,2),&w)==0; }
+   inline void wsa_cleanup() { WSACleanup(); }
+#else
+#  include <sys/socket.h>
+#  include <netinet/in.h>
+#  include <arpa/inet.h>
+#  include <fcntl.h>
+#  include <unistd.h>
+   using socket_t = int;
+   static constexpr socket_t INVALID_SOCK = -1;
+   inline void close_socket(socket_t s) { ::close(s); }
+   inline bool wsa_init()    { return true; }
+   inline void wsa_cleanup() {}
+#endif
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstdint>
+#include <cstring>
+#include <algorithm>
+#include <fstream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+
+namespace {
+	socket_t    g_sock       = INVALID_SOCK;
+	sockaddr_in g_voice_addr{};
+	bool        g_ready      = false;
+	std::string g_bridge_secret;
+	int         g_speaking_hat_effect = HAT_EF_MIC;
+
+	std::string trim_copy(std::string s) {
+		size_t a = s.find_first_not_of(" \t\r\n");
+		size_t b = s.find_last_not_of(" \t\r\n");
+		return (a == std::string::npos) ? std::string{} : s.substr(a, b - a + 1);
+	}
+
+	std::string base_dir_of(const std::string& path) {
+		size_t slash = path.find_last_of("/\\");
+		return (slash == std::string::npos) ? std::string{} : path.substr(0, slash + 1);
+	}
+
+	std::string join_path(const std::string& base_dir, const std::string& rel) {
+		if (rel.empty()) return base_dir;
+		if (rel.size() > 1 && rel[1] == ':') return rel;
+		if (rel[0] == '/' || rel[0] == '\\') return rel;
+		if (rel.rfind("conf/", 0) == 0 || rel.rfind("conf\\", 0) == 0) return rel;
+		return base_dir + rel;
+	}
+
+	void load_bridge_conf_file(const std::string& path, std::string& host, int& port, std::unordered_set<std::string>& seen) {
+		if (!seen.insert(path).second)
+			return;
+
+		std::ifstream f(path);
+		if (!f.is_open())
+			return;
+
+		const std::string base_dir = base_dir_of(path);
+		std::string line;
+		while (std::getline(f, line)) {
+			size_t comment = line.find("//");
+			if (comment != std::string::npos)
+				line = line.substr(0, comment);
+			size_t sep = line.find(':');
+			if (sep == std::string::npos)
+				continue;
+
+			std::string key = trim_copy(line.substr(0, sep));
+			std::string val = trim_copy(line.substr(sep + 1));
+			if (key == "import") {
+				load_bridge_conf_file(join_path(base_dir, val), host, port, seen);
+			} else if (key == "voice_api_ip" || key == "voice_api_host") {
+				if (!val.empty())
+					host = val;
+			} else if (key == "voice_api_port") {
+				if (!val.empty())
+					port = std::atoi(val.c_str());
+			} else if (key == "voice_bridge_secret") {
+				g_bridge_secret = val;
+			} else if (key == "voice_speaking_hat_effect") {
+				if (val.empty() || val == "HAT_EF_MIC" || val == "HAT_EF_C_SPOT_MIKE")
+					g_speaking_hat_effect = HAT_EF_MIC;
+				else
+					g_speaking_hat_effect = std::atoi(val.c_str());
+			}
+		}
+	}
+
+	void load_bridge_conf(std::string& host, int& port) {
+		std::unordered_set<std::string> seen;
+		load_bridge_conf_file("conf/voice_athena.conf", host, port, seen);
+	}
+
+	std::string json_escape(const std::string& s) {
+		std::string out;
+		out.reserve(s.size() + 8);
+		for (char ch : s) {
+			switch (ch) {
+				case '\\': out += "\\\\"; break;
+				case '"':  out += "\\\""; break;
+				case '\n': out += "\\n";  break;
+				case '\r': out += "\\r";  break;
+				case '\t': out += "\\t";  break;
+				default:   out.push_back(ch); break;
+			}
+		}
+		return out;
+	}
+
+	std::string attach_bridge_secret(const std::string& s) {
+		if (g_bridge_secret.empty() || s.empty() || s.back() != '}')
+			return s;
+		std::string out = s;
+		out.insert(out.size() - 1, ",\"bridge_secret\":\"" + json_escape(g_bridge_secret) + "\"");
+		return out;
+	}
+
+	bool voice_bridge_send_text(const std::string& s) {
+		if (!g_ready || g_sock == INVALID_SOCK)
+			return false;
+
+		const std::string payload = attach_bridge_secret(s);
+		int rc = sendto(
+			g_sock,
+			payload.c_str(),
+			static_cast<int>(payload.size()),
+			0,
+			reinterpret_cast<const sockaddr*>(&g_voice_addr),
+			sizeof(g_voice_addr)
+		);
+		return rc == static_cast<int>(payload.size());
+	}
+
+	std::string json_string_field(const std::string& s, const char* key) {
+		const std::string needle = std::string("\"") + key + "\":\"";
+		size_t pos = s.find(needle);
+		if (pos == std::string::npos)
+			return {};
+		pos += needle.size();
+		size_t end = s.find('"', pos);
+		return (end == std::string::npos) ? std::string{} : s.substr(pos, end - pos);
+	}
+
+	int json_int_field(const std::string& s, const char* key, int def = 0) {
+		const std::string needle = std::string("\"") + key + "\":";
+		size_t pos = s.find(needle);
+		if (pos == std::string::npos)
+			return def;
+		pos += needle.size();
+		return std::atoi(s.c_str() + pos);
+	}
+
+	bool json_bool_field(const std::string& s, const char* key, bool def = false) {
+		const std::string needle = std::string("\"") + key + "\":";
+		size_t pos = s.find(needle);
+		if (pos == std::string::npos)
+			return def;
+		pos += needle.size();
+		if (s.compare(pos, 4, "true") == 0)
+			return true;
+		if (s.compare(pos, 5, "false") == 0)
+			return false;
+		return def;
+	}
+
+	bool voice_reply_allowed(const sockaddr_in& from) {
+		return from.sin_addr.s_addr == g_voice_addr.sin_addr.s_addr &&
+			from.sin_port == g_voice_addr.sin_port;
+	}
+
+	void voice_set_speaking_hat(int char_id, bool enable) {
+		if (char_id <= 0 || g_speaking_hat_effect <= HAT_EF_MIN || g_speaking_hat_effect >= HAT_EF_MAX)
+			return;
+
+		map_session_data* sd = map_charid2sd(char_id);
+		if (sd == nullptr)
+			return;
+
+		const int16 effect = static_cast<int16>(g_speaking_hat_effect);
+		auto it = std::find(sd->hatEffects.begin(), sd->hatEffects.end(), effect);
+		if (enable) {
+			if (it != sd->hatEffects.end())
+				return;
+			sd->hatEffects.push_back(effect);
+		} else {
+			if (it == sd->hatEffects.end())
+				return;
+			sd->hatEffects.erase(it);
+		}
+
+		if (!sd->state.connect_new)
+			clif_hat_effect_single_target(*sd, static_cast<uint16>(effect), enable, AREA);
+	}
+
+	int voice_bridge_clear_speaking_hat(map_session_data* sd, va_list) {
+		if (sd)
+			voice_set_speaking_hat(sd->status.char_id, false);
+		return 0;
+	}
+
+	// Broadcast a one-line alert to every online GM that can receive requests.
+	int voice_alert_gm_sub(map_session_data* sd, va_list ap) {
+		const char* msg = va_arg(ap, const char*);
+		if (sd && pc_has_permission(sd, PC_PERM_RECEIVE_REQUESTS))
+			clif_displaymessage(sd->fd, msg);
+		return 0;
+	}
+
+	void voice_bridge_poll_replies() {
+		if (!g_ready || g_sock == INVALID_SOCK)
+			return;
+
+		char buf[1024];
+		for (int drained = 0; drained < 64; ++drained) {
+			sockaddr_in from{};
+#ifdef _WIN32
+			int from_len = sizeof(from);
+#else
+			socklen_t from_len = sizeof(from);
+#endif
+			int n = recvfrom(g_sock, buf, sizeof(buf) - 1, 0,
+				reinterpret_cast<sockaddr*>(&from), &from_len);
+			if (n <= 0)
+				break;
+			if (!voice_reply_allowed(from))
+				continue;
+
+			buf[n] = '\0';
+			const std::string payload(buf, n);
+			if (!g_bridge_secret.empty() && json_string_field(payload, "bridge_secret") != g_bridge_secret)
+				continue;
+
+			const std::string rtype = json_string_field(payload, "type");
+			if (rtype == "speaking_hat") {
+				voice_set_speaking_hat(
+					json_int_field(payload, "char_id"),
+					json_bool_field(payload, "speaking")
+				);
+			} else if (rtype == "block_alert") {
+				const std::string name = json_string_field(payload, "name");
+				const int count = json_int_field(payload, "count");
+				char msg[192];
+				std::snprintf(msg, sizeof(msg),
+					"[Voice] '%s' has been voice-blocked by %d players (possible toxic player).",
+					name.c_str(), count);
+				map_foreachpc(voice_alert_gm_sub, msg);
+			}
+		}
+	}
+
+	// Last-sent position cache — keyed by char_id.
+	// Periodic tick sends only when position changed OR keepalive interval elapsed.
+	// Keepalive must be shorter than server's POSITION_STALE_MS (2000 ms) so
+	// standing players don't lose proximity voice after 2 seconds.
+	static constexpr t_tick KEEPALIVE_MS = 1500;
+
+	// Auth advisory renewal — must be shorter than the voice server's
+	// ADVISORY_GRACE_MS (currently 30 s) so a reconnecting DLL always finds a
+	// fresh advisory within its grace window. 5 s leaves a wide safety margin.
+	static constexpr t_tick AUTH_ADVISORY_RENEW_MS = 5000;
+
+	struct LastPos {
+		short  x        = -1;
+		short  y        = -1;
+		t_tick sent_at  = 0;   // gettick() of last UDP send
+		t_tick auth_at  = 0;   // gettick() of last auth_advisory send
+		char   map[MAP_NAME_LENGTH_EXT] = {};
+	};
+	std::unordered_map<int, LastPos> g_last_pos;
+
+	bool should_send(map_session_data* sd, const LastPos& lp) {
+		// Always send if position/map changed
+		if (sd->bl.x != lp.x || sd->bl.y != lp.y) return true;
+		const struct map_data* md = map_getmapdata(sd->bl.m);
+		const char* mapname = (md != nullptr) ? md->name : "";
+		if (strncmp(mapname, lp.map, MAP_NAME_LENGTH_EXT) != 0) return true;
+		// Keepalive: send even if standing still so server position stays fresh
+		return (gettick() - lp.sent_at) >= KEEPALIVE_MS;
+	}
+
+	void update_last_pos(map_session_data* sd, LastPos& lp) {
+		lp.x       = sd->bl.x;
+		lp.y       = sd->bl.y;
+		lp.sent_at = gettick();
+		const struct map_data* md = map_getmapdata(sd->bl.m);
+		const char* mapname = (md != nullptr) ? md->name : "";
+		strncpy(lp.map, mapname, MAP_NAME_LENGTH_EXT - 1);
+		lp.map[MAP_NAME_LENGTH_EXT - 1] = '\0';
+	}
+
+}
+
+static void voice_bridge_send_pos_common(map_session_data* sd);
+static void voice_bridge_send_auth_advisory_internal(map_session_data* sd);
+
+// ── Periodic position ping ────────────────────────────────────────────────────
+static int voice_bridge_ping_player(map_session_data* sd, va_list) {
+	if (!sd || sd->status.char_id <= 0)
+		return 0;
+
+	auto& lp = g_last_pos[sd->status.char_id];
+	if (should_send(sd, lp)) {
+		voice_bridge_send_pos_common(sd);
+		update_last_pos(sd, lp);
+	}
+
+	// Auth advisory renewal — keeps voice server's advisory entry fresh
+	if (lp.auth_at == 0 || (gettick() - lp.auth_at) >= AUTH_ADVISORY_RENEW_MS) {
+		voice_bridge_send_auth_advisory_internal(sd);
+		lp.auth_at = gettick();
+	}
+	return 0;
+}
+
+static TIMER_FUNC(voice_bridge_tick) {
+	voice_bridge_poll_replies();
+	map_foreachpc(voice_bridge_ping_player);
+	return 0;
+}
+
+static TIMER_FUNC(voice_bridge_reply_tick) {
+	voice_bridge_poll_replies();
+	return 0;
+}
+
+void voice_bridge_init() {
+	if (g_ready)
+		return;
+
+	if (!wsa_init())
+		return;
+
+	g_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (g_sock == INVALID_SOCK) {
+		wsa_cleanup();
+		return;
+	}
+
+	// Boost UDP send/recv buffers. Default Linux rmem/wmem (~208 KB) is
+	// too small for a busy server: with 200+ players the per-second
+	// position pings + 5 s advisory renewals burst beyond the default,
+	// causing kernel drops that look downstream like "auth advisory
+	// never arrived" timeouts. 4 MB absorbs typical bursts cleanly.
+	{
+		int bufsz = 4 * 1024 * 1024;
+		setsockopt(g_sock, SOL_SOCKET, SO_SNDBUF,
+			reinterpret_cast<const char*>(&bufsz), sizeof(bufsz));
+		setsockopt(g_sock, SOL_SOCKET, SO_RCVBUF,
+			reinterpret_cast<const char*>(&bufsz), sizeof(bufsz));
+	}
+
+#ifdef _WIN32
+	u_long nonblock = 1;
+	ioctlsocket(g_sock, FIONBIO, &nonblock);
+#else
+	fcntl(g_sock, F_SETFL, fcntl(g_sock, F_GETFL, 0) | O_NONBLOCK);
+#endif
+
+	std::string voice_host = "127.0.0.1";
+	int voice_port = 7001;
+	load_bridge_conf(voice_host, voice_port);
+
+	std::memset(&g_voice_addr, 0, sizeof(g_voice_addr));
+	g_voice_addr.sin_family = AF_INET;
+	g_voice_addr.sin_port = htons(static_cast<uint16_t>(voice_port));
+	if (inet_pton(AF_INET, voice_host.c_str(), &g_voice_addr.sin_addr) != 1) {
+		close_socket(g_sock);
+		g_sock = INVALID_SOCK;
+		wsa_cleanup();
+		return;
+	}
+
+	g_ready = true;
+	voice_bridge_send_guild_war_state(is_agit_start());
+
+	// Send position for all online players every 1 second
+	add_timer_interval(gettick() + 1000, voice_bridge_tick, 0, 0, 1000);
+	add_timer_interval(gettick() + 100, voice_bridge_reply_tick, 0, 0, 100);
+}
+
+void voice_bridge_final() {
+	map_foreachpc(voice_bridge_clear_speaking_hat);
+	if (g_sock != INVALID_SOCK) {
+		close_socket(g_sock);
+		g_sock = INVALID_SOCK;
+	}
+	if (g_ready) {
+		wsa_cleanup();
+		g_ready = false;
+	}
+}
+
+static void voice_bridge_send_pos_common(map_session_data* sd) {
+	if (!g_ready || !sd)
+		return;
+
+	const struct map_data* md = map_getmapdata(sd->bl.m);
+	const char* mapname = (md != nullptr) ? md->name : "";
+	const int war_map = map_flag_gvg(sd->bl.m) ? 1 : 0;
+
+	char buf[256];
+	std::snprintf(
+		buf, sizeof(buf),
+		"{\"type\":\"map_pos\",\"char_id\":%d,\"map\":\"%s\",\"x\":%d,\"y\":%d,\"level\":%d,\"job\":%d,\"group_id\":%d,\"war_map\":%s}",
+		sd->status.char_id,
+		mapname,
+		sd->bl.x,
+		sd->bl.y,
+		(int)sd->status.base_level,
+		(int)sd->status.class_,
+		(int)sd->group_id,
+		war_map ? "true" : "false"
+	);
+
+	voice_bridge_send_text(buf);
+}
+
+// Send `auth_advisory` so the voice server can verify WS auth from the DLL
+// matches the authoritative (char_id, account_id) pair from the map server.
+// login_id1 is also forwarded as an opaque RO session token for future stricter
+// verification — currently informational only.
+static void voice_bridge_send_auth_advisory_internal(map_session_data* sd) {
+	if (!g_ready || !sd) return;
+
+	char buf[160];
+	std::snprintf(
+		buf, sizeof(buf),
+		"{\"type\":\"auth_advisory\",\"char_id\":%d,\"account_id\":%d,\"login_id1\":%u}",
+		sd->status.char_id,
+		sd->status.account_id,
+		(unsigned int)sd->login_id1
+	);
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_join(map_session_data* sd) {
+	if (!sd) return;
+	// Advisory BEFORE position so the voice server accepts subsequent WS auth
+	voice_bridge_send_auth_advisory_internal(sd);
+	voice_bridge_send_pos_common(sd);
+	auto& lp = g_last_pos[sd->status.char_id];
+	update_last_pos(sd, lp);
+	lp.auth_at = gettick();
+}
+
+void voice_bridge_send_map_pos(map_session_data* sd) {
+	if (!sd) return;
+	voice_bridge_send_pos_common(sd);
+	update_last_pos(sd, g_last_pos[sd->status.char_id]);
+}
+
+void voice_bridge_send_room_join(map_session_data* sd, int room_id) {
+	if (!g_ready || !sd || room_id <= 0)
+		return;
+
+	char buf[128];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"chat_join\",\"char_id\":%d,\"room_id\":%d}",
+		sd->status.char_id, room_id);
+
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_room_leave(map_session_data* sd) {
+	if (!g_ready || !sd)
+		return;
+
+	char buf[64];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"chat_leave\",\"char_id\":%d}",
+		sd->status.char_id);
+
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_reload_config() {
+	voice_bridge_send_text("{\"type\":\"reload_voice_conf\"}");
+}
+
+void voice_bridge_send_reload_db() {
+	voice_bridge_send_text("{\"type\":\"reload_voice_db\"}");
+}
+
+void voice_bridge_send_guild_war_state(bool active) {
+	char buf[64];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"guild_war_state\",\"active\":%s}",
+		active ? "true" : "false");
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_admin_mute(int char_id, int duration_sec) {
+	if (!g_ready || char_id <= 0) return;
+	char buf[96];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"admin_mute\",\"char_id\":%d,\"duration\":%d}",
+		char_id, duration_sec);
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_admin_unmute(int char_id) {
+	if (!g_ready || char_id <= 0) return;
+	char buf[64];
+	std::snprintf(buf, sizeof(buf), "{\"type\":\"admin_unmute\",\"char_id\":%d}", char_id);
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_admin_ban(int account_id, int duration_sec) {
+	if (!g_ready || account_id <= 0) return;
+	char buf[96];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"admin_ban\",\"account_id\":%d,\"duration\":%d}",
+		account_id, duration_sec);
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_admin_unban(int account_id) {
+	if (!g_ready || account_id <= 0) return;
+	char buf[64];
+	std::snprintf(buf, sizeof(buf), "{\"type\":\"admin_unban\",\"account_id\":%d}", account_id);
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_admin_ban_by_name(const char* char_name, int duration_sec) {
+	if (!g_ready || !char_name || !char_name[0]) return;
+	char buf[160];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"admin_ban_by_name\",\"char_name\":\"%s\",\"duration\":%d}",
+		char_name, duration_sec);
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_admin_unban_by_name(const char* char_name) {
+	if (!g_ready || !char_name || !char_name[0]) return;
+	char buf[128];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"admin_unban_by_name\",\"char_name\":\"%s\"}", char_name);
+	voice_bridge_send_text(buf);
+}
+
+bool voice_bridge_send_grant_license(int account_id, int duration_sec) {
+	if (!g_ready || account_id <= 0) return false;
+	char buf[96];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"grant_license\",\"account_id\":%d,\"duration\":%d}",
+		account_id, duration_sec);
+	voice_bridge_send_text(buf);
+	return true;
+}
+
+bool voice_bridge_send_revoke_license(int account_id) {
+	if (!g_ready || account_id <= 0) return false;
+	char buf[64];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"revoke_license\",\"account_id\":%d}", account_id);
+	voice_bridge_send_text(buf);
+	return true;
+}
+
+void voice_bridge_send_block_by_name(int blocker_account_id, const char* blocked_name) {
+	if (!g_ready || blocker_account_id <= 0 || !blocked_name || !blocked_name[0]) return;
+	char buf[160];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"block_by_name\",\"blocker_account_id\":%d,\"name\":\"%s\"}",
+		blocker_account_id, blocked_name);
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_unblock_by_name(int blocker_account_id, const char* blocked_name) {
+	if (!g_ready || blocker_account_id <= 0 || !blocked_name || !blocked_name[0]) return;
+	char buf[160];
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"unblock_by_name\",\"blocker_account_id\":%d,\"name\":\"%s\"}",
+		blocker_account_id, blocked_name);
+	voice_bridge_send_text(buf);
+}
+
+void voice_bridge_send_leave(map_session_data* sd) {
+	if (!g_ready || !sd)
+		return;
+
+	g_last_pos.erase(sd->status.char_id);  // clean up cache on logout
+
+	char buf[128];
+
+	// Tell voice server this char_id is no longer logged in — future WS auth
+	// with this char_id will be rejected until a new auth_advisory arrives.
+	std::snprintf(buf, sizeof(buf),
+		"{\"type\":\"auth_revoke\",\"char_id\":%d}",
+		sd->status.char_id);
+	voice_bridge_send_text(buf);
+
+	std::snprintf(
+		buf, sizeof(buf),
+		"{\"type\":\"map_leave\",\"char_id\":%d}",
+		sd->status.char_id
+	);
+
+	voice_bridge_send_text(buf);
+}

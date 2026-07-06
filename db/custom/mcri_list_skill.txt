@@ -1,0 +1,38 @@
+///////////////////////////////////////////////////
+//                                               //
+// Skill name : สกิลประเภทเล็งเป้า                    			 //
+//                                               //
+//                                               //
+//////////////////////////////////////////////////////
+//+  - Id: 2202                                    ///
+//+    AegisName: Sunglasses_                      ///
+//+    Name: Sunglasses                            ///
+//+    Type: Armor                                 ///
+//+    Buy: 5000                                   ///
+//+    Weight: 100                                 ///
+//+    Slots: 1                                    ///
+//+    Locations:                                  ///
+//+      Head_Mid: true                            ///
+//+    ArmorLevel: 1                               ///
+//+    View: 12                                    ///
+//+    Script: |                                   ///
+//+      bonus2 bResEff,Eff_Blind,500;             ///
+//+      criticalmagic 1;                          ///
+//+    UnEquipScript: |                            ///
+//+      criticalmagic 0;                          ///
+//////////////////////////////////////////////////////
+MG_SOULSTRIKE
+MG_COLDBOLT
+MG_FROSTDIVER
+MG_STONECURSE
+MG_FIREBALL
+MG_FIREWALL
+MG_FIREBOLT
+MG_LIGHTNINGBOLT
+MG_THUNDERSTORM
+PR_MAGNUS
+AL_HOLYLIGHT
+WZ_STORMGUST
+WZ_VERMILION
+WZ_METEOR
+WZ_JUPITEL

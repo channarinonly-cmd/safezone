@@ -1,0 +1,558 @@
+-	shop	Rubbish_shop	-1,909:-1
+-	shop	Rubbish_shop2	-1,909:-1
+
+morocc,155,57,6	script	Rubbish System	713,{
+
+		mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+		mes "^FF0000สวัสดีผู้เล่นทุกๆท่าน^000000";
+		mes "กิจกรรมของเราจะสุ่ม item ใหม่ ที่สามารถใช้แลกแต้ม";
+		mes "วันละ 4 ครั้ง ในเวลา";
+		mes "^0000FF 00.00 น. ^000000";
+		mes "^0000FF 06.00 น. ^000000";
+		mes "^0000FF 12.00 น. ^000000";
+		mes "^0000FF 18.00 น. ^000000";
+		next;
+
+Start:
+	// สร้างเมนูแบบ Dynamic (โชว์/ซ่อน เมนูจัดอันดับตามสถานะกิจกรรม)
+	.@menu$ = "- ขยะแลก ^0099FFRubbish Point^000000:- เข้าชมร้านค้า ^0000FF["+callfunc("F_InsertComma",#Rubbish_point)+"]^000000:- ตัวอย่างขยะที่แลกเปลี่ยนได้ (รอบปัจจุบัน)";
+	
+	if ($Rubbish_Rank_Enable) {
+		.@menu$ += ":- ตรวจสอบอันดับ ^FF9900ปัจจุบัน^000000:- ตรวจสอบอันดับ ^0099FFครั้งที่แล้ว^000000:- ตรวจสอบอันดับ ^FF3300ที่ส่งมาทั้งหมด^000000:- ^FF3300รับรางวัลผู้ติดอันดับ^000000";
+	}
+
+	switch(select(.@menu$)) {
+		case 1:
+			callshop "Rubbish_shop2",2;
+			npcshopattach "Rubbish_shop2";
+			end;
+		case 2:
+			message strcharinfo(0),"[ระบบ] : ท่านมีแต้มสะสมทั้งหมด "+callfunc("F_InsertComma",#Rubbish_point)+" แต้ม";
+			callshop "Rubbish_shop",1;
+			npcshopattach "Rubbish_shop";
+			end;
+		case 3:
+			callshop "Rubbish_shop2",1;
+			npcshopattach "Rubbish_shop2";
+			end;
+		case 4: goto menu_04;
+		case 5: goto menu_05;
+		case 6: goto menu_06;
+		case 7: goto menu_reward;
+	}
+	end;
+
+	menu_04:
+		menu	"- ตรวจสอบอันดับปัจจุบัน",menu_check_01,
+				"- ตรวจสอบรางวัลอันดับ",menu_check_02;
+		end;
+		
+		menu_check_02:
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			// ดึงข้อมูลรางวัลมาแสดงแบบ Dynamic ตามจำนวนอันดับสูงสุด
+			for (.@r = 1; .@r <= .Max_Rank; .@r++) {
+				mes "^0099FF[ รางวัลอันดับที่ " + .@r + " ]^000000";
+				.@size = getarraysize(getd(".rank_item_" + .@r));
+				if (.@size == 0) {
+					mes "^777777- ไม่มีของรางวัล -^000000";
+				} else {
+					for (.@i = 0; .@i < .@size; .@i++) {
+						mes "- "+getitemname(getd(".rank_item_"+.@r+"["+.@i+"]"))+" x"+getd(".rank_amt_"+.@r+"["+.@i+"]")+" ea";
+					}
+				}
+				if (.@r < .Max_Rank) next;
+			}
+			close;
+		
+		menu_check_01:
+		query_sql("SELECT player_name,score FROM `Rubbish_player_ranking` ORDER BY score DESC LIMIT " + .Max_Rank, .@name2$, .@score2);
+		if (!getarraysize(.@score2)) {
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes "^FF0000ยังไม่มีข้อมูลของสัปดาห์นี้^000000";
+			end;
+		}
+		for ( .@i=0; .@i<getarraysize(.@name2$); .@i++ ) {
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes ""+(.@i+1)+". ^0000FF"+.@name2$[.@i]+"^000000 : ^009900"+callfunc("F_InsertComma",.@score2[.@i])+"^000000 pt";
+		}
+		end;
+	
+	menu_05:
+		query_sql("SELECT player_name,score FROM `Rubbish_player_winners` ORDER BY id DESC LIMIT " + .Max_Rank, .@name1$, .@score1);
+		if (!getarraysize(.@score1)) {
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes "^FF0000ยังไม่มีข้อมูลของสัปดาห์ที่แล้ว^000000";
+			end;
+		}
+		for ( .@i=0; .@i<getarraysize(.@name1$); .@i++ ) {
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes ""+(.@i+1)+". ^0000FF"+.@name1$[.@i]+"^000000 : ^009900"+callfunc("F_InsertComma",.@score1[.@i])+"^000000 pt";
+		}
+		end;
+	
+	menu_06:
+		query_sql("SELECT player_name,played FROM `Rubbish_player_logs` ORDER BY id DESC LIMIT 10",.@name3$,.@score3);
+		if (!getarraysize(.@score3)) {
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes "^FF0000ยังไม่มีข้อมูลของทั้งหมด^000000";
+			end;
+		}
+		for ( .@i=0; .@i<getarraysize(.@name3$); .@i++ ) {
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes ""+(.@i+1)+". ^0000FF"+.@name3$[.@i]+"^000000 : ^009900"+callfunc("F_InsertComma",.@score3[.@i])+"^000000 pt";
+		}
+		end;
+	
+	menu_reward:
+		query_sql("SELECT id FROM `Rubbish_player_winners` WHERE char_id = "+getcharid(0)+" && status = 0",.@id);
+		mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+		mes "รางวัลที่ยังไม่ได้รับ ^FF0000"+getarraysize(.@id)+"^000000 รางวัล";
+		next;
+		if(!.@id){
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes "ยังไม่มีรางวัลที่ท่านสามารถรับได้";
+			end;
+		}
+		if(select("รับรางวัล:ยกเลิก") == 1) {
+			goto OnReward;
+			end;
+		}
+		
+		mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+		mes "ไม่เป็นไร ไว้มารับทีหลังก็ได้นะ";
+		end;
+		
+		OnReward:
+		query_sql("UPDATE `Rubbish_player_winners` SET status = 1 WHERE char_id = "+getcharid(0)+"");
+		dispbottom "ระบบ : คุณได้รับรางวัล ranking อันดับ "+.@id+"",0x0000FF;
+		
+		// แจกรางวัลแบบ Dynamic ตามอันดับ
+		if (.@id > 0 && .@id <= .Max_Rank) {
+			.@size = getarraysize(getd(".rank_item_" + .@id));
+			for (.@i = 0; .@i < .@size; .@i++) {
+				getitem getd(".rank_item_"+.@id+"["+.@i+"]"), getd(".rank_amt_"+.@id+"["+.@i+"]");
+			}
+		}
+		end;
+
+// ========================================================
+// ระบบขายขยะแบบ Real-Time (ไม่มีบั๊ก npc_checknear แล้ว 100%)
+// ========================================================
+OnSellItem:
+	freeloop(1);
+	.@Etc_Totalpoint = 0;
+	deletearray .@invalid_id[0];
+
+	dispbottom "[ Rubbish System ] : สรุปรายการขายขยะของคุณ:";
+	dispbottom "----------------------------------";
+
+	for( .@i=0; .@i<getarraysize(@sold_nameid); .@i++ ) {
+		.@item_id = @sold_nameid[.@i];
+		.@amount = @sold_quantity[.@i];
+		.@is_valid = 0;
+
+		for( .@a=0; .@a<getarraysize(.item_decompose); .@a+=2 ){
+			if (.@item_id == .item_decompose[.@a]){
+				.@is_valid = 1;
+				
+				if(.set_prize == 1){
+					.@point_back = (.@amount * getiteminfo(.@item_id, 1));
+				} else {
+					.@point_back = (.@amount * .item_decompose[.@a+1]);
+				}
+				
+				delitem .@item_id, .@amount; // ลบของเฉพาะอันที่ขายได้
+				.@Etc_Totalpoint += .@point_back;
+				
+				dispbottom "• "+getitemname(.@item_id)+" x"+callfunc("F_InsertComma",.@amount)+" ea   -> ได้รับ "+callfunc("F_InsertComma",.@point_back)+" pt";
+				break;
+			}
+		}
+		
+		if (!.@is_valid) {
+			.@invalid_id[getarraysize(.@invalid_id)] = .@item_id;
+		}
+	}
+
+	if(.@Etc_Totalpoint > 0){
+		#Rubbish_point += .@Etc_Totalpoint; 
+		.@point = .@Etc_Totalpoint;
+				
+		// ประวัติการเล่นเก็บตลอดเวลา
+		query_sql("SELECT COUNT(char_id) FROM `Rubbish_player_logs` WHERE char_id = "+getcharid(0)+"",.@ccid);
+		if (!.@ccid) {
+			query_sql("INSERT INTO `Rubbish_player_logs` (account_id,char_id,player_name,played) VALUES ("+getcharid(3)+","+getcharid(0)+",'"+escape_sql(strcharinfo(0))+"',"+.@point+")");
+		} else {
+			query_sql("UPDATE `Rubbish_player_logs` SET `played` = `played`+"+.@point+" WHERE char_id = "+getcharid(0)+"");
+		}
+		
+		// เก็บแต้มลงตาราง Ranking เฉพาะตอนเปิดกิจกรรมจัดอันดับเท่านั้น
+		if ($Rubbish_Rank_Enable) {
+			query_sql("SELECT COUNT(char_id) FROM `Rubbish_player_ranking` WHERE char_id = "+getcharid(0)+"",.@ccid2);
+			if (!.@ccid2) {
+				query_sql("INSERT INTO `Rubbish_player_ranking` (account_id,char_id,player_name,score) VALUES ("+getcharid(3)+","+getcharid(0)+",'"+strcharinfo(0)+"',"+.@point+")");
+			} else {
+				query_sql("UPDATE `Rubbish_player_ranking` SET `score` = `score`+"+.@point+" WHERE char_id = "+getcharid(0)+"");
+			}
+		}
+		
+		dispbottom "----------------------------------";
+		dispbottom "ได้รับแต้มทั้งหมด : "+callfunc("F_InsertComma",.@Etc_Totalpoint)+" แต้ม";
+		dispbottom "แต้มสะสมปัจจุบัน : "+callfunc("F_InsertComma",#Rubbish_point)+" แต้ม";
+	} else {
+		dispbottom "----------------------------------";
+		dispbottom "ไอเทมที่คุณเสนอมา ข้าไม่ได้รับซื้อในรอบเวลานี้นะ!";
+	}
+
+	if (getarraysize(.@invalid_id) > 0) {
+		dispbottom "* ไอเทมที่ไม่รับซื้อ ภาพที่หายไปจะกลับมาอยู่ในกระเป๋าตามเดิม *";
+	}
+
+	// ใช้ @refresh เพื่อคืนภาพไอเทมที่ตาค้าง และไม่มีการเปิดหน้าต่างรอ เพื่อข้ามการเช็คระยะ!
+	atcommand "@refresh";
+	end;
+
+// ========================================================
+// ระบบซื้อของแบบ Real-Time (ไม่มีหน้าต่างเมนูกวนใจ และไม่บั๊ก)
+// ========================================================
+OnBuyItem:
+	freeloop(1);
+	.@valid_buy = 0;
+	.@total_cost = 0;
+
+	for ( .@i=0; .@i<getarraysize(.sale); .@i+=2 ){
+		if(@bought_nameid == .sale[.@i]){
+			.@total_cost = .sale[.@i+1] * @bought_quantity;
+			.@valid_buy = 1;
+			break;
+		}
+	}
+
+	if (!.@valid_buy) {
+		dispbottom "[ Rubbish System ] : ไอเทมนี้ไม่สามารถแลกได้";
+		end;
+	}
+
+	if (#Rubbish_point < .@total_cost) {
+		dispbottom "[ Rubbish System ] : แต้มของคุณไม่เพียงพอ ต้องการอีก "+callfunc("F_InsertComma", (.@total_cost - #Rubbish_point))+" แต้ม";
+		end;
+	}
+
+	// หักแต้มและให้ไอเทมทันที โดยไม่ต้องขึ้นเมนูยืนยัน
+	#Rubbish_point -= .@total_cost;
+	getitem @bought_nameid, @bought_quantity;
+	setd "$Rubbish_point"+@bought_nameid, getd("$Rubbish_point"+@bought_nameid) + @bought_quantity;
+	
+	dispbottom "[ Rubbish System ] : ท่านได้แลกเปลี่ยน "+getitemname(@bought_nameid)+" จำนวน "+callfunc("F_InsertComma", @bought_quantity)+" ชิ้น สำเร็จ!";
+	dispbottom "[ Rubbish System ] : แต้มสะสมปัจจุบันของคุณเหลือ "+callfunc("F_InsertComma", #Rubbish_point)+" แต้ม";
+	end;
+	
+	// =========================================================================
+	// เมนูแอดมินสำหรับพิมพ์ @rubbish
+	// =========================================================================
+	OnMenu:
+		.@status$ = ($Rubbish_Rank_Enable) ? "^00AA00[เปิดใช้งาน]^000000" : "^FF0000[ปิดใช้งาน]^000000";
+		menu "- ตัดอันดับกิจกรรมเดี๋ยวนี้",menu_cmd_02,
+		     "- สุ่มรายการขยะใหม่เดี๋ยวนี้", menu_cmd_03,
+			 "- สถานะกิจกรรมจัดอันดับ " + .@status$, menu_cmd_04,
+			 "- ตั้งค่าของรางวัลจัดอันดับ (SQL)", menu_cmd_05;
+		end;
+	
+	menu_cmd_02:
+		goto OnRank;
+		end;
+
+	menu_cmd_03:
+		mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+		mes "คุณต้องการสุ่มรายการรับซื้อขยะรอบใหม่";
+		mes "โดยไม่ต้องรอเวลาใช่หรือไม่?";
+		next;
+		if (select("ใช่ สุ่มเลย!:ยกเลิก") == 1) {
+			donpcevent "Rubbish System::OnRollItems";
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes "ทำการสุ่มรายการขยะใหม่เรียบร้อยแล้ว!";
+		}
+		close;
+
+	menu_cmd_04:
+		$Rubbish_Rank_Enable = ($Rubbish_Rank_Enable == 1) ? 0 : 1;
+		mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+		mes "สถานะระบบจัดอันดับถูกเปลี่ยนเป็น: " + (($Rubbish_Rank_Enable) ? "^00AA00[เปิด]^000000" : "^FF0000[ปิด]^000000");
+		if ($Rubbish_Rank_Enable == 0) {
+			mes "^777777* ผู้เล่นจะไม่เห็นเมนูดูอันดับ และคะแนนการขายจะไม่ถูกนับเข้ากระดานอันดับ (แต่ยังได้แต้มปกติ)^000000";
+		}
+		close;
+
+	menu_cmd_05:
+		mes "^FF3300[ ตั้งค่าของรางวัลจัดอันดับ ]^000000";
+		mes "เลือกอันดับที่คุณต้องการตั้งค่าของรางวัล";
+		mes "(รองรับตั้งแต่ 1 ถึง " + .Max_Rank + ")";
+		next;
+		input .@sel_rank;
+		if (.@sel_rank < 1 || .@sel_rank > .Max_Rank) {
+			mes "^FF0000ระบุอันดับไม่ถูกต้อง!^000000";
+			close;
+		}
+	menu_cmd_05_loop:
+		mes "^FF3300[ ข้อมูลรางวัลอันดับที่ "+.@sel_rank+" ]^000000";
+		.@size = getarraysize(getd(".rank_item_" + .@sel_rank));
+		if (.@size == 0) {
+			mes "^777777- ยังไม่มีของรางวัล -^000000";
+		} else {
+			for (.@i = 0; .@i < .@size; .@i++) {
+				mes "- "+getitemname(getd(".rank_item_"+.@sel_rank+"["+.@i+"]"))+" x"+getd(".rank_amt_"+.@sel_rank+"["+.@i+"]")+" ea";
+			}
+		}
+		next;
+		switch(select("- เพิ่มของรางวัล:- ล้างของรางวัลทั้งหมด:- เลือกอันดับอื่น:- ปิดหน้าต่าง")) {
+			case 1:
+				mes "ระบุ ^0000FFรหัสไอเทม (Item ID)^000000 ที่ต้องการเพิ่ม:";
+				next;
+				input .@item_id;
+				if (getitemname(.@item_id) == "null") {
+					mes "^FF0000รหัสไอเทมไม่ถูกต้อง หรือไม่มีอยู่จริง!^000000";
+					next;
+					goto menu_cmd_05_loop;
+				}
+				mes "ระบุ ^009900จำนวน^000000 ที่ต้องการแจกให้ผู้เล่น:";
+				next;
+				input .@item_amt;
+				if (.@item_amt <= 0) {
+					mes "^FF0000จำนวนต้องมากกว่า 0 ชิ้น!^000000";
+					next;
+					goto menu_cmd_05_loop;
+				}
+				// บันทึกลงตาราง SQL
+				query_sql("INSERT INTO `Rubbish_reward_list` (`rank`,`item_id`,`amount`) VALUES ("+.@sel_rank+","+.@item_id+","+.@item_amt+")");
+				// อัปเดต Array ในหน่วยความจำทันที (ไม่ต้อง Reloadscript)
+				setd ".rank_item_"+.@sel_rank+"["+.@size+"]", .@item_id;
+				setd ".rank_amt_"+.@sel_rank+"["+.@size+"]", .@item_amt;
+				
+				mes "^00AA00เพิ่มของรางวัลเรียบร้อยแล้ว!^000000";
+				next;
+				goto menu_cmd_05_loop;
+				
+			case 2:
+				mes "คุณแน่ใจหรือไม่ว่าต้องการ ^FF0000ล้างของรางวัลทั้งหมด^000000 ของอันดับที่ " + .@sel_rank + "?";
+				next;
+				if (select("ใช่ ลบทิ้งเลย!:ยกเลิก") == 1) {
+					query_sql("DELETE FROM `Rubbish_reward_list` WHERE `rank` = " + .@sel_rank);
+					deletearray getd(".rank_item_" + .@sel_rank + "[0]");
+					deletearray getd(".rank_amt_" + .@sel_rank + "[0]");
+					mes "ล้างข้อมูลของรางวัลเรียบร้อยแล้ว!";
+				}
+				next;
+				goto menu_cmd_05_loop;
+				
+			case 3:
+				goto menu_cmd_05;
+				
+			case 4:
+				close;
+		}
+		end;
+	
+	Onclock2359:			
+		// ให้ตัวหลักทำคนเดียว ป้องกันบั๊กโคลน
+		if (strnpcinfo(0) != "Rubbish System") end;
+		// ถ้าระบบจัดอันดับปิดอยู่ ให้ข้ามการตัดยอดไปเลย
+		if (!$Rubbish_Rank_Enable) end;
+		
+		if(gettime(DT_DAYOFWEEK) == 5){ // วันศุกร์
+			OnRank:
+				query_sql("TRUNCATE TABLE `Rubbish_player_winners`");
+				query_sql("SELECT account_id,char_id,player_name,score FROM `Rubbish_player_ranking` ORDER BY score DESC LIMIT " + .Max_Rank,.@account_id,.@char_id,.@player_name$,.@score);
+				for ( .@i=0; .@i<getarraysize(.@account_id); .@i++ ) {
+					announce strnpcinfo(0)+" : ผู้เล่น " +.@player_name$[.@i]+ " ได้อันดับ "+(.@i+1)+" จากการเล่น "+strnpcinfo(0)+" "+callfunc("F_InsertComma",.@score[.@i])+" คะแนน สัปดาห์นี้", bc_all, "0xFFFF00";
+					query_sql("INSERT INTO `Rubbish_player_winners` (account_id,char_id,player_name,score,status) VALUES ("+.@account_id[.@i]+","+.@char_id[.@i]+",'"+.@player_name$[.@i]+"',"+.@score[.@i]+",0)");
+				}
+				query_sql("TRUNCATE TABLE `Rubbish_player_ranking`");
+				announce strnpcinfo(0)+" : ทำการรีเซ็ตอันดับ "+strnpcinfo(0)+" เรียบร้อยแล้ว", bc_all, "0xFFFF00";
+				end;
+		}
+		end;
+
+	// =========================================================================
+	// ระบบตั้งเวลาสุ่มไอเทมรอบใหม่ (4 รอบต่อวัน)
+	// =========================================================================
+	OnClock0000:
+	OnClock0600:
+	OnClock1200:
+	OnClock1800:
+		if (strnpcinfo(0) != "Rubbish System") end;
+		goto OnRollItems;
+		end;
+
+	// ฟังก์ชันสุ่มและจัดหน้าร้านรับซื้อขยะใหม่
+	OnRollItems:
+		if (strnpcinfo(0) != "Rubbish System") end;
+
+		// 1. ดึงไอเทมเก่า (ที่เคยรับซื้อ status=1) ออกจากร้านก่อน
+		query_sql("SELECT `etc_id` FROM `Rubbish_data` WHERE `status` = 1", .@old_id);
+		if (getarraysize(.@old_id) > 0) {
+			for (.@i = 0; .@i < getarraysize(.@old_id); .@i++) {
+				npcshopdelitem "Rubbish_shop2", .@old_id[.@i];
+			}
+		}
+		deletearray .item_decompose[0];
+		deletearray .@old_id[0];
+
+		// 2. รีเซ็ตสถานะทั้งหมดใน SQL กลับเป็น 0 (ไม่ได้รับซื้อ)
+		query_sql("UPDATE `Rubbish_data` SET `status` = 0");
+
+		// 3. สุ่มไอเทมจาก SQL มา 10 ชิ้น (ปรับเลข 10 ได้ตามต้องการ)
+		set .@limit_items, 10;
+		query_sql("SELECT `etc_id`, `etc_point` FROM `Rubbish_data` ORDER BY RAND() LIMIT " + .@limit_items, .@etc_id, .@etc_point);
+
+		// 4. เอาที่สุ่มได้มายัดเข้าร้านใหม่ และจดลงตัวแปร Array
+		if (getarraysize(.@etc_id) > 0) {
+			for (.@i = 0; .@i < getarraysize(.@etc_id); .@i++) {
+				.item_decompose[.@i * 2] = .@etc_id[.@i];
+				.item_decompose[.@i * 2 + 1] = .@etc_point[.@i];
+				
+				// อัปเดตสถานะกลับเป็น 1
+				query_sql("UPDATE `Rubbish_data` SET `status` = 1 WHERE `etc_id` = " + .@etc_id[.@i]);
+				
+				// แอดเข้าร้านค้าเงา
+				if (.set_prize == 1) {
+					npcshopadditem "Rubbish_shop2", .@etc_id[.@i], getiteminfo(.@etc_id[.@i], 1);
+				} else {
+					npcshopadditem "Rubbish_shop2", .@etc_id[.@i], .@etc_point[.@i];
+				}
+			}
+			announce "[ ระบบ Rubbish ] : ตลาดรับซื้อขยะอัปเดตใบสั่งซื้อใหม่แล้ว! ตรวจสอบรายการได้ที่ NPC เมือง Morocc", bc_all, 0xFFFFFF;
+		}
+		end;
+
+OnInit:
+	// =========================================================================
+	// ?? ส่วนตั้งค่าระบบ (Configuration Zone)
+	// =========================================================================
+	
+	// กำหนดจำนวน "อันดับสูงสุด" ที่มีของรางวัล
+	.Max_Rank = 10; 
+
+	// ---------------------------------------------------------
+	// [1] ระบบราคา
+	// ---------------------------------------------------------
+	// .set_prize = 1 : รับซื้ออิงจากราคาขายของไอเทมชิ้นนั้นใน item_db
+	// .set_prize = 2 : รับซื้อตามราคาที่คุณกำหนดเองในคอลัมน์ etc_point ใน SQL
+	.set_prize = 2;
+
+	// ---------------------------------------------------------
+	// [2] ตั้งค่าร้านค้า (ผู้เล่นใช้แต้มแลกไอเทมถาวร ไม่โดนรีเซ็ต)
+	// ---------------------------------------------------------
+	deletearray .sale;
+	setarray .sale[0],
+//		3301, 3000,
+		3210, 500,
+		3211, 1000,
+//		3202, 1000,
+		3209, 1000,
+		3213, 300,
+//		3203, 200,
+//		756, 300,
+//		757, 300,
+//		3502, 10,
+//		3503, 10,
+//		30035, 100,
+		85440001, 150;
+
+	// =========================================================================
+
+	waitingroom "Recycle Item",0;
+	// อนุญาตเฉพาะ GM เลเวล 60 ขึ้นไปใช้งานคำสั่ง @rubbish
+	bindatcmd "rubbish",""+strnpcinfo(3)+"::OnMenu",60,0;
+
+	if (strnpcinfo(0) == "Rubbish System") {
+		// เตรียม Table พื้นฐาน
+		query_sql (
+			"CREATE TABLE IF NOT EXISTS `Rubbish_player_logs` ("+
+			"`id` int(7) NOT NULL AUTO_INCREMENT,"+
+			"`account_id` int(11) NOT NULL,"+
+			"`char_id` int(11) NOT NULL,"+
+			"`player_name` varchar(255) NOT NULL,"+
+			"`played` int(7) NOT NULL,"+
+			"PRIMARY KEY (`id`)"+
+			") ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;"
+		);
+		query_sql (
+			"CREATE TABLE IF NOT EXISTS `Rubbish_player_ranking` ("+
+			"`id` int(7) NOT NULL AUTO_INCREMENT,"+
+			"`account_id` int(11) NOT NULL,"+
+			"`char_id` int(11) NOT NULL,"+
+			"`player_name` varchar(255) NOT NULL,"+
+			"`score` int(7) NOT NULL,"+
+			"PRIMARY KEY (`id`)"+
+			") ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;"
+		);
+		query_sql (
+			"CREATE TABLE IF NOT EXISTS `Rubbish_player_winners` ("+
+			"`id` int(7) NOT NULL AUTO_INCREMENT,"+
+			"`account_id` int(11) NOT NULL,"+
+			"`char_id` int(11) NOT NULL,"+
+			"`player_name` varchar(255) NOT NULL,"+
+			"`score` int(7) NOT NULL,"+
+			"`status` int(7) NOT NULL,"+
+			"PRIMARY KEY (`id`)"+
+			") ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;"
+		);
+		// เตรียม Table เก็บของรางวัล
+		query_sql (
+			"CREATE TABLE IF NOT EXISTS `Rubbish_reward_list` ("+
+			"`rank` int(11) NOT NULL,"+
+			"`item_id` int(11) NOT NULL,"+
+			"`amount` int(11) NOT NULL,"+
+			"KEY `rank` (`rank`)"+
+			") ENGINE=MyISAM DEFAULT CHARSET=utf8;"
+		);
+
+		// ===============================================
+		// ระบบจัดการของรางวัลโหลดจาก SQL อัตโนมัติ
+		// ===============================================
+		query_sql("SELECT COUNT(*) FROM `Rubbish_reward_list`", .@count_reward);
+		// ถ้ายกสคริปต์ลงครั้งแรกตารางจะว่างเปล่า ให้ยัดของรางวัล Default ลงไปกันบั๊ก
+		if (.@count_reward == 0) {
+			query_sql("INSERT INTO `Rubbish_reward_list` (`rank`,`item_id`,`amount`) VALUES " +
+			"(1,6635,5), (1,7620,10), (1,7619,10), " +
+			"(2,6635,3), (2,7620,5), (2,7619,5), " +
+			"(3,6635,1), (3,7620,3), (3,7619,3), " +
+			"(4,985,5), (4,984,5), (4,7620,1), (4,7619,1), " +
+			"(5,985,5), (5,984,5), (5,7620,1), (5,7619,1), " +
+			"(6,985,5), (6,984,5), (6,7620,1), (6,7619,1), " +
+			"(7,985,5), (7,984,5), (7,7620,1), (7,7619,1), " +
+			"(8,985,5), (8,984,5), (8,7620,1), (8,7619,1), " +
+			"(9,985,5), (9,984,5), (9,7620,1), (9,7619,1), " +
+			"(10,985,5), (10,984,5), (10,7620,1), (10,7619,1)");
+		}
+
+		// ดึงข้อมูลจาก SQL มาเก็บลง Array 
+		for (.@r = 1; .@r <= .Max_Rank; .@r++) {
+			deletearray getd(".rank_item_" + .@r + "[0]");
+			deletearray getd(".rank_amt_" + .@r + "[0]");
+			query_sql("SELECT `item_id`, `amount` FROM `Rubbish_reward_list` WHERE `rank` = " + .@r, getd(".rank_item_" + .@r), getd(".rank_amt_" + .@r));
+		}
+		
+		// ล้างและตั้งร้านค้าของรางวัล (.sale)
+		npcshopdelitem "Rubbish_shop", 909;
+		for ( .@i=0; .@i<getarraysize(.sale); .@i=.@i+2 ){
+			npcshopadditem "Rubbish_shop", .sale[.@i], .sale[.@i+1];
+		}
+
+		// ล้างไอเทมหลอก (909) ออกจากร้านรับซื้อขยะ
+		npcshopdelitem "Rubbish_shop2", 909;
+
+		// ? สั่งให้ดึงข้อมูลจาก SQL และสุ่มขยะชุดแรกทันทีตอนเซิร์ฟเปิด หรือตอน @reloadscript ?
+		donpcevent "Rubbish System::OnRollItems";
+	}
+	
+	end;
+}
+
+// ========================================================
+// จุดสำหรับวางร่างก๊อปปี้ (Duplicate) 
+// ========================================================
+prontera,137,94,4	duplicate(Rubbish System)	Rubbish System#prt	713
+//payon,150,150,4		duplicate(Rubbish System)	Rubbish System#pay	713
+geffen,150,150,4	duplicate(Rubbish System)	Rubbish System#gef	713
+alberta,150,150,4	duplicate(Rubbish System)	Rubbish System#alb	713

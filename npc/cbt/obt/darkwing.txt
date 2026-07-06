@@ -1,0 +1,278 @@
+//============================================================
+// Fallen Angel Wing Enchantment (Remastered & Bug Fixed & UI Updated)
+//============================================================
+morocc,124,82,4	script	Valkyrie#faw	403,{
+	disable_items;
+	if (checkweight(1201,1) == 0) {
+		mes "เจ้าพกของมาเยอะเกินไป กรุณาลดของออกก่อน!";
+		close;
+	}
+	if (MaxWeight - Weight < 10000) {
+		mes "น้ำหนักเกิน กรุณาลดน้ำหนักลงก่อน!";
+		close;
+	}
+
+	set .@menu_enchant$, "";
+	set .@is_max_enchant, 0;
+
+	// เช็คว่าใส่ไอเทม ID 2589 (FAW) อยู่หรือไม่
+	if (getequipid(EQI_GARMENT) == 2589) {
+		set .@refine, getequiprefinerycnt(EQI_GARMENT);
+		set .@card1, getequipcardid(EQI_GARMENT, 1); // ออฟช่องที่ 1
+		set .@card2, getequipcardid(EQI_GARMENT, 2); // ออฟช่องที่ 2
+		set .@card3, getequipcardid(EQI_GARMENT, 3); // ออฟช่องที่ 3
+
+		// ตรวจสอบจำนวนช่องที่สามารถออฟได้
+		if (.@card1 == 0) {
+			set .@menu_enchant$, "^777777ออฟ Fallen Angel Wing ครั้งที่ 1^000000";
+		} else if (.@card2 == 0) {
+			if (.@refine >= 7) set .@menu_enchant$, "^777777ออฟ Fallen Angel Wing ครั้งที่ 2^000000";
+			else set .@is_max_enchant, 1;
+		} else if (.@card3 == 0) {
+			if (.@refine >= 9) set .@menu_enchant$, "^777777ออฟ Fallen Angel Wing ครั้งที่ 3^000000";
+			else set .@is_max_enchant, 1;
+		} else {
+			set .@is_max_enchant, 1; // ออฟเต็มหมดแล้ว
+		}
+	}
+
+	mes "[Fallen Angel]";
+	mes "ถ้าเจ้ามี Fallen Angel Wing, ข้าสามารถออฟให้เจ้าได้โดยใช้เงิน 300,000 zeny.";
+	mes "^ff0000*คำเตือน: สวมใส่ Fallen Angel Wing ทุกครั้งถึงจะเห็นเมนูออฟ!^000000";
+	next;
+	
+	// เพิ่มเมนู "ขอทราบรายละเอียดด้วยสิ"
+	if (.@menu_enchant$ != "") {
+		set .@s, select("มันคืออะไร ?:ขอทราบรายละเอียดด้วยสิ:" + .@menu_enchant$ + ":ลบออฟ");
+	} else {
+		set .@s, select("มันคืออะไร ?:ขอทราบรายละเอียดด้วยสิ:ลบออฟ");
+		if (.@s == 3) set .@s, 4; // ปรับค่าให้ตรงกับลบออฟ (Case 4)
+	}
+
+	switch(.@s) {
+		case 1:
+			switch(select("จบการสนทนา:เจ้าทำอะไรได้บ้าง ?")) {
+				case 1:
+					mes "[Fallen Angel]";
+					mes "เจ้าพูดบ้าอะไร ?";
+					close;
+				case 2:
+					mes "[Fallen Angel]";
+					mes "ข้าสามารถออฟ Fallen Angel Wing ให้กับเจ้าได้ ถ้าเจ้าจ่าย 300,000 zeny ให้กับข้า.";    
+					next;
+					mes "ข้าจะออฟให้ 1 ช่อง ถ้าค่าตีบวกอยู่ที่ +6 หรือต่ำกว่า.";    
+					mes "2 ช่อง ถ้าค่าตีบวกอยู่ที่ +7 หรือ +8.";    
+					mes "และ 3 ช่อง ถ้าค่าตีบวกอยู่ที่ +9 หรือสูงกว่า.";    
+					mes "[Fallen Angel]";
+					close;
+			}
+			break;
+
+		case 2: // ================== ขอทราบรายละเอียด ==================
+			mes "[Fallen Angel]";
+			mes "รายละเอียดหินออฟชั่นแต่ละสาย ข้าเตรียมไว้ให้เจ้าดูแล้ว:";
+			mes "^i[4821]^FFFFFF_^000000 ^0000ffFighting^000000 - เน้นเพิ่มพลังโจมตีทางกายภาพ (ATK)";
+			mes "^i[4828]^FFFFFF_^000000 ^0000ffMagic^000000 - เน้นเพิ่มพลังโจมตีเวทมนตร์ (MATK)";
+			mes "^i[4835]^FFFFFF_^000000 ^0000ffArcher^000000 - เน้นการโจมตีระยะไกล (Ranged)";
+			mes "^i[4866]^FFFFFF_^000000 ^0000ffFatal^000000 - เน้นเพิ่มความรุนแรงคริติคอล (Cri Dmg)";
+			mes "^i[4807]^FFFFFF_^000000 ^0000ffAspd^000000 - เน้นความเร็วในการโจมตีและร่ายเวทย์";
+			next;
+			mes "[Fallen Angel]";
+			mes "^i[4868]^FFFFFF_^000000 ^0000ffMax HP^000000 - เพิ่มพลังชีวิตสูงสุด";
+			mes "^i[4801]^FFFFFF_^000000 ^0000ffMax SP^000000 - เพิ่มมานาสูงสุด";
+			mes "นอกจากนี้ยังมีสายสเตตัสต่างๆ ได้แก่ ^0000ffStr, Agi, Dex, Vit, Int, Luk^000000 อีกด้วย";
+			mes " ";
+			mes "^ff0000*พิเศษ: การออฟในช่องสุดท้าย (ครั้งที่ 3) เจ้าจะได้รับหินระดับสูงสุดเสมอ!^000000";
+			close;
+
+		case 3: // ================== เริ่มการออฟชั่น ==================
+			if (Zeny < 300000) {
+				mes "[Fallen Angel]";
+				mes "ข้าทำไม่ได้ถ้าเจ้าไม่มีเงิน!";
+				close;
+			}
+			mes "[Fallen Angel]";
+			mes "เลือกประเภทที่จะออฟ";
+			next;
+
+			set .@i, rand(1,15);
+			set .@is_third_enchant, (getequipcardid(EQI_GARMENT, 2) > 0); // เช็คว่าเป็นการออฟครั้งที่ 3 (ช่องสุดท้าย) หรือไม่
+			
+			// เมนูเลือกไอคอนรูปหิน
+			set .@type, select(
+				"^i[4821]^FFFFFF_^000000 Fighting",
+				"^i[4828]^FFFFFF_^000000 Magic",
+				"^i[4835]^FFFFFF_^000000 Archer",
+				"^i[4866]^FFFFFF_^000000 Fatal",
+				"^i[4807]^FFFFFF_^000000 Aspd",
+				"^i[4868]^FFFFFF_^000000 Max HP",
+				"^i[4801]^FFFFFF_^000000 Max SP",
+				"^i[4853]^FFFFFF_^000000 Str",
+				"^i[4854]^FFFFFF_^000000 Agi",
+				"^i[4857]^FFFFFF_^000000 Dex",
+				"^i[4855]^FFFFFF_^000000 Vit",
+				"^i[4856]^FFFFFF_^000000 Int",
+				"^i[4858]^FFFFFF_^000000 Luk"
+			);
+			
+			// เช็คเงื่อนไขก่อนโหลดหลอด
+			if (getequipid(EQI_GARMENT) != 2589) { mes "[Fallen Angel]"; mes "ไอเท็มไม่ตรง!"; close; }
+			set .@check_refine, getequiprefinerycnt(EQI_GARMENT);
+
+			specialeffect2 EF_REPAIRWEAPON;
+			progressbar "ffff00",2;
+
+			// ป้องกันบัคสลับของและโยนเงินทิ้งหลังโหลดหลอดเสร็จ!
+			if (getequipisequiped(EQI_GARMENT) == 0 || getequipid(EQI_GARMENT) != 2589) {
+				mes "[Fallen Angel]"; mes "เจ้าสลับไอเท็ม ข้าไม่ทำต่อแล้ว!"; close;
+			}
+			if (getequiprefinerycnt(EQI_GARMENT) != .@check_refine) {
+				mes "[Fallen Angel]"; mes "เจ้าแอบสลับผ้าคลุม ข้าจับได้นะ!"; close;
+			}
+			if (Zeny < 300000) {
+				mes "[Fallen Angel]"; mes "เงินเจ้าหายไปไหน? ข้าไม่ทำต่อแล้ว!"; close;
+			}
+			
+			Zeny -= 300000;
+
+			// กำหนดรหัสการออฟ
+			if (.@type == 1) { // Fighting
+				if(.@is_third_enchant) set .@enchant,4821;
+				else if (.@i < 4)   set .@enchant,4820;
+				else if (.@i < 8)   set .@enchant,4808;
+				else set .@enchant,4809;
+			}
+			else if (.@type == 2) { // Magic
+				if(.@is_third_enchant) set .@enchant,4828;
+				else if (.@i < 4)   set .@enchant,4827;
+				else if (.@i < 8)   set .@enchant,4826;
+				else set .@enchant,4812;
+			}
+			else if (.@type == 3) { // Archer
+				if(.@is_third_enchant) set .@enchant,4835;
+				else if (.@i < 4)   set .@enchant,4834;
+				else if (.@i < 8)   set .@enchant,4833;
+				else set .@enchant,4832;
+			}
+			else if (.@type == 4) { // Fatal
+				if(.@is_third_enchant) set .@enchant,4866;
+				else if (.@i < 4)   set .@enchant,4865;
+				else if (.@i < 8)   set .@enchant,4864;
+				else set .@enchant,4863;
+			}
+			else if (.@type == 5) { // Aspd
+				if(.@is_third_enchant) set .@enchant,4807;
+				else if (.@i < 4)   set .@enchant,4872;
+				else if (.@i < 8)   set .@enchant,4869;
+				else set .@enchant,4869;
+			}
+			else if (.@type == 6) { // Max HP
+				if(.@is_third_enchant) set .@enchant,4868;
+				else if (.@i < 4)   set .@enchant,4867;
+				else if (.@i < 8)   set .@enchant,4862;
+				else set .@enchant,4861;
+			}
+			else if (.@type == 7) { // Max SP
+				if(.@is_third_enchant) set .@enchant,4801;
+				else if (.@i < 4)   set .@enchant,4871;
+				else if (.@i < 8)   set .@enchant,4800;
+				else set .@enchant,4870;
+			}
+			else if (.@type == 8) { // STR
+				if(.@is_third_enchant) set .@enchant,4853;
+				else if (.@i < 4)   set .@enchant,4704;
+				else if (.@i < 8)   set .@enchant,4703;
+				else set .@enchant,4702;
+			}
+			else if (.@type == 9) { // AGI
+				if(.@is_third_enchant) set .@enchant,4854;
+				else if (.@i < 4)   set .@enchant,4733;
+				else if (.@i < 8)   set .@enchant,4732;
+				else set .@enchant,4731;
+			}
+			else if (.@type == 10) { // DEX
+				if(.@is_third_enchant) set .@enchant,4857;
+				else if (.@i < 4)   set .@enchant,4724;
+				else if (.@i < 8)   set .@enchant,4723;
+				else set .@enchant,4722;
+			}
+			else if (.@type == 11) { // VIT
+				if(.@is_third_enchant) set .@enchant,4855;
+				else if (.@i < 4)   set .@enchant,4744;
+				else if (.@i < 8)   set .@enchant,4743;
+				else set .@enchant,4742;
+			}
+			else if (.@type == 12) { // INT
+				if(.@is_third_enchant) set .@enchant,4856;
+				else if (.@i < 4)   set .@enchant,4714;
+				else if (.@i < 8)   set .@enchant,4713;
+				else set .@enchant,4712;
+			}
+			else if (.@type == 13) { // LUK
+				if(.@is_third_enchant) set .@enchant,4858;
+				else if (.@i < 4)   set .@enchant,4754;
+				else if (.@i < 8)   set .@enchant,4753;
+				else set .@enchant,4752;
+			}
+
+			// จัดการยัดการ์ดแบบสะอาดสะอ้าน ปลอดภัย 100%
+			set .@save_refine, getequiprefinerycnt(EQI_GARMENT);
+			set .@save_card0, getequipcardid(EQI_GARMENT, 0); // การ์ดหลัก (เช่น การ์ดเรดิก)
+			set .@save_card1, getequipcardid(EQI_GARMENT, 1);
+			set .@save_card2, getequipcardid(EQI_GARMENT, 2);
+			set .@save_card3, getequipcardid(EQI_GARMENT, 3);
+
+			// ยัดออฟลงช่องที่ยังว่าง
+			if (.@save_card1 == 0) set .@save_card1, .@enchant;
+			else if (.@save_card2 == 0) set .@save_card2, .@enchant;
+			else if (.@save_card3 == 0) set .@save_card3, .@enchant;
+
+			delequip EQI_GARMENT;
+			getitem2 2589, 1, 1, .@save_refine, 0, .@save_card0, .@save_card1, .@save_card2, .@save_card3;
+			
+			mes "[Fallen Angel]";
+			mes "เอาไป!";
+			mes "การออฟประสบผลสำเร็จ!";
+			close;
+
+		case 4: // ================== ลบออฟชั่น ==================
+			mes "[Fallen Angel]";
+			mes "ลบออฟต้องการ ^0000ff300,000 zeny^000000. ไอเท็มจะไม่ได้รับความเสียหายตอนลบออฟ.";
+			next;
+			if(select("ขอทำใจก่อน...:Ok, ข้าต้องการลบออฟ.") == 1) {
+				mes "[Fallen Angel]";
+				mes "Ok! ข้าจะรอเจ้า!";
+				close;
+			}
+
+			if (getequipid(EQI_GARMENT) != 2589) { mes "[Fallen Angel]"; mes "โอ้... เจ้าไม่ได้สวมใส่ Fallen Angel Wing!"; close; }
+			set .@check_refine, getequiprefinerycnt(EQI_GARMENT);
+
+			specialeffect2 EF_REPAIRWEAPON;
+			progressbar "ffff00",2;
+
+			// เช็คความปลอดภัยหลังหลอดโหลด
+			if (getequipisequiped(EQI_GARMENT) == 0 || getequipid(EQI_GARMENT) != 2589) { mes "[Fallen Angel]"; mes "ไอเท็มถูกสลับ!"; close; }
+			if (getequiprefinerycnt(EQI_GARMENT) != .@check_refine) { mes "[Fallen Angel]"; mes "เจ้าแอบสลับผ้าคลุม!"; close; }
+			if (Zeny < 300000) { mes "[Fallen Angel]"; mes "ข้าทำไม่ได้ถ้าเจ้าไม่มีเงิน!"; close; }
+			
+			if ((getequipcardid(EQI_GARMENT,3) < 4700) && (getequipcardid(EQI_GARMENT,2) < 4700) && (getequipcardid(EQI_GARMENT,1) < 4700)) { 
+				mes "[Fallen Angel]";
+				mes "ไอเท็มนี้ไม่เคยออฟเลย, กรุณาตรวจดูใหม่!";
+				close;
+			}
+
+			Zeny -= 300000;
+			set .@save_refine, getequiprefinerycnt(EQI_GARMENT);
+			set .@save_card0, getequipcardid(EQI_GARMENT, 0); // เก็บการ์ดหลักไว้
+			
+			delequip EQI_GARMENT;
+			// เสกกลับมาโดยใส่แค่การ์ดหลัก ส่วนช่อง 1, 2, 3 ปล่อยเป็น 0 เพื่อล้างทิ้ง
+			getitem2 2589, 1, 1, .@save_refine, 0, .@save_card0, 0, 0, 0; 
+			
+			mes "[Fallen Angel]";
+			mes "เอาไป!";
+			mes "ลบออฟชั่นเรียบร้อยแล้ว!";
+			close;
+	}
+}

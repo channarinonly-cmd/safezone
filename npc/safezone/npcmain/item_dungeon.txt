@@ -1,0 +1,274 @@
+//////////////////////npcแลกของในดันตามเมืองต่างๆ//////////////////////////////////////
+aldebaran,144,136,3	script	Weapon Crystal#1	564,{
+	callshop "aldebaran", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Aldebaran Crystal",0;
+}
+
+amatsu,92,239,3	script	Weapon Crystal#2	564,{
+	callshop "amatsu", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Amatsu Crystal",0;
+}
+
+cmd_fild08,332,362,3	script	Weapon Crystal#3	564,{
+	callshop "anthell", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Anthell Crystal",0;
+}
+
+ayo_fild02,279,154,3	script	Weapon Crystal#4	564,{
+	callshop "ayothaya", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Ayothaya Crystal",0;
+}
+
+comodo,191,161,3	script	Weapon Crystal#5	564,{
+	callshop "comodo", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Comodo Crystal",0;
+}
+
+aldebaran,135,136,3	script	Weapon Crystal#6	564,{
+	callshop "clocktower", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Clocktower Crystal",0;
+}
+
+einbech,135,248,3	script	Weapon Crystal#7	564,{
+	callshop "einbech", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Einbech Crystal",0;
+}
+
+geffen,116,111,3	script	Weapon Crystal#8	564,{
+	callshop "geffen", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Geffen Crystal",0;
+}
+
+geffen,122,58,3	script	Weapon Crystal#9	564,{
+	callshop "geffenia", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Geffenia Crystal",0;
+}
+
+gonryun,155,200,3	script	Weapon Crystal#10	564,{
+	callshop "gonryun", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Gonryun Crystal",0;
+}
+
+glast_01,195,292,3	script	Weapon Crystal#11	564,{
+	callshop "glast_01", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Glastheim Crystal",0;
+}
+
+glast_01,75,197,3	script	Weapon Crystal#112	564,{
+	callshop "glast_01", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Glastheim Crystal",0;
+}
+
+glast_01,195,137,3	script	Weapon Crystal#113	564,{
+	callshop "glast_01", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Glastheim Crystal",0;
+}
+
+glast_01,54,111,3	script	Weapon Crystal#114	564,{
+	callshop "glast_01", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Glastheim Crystal",0;
+}
+
+moc_fild19,106,97,3	script	Weapon Crystal#12	564,{
+	callshop "sphinx", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Sphinx Crystal",0;
+}
+
+izlu2dun,105,87,3	script	Weapon Crystal#13	564,{
+	callshop "izlu2dun", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Byalan Crystal",0;
+}
+
+yuno_fild07,212,181,3	script	Weapon Crystal#14	564,{
+	callshop "juperos", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Juperos Crystal",0;
+}
+
+yuno_fild08,76,183,3	script	Weapon Crystal#15	564,{
+	callshop "robot_factory", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Kiel Crystal",0;
+}
+
+louyang,43,267,3	script	Weapon Crystal#16	564,{
+	callshop "louyang", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Louyang Crystal",0;
+}
+
+yuno_fild03,36,143,3	script	Weapon Crystal#17	564,{
+	callshop "magma", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Magma Crystal",0;
+}
+
+mjolnir_02,83,364,3	script	Weapon Crystal#18	564,{
+	callshop "Mjolnir", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Mjolnir Dead Pit Crystal",0;
+}
+
+moc_ruins,55,157,3	script	Weapon Crystal#19	564,{
+	callshop "pyramid", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Pyramid Crystal",0;
+}
+
+mosk_fild02,184,257,3	script	Weapon Crystal#20	564,{
+	callshop "mosk", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Moscovia Crystal",0;
+}
+
+gef_fild10,61,329,3	script	Weapon Crystal#21	564,{
+	callshop "orcdun", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Orc Crystal",0;
+}
+
+pay_arche,39,127,3	script	Weapon Crystal#22	564,{
+	callshop "payon", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Payon Crystal",0;
+}
+
+mjolnir_12,38,18,3	script	Weapon Crystal#23	564,{
+	callshop "hidden", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Hidden Crystal",0;
+}
+
+prt_fild05,278,223,3	script	Weapon Crystal#24	564,{
+	callshop "culvert", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Culvert Crystal",0;
+}
+
+ra_temple,126,178,3	script	Weapon Crystal#25	564,{
+	callshop "rachel", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Rachel Crystal",0;
+}
+
+hu_fild01,143,160,3	script	Weapon Crystal#26	564,{
+	callshop "thanatos", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Thanatos Crystal",0;
+}
+
+alb2trea,61,69,3	script	Weapon Crystal#27	564,{
+	callshop "SunkenShip", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " SunkenShip Crystal",0;
+}
+
+alberta,240,118,3	script	Weapon Crystal#28	564,{
+	callshop "TurtleIsland", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Turtle Crystal",0;
+}
+
+xmas,140,310,3	script	Weapon Crystal#29	564,{
+	callshop "ToyFactory", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " ToyFactory Crystal",0;
+}
+
+umbala,114,285,3	script	Weapon Crystal#30	564,{
+	callshop "umbala", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Umbala Crystal",0;
+}
+
+ra_fild01,240,327,3	script	Weapon Crystal#31	564,{
+	callshop "IceCave", 1;
+	end;
+Oninit:
+	delwaitingroom;
+	waitingroom " Ice Cave Crystal",0;
+}
+
+

@@ -1,0 +1,406 @@
+new_1-1,148,112,0	script	newwarp6001a	WARPNPC,2,2,{
+	warp "new_1-2",100,9;
+	end;
+}
+
+new_1-2,100,29,4	script	Sprakki	4_F_01,{
+	mes "[Sprakki]";
+	mes "สวัสดี! ยินดีต้อนรับท่าน";
+	mes "เข้าสู่โลกแห่ง Ragnarok Online";
+	mes "ข้ามีนามว่า Sprakki";
+	next;
+	mes "[Sprakki]";
+	mes "ที่นี่คือ Trainging Center";
+	mes "ที่สำหรับให้ท่านได้เตรียมตัว";
+	mes "ท่านกำลังเข้าสู่การฝึกอบรมพื้นฐาน";
+	mes "ของการเล่นเกมและการต่อสู้";
+	next;
+	mes "[Sprakki]";
+	mes "ข้าคิดว่าท่านไม่จำเป็นต้องฝึกอบรม";
+	mes "ข้าจะส่งท่านไปฝึกการต่อสู้ที่แท้จริง";
+	mes "ท่านพร้อมแล้วหรือยัง?";
+	next;
+	switch(select("ไปยังการฝึกต่อสู้ที่แท้จริง","ยังก่อน")){
+		case 1:
+			mes "[Sprakki]";
+			mes "ข้าขอให้ท่านโชคดี";
+			mes "อาวุธและชุดเกราะ ของใช้ต่างๆ";
+			mes "อย่าลืมใช้มันต่อสู้ล่ะ!";
+			getitem 3504,1;
+			getitem 7059,30;
+			getitem 7060,30;
+			getitem 569,300;
+			getitem 12323,200;
+			getitem 12324,50;
+			getitem 12325,20;
+			getitem 1243,1;
+			getitem 2112,1;
+			getitem 5055,1;
+			getitem 2352,1;
+			getitem 2510,1;
+			getitem 2414,1;
+			close2;
+			warp "new_1-3",95,24;
+			savepoint "new_1-3",93,35;
+			mes "ก่อนโจมตีมอนสเตอร์ทุกครั้ง ต้องเปิดระบบ stamina ก่อน";
+			mes "itemกดใช้ จะอยู่ในช่องเก็บของ ที่ให้มาตอนสร้างตัวละคร";
+			next;
+			mes "ถ้าไม่กดใช้งาน จะไม่ได้รับค่า EXP และ Item";
+			close;
+			end;
+		case 2:
+			close;
+	}
+	end;
+}
+
+new_1-3,91,41,6	script	Buff	1_M_KNIGHTMASTER,{
+	switch(select("ขอความช่วยเหลือ","ยกเลิก")){
+		case 1:
+			sc_start SC_BLESSING,180000,10;
+			sc_start SC_INCREASEAGI,180000,10;
+			specialeffect2 EF_INCAGILITY;
+			specialeffect2 EF_BLESSING;
+			percentheal 100,100;
+			end;
+		case 2:
+			close;
+			end;
+	}
+	end;
+}
+
+new_1-3,95,175,6	script	ผู้เฝ้าประตู	1_M_YOUNGKNIGHT,{
+	switch(select("ไปยังเมืองหลัก","ยกเลิก")){
+		case 1:
+			if (JobLevel < 10){
+				unittalk getcharid(3), "" + strcharinfo(0) + " : ไปยังเมืองหลัก", bc_self;
+				sleep2 2000;
+				npctalk "Buff : ท่านยังมีJob lv ไม่ถึง 10!", "", bc_self;
+				sleep2 2000;
+				unittalk getcharid(3), "" + strcharinfo(0) + " : ข้าต้องทำยังไง?", bc_self;
+				sleep2 2000;
+				npctalk "Buff : กดคุยกับข้าอีกที หลังจากที่ท่านมี JobLevel 10 แล้ว", "", bc_self;
+				end;
+			}
+			warp "new_1-4",139,175;
+			savepoint "new_1-4",139,175;
+			end;
+		case 2:
+			close;
+			end;
+	}
+	end;
+}
+
+new_1-4,139,191,6	script	Ragnarok Master	4_M_CRU_CRUA,{
+
+	// ==========================================
+	// [Addon] ระบบป้องกันสร้างตัวละครที่ 2 มาปั๊มของ/เปลี่ยนฝ่าย
+	// ==========================================
+	if (#city_faction > 0) {
+		mes "[นายทะเบียนทหาร]";
+		mes "อ้าว! ข้อมูลในทะเบียนราษฎร์ระบุว่า สายเลือดของเจ้าได้ประกาศจุดยืนไปแล้วนี่นา";
+		if (#city_faction == 1) {
+			mes "ครอบครัวของเจ้าคือชาว ^FF0000Morocc^000000 อย่างแท้จริง ข้าจะส่งเจ้ากลับไปรวมบารมีกับพี่น้องของเจ้าเดี๋ยวนี้!";
+			next;
+			savepoint "morocc",156,93;
+			close2;
+			warp "morocc", 156, 93;
+			end;
+		} else if (#city_faction == 2) {
+			mes "ครอบครัวของเจ้าคือชาว ^0000FFProntera^000000 อย่างแท้จริง ข้าจะส่งเจ้ากลับไปรวมบารมีกับพี่น้องของเจ้าเดี๋ยวนี้!";
+			next;
+			savepoint "morocc",156,93;
+			close2;
+			warp "morocc", 156, 93;
+			end;
+		}
+	}
+	// ==========================================
+
+	mes "[นายทะเบียนทหาร]";
+	mes "ยินดีด้วยที่ผ่านการฝึกฝนขั้นพื้นฐานมาได้...";
+	mes "แผ่นดินนี้ถูกแบ่งแยกออกเป็น 2 ขั้วอำนาจ คือ สมาคมพ่อค้าแห่ง ^FF0000Morocc^000000 และ สภาอัศวินแห่ง ^0000FFProntera^000000";
+	next;
+	mes "[นายทะเบียนทหาร]";
+	mes "เจ้าต้องเลือก 'แผ่นดินเกิด' เพื่อรับใช้และปกป้องมัน";
+	mes "^FF0000[คำเตือน]^000000 หากเจ้าเลือกฝ่ายใดแล้ว NPC ของอีกฝ่ายจะไม่ต้อนรับเจ้าอีกต่อไป (และผูกมัดทั้ง Account!)";
+	next;
+	mes "[นายทะเบียนทหาร]";
+	mes "บอกข้ามาสิ... ในใจของเจ้าปรารถนาที่จะเข้าร่วมกับฝ่ายใด?";
+	
+	switch(select("ข้าขอเลือก Morocc:ข้าขอเลือก Prontera:ข้ามาเล่นกับเพื่อน (เช็กชื่อเพื่อน)")) {
+		case 1: .@choice = 1; break;
+		case 2: .@choice = 2; break;
+		case 3: goto L_FriendBypass;
+	}
+
+	// [อัปเดต SQL] เปลี่ยนตารางเช็กจำนวนประชากรจาก char_reg_num เป็น acc_reg_num
+	query_sql("SELECT count(account_id) FROM `acc_reg_num` WHERE `key`='#city_faction' AND `value`='1'", .@count_morocc);
+	query_sql("SELECT count(account_id) FROM `acc_reg_num` WHERE `key`='#city_faction' AND `value`='2'", .@count_prt);
+
+	// ตั้งค่าระยะห่างของประชากร
+	.@bonus_gap = 1; // ถ้าห่างกันเกิน X คน จะเริ่มงัดของมาล่อ
+	.@lock_gap = 2;  // ถ้าห่างกันเกิน Y คน จะ "ปิดรับสมัคร" เมืองที่คนเยอะทันที
+	
+	.@diff = .@count_morocc - .@count_prt;
+
+	// ==========================================
+	// กรณีที่ผู้เล่นเลือก >> Morocc <<
+	// ==========================================
+	if (.@choice == 1) {
+		if (.@diff >= .@lock_gap) {
+			mes "[นายทะเบียนทหาร]";
+			mes "ช้าก่อน... ตอนนี้ประชากรใน ^FF0000Morocc^000000 ล้นทะลักจนเสบียงไม่พอเลี้ยงดูคนใหม่แล้ว ผู้ว่าการเมืองสั่ง ^FF0000ปิดประตูเมืองชั่วคราว^000000!";
+			mes "สภาอัศวินแห่งพรอนเทร่าจึงฝาก ^008800[กล่องเสบียงกอบกู้]^000000 มาต้อนรับให้เจ้าไปที่นั่นแทน";
+			next;
+			switch(select("ไม่มีทางเลือก ไป Prontera ก็ได้!:เดี๋ยวก่อน! ข้ามีสหายรออยู่ที่ Morocc!")) {
+				case 1:
+					mes "[นายทะเบียนทหาร]";
+					mes "ขอให้แสงสว่างแห่งเมืองหลวงนำทางเจ้า...";
+					getitem 12264, 3; #city_faction = 2; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+				case 2:
+					goto L_FriendBypass;
+			}
+		}
+		else if (.@diff >= .@bonus_gap) {
+			mes "[นายทะเบียนทหาร]";
+			mes "เจ้าเลือก ^FF0000Morocc^000000 สินะ? แต่ข้าต้องเตือนว่าที่นั่นคนแออัดมาก เจ้าต้องไปแย่งชิงทรัพยากรกับคนอื่นนะ";
+			mes "หากเจ้ายอมเปลี่ยนใจไปช่วยคานอำนาจที่ ^0000FFProntera^000000 ข้ามี ^008800[กล่องเสบียงกอบกู้]^000000 มอบให้เจ้าเป็นพิเศษ!";
+			next;
+			switch(select("ข้อเสนอน่าสน! ข้าเปลี่ยนใจไป Prontera ดีกว่า:ข้าไม่สน ข้ายืนยันจะไป Morocc:เดี๋ยวก่อน! ข้ามีสหายรออยู่ที่ Morocc!")) {
+				case 1: getitem 12264, 3; #city_faction = 2; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+				case 2: #city_faction = 1; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+				case 3: goto L_FriendBypass;
+			}
+		}
+		else {
+			mes "[นายทะเบียนทหาร]";
+			mes "เป็นการตัดสินใจที่เด็ดเดี่ยวมาก...";
+			if (.@diff <= -(.@bonus_gap)) {
+				mes "และเนื่องจากตอนนี้ ^FF0000Morocc^000000 กำลังขาดแคลนคน สมาคมพ่อค้าจึงฝาก ^008800[กล่องทุนตั้งตัว]^000000 มาให้เจ้าด้วย ถือว่าเจ้ามาได้ถูกเวลาจริงๆ!";
+				getitem 12264, 3;
+			}
+			mes "ขอให้ทะเลทรายจงสถิตอยู่กับเจ้า!";
+			#city_faction = 1; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+		}
+	}
+	// ==========================================
+	// กรณีที่ผู้เล่นเลือก >> Prontera <<
+	// ==========================================
+	else if (.@choice == 2) {
+		if (.@diff <= -(.@lock_gap)) {
+			mes "[นายทะเบียนทหาร]";
+			mes "หยุดเลย... ตอนนี้เมืองหลวง ^0000FFProntera^000000 แออัดจนแทบไม่มีที่ยืน สภาอัศวินสั่ง ^FF0000ระงับการรับคนเพิ่ม^000000 เด็ดขาด!";
+			mes "สมาคมพ่อค้า ^FF0000Morocc^000000 จึงมอบ ^008800[กล่องทุนตั้งตัว]^000000 ให้เจ้าเป็นการรับขวัญหากเจ้ายอมไปที่นั่น";
+			next;
+			switch(select("ถ้าได้เงิน ข้าเปลี่ยนไป Morocc ก็ได้!:เดี๋ยวก่อน! ข้ามีสหายรออยู่ที่ Prontera!")) {
+				case 1:
+					mes "[นายทะเบียนทหาร]";
+					mes "ขอให้ทะเลทรายจงสถิตอยู่กับเจ้า...";
+					getitem 12264, 3; #city_faction = 1; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+				case 2:
+					goto L_FriendBypass;
+			}
+		}
+		else if (.@diff <= -(.@bonus_gap)) {
+			mes "[นายทะเบียนทหาร]";
+			mes "เจ้าเลือก ^0000FFProntera^000000 สินะ? แต่เมืองหลวงตอนนี้มีแต่คนแย่งกันทำภารกิจ เจ้าจะไปเบียดกับพวกเขาทำไม?";
+			mes "หากเจ้ายอมเปลี่ยนใจเข้าร่วมกับ ^FF0000Morocc^000000 เจ้าจะได้รับ ^008800[กล่องทุนตั้งตัว]^000000 ไปนอนกอดฟรีๆ!";
+			next;
+			switch(select("ข้ารักเงิน! เปลี่ยนไป Morocc แน่นอน!:ข้ายืนยันจะรับใช้ Prontera:เดี๋ยวก่อน! ข้ามีสหายรออยู่ที่ Prontera!")) {
+				case 1: getitem 12264, 3; #city_faction = 1; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+				case 2: #city_faction = 2; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+				case 3: goto L_FriendBypass;
+			}
+		}
+		else {
+			mes "[นายทะเบียนทหาร]";
+			mes "เป็นการตัดสินใจที่เด็ดเดี่ยวมาก...";
+			if (.@diff >= .@bonus_gap) {
+				mes "และเนื่องจากตอนนี้ ^0000FFProntera^000000 กำลังต้องการกองกำลัง สภาอัศวินจึงฝาก ^008800[กล่องเสบียงกอบกู้]^000000 มาให้เจ้าเป็นของขวัญ ถือว่าเจ้ามาถูกเวลาจริงๆ!";
+				getitem 12264, 3;
+			}
+			mes "ขอให้แสงสว่างแห่งเมืองหลวงนำทางเจ้า!";
+			#city_faction = 2; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+		}
+	}
+
+// ==========================================
+// ส่วนประมวลผลการเช็กชื่อเพื่อน (Friend Bypass)
+// ==========================================
+L_FriendBypass:
+	mes "[นายทะเบียนทหาร]";
+	mes "โอ้? เจ้ามีสหายรออยู่แล้วงั้นรึ?";
+	mes "บอกชื่อตัวละครของสหายเจ้ามาสิ ข้าจะตรวจสอบทะเบียนราษฎร์ให้";
+	next;
+	input .@friend_name$;
+
+	if (.@friend_name$ == "") {
+		mes "[นายทะเบียนทหาร]";
+		mes "เจ้าไม่ได้พิมพ์ชื่อสหายมานะ กลับไปตั้งสติใหม่แล้วค่อยมาคุยกับข้า!";
+		close;
+	}
+
+	.@friend_faction = 0;
+	// [อัปเดต SQL] เปลี่ยนการเช็กเพื่อนให้อ่านตาราง acc_reg_num แทน
+	query_sql("SELECT `value` FROM `acc_reg_num` WHERE `key`='#city_faction' AND `account_id`=(SELECT `account_id` FROM `char` WHERE `name`='"+escape_sql(.@friend_name$)+"')", .@friend_faction);
+
+	if (.@friend_faction == 0) {
+		mes "[นายทะเบียนทหาร]";
+		mes "ข้าหาชื่อสหายของเจ้าไม่พบ... หรือบางทีเขายังไม่ได้เลือกเมืองเกิดเลยด้วยซ้ำ!";
+		mes "ไปเช็กตัวสะกดให้ดีๆ แล้วค่อยมาหาข้าใหม่!";
+		close;
+	}
+
+	if (.@friend_faction == 1) {
+		mes "[นายทะเบียนทหาร]";
+		mes "อืม... สหายของเจ้าอยู่ ^FF0000Morocc^000000 จริงๆ ด้วย";
+		mes "ในเมื่อเจ้าตั้งใจจะไปสมทบกับสหาย ข้าก็จะเปิดทางให้... ^FF0000แต่จำไว้ว่าเจ้าจะไม่ได้รับกล่องเสบียงช่วยเหลือใดๆ ทั้งสิ้น!^000000";
+		next;
+		#city_faction = 1; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+	} else if (.@friend_faction == 2) {
+		mes "[นายทะเบียนทหาร]";
+		mes "อืม... สหายของเจ้าอยู่ ^0000FFProntera^000000 จริงๆ ด้วย";
+		mes "ข้าจะยอมส่งตัวเจ้าไปที่นั่น... ^FF0000แต่ต้องแลกกับการที่เจ้าจะไม่ได้รับกล่องโบนัสพิเศษใดๆ เลยนะ!^000000";
+		next;
+		#city_faction = 2; savepoint "morocc",156,93; close2; warp "morocc", 156, 93; end;
+	}
+}
+
+// Training Ground Mobs
+new_1-3,0,0,0,0	monster	Poring	1002,50
+new_1-3,0,0,0,0	monster	Drops	1113,50
+new_1-3,0,0,0,0	monster	Lunatic	1063,50
+new_1-3,0,0,0,0	monster	ChonChon	1011,50
+new_1-3,0,0,0,0	monster	Picky	1050,50
+new_1-3,0,0,0,0	monster	Willow	1010,30
+new_1-3,0,0,0,0	monster	Roda Frog	1012,30
+new_1-3,0,0,0,0	monster	Condor	1009,20
+new_1-3,0,0,0,0	monster	Thief Bug	1053,20
+new_1-3,0,0,0,0	monster	Spore	1014,20
+
+//new_1-1,0,0,0,0	monster	Poring	1002,50
+//new_1-1,0,0,0,0	monster	Drops	1113,50
+//new_1-1,0,0,0,0	monster	Lunatic	1063,50
+//new_1-1,0,0,0,0	monster	ChonChon	1011,50
+//new_1-1,0,0,0,0	monster	Picky	1050,50
+//new_1-1,0,0,0,0	monster	Willow	1010,30
+//new_1-1,0,0,0,0	monster	Roda Frog	1012,30
+//new_1-1,0,0,0,0	monster	Condor	1009,20
+//new_1-1,0,0,0,0	monster	Thief Bug	1053,20
+//new_1-1,0,0,0,0	monster	Spore	1014,20
+
+//============================================================
+new_1-1	mapflag	loadevent
+new_1-2	mapflag	loadevent
+new_1-3	mapflag	loadevent
+new_1-4	mapflag	loadevent
+
+
+-	script	stamina_notice	-1,{
+
+	OnInit:
+		setarray .maps$, "new_1-3";
+		for (.@i = 0; .@i < getarraysize(.maps$); .@i++)
+			setmapflag .maps$[.@i], mf_loadevent;
+		end;
+
+	OnPCLoadMapEvent:
+		for (.@i = 0; .@i < getarraysize(.maps$); .@i++) {
+			if (strcharinfo(3) == .maps$[.@i]) {
+				mes "[ระบบสแตมิน่า]";
+				mes "ก่อนโจมตีมอนสเตอร์ทุกครั้ง ";
+				mes "ต้องเปิดระบบ ";
+				mes "stamina ก่อน";
+				.@item_id = 30034;
+				mes "^i["+.@item_id+"]^FFFFFF "+getitemname(.@item_id)+"^000000";
+				mes "Item จะอยู่ในช่องเก็บของใช้ทั่วไปในตัว";
+				next;
+				mes "ถ้าไม่กดใช้งาน จะไม่ได้รับค่า EXP และ Item";
+				mes "^ff0000โปรดอย่าลืม^000000";
+				close;
+			}
+		}
+		end;
+}
+
+
+// =======================================================
+// ระบบ GM สร้างกำแพงล่องหนกั้นวาร์ป (คำสั่ง @obt)
+// =======================================================
+-	script	GM_Wall_Controller	-1,{
+OnInit:
+	// ผูกคำสั่ง @obt ให้เฉพาะ GM Level 99 ใช้งานได้
+	bindatcmd "obt", strnpcinfo(0)+"::OnCmd", 99, 99;
+	
+	// ตอนเปิดเซิร์ฟเวอร์ ให้เช็กสถานะล่าสุดว่ากำแพงเปิดหรือปิดอยู่
+	if ($WarpWallStatus == 1) {
+		setcell "new_1-1", 78, 109, 78, 114, cell_walkable, 0; // 0 = เดินไม่ได้
+		enablenpc "#OBT_Wall0";
+		enablenpc "#OBT_Wall1";
+		enablenpc "#OBT_Wall2";
+		enablenpc "#OBT_Wall3";
+		enablenpc "#OBT_Wall4";
+		enablenpc "#OBT_Wall5";
+	} else {
+		// ถ้าสถานะเป็น 0 ให้แน่ใจว่าซ่อน NPC เสาหินเอาไว้
+		disablenpc "#OBT_Wall0";
+		disablenpc "#OBT_Wall1";
+		disablenpc "#OBT_Wall2";
+		disablenpc "#OBT_Wall3";
+		disablenpc "#OBT_Wall4";
+		disablenpc "#OBT_Wall5";
+	}
+	end;
+
+OnCmd:
+	// ถ้ากำแพงยังไม่ถูกสร้าง (Status = 0) ให้ สร้างกำแพง
+	if ($WarpWallStatus == 0) {
+		$WarpWallStatus = 1;
+		
+		// 1. สร้างกำแพงล่องหน (เดินไม่ได้)
+		setcell "new_1-1", 78, 109, 78, 114, cell_walkable, 0;
+		
+		// 2. เรียก NPC เสาหินให้โผล่ขึ้นมา
+		enablenpc "#OBT_Wall0";
+		enablenpc "#OBT_Wall1";
+		enablenpc "#OBT_Wall2";
+		enablenpc "#OBT_Wall3";
+		enablenpc "#OBT_Wall4";
+		enablenpc "#OBT_Wall5";
+		
+		announce "[ประกาศ] เติมพลัง OBT ได้สร้างแนวป้องกันทางเข้าวาร์ปแล้ว!", bc_all | bc_blue;
+		dispbottom "คุณได้สร้างเสาหินและกำแพงกั้นพิกัด 68,110 ถึง 68,113 เรียบร้อยแล้ว";
+	}
+	// ถ้ากำแพงถูกสร้างไว้แล้ว (Status = 1) ให้ ทำลายกำแพง
+	else {
+		$WarpWallStatus = 0;
+		
+		// 1. ลบกำแพงล่องหน (เปลี่ยนเลขตัวสุดท้ายเป็น 1 = เดินได้ปกติ)
+		setcell "new_1-1", 78, 109, 78, 114, cell_walkable, 1;
+		
+		// 2. ซ่อน NPC เสาหินทิ้งไป
+		disablenpc "#OBT_Wall0";
+		disablenpc "#OBT_Wall1";
+		disablenpc "#OBT_Wall2";
+		disablenpc "#OBT_Wall3";
+		disablenpc "#OBT_Wall4";
+		disablenpc "#OBT_Wall5";
+		
+		announce "[ประกาศ] ได้เปิดพื้นที่ทางเข้าวาร์ป OBT ตามปกติแล้ว ลุยเลย!", bc_all | bc_green;
+		dispbottom "คุณได้ทำลายกำแพงและเสาหิน เปิดทางเรียบร้อยแล้ว";
+	}
+	end;
+}
+
+// =======================================================
+// ตัว Dummy NPC เสาหิน (ตั้งชื่อนำหน้าด้วย # เพื่อซ่อนชื่อไม่ให้ลอยบนหัว)
+// =======================================================
+new_1-1,78,109,3	script	#OBT_Wall0	4_M_PAY_SOLDIER,{ end; }
+new_1-1,78,110,3	script	#OBT_Wall1	4_M_PAY_SOLDIER,{ end; }
+new_1-1,78,111,3	script	#OBT_Wall2	4_M_PAY_SOLDIER,{ end; }
+new_1-1,78,112,3	script	#OBT_Wall3	4_M_PAY_SOLDIER,{ end; }
+new_1-1,78,113,3	script	#OBT_Wall4	4_M_PAY_SOLDIER,{ end; }
+new_1-1,78,114,3	script	#OBT_Wall5	4_M_PAY_SOLDIER,{ end; }

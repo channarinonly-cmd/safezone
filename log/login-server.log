@@ -1,0 +1,29 @@
+[Status]: Memory manager initialised: log/login-server.leaks
+
+                                                                      
+                   rAthena Development Team presents                  
+                      ___   __  __                                    
+                _____/   | / /_/ /_  ___  ____  ____ _                
+               / ___/ /| |/ __/ __ \/ _ \/ __ \/ __ `/                
+              / /  / ___ / /_/ / / /  __/ / / / /_/ /                 
+             /_/  /_/  |_\__/_/ /_/\___/_/ /_/\__,_/                  
+                                                                      
+                     http://rathena.org/board/                        
+                                                                      
+[Info]: Server uses 'select' as event dispatcher
+[Info]: Server supports up to '4096' concurrent connections.
+[Info]: Finished reading conf/import/inter_conf.txt.
+[Info]: Finished reading conf/inter_athena.conf.
+[Info]: Finished reading conf/import/login_conf.txt.
+[Info]: Finished reading conf/login_athena.conf.
+[Info]: Done reading '23' messages in 'conf/msg_conf/login_msg.conf'.
+[Info]: Ipban connection made.
+[Status]: The login-server is ready (Server is listening on the port 22621).
+
+[SQL]: DB error - Unknown column 'unique_id' in 'field list'
+[Debug]: at loginlog.cpp:90 - INSERT INTO `loginlog`(`time`,`ip`,`user`,`rcode`, `unique_id`,`log`) VALUES (NOW(), '0.0.0.0', 'login server', '100', '0', 'login server started')
+[Info]: Connection request of the char-server 'Thuay' @ 43.229.151.208:22622 (account: 'thuaysv', ip: '43.229.151.208')
+[SQL]: DB error - Unknown column 'unique_id' in 'field list'
+[Debug]: at loginlog.cpp:90 - INSERT INTO `loginlog`(`time`,`ip`,`user`,`rcode`, `unique_id`,`log`) VALUES (NOW(), '43.229.151.208', 'thuaysv', '100', '0', 'charserver - Thuay@43.229.151.208:22622')
+[Notice]: Authentication accepted (account: thuaysv, id: 1, ip: 43.229.151.208)
+[Status]: Connection of the char-server 'Thuay' accepted.

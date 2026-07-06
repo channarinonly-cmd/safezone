@@ -1,0 +1,303 @@
+/*
+// ===================================================
+// ระบบแจกบัฟ (Passive Buff) สำหรับฝ่ายที่ครอบครองพรมแดน
+// ===================================================
+-	script	Faction_Conquest_Buff	-1,{
+
+OnPCLoginEvent:
+OnPCLoadMapEvent:
+	// ส่วนนี้รับผิดชอบการ "แจกบัฟ" ตอนเข้าเกมหรือเปลี่ยนแมพ
+	if (#city_faction > 0 && #city_faction == $FactionOwner) {
+		dispbottom "?? [Faction War] อาณาเขตเป็นของเรา! คุณกำลังได้รับโบนัส EXP & Drop +10%";
+		
+		// เรียกใช้ Status Change ของเรา (ดึงโบนัสจาก custom_buff.yml)
+		sc_start SC_FACTION_BUFF, 86400000, 10; 
+		
+	} else {
+		// ถ้าไม่ได้อยู่ฝ่ายชนะ หรือหมดเวลาแล้ว ให้ลบไอคอนทิ้ง
+		sc_end SC_FACTION_BUFF;
+	}
+	end;
+}
+
+// ===================================================
+// ระบบควบคุมกิจกรรมสงคราม Faction (ศึกชิงพรมแดน)
+// ===================================================
+-	script	FactionWar_Controller	-1,{
+
+OnInit:
+	// -------------------------------------------------------------------------
+	// [คู่มือการตั้งค่าแผนที่และพิกัด]
+	// -------------------------------------------------------------------------
+	setarray .WarMaps$[0], "payon_mem";
+	
+	setarray .SpawnX[0],   90;
+	setarray .SpawnY[0],   153;
+	
+	setarray .MocSpawnX[0], 16;
+	setarray .MocSpawnY[0], 151;
+
+	setarray .PrtSpawnX[0], 188;
+	setarray .PrtSpawnY[0], 70;
+	
+	bindatcmd("factionwar", strnpcinfo(0)+"::OnCall", 99, 99);
+
+	// -------------------------------------------------------------------------
+	// ??? ระบบฟื้นฟูสถานะเมื่อมีการ @reloadscript
+	// -------------------------------------------------------------------------
+	if ($FactionWarActive == 1) {
+		enablenpc "Morocc Faction Portal";
+		enablenpc "Prontera Faction Portal";
+		
+		.@now = gettimetick(2);
+		
+		if (.@now >= $FactionWarEndTime) {
+			goto L_EndWar;
+		} else {
+			.@elapsed = 1800 - ($FactionWarEndTime - .@now);
+			initnpctimer;
+			setnpctimer .@elapsed * 1000;
+			
+			if (mobcount($FactionWarMap$, strnpcinfo(0)+"::OnCrystalBreak") == 0) {
+				monster $FactionWarMap$, $FactionWarX, $FactionWarY, "Faction Crystal", 1915, 1, strnpcinfo(0)+"::OnCrystalBreak";
+			}
+		}
+	} else {
+		disablenpc "Morocc Faction Portal";
+		disablenpc "Prontera Faction Portal";
+	}
+	end;
+
+// ===================================================
+// ส่วนควบคุมเวลาเริ่มกิจกรรมอัตโนมัติ (เริ่มเวลา 23:20 น.)
+// ===================================================
+OnClock2320:
+	if ($FactionWarActive == 1) end;
+	goto L_StartWar;
+	end;
+
+OnCall:
+	if ($FactionWarActive == 1) {
+		stopnpctimer;
+		$FactionWarActive = 0;
+		$TempFactionOwner = 0;
+		killmonster $FactionWarMap$, strnpcinfo(0)+"::OnCrystalBreak";
+		disablenpc "Morocc Faction Portal";
+		disablenpc "Prontera Faction Portal";
+		announce "[Faction War] ยกเลิกสงคราม! GM ได้ทำการยุติสมรภูมิแล้ว!", bc_all | bc_yellow;
+		end;
+	}
+	goto L_StartWar;
+	end;
+
+L_StartWar:
+	.@size = getarraysize(.WarMaps$);
+	if (.@size > 1) {
+		.@rand = rand(.@size);
+	} else {
+		.@rand = 0;
+	}
+
+	$FactionWarMap$ = .WarMaps$[.@rand];
+	$FactionWarX = .SpawnX[.@rand]; 
+	$FactionWarY = .SpawnY[.@rand]; 
+	
+	$MocStartX = .MocSpawnX[.@rand];
+	$MocStartY = .MocSpawnY[.@rand];
+	$PrtStartX = .PrtSpawnX[.@rand];
+	$PrtStartY = .PrtSpawnY[.@rand];
+
+	$TempFactionOwner = 0; 
+	$FactionWarActive = 1; 
+	
+	// บันทึกเวลาที่กิจกรรมจะต้องจบ (ปัจจุบัน + 1800 วินาที/30 นาที)
+	$FactionWarEndTime = gettimetick(2) + 1800; 
+
+	enablenpc "Morocc Faction Portal";
+	enablenpc "Prontera Faction Portal";
+
+	announce "[Faction War] สมรภูมิเปิดแล้ว! คริสตัลพรมแดน ปรากฏขึ้นที่แผนที่ " + $FactionWarMap$ + "!", bc_all | bc_blue;
+	announce "[Faction War] ประตูยุทธศาสตร์เปิดออกแล้ว จงรีบไปยึดครองพื้นที่เดี๋ยวนี้!", bc_all | bc_blue;
+	
+	monster $FactionWarMap$, $FactionWarX, $FactionWarY, "Faction Crystal", 1915, 1, strnpcinfo(0)+"::OnCrystalBreak";
+	
+	initnpctimer;
+	end;
+
+// -------------------------------------------------------------------------
+// [ตั้งค่าระยะเวลากิจกรรม] 1,800,000 ms = 30 นาที (ไปจบและปิดที่ 23:50)
+// -------------------------------------------------------------------------
+OnTimer1800000: 
+L_EndWar:
+	stopnpctimer;
+	$FactionWarActive = 0;
+	killmonster $FactionWarMap$, strnpcinfo(0)+"::OnCrystalBreak";
+	disablenpc "Morocc Faction Portal";
+	disablenpc "Prontera Faction Portal";
+	
+	if ($TempFactionOwner == 1) {
+		$FactionOwner = 1;
+		announce "[Faction War] สิ้นสุดสงคราม! ชัยชนะตกเป็นของ สมาคมการค้า Morocc!", bc_all | bc_red;
+		announce "[Faction War] ชาว Morocc ทุกคนได้รับบัฟ EXP & Drop +10% เป็นเวลา 1 วันเต็ม!", bc_all | bc_red;
+	} 
+	else if ($TempFactionOwner == 2) {
+		$FactionOwner = 2;
+		announce "[Faction War] สิ้นสุดสงคราม! ชัยชนะตกเป็นของ สภาอัศวิน Prontera!", bc_all | bc_blue;
+		announce "[Faction War] ชาว Prontera ทุกคนได้รับบัฟ EXP & Drop +10% เป็นเวลา 1 วันเต็ม!", bc_all | bc_blue;
+	} 
+	else {
+		announce "[Faction War] สิ้นสุดสงคราม! ไม่มีฝ่ายใดสามารถยึดครองคริสตัลได้ในรอบนี้!", bc_all | bc_yellow;
+	}
+
+	// อัปเดตสถานะผู้เล่นทุกคนที่ออนไลน์
+	query_sql("SELECT `account_id` FROM `char` WHERE `online`=1", .@online_aid);
+	for (.@i = 0; .@i < getarraysize(.@online_aid); .@i++) {
+		if (attachrid(.@online_aid[.@i])) {
+			recalcstat; 
+			detachrid();
+		}
+	}
+	
+	// ส่งผู้เล่นทุกคนกลับเมืองเมื่อจบกิจกรรม
+	getmapunits(BL_PC, $FactionWarMap$, .@end_players[0]);
+	for (.@i = 0; .@i < getarraysize(.@end_players); .@i++) {
+		if (attachrid(.@end_players[.@i])) {
+			warp "SavePoint", 0, 0;
+			detachrid();
+		}
+	}
+	end;
+
+OnCrystalBreak:
+	if ($FactionWarActive == 0) end;
+
+	if (playerattached()) {
+		.@killer_name$ = strcharinfo(0);
+
+		if (#city_faction == 1) {
+			$TempFactionOwner = 1; 
+			announce "[Faction War] คริสตัลถูกยึดโดย Morocc! (กองทัพ Prontera ถูกตีถอยร่นกลับเมือง!)", bc_all | bc_red;
+		} 
+		else if (#city_faction == 2) {
+			$TempFactionOwner = 2; 
+			announce "[Faction War] คริสตัลถูกยึดโดย Prontera! (กองทัพ Morocc ถูกตีถอยร่นกลับเมือง!)", bc_all | bc_blue;
+		} 
+		else {
+			$TempFactionOwner = 0; 
+			announce "[Faction War] คริสตัลถูกทำลายโดยกองกำลังปริศนา!", bc_all | bc_yellow;
+		}
+	} else {
+		$TempFactionOwner = 0;
+		announce "[Faction War] คริสตัลถูกทำลาย!", bc_all | bc_yellow;
+	}
+
+	getmapunits(BL_PC, $FactionWarMap$, .@map_players[0]);
+	for (.@i = 0; .@i < getarraysize(.@map_players); .@i++) {
+		if (attachrid(.@map_players[.@i])) {
+			if (#city_faction != $TempFactionOwner || $TempFactionOwner == 0) {
+				dispbottom "?? [Faction War] กองทัพของคุณพ่ายแพ้! จงถอยร่นกลับเมืองเพื่อตั้งหลักใหม่...";
+				if (#city_faction == 1) warp "morocc", 157, 46;
+				else if (#city_faction == 2) warp "prontera", 155, 183;
+				else warp "SavePoint", 0, 0;
+			}
+			detachrid();
+		}
+	}
+
+	sleep 5000;
+	
+	if ($FactionWarActive == 1) {
+		monster $FactionWarMap$, $FactionWarX, $FactionWarY, "Faction Crystal", 1915, 1, strnpcinfo(0)+"::OnCrystalBreak";
+	}
+	end;
+}
+
+// ===================================================
+// NPC ทางเข้าแบบวาร์ป (OnTouch)
+// ===================================================
+morocc,168,40,0	script	Morocc Faction Portal	45,2,2,{
+OnTouch:
+	if ($FactionWarActive != 1) {
+		dispbottom "สมรภูมิยังไม่เปิด!";
+		end;
+	}
+	
+	if (#city_faction == 1) {
+		warp $FactionWarMap$, $MocStartX, $MocStartY;
+	} else if (#city_faction == 2) {
+		warp $FactionWarMap$, $PrtStartX, $PrtStartY;
+	} else {
+		dispbottom "คุณยังไม่ได้เลือกฝ่าย (Faction) ไม่สามารถเข้าร่วมสงครามได้!";
+	}
+	end;
+}
+
+prontera,122,68,0	script	Prontera Faction Portal	45,2,2,{
+OnTouch:
+	if ($FactionWarActive != 1) {
+		dispbottom "สมรภูมิยังไม่เปิด!";
+		end;
+	}
+	
+	if (#city_faction == 1) {
+		warp $FactionWarMap$, $MocStartX, $MocStartY;
+	} else if (#city_faction == 2) {
+		warp $FactionWarMap$, $PrtStartX, $PrtStartY;
+	} else {
+		dispbottom "คุณยังไม่ได้เลือกฝ่าย (Faction) ไม่สามารถเข้าร่วมสงครามได้!";
+	}
+	end;
+}
+
+// ===================================================
+// Mapflags: ตั้งค่ากฎของแผนที่สมรภูมิ (payon_mem)
+// ===================================================
+payon_mem	mapflag	nopenalty	
+payon_mem	mapflag	noteleport	
+payon_mem	mapflag	nowarp		
+payon_mem	mapflag	nowarpto	
+payon_mem	mapflag	nobranch	
+payon_mem	mapflag	nosave	SavePoint	
+payon_mem	mapflag	noskill	WZ_ICEWALL	
+
+
+// ===================================================
+// [GM Command] คำสั่งรีเซ็ตสถานะผู้ชนะและลบบัฟ (@resetfaction)
+// ===================================================
+-	script	Faction_Reset_Cmd	-1,{
+
+OnInit:
+	// บูกคำสั่ง @resetfaction ให้กับ GM Level 99
+	bindatcmd("resetfaction", strnpcinfo(0)+"::OnResetCommand", 99, 99);
+	end;
+
+OnResetCommand:
+	// 1. รีเซ็ตเมืองที่ชนะให้เป็น 0 (ว่างเปล่า)
+	$FactionOwner = 0;
+	$TempFactionOwner = 0;
+	
+	// 2. ปิดสงครามทันทีถ้ายังรันอยู่
+	$FactionWarActive = 0;
+	stopnpctimer "FactionWar_Controller";
+	
+	// 3. กำจัดมอนสเตอร์และปิดประตูวาร์ป
+	killmonster $FactionWarMap$, "FactionWar_Controller::OnCrystalBreak";
+	disablenpc "Morocc Faction Portal";
+	disablenpc "Prontera Faction Portal";
+
+	// 4. ดึงข้อมูลคนออนไลน์ทุกคนมาลบบัฟทิ้งทันที
+	query_sql("SELECT `account_id` FROM `char` WHERE `online`=1", .@online_aid);
+	for (.@i = 0; .@i < getarraysize(.@online_aid); .@i++) {
+		if (attachrid(.@online_aid[.@i])) {
+			// ลบสถานะบัฟออก และคำนวณ Stat ใหม่
+			sc_end SC_FACTION_BUFF; 
+			recalcstat; 
+			dispbottom "?? [Faction War] ระบบถูกรีเซ็ต! ปัจจุบันไม่มีฝ่ายใดครอบครองอาณาเขต บัฟถูกยกเลิกทั้งหมด";
+			detachrid();
+		}
+	}
+
+	dispbottom "[ ระบบจัดการ GM ] รีเซ็ตสถานะเป็น 'ไม่มีผู้ชนะ' และเคลียร์บัฟทั้งเซิร์ฟเวอร์เรียบร้อยแล้ว!";
+	end;
+	}
+	*/

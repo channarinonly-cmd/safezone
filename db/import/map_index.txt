@@ -1,0 +1,37 @@
+//======================================================================================
+// Map Index
+//======================================================================================
+//Contains the list of maps with their respective IDs for inter-server use.
+//IDs must never change, therefore any new maps need to be added at the end,
+//and old ones must not be removed, but may be replaced.
+//Format:
+//mapname<tab>index <- specifies index for this map
+//mapname <- map will use index of previous map +1
+//Note that map index 0 is special and reserved for "error" status. 
+
+//======================================================================================
+//Place your custom maps with a starting ID here.
+//======================================================================================
+//Example:
+//
+//mymap	1250
+//mymap-2
+
+festival_01 1250
+festival_02 1251
+festival_03 1252
+festival_04 1253
+festival_05 1254
+festival_06 1255
+festival_07 1256
+festival_08 1257
+festival_09 1258
+festival_10 1259
+event_01 1260
+guest_room 1261
+morocc_mem 1262
+payon_mem 1263
+pa2_in01 1264
+pa2_in02 1265
+
+uryon 1266

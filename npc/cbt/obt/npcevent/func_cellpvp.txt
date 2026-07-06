@@ -1,0 +1,123 @@
+// ==========================================
+// 1. ระบบตั้งค่าพื้นที่ (OnInit)
+// ==========================================
+-	script	Zone_CellPVP_Setup	-1,{
+OnInit:
+	// --- MOROCC ---
+	setcell "morocc", 201, 52, 218, 66, cell_pvp, 1;
+	// --- PRONTERA ---
+	setcell "prontera", 148, 66, 163, 77, cell_pvp, 1;
+	// --- PAYON ---
+//	setcell "payon", 147, 150, 159, 163, cell_pvp, 1;
+	end;
+}
+
+// ==========================================
+// 2. ฟังก์ชันส่วนกลาง (แจกบัฟอัตโนมัติ)
+// ==========================================
+function	script	F_Autobuff	{
+	sc_start SC_BLESSING, 60000, 10;
+	sc_start SC_INCREASEAGI, 60000, 10;
+	return;
+}
+
+// ==========================================
+// 3. Core NPC: Deathmatch (ตัวรับค่าจากระบบ)
+// ห้ามเปลี่ยนชื่อเด็ดขาด เพราะ rAthena จะเรียกหาชื่อนี้เมื่อเกิดการฆ่ากันในโซน PVP
+// ==========================================
+-	script	deathmatch_core	-1,{
+	callfunc "F_Autobuff";
+	end;
+}
+
+// ==========================================
+// 4. PVP Manager: จัดการ Event เข้า/ออก
+// ส่วนนี้สำคัญมาก! ทำหน้าที่ตรวจจับเมื่อเดินเข้าพื้นที่ cell_pvp
+// ==========================================
+-	script	PVP_Manager	-1,{
+OnPVPEnter:
+	// เมื่อก้าวเท้าเข้าสู่โซน PVP ให้แจกบัฟทันที
+	callfunc "F_Autobuff";
+	end;
+
+OnPVPLeave:
+	// เมื่อเดินออกจากโซน PVP (ถ้าต้องการให้บัฟหาย หรือทำอะไรเพิ่มเติม)
+	end;
+}
+
+// ==========================================
+// 5. NPC ต้นแบบ (Templates)
+// ==========================================
+
+// --- ต้นแบบทางเข้า ---
+-	script	PVP_Gatekeeper_Temp	-1,{
+	mes "[PVP Gatekeeper]";
+	mes "พร้อมจะเข้าไปลุยในลาน Free PK หรือยัง?";
+	mes "ด้านในนี้คุณสามารถหวดได้ทันทีโดยไม่ต้องกด Shift!";
+	next;
+	if (select("เข้าไปลุยเลย!:ขอเตรียมตัวก่อน") == 2) close;
+	
+	.@map$ = strcharinfo(3);
+	if (.@map$ == "morocc") warp "morocc", 209, 59;
+	else if (.@map$ == "prontera") warp "prontera", 157, 187;
+	else if (.@map$ == "payon") warp "payon", 153, 156; // ปรับพิกัดให้ตรงกับพิกัดใหม่ที่คุณแก้
+	else close;
+	end;
+}
+
+// --- ต้นแบบทางออก ---
+-	script	PVP_Exit_Temp	-1,{
+	mes "[PVP Exit]";
+	mes "ต้องการออกจากลานประลองหรือไม่?";
+	next;
+	if (select("ออกไปพัก:ขอลุยต่อ") == 2) close;
+	
+	.@map$ = strcharinfo(3);
+	if (.@map$ == "morocc") warp "morocc", 198, 57;
+	else if (.@map$ == "prontera") warp "prontera", 148, 187;
+	else if (.@map$ == "payon") warp "payon", 145, 156;
+	end;
+}
+
+// --- ต้นแบบรั้ว ---
+-	script	PVP_Fence_Temp	858,{ end; }
+
+// ==========================================
+// 6. การวาง NPC (Deployment)
+// ==========================================
+
+//// --- MOROCC ---
+//morocc,198,59,4	duplicate(PVP_Gatekeeper_Temp)	PVP Gatekeeper#mor	858
+//morocc,209,65,4	duplicate(PVP_Exit_Temp)	PVP Exit#mor	858
+// รั้ว Morocc
+morocc,201,52,5	duplicate(PVP_Fence_Temp)	Fence_Mor_B01	858
+morocc,201,66,5	duplicate(PVP_Fence_Temp)	Fence_Mor_B02	858
+morocc,218,66,5	duplicate(PVP_Fence_Temp)	Fence_Mor_B03	858
+morocc,218,52,5	duplicate(PVP_Fence_Temp)	Fence_Mor_B04	858
+morocc,201,59,5	duplicate(PVP_Fence_Temp)	Fence_Mor_B05	858
+morocc,218,59,5	duplicate(PVP_Fence_Temp)	Fence_Mor_B06	858
+morocc,209,66,5	duplicate(PVP_Fence_Temp)	Fence_Mor_B07	858
+morocc,209,52,5	duplicate(PVP_Fence_Temp)	Fence_Mor_B08	858
+
+// --- PRONTERA ---
+//prontera,148,187,4	duplicate(PVP_Gatekeeper_Temp)	PVP Gatekeeper#prt	858
+//prontera,157,194,4	duplicate(PVP_Exit_Temp)	PVP Exit#prt	858
+// รั้ว Prontera
+prontera,148,66,0	duplicate(PVP_Fence_Temp)	Fence_Prt_01	858
+prontera,148,77,0	duplicate(PVP_Fence_Temp)	Fence_Prt_02	858
+prontera,163,66,0	duplicate(PVP_Fence_Temp)	Fence_Prt_03	858
+prontera,163,77,0	duplicate(PVP_Fence_Temp)	Fence_Prt_04	858
+prontera,156,77,0	duplicate(PVP_Fence_Temp)	Fence_Prt_05	858
+prontera,156,66,0	duplicate(PVP_Fence_Temp)	Fence_Prt_06	858
+prontera,163,71,0	duplicate(PVP_Fence_Temp)	Fence_Prt_07	858
+prontera,148,71,0	duplicate(PVP_Fence_Temp)	Fence_Prt_08	858
+
+
+//// --- PAYON ---
+//payon,145,156,4	duplicate(PVP_Gatekeeper_Temp)	PVP Gatekeeper#pay	858
+//payon,153,164,4	duplicate(PVP_Exit_Temp)	PVP Exit#pay	858
+//// รั้ว Payon
+//payon,147,150,0	duplicate(PVP_Fence_Temp)	Fence_Pay_01	858
+//payon,159,150,0	duplicate(PVP_Fence_Temp)	Fence_Pay_02	858
+//payon,147,163,0	duplicate(PVP_Fence_Temp)	Fence_Pay_03	858
+//payon,159,163,0	duplicate(PVP_Fence_Temp)	Fence_Pay_04	858

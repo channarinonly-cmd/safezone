@@ -1,0 +1,31 @@
+###########################################################################
+# Whispering Rain
+###########################################################################
+#
+###########################################################################
+
+Header:
+  Type: CHANGE_MATERIAL_DB
+  Version: 1
+
+Body:
+  - Id: 1
+    Result: Blade_
+    Amount: 1
+    Rate: 10000
+    ItemGroup: IG_ACCESORY # ชื่อกลุ่ม
+    Materials:
+      - Item: Snail's_Shell
+        Amount: 1
+      - Item: Cactus_Needle
+        Amount: 1
+  - Id: 2
+    Result: Elunium
+    Amount: 1
+    Rate: 10000
+    ItemGroup: IG_ACCESORY # ชื่อกลุ่ม
+    Materials:
+      - Item: Snail's_Shell
+        Amount: 4
+      - Item: Cactus_Needle
+        Amount: 4

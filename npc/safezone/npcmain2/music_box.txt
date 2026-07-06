@@ -1,0 +1,407 @@
+//======================================================
+// Music_Box - Jukebox Style (Zeny) - Shared Stamina + No Vending/Chat Zone
+//======================================================
+
+//======================================================
+// Global login/logout hook
+//======================================================
+-	script	BoxStamina_InitFix	-1,{
+OnPCLoginEvent:
+	.@aid = getcharid(3);
+	callfunc "F_MB_EnsureStaminaRow", .@aid;
+	#IN_MUSIC_AREA = 0;
+	#STAMINA_UNSAVED = 0;
+	#BOXPLUS_SQL = 0;
+	#BOX_LAST_TICK = 0;
+	#MB_LAST_PRESS = 0;
+	#MB_TICKRUN = 0;
+	#MB_CUR_BGM$ = "";
+	#MB_FULL_NOTICE = 0;
+	#MB_DAYKEY = (gettime(5) * 10000) + (gettime(4) * 100) + gettime(3);
+	end;
+OnPCLogoutEvent:
+	if (#STAMINA_UNSAVED > 0) {
+		callfunc "F_MB_FlushStamina", getcharid(3), #STAMINA_UNSAVED, $MB_MAX;
+		#STAMINA_UNSAVED = 0;
+	}
+	#IN_MUSIC_AREA = 0;
+	#MB_TICKRUN = 0;
+	#BOX_LAST_TICK = 0;
+	#MB_CUR_BGM$ = "";
+	#MB_FULL_NOTICE = 0;
+	end;
+OnPCLoadMapEvent:
+	.@map$ = strcharinfo(3);
+	if (#IN_MUSIC_AREA && .@map$ != "morocc") {
+		if (#STAMINA_UNSAVED > 0) {
+			callfunc "F_MB_FlushStamina", getcharid(3), #STAMINA_UNSAVED, $MB_MAX;
+			#BOXPLUS_SQL = min(#BOXPLUS_SQL + #STAMINA_UNSAVED, $MB_MAX);
+			#STAMINA_UNSAVED = 0;
+		}
+		#IN_MUSIC_AREA = 0;
+		#MB_TICKRUN = 0;
+		#BOX_LAST_TICK = 0;
+		#MB_FULL_NOTICE = 0;
+		playBGM $MB_DEFAULT_BGM$;
+		#MB_CUR_BGM$ = $MB_DEFAULT_BGM$;
+		end;
+	}
+	if (.@map$ == "morocc") {
+		getmapxy(.@m2$, .@x, .@y, BL_PC);
+		if (distance(159,102,.@x,.@y) <= $MB_RADIUS) {
+			if (!#IN_MUSIC_AREA) {
+				#IN_MUSIC_AREA = 1;
+				#MB_DAYKEY = (gettime(5) * 10000) + (gettime(4) * 100) + gettime(3);
+				callfunc "F_MB_EnsureStaminaRow", getcharid(3);
+				query_sql("SELECT `Boxstamina_time` FROM `stamina` WHERE `account_id` = "+getcharid(3), #BOXPLUS_SQL);
+				#STAMINA_UNSAVED = 0;
+				#BOX_LAST_TICK = gettimetick(2);
+				#MB_FULL_NOTICE = 0;
+				#MB_CUR_BGM$ = ""; 
+			}
+			.@now = gettimetick(2);
+			if ($MB_MUSIC_END > .@now && $MB_MUSIC_BGM$ != "") .@want$ = $MB_MUSIC_BGM$;
+			else .@want$ = $MB_DEFAULT_BGM$;
+			if (#MB_CUR_BGM$ != .@want$) {
+				playBGM .@want$;
+				#MB_CUR_BGM$ = .@want$;
+			}
+			if (!#MB_TICKRUN) {
+				#MB_TICKRUN = 1;
+				addtimer 1000, "Music_Box_Zone::OnTick";
+			}
+		} else {
+			if (#IN_MUSIC_AREA) {
+				if (#STAMINA_UNSAVED > 0) {
+					callfunc "F_MB_FlushStamina", getcharid(3), #STAMINA_UNSAVED, $MB_MAX;
+					#BOXPLUS_SQL = min(#BOXPLUS_SQL + #STAMINA_UNSAVED, $MB_MAX);
+					#STAMINA_UNSAVED = 0;
+				}
+				#IN_MUSIC_AREA = 0;
+				#MB_TICKRUN = 0;
+				#BOX_LAST_TICK = 0;
+				#MB_FULL_NOTICE = 0;
+				playBGM $MB_DEFAULT_BGM$;
+				#MB_CUR_BGM$ = $MB_DEFAULT_BGM$;
+			}
+		}
+	}
+	end;
+}
+
+//======================================================
+// Music Box NPC (Jukebox Style)
+//======================================================
+morocc,159,102,5	script	Music_Box	4_f_jp_chrome,{
+	callfunc "F_MB_EnsureStaminaRow", getcharid(3);
+	.@now = gettimetick(2);
+	.@remain = ($MB_MUSIC_END > .@now) ? ($MB_MUSIC_END - .@now) : 0;
+
+	mes "[Music Box]";
+	mes "^FF0000ยืนในรัศมี "+$MB_RADIUS+" เซลล์^000000";
+	mes "^00AA00รับ "+$MB_STAMINA_NORMAL+" แต้ม/รอบ^000000";
+	mes "^FF0000VIP ได้รับ "+$MB_STAMINA_VIP+" แต้ม/รอบ^000000";
+	mes "^0000FFรอบคำนวณทุก "+$MB_STAMINA_TIME+" วินาที^000000";
+	mes "^FF0000สะสมได้สูงสุด "+($MB_MAX/3600)+" ชั่วโมง (ไม่รีเซ็ต)^000000";
+	next;
+
+	mes "^FF0000=== ระบบฟังเพลงพิเศษ (Global โบนัส) ===^000000";
+	mes "สถานะเพลง: " + ((.@remain > 0) ? "^00FF00กำลังเล่น (เหลือ "+.@remain+" วินาที)^000000" : "^FF0000ปิดอยู่^000000");
+	
+	.@cur_song_name$ = "ไม่มี";
+	if (.@remain > 0) {
+		for(.@i = 0; .@i < $MB_BGMCOUNT; .@i++) {
+			if ($MB_MUSIC_BGM$ == $MB_BGM_FILE$[.@i]) {
+				.@cur_song_name$ = $MB_BGM_NAME$[.@i];
+				break;
+			}
+		}
+	}
+	mes "เพลงปัจจุบัน: ^0000FF" + .@cur_song_name$ + "^000000";
+	mes "^00AA00โบนัส: x"+$MB_MUSIC_BONUS+" (เฉพาะคนในโซน)^000000";
+	mes "^999999ค่าบริการเปิด/เปลี่ยนเพลง: "+$MB_MUSIC_ZENY+" Zeny^000000";
+	next;
+	
+	switch(select("ดูข้อมูลสถานะ","เลือกเพลง (จ่าย Zeny)","ออก")) {
+
+	case 1:
+		query_sql("SELECT `Boxstamina_time` FROM `stamina` WHERE `account_id` = "+getcharid(3), .@box_time);
+		.@now = gettimetick(2);
+		.@remain = ($MB_MUSIC_END > .@now) ? ($MB_MUSIC_END - .@now) : 0;
+		mes "[สถานะ Music Box]";
+		mes "เวลาสะสม (สำรอง): ^0000FF"+.@box_time+"^000000 / "+$MB_MAX+" วินาที";
+		mes "ค้างยังไม่เซฟ: "+#STAMINA_UNSAVED;
+		mes "เพลง: " + ((.@remain > 0) ? ("เปิด (เหลือ "+.@remain+" วินาที)") : "ปิด");
+		close;
+		
+	case 2:
+		.@now = gettimetick(2);
+		if (#MB_LAST_PRESS > 0 && (.@now - #MB_LAST_PRESS) < $MB_MUSIC_CD) {
+			mes "[Music Box]";
+			mes "เครื่องเล่นกำลังทำงาน...";
+			mes "กรุณารอคูลดาวน์อีก "+($MB_MUSIC_CD - (.@now - #MB_LAST_PRESS))+" วินาที";
+			close;
+		}
+
+		mes "[Music Box]";
+		mes "กรุณาเลือกเพลงที่คุณต้องการเปิดให้ทุกคนฟัง";
+		mes "ค่าบริการ: ^FF0000" + $MB_MUSIC_ZENY + " Zeny^000000";
+		next;
+
+		.@menu$ = "";
+		for(.@i = 0; .@i < $MB_BGMCOUNT; .@i++) {
+			.@menu$ += $MB_BGM_NAME$[.@i] + ":";
+		}
+		.@menu$ += "ยกเลิก";
+		.@s = select(.@menu$) - 1;
+
+		if (.@s == $MB_BGMCOUNT) close;
+
+		if (Zeny < $MB_MUSIC_ZENY) {
+			mes "[Music Box]";
+			mes "ขออภัย คุณมี Zeny ไม่พอใช้บริการตู้เพลง";
+			close;
+		}
+
+		Zeny -= $MB_MUSIC_ZENY;
+		$MB_MUSIC_BGM$ = $MB_BGM_FILE$[.@s];
+
+		if ($MB_MUSIC_END <= .@now) {
+			$MB_MUSIC_END = .@now + $MB_MUSIC_EXTEND;
+			#MB_LAST_PRESS = .@now;
+			playBGM $MB_MUSIC_BGM$;
+
+			mes "[Music Box]";
+			mes "หักเงินเรียบร้อยแล้ว เริ่มเปิดเพลง!";
+			mes "กำลังเล่นเพลง: ^0000FF" + $MB_BGM_NAME$[.@s] + "^000000";
+			mes "เหลือเวลา "+($MB_MUSIC_END - .@now)+" วินาที";
+			specialeffect2 EF_MUSIC;
+			close;
+		}
+
+		.@new = $MB_MUSIC_END + $MB_MUSIC_EXTEND;
+		if ((.@new - .@now) > $MB_MUSIC_CAP) $MB_MUSIC_END = .@now + $MB_MUSIC_CAP;
+		else $MB_MUSIC_END = .@new;
+
+		#MB_LAST_PRESS = .@now;
+		playBGM $MB_MUSIC_BGM$; 
+
+		mes "[Music Box]";
+		mes "คุณได้เปลี่ยนเพลงเป็น: ^0000FF" + $MB_BGM_NAME$[.@s] + "^000000";
+		mes "และต่อเวลาเพลงแล้ว! (+"+$MB_MUSIC_EXTEND+" วินาที)";
+		mes "เวลาคงเหลือปัจจุบัน: "+($MB_MUSIC_END - .@now)+" วินาที (เพดาน "+$MB_MUSIC_CAP+" วิ)";
+		specialeffect2 EF_MUSIC;
+		close;
+		
+	case 3:
+		close;
+	}
+	end;
+
+OnTimer5000:
+	.@x1 = 159 - $MB_RADIUS;
+	.@y1 = 102  - $MB_RADIUS;
+	.@x2 = 159 + $MB_RADIUS;
+	.@y2 = 102  + $MB_RADIUS;
+	.@pc = getareausers("morocc", .@x1, .@y1, .@x2, .@y2);
+	delwaitingroom;
+	waitingroom "Music Box ผู้เล่นในพื้นที่: " + .@pc + " คน", 0;
+	initnpctimer;
+	end;
+
+OnInit:
+	$MB_RADIUS = 10;
+	$MB_STAMINA_TIME = 10;
+	$MB_STAMINA_NORMAL = 2;
+	$MB_STAMINA_VIP = 4;
+	$MB_STAMINA_TO_SAVE = 100;
+	$MB_MAX = 14400; 
+
+	$MB_MUSIC_ZENY = 50000; // ค่าบริการ 50k
+	
+	$MB_MUSIC_BONUS = 2;
+	$MB_MUSIC_CAP = 600;
+	$MB_MUSIC_EXTEND = 180;
+	$MB_MUSIC_CD = 30;
+	$MB_DEFAULT_BGM$ = "11";
+
+	deletearray $MB_BGM_FILE$[0], getarraysize($MB_BGM_FILE$);
+	deletearray $MB_BGM_NAME$[0], getarraysize($MB_BGM_NAME$);
+	
+	setarray $MB_BGM_FILE$[0], "pronteranew", "Sakura", "Samarn", "Samarn2", "Samarn3", "Samarn4";
+	setarray $MB_BGM_NAME$[0], "Prontera Theme", "Sakura Festival", "Samarn (แบบที่ 1)", "Samarn (แบบที่ 2)", "Samarn (แบบที่ 3)", "Samarn (แบบที่ 4)";
+	
+	$MB_BGMCOUNT = getarraysize($MB_BGM_FILE$);
+
+	// --- สร้างเขตแดนห้ามตั้งร้าน/ตั้งห้อง ---
+	.@x1 = 159 - $MB_RADIUS;
+	.@y1 = 102 - $MB_RADIUS;
+	.@x2 = 159 + $MB_RADIUS;
+	.@y2 = 102 + $MB_RADIUS;
+
+	// บล็อกการตั้งร้าน (Vending) ในระยะ
+	setcell "morocc", .@x1, .@y1, .@x2, .@y2, cell_novending, 1;
+	// บล็อกการตั้งห้องแชท (Chat Room) ในระยะ
+	setcell "morocc", .@x1, .@y1, .@x2, .@y2, cell_nochat, 1;
+
+	delwaitingroom;
+	waitingroom "Music Box ผู้เล่นในพื้นที่: 0 คน", 0;
+	initnpctimer;
+	end;
+} // <-- เพิ่มปีกกาปิดตัวนี้ให้แล้วครับ!
+
+//======================================================
+// Zone Touch NPC
+//======================================================
+morocc,159,102,0	script	Music_Box_Zone	-1,10,10,{
+OnTouch:
+	if (!#IN_MUSIC_AREA) {
+		#IN_MUSIC_AREA = 1;
+		#MB_DAYKEY = (gettime(5) * 10000) + (gettime(4) * 100) + gettime(3);
+		callfunc "F_MB_EnsureStaminaRow", getcharid(3);
+		query_sql("SELECT `Boxstamina_time` FROM `stamina` WHERE `account_id` = "+getcharid(3), #BOXPLUS_SQL);
+		#STAMINA_UNSAVED = 0;
+		#BOX_LAST_TICK = gettimetick(2);
+		#MB_CUR_BGM$ = "";
+		#MB_FULL_NOTICE = 0;
+		dispbottom "^00FF00[Music Box] เข้าพื้นที่แล้ว เริ่มนับแต้ม!^000000";
+		specialeffect2 EF_ENTRY2;
+	}
+	callsub S_MB_ApplyBGM;
+	if (!#MB_TICKRUN) {
+		#MB_TICKRUN = 1;
+		addtimer 1000, strnpcinfo(0)+"::OnTick";
+	}
+	end;
+OnTouchOut:
+	if (#IN_MUSIC_AREA) {
+		callsub S_MB_ForceExit;
+	}
+	end;
+S_MB_ApplyBGM:
+	.@now = gettimetick(2);
+	if ($MB_MUSIC_END > 0 && .@now >= $MB_MUSIC_END) {
+		$MB_MUSIC_END = 0;
+		$MB_MUSIC_BGM$ = "";
+	}
+	if ($MB_MUSIC_END > .@now && $MB_MUSIC_BGM$ != "") .@want$ = $MB_MUSIC_BGM$;
+	else .@want$ = $MB_DEFAULT_BGM$;
+	if (#MB_CUR_BGM$ != .@want$) {
+		playBGM .@want$;
+		#MB_CUR_BGM$ = .@want$;
+	}
+	return;
+S_MB_ForceExit:
+	if (#STAMINA_UNSAVED > 0) {
+		callfunc "F_MB_FlushStamina", getcharid(3), #STAMINA_UNSAVED, $MB_MAX;
+		#BOXPLUS_SQL = min(#BOXPLUS_SQL + #STAMINA_UNSAVED, $MB_MAX);
+		#STAMINA_UNSAVED = 0;
+	}
+	#IN_MUSIC_AREA = 0;
+	#MB_TICKRUN = 0;
+	#BOX_LAST_TICK = 0;
+	#MB_FULL_NOTICE = 0;
+	playBGM $MB_DEFAULT_BGM$;
+	#MB_CUR_BGM$ = $MB_DEFAULT_BGM$;
+	dispbottom "^FF9900[Music Box] ออกจากพื้นที่แล้ว (บันทึกแต้ม + กลับเพลงเดิมทันที)^000000";
+	specialeffect2 EF_EXIT2;
+	return;
+OnTick:
+	if (!#IN_MUSIC_AREA) {
+		#MB_TICKRUN = 0;
+		#BOX_LAST_TICK = 0;
+		end;
+	}
+	getmapxy(.@m$, .@x, .@y, BL_PC);
+	if (.@m$ != "morocc" || distance(159,102,.@x,.@y) > $MB_RADIUS) {
+		callsub S_MB_ForceExit;
+		end;
+	}
+	.@now = gettimetick(2);
+	.@daykey = (gettime(5) * 10000) + (gettime(4) * 100) + gettime(3);
+	if (#MB_DAYKEY != .@daykey) {
+		#MB_DAYKEY = .@daykey;
+		callfunc "F_MB_EnsureStaminaRow", getcharid(3);
+		query_sql("SELECT `Boxstamina_time` FROM `stamina` WHERE `account_id` = "+getcharid(3), #BOXPLUS_SQL);
+		#STAMINA_UNSAVED = 0;
+		#BOX_LAST_TICK = .@now;
+		#MB_CUR_BGM$ = "";
+		#MB_FULL_NOTICE = 0;
+	}
+	callsub S_MB_ApplyBGM;
+	if (#BOX_LAST_TICK <= 0) #BOX_LAST_TICK = .@now;
+	.@elapsed = .@now - #BOX_LAST_TICK;
+	if (.@elapsed >= $MB_STAMINA_TIME) {
+		.@n = .@elapsed / $MB_STAMINA_TIME;
+		#BOX_LAST_TICK += (.@n * $MB_STAMINA_TIME);
+		.@cur = #BOXPLUS_SQL + #STAMINA_UNSAVED;
+		if (.@cur < $MB_MAX) {
+			.@mul = (($MB_MUSIC_END > .@now) ? $MB_MUSIC_BONUS : 1);
+			if (vip_status(VIP_STATUS_ACTIVE) || getgmlevel() >= 99)
+				.@per = $MB_STAMINA_VIP;
+			else
+				.@per = $MB_STAMINA_NORMAL;
+			.@add = .@n * (.@per * .@mul);
+			if (.@cur + .@add > $MB_MAX)
+				.@add = $MB_MAX - .@cur;
+			if (.@add > 0) {
+				#MB_FULL_NOTICE = 0;
+				#STAMINA_UNSAVED += .@add;
+				.@total = #BOXPLUS_SQL + #STAMINA_UNSAVED;
+				if (.@total > $MB_MAX) .@total = $MB_MAX;
+				
+				dispbottom "^00FF00[Music Box] ได้รับ +"+.@add+" แต้ม (สะสม: "+.@total+"/"+$MB_MAX+")^000000";
+				specialeffect2 EF_COIN; // แสดงเหรียญบนหัว
+				emotion ET_MONEY;       // [แก้ไขที่นี่] เปลี่ยนเป็นชื่อ Constant ใหม่ตามที่ระบบแนะนำ
+
+				if (#STAMINA_UNSAVED >= $MB_STAMINA_TO_SAVE
+				 || (#BOXPLUS_SQL + #STAMINA_UNSAVED) >= $MB_MAX) {
+					callfunc "F_MB_FlushStamina", getcharid(3), #STAMINA_UNSAVED, $MB_MAX;
+					#BOXPLUS_SQL = min(#BOXPLUS_SQL + #STAMINA_UNSAVED, $MB_MAX);
+					#STAMINA_UNSAVED = 0;
+					dispbottom "^00FFFF[System] บันทึกแต้ม Music Box ลงฐานข้อมูลแล้ว ("+#BOXPLUS_SQL+"/"+$MB_MAX+")^000000";
+				}
+			}
+		} else {
+			if (!#MB_FULL_NOTICE) {
+				dispbottom "^FF0000[Stamina] กระเป๋าเวลา Music Box เต็มแล้ว: " + .@cur + "/" + $MB_MAX + "^000000";
+				#MB_FULL_NOTICE = 1;
+			}
+		}
+	}
+	addtimer 1000, strnpcinfo(0)+"::OnTick";
+	end;
+}
+
+//======================================================
+// Daily reset
+//======================================================
+-	script	Music_Box_DailyReset	-1,{
+OnClock0000:
+	announce "กำลังรีเซ็ตระบบ Music Box", bc_all|bc_blue;
+	$MB_MUSIC_END = 0;
+	$MB_MUSIC_BGM$ = "";
+	announce "รีเซ็ตระบบ Music Box เรียบร้อยแล้ว", bc_all|bc_blue;
+	end;
+}
+
+//======================================================
+// Helper
+//======================================================
+function	script	F_MB_EnsureStaminaRow	{
+	.@aid = getarg(0);
+	query_sql(
+		"INSERT INTO `stamina` (`account_id`,`stamina_time`,`stamina_plus`,`Boxstamina_time`,`BoxStamina_plus`,`stamina_lock`) " +
+		"SELECT "+.@aid+", 28800, 0, 0, 0, 0 FROM DUAL " +
+		"WHERE NOT EXISTS (SELECT 1 FROM `stamina` WHERE `account_id` = "+.@aid+")"
+	);
+	return;
+}
+function	script	F_MB_FlushStamina	{
+	.@aid = getarg(0);
+	.@amt = getarg(1);
+	.@max = getarg(2);
+	if (.@amt <= 0) return;
+	query_sql("UPDATE `stamina` SET `Boxstamina_time` = LEAST(`Boxstamina_time` + "+.@amt+", "+.@max+") WHERE `account_id` = "+.@aid);
+	return;
+}

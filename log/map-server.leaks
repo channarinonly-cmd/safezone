@@ -1,0 +1,258 @@
+
+Memory manager: Memory leaks found at 2026/07/03 20h04m53s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8849e94
+0002 : npc.cpp line 4263 size 32 address 0x0x91e4bcc
+0003 : npc.cpp line 4263 size 32 address 0x0x91e4c0c
+
+Memory manager: Memory leaks found at 2026/07/03 20h05m50s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x80cb944
+0002 : npc.cpp line 4263 size 32 address 0x0x8a71b84
+0003 : npc.cpp line 4263 size 32 address 0x0x8a71bc4
+
+Memory manager: Memory leaks found at 2026/07/03 20h14m51s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x9329944
+0002 : npc.cpp line 4263 size 32 address 0x0x9ccfb84
+0003 : npc.cpp line 4263 size 32 address 0x0x9ccfbc4
+
+Memory manager: Memory leaks found at 2026/07/03 20h45m58s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8990944
+0002 : npc.cpp line 4263 size 32 address 0x0x9336b84
+0003 : npc.cpp line 4263 size 32 address 0x0x9336bc4
+
+Memory manager: Memory leaks found at 2026/07/03 20h54m56s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8ccee64
+0002 : npc.cpp line 4263 size 32 address 0x0x98058c4
+0003 : npc.cpp line 4263 size 32 address 0x0x9805904
+
+Memory manager: Memory leaks found at 2026/07/04 01h41m34s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8f01e64
+0002 : npc.cpp line 4263 size 32 address 0x0x9a388c4
+0003 : npc.cpp line 4263 size 32 address 0x0x9a38904
+
+Memory manager: Memory leaks found at 2026/07/04 01h58m49s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x84b802c
+0002 : npc.cpp line 4263 size 32 address 0x0x8da3c34
+0003 : npc.cpp line 4263 size 32 address 0x0x8da3c74
+
+Memory manager: Memory leaks found at 2026/07/04 02h06m43s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8af1d6c
+0002 : npc.cpp line 4263 size 32 address 0x0x94c6bac
+0003 : npc.cpp line 4263 size 32 address 0x0x94c6bec
+
+Memory manager: Memory leaks found at 2026/07/04 02h07m06s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8166d6c
+0002 : npc.cpp line 4263 size 32 address 0x0x8b3bbac
+0003 : npc.cpp line 4263 size 32 address 0x0x8b3bbec
+
+Memory manager: Memory leaks found at 2026/07/04 02h39m46s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x841cd6c
+0002 : npc.cpp line 4263 size 32 address 0x0x8df1bac
+0003 : npc.cpp line 4263 size 32 address 0x0x8df1bec
+
+Memory manager: Memory leaks found at 2026/07/04 02h47m31s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8130d9c
+0002 : npc.cpp line 4263 size 32 address 0x0x8b05bdc
+0003 : npc.cpp line 4263 size 32 address 0x0x8b05c1c
+
+Memory manager: Memory leaks found at 2026/07/04 02h56m36s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x898ad9c
+0002 : npc.cpp line 4263 size 32 address 0x0x935fbdc
+0003 : npc.cpp line 4263 size 32 address 0x0x935fc1c
+
+Memory manager: Memory leaks found at 2026/07/04 09h19m34s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8f53d9c
+0002 : npc.cpp line 4263 size 32 address 0x0x9928bdc
+0003 : npc.cpp line 4263 size 32 address 0x0x9928c1c
+
+Memory manager: Memory leaks found at 2026/07/04 09h26m48s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8f80cfc
+0002 : npc.cpp line 4263 size 32 address 0x0x995601c
+0003 : npc.cpp line 4263 size 32 address 0x0x995605c
+
+Memory manager: Memory leaks found at 2026/07/04 09h43m13s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x85f88fc
+0002 : npc.cpp line 4263 size 32 address 0x0x8fcdc1c
+0003 : npc.cpp line 4263 size 32 address 0x0x8fcdc5c
+
+Memory manager: Memory leaks found at 2026/07/04 09h45m36s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x90358dc
+0002 : npc.cpp line 4263 size 32 address 0x0x9a0ac5c
+0003 : npc.cpp line 4263 size 32 address 0x0x9a0ac9c
+
+Memory manager: Memory leaks found at 2026/07/04 10h06m19s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8243c64
+0002 : npc.cpp line 4263 size 32 address 0x0x8c31eac
+0003 : npc.cpp line 4263 size 32 address 0x0x8c31eec
+
+Memory manager: Memory leaks found at 2026/07/04 10h17m16s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x9042564
+0002 : npc.cpp line 4263 size 32 address 0x0x99ba7f4
+0003 : npc.cpp line 4263 size 32 address 0x0x99ba834
+
+Memory manager: Memory leaks found at 2026/07/04 15h46m04s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x7af46a4
+0002 : npc.cpp line 4263 size 32 address 0x0x83e8df4
+0003 : npc.cpp line 4263 size 32 address 0x0x83e8e34
+
+Memory manager: Memory leaks found at 2026/07/04 16h18m34s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8bfc3f4
+0002 : npc.cpp line 4263 size 32 address 0x0x9606034
+0003 : npc.cpp line 4263 size 32 address 0x0x9606074
+
+Memory manager: Memory leaks found at 2026/07/04 16h33m50s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8a53fe4
+0002 : npc.cpp line 4263 size 32 address 0x0x945e074
+0003 : npc.cpp line 4263 size 32 address 0x0x945e0b4
+
+Memory manager: Memory leaks found at 2026/07/04 16h59m03s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8552014
+0002 : npc.cpp line 4263 size 32 address 0x0x8f5c074
+0003 : npc.cpp line 4263 size 32 address 0x0x8f5c0b4
+
+Memory manager: Memory leaks found at 2026/07/04 17h14m03s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x814a014
+0002 : npc.cpp line 4263 size 32 address 0x0x8b54074
+0003 : npc.cpp line 4263 size 32 address 0x0x8b540b4
+
+Memory manager: Memory leaks found at 2026/07/04 17h20m19s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8cdf454
+0002 : npc.cpp line 4263 size 32 address 0x0x96e9034
+0003 : npc.cpp line 4263 size 32 address 0x0x96e9074
+
+Memory manager: Memory leaks found at 2026/07/04 17h27m36s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x9016454
+0002 : npc.cpp line 4263 size 32 address 0x0x9a20034
+0003 : npc.cpp line 4263 size 32 address 0x0x9a20074
+
+Memory manager: Memory leaks found at 2026/07/04 17h36m53s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x768d484
+0002 : npc.cpp line 4263 size 32 address 0x0x8097034
+0003 : npc.cpp line 4263 size 32 address 0x0x8097074
+
+Memory manager: Memory leaks found at 2026/07/04 20h31m26s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x9286594
+0002 : npc.cpp line 4263 size 16 address 0x0x9288064
+0003 : npc.cpp line 4263 size 16 address 0x0x92881b4
+0004 : npc.cpp line 4263 size 16 address 0x0x9288484
+0005 : npc.cpp line 4263 size 32 address 0x0x9c90934
+0006 : npc.cpp line 4263 size 32 address 0x0x9c91174
+0007 : npc.cpp line 4263 size 32 address 0x0x9c92034
+0008 : npc.cpp line 4263 size 32 address 0x0x9c92074
+0009 : npc.cpp line 4263 size 32 address 0x0x9c92e74
+0010 : npc.cpp line 4263 size 32 address 0x0x9c989b4
+0011 : script.cpp line 18438 size 16 address 0x0xd916044
+0012 : npc.cpp line 4263 size 32 address 0x0xe93ffbc
+0013 : npc.cpp line 4263 size 32 address 0x0xe940dfc
+
+Memory manager: Memory leaks found at 2026/07/04 21h52m59s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x821cf14
+0002 : npc.cpp line 4263 size 16 address 0x0x821d034
+0003 : npc.cpp line 4263 size 32 address 0x0x8c26ff4
+0004 : npc.cpp line 4263 size 32 address 0x0x8c27034
+0005 : script.cpp line 18438 size 3504 address 0x0xe545a84
+
+Memory manager: Memory leaks found at 2026/07/05 14h21m09s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x7acafa4
+0002 : npc.cpp line 4263 size 32 address 0x0x84d4ff4
+0003 : npc.cpp line 4263 size 32 address 0x0x84d5034
+
+Memory manager: Memory leaks found at 2026/07/05 15h40m03s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8ed94b4
+0002 : npc.cpp line 4263 size 32 address 0x0x98e3544
+0003 : npc.cpp line 4263 size 32 address 0x0x98e3584
+
+Memory manager: Memory leaks found at 2026/07/05 21h45m53s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8966fc4
+0002 : npc.cpp line 4263 size 32 address 0x0x9371b74
+0003 : npc.cpp line 4263 size 32 address 0x0x9371bb4
+
+Memory manager: Memory leaks found at 2026/07/05 21h52m57s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x896c4b4
+0002 : npc.cpp line 4263 size 32 address 0x0x9376bc4
+0003 : npc.cpp line 4263 size 32 address 0x0x9376c04
+
+Memory manager: Memory leaks found at 2026/07/05 22h18m45s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x82e3fa4
+0002 : npc.cpp line 4263 size 32 address 0x0x8ceec14
+0003 : npc.cpp line 4263 size 32 address 0x0x8ceec54
+
+Memory manager: Memory leaks found at 2026/07/05 22h59m14s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x89c8ae4
+0002 : npc.cpp line 4263 size 16 address 0x0x89cb124
+0003 : npc.cpp line 4263 size 32 address 0x0x93d4644
+0004 : npc.cpp line 4263 size 32 address 0x0x93d5d04
+0005 : npc.cpp line 4263 size 32 address 0x0x93d5d44
+0006 : npc.cpp line 4263 size 32 address 0x0x93d8984
+
+Memory manager: Memory leaks found at 2026/07/05 23h10m06s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x89a8124
+0002 : npc.cpp line 4263 size 32 address 0x0x93b2d44
+0003 : npc.cpp line 4263 size 32 address 0x0x93b2d84
+
+Memory manager: Memory leaks found at 2026/07/06 02h42m15s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x76eb034
+0002 : npc.cpp line 4263 size 32 address 0x0x80f5ca4
+0003 : npc.cpp line 4263 size 32 address 0x0x80f5ce4
+
+Memory manager: Memory leaks found at 2026/07/06 02h58m46s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x880f004
+0002 : npc.cpp line 4263 size 32 address 0x0x9219cd4
+0003 : npc.cpp line 4263 size 32 address 0x0x9219d14
+
+Memory manager: Memory leaks found at 2026/07/06 04h04m57s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x7da4c14
+0002 : npc.cpp line 4263 size 16 address 0x0x7da4c44
+0003 : npc.cpp line 4263 size 16 address 0x0x7da5034
+0004 : npc.cpp line 4263 size 32 address 0x0x87ae614
+0005 : npc.cpp line 4263 size 32 address 0x0x87afcd4
+0006 : npc.cpp line 4263 size 32 address 0x0x87afd14
+0007 : npc.cpp line 4263 size 32 address 0x0x87b1d14
+0008 : npc.cpp line 4263 size 32 address 0x0x87b2954
+0009 : npc.cpp line 4263 size 32 address 0x0x87b5d94
+
+Memory manager: Memory leaks found at 2026/07/06 04h29m27s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x87ea434
+0002 : npc.cpp line 4263 size 32 address 0x0x91f50d4
+0003 : npc.cpp line 4263 size 32 address 0x0x91f5114
+
+Memory manager: Memory leaks found at 2026/07/06 05h05m15s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8813434
+0002 : npc.cpp line 4263 size 32 address 0x0x921e0d4
+0003 : npc.cpp line 4263 size 32 address 0x0x921e114
+
+Memory manager: Memory leaks found at 2026/07/06 12h46m28s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x91ac8e4
+0002 : npc.cpp line 4263 size 16 address 0x0x91af434
+0003 : npc.cpp line 4263 size 32 address 0x0x9bb8a14
+0004 : npc.cpp line 4263 size 32 address 0x0x9bba0d4
+0005 : npc.cpp line 4263 size 32 address 0x0x9bba114
+0006 : npc.cpp line 4263 size 32 address 0x0x9bbcd54
+
+Memory manager: Memory leaks found at 2026/07/06 13h03m53s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x920e504
+0002 : npc.cpp line 4263 size 16 address 0x0x920e654
+0003 : npc.cpp line 4263 size 32 address 0x0x9c17a64
+0004 : npc.cpp line 4263 size 32 address 0x0x9c19124
+0005 : npc.cpp line 4263 size 32 address 0x0x9c19164
+0006 : npc.cpp line 4263 size 32 address 0x0x9c1bda4
+
+Memory manager: Memory leaks found at 2026/07/06 13h29m00s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x94dc434
+0002 : npc.cpp line 4263 size 32 address 0x0x9ee70d4
+0003 : npc.cpp line 4263 size 32 address 0x0x9ee7114
+
+Memory manager: Memory leaks found at 2026/07/06 14h21m09s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x8c4f014
+0002 : npc.cpp line 4263 size 16 address 0x0x8c4f044
+0003 : npc.cpp line 4263 size 16 address 0x0x8c4f434
+0004 : npc.cpp line 4263 size 32 address 0x0x9658a14
+0005 : npc.cpp line 4263 size 32 address 0x0x965a0d4
+0006 : npc.cpp line 4263 size 32 address 0x0x965a114
+0007 : npc.cpp line 4263 size 32 address 0x0x965cd54
+0008 : npc.cpp line 4263 size 32 address 0x0xe165f34
+0009 : npc.cpp line 4263 size 32 address 0x0xe16abf4
+
+Memory manager: Memory leaks found at 2026/07/06 14h28m55s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x91e2504
+0002 : npc.cpp line 4263 size 32 address 0x0x9bed124
+0003 : npc.cpp line 4263 size 32 address 0x0x9bed164

@@ -1,0 +1,2041 @@
+morocc,211,44,4	script	Festival Dungeon	115,{
+Start:
+	
+	mes .mes$;
+	if(.cash_use){
+		mes "เงื่อนไข : Cash "+callfunc("F_InsertComma",.cash_use)+" pt.";
+	}
+	if(.zeny_use){
+		mes "เงื่อนไข : Zeny "+callfunc("F_InsertComma",.zeny_use)+" z.";
+	}
+	if(.item_use){
+		mes "เงื่อนไข : "+getitemname(.item_use)+" "+callfunc("F_InsertComma",.item_am)+" ea.";
+	}
+	for ( .@i=0; .@i<getarraysize(.map$); .@i=.@i+3 ){
+		if(.map$[.@i+2] == "1"){
+			.@menu$ = .@menu$ + "- "+.map$[.@i]+" ^009900[ว่าง]^000000";
+		}
+		if(.map$[.@i+2] == "2"){
+			.@menu$ = .@menu$ + "- "+.map$[.@i]+" ^FF3300[เต็ม]^000000";
+		}
+		.@menu$ = .@menu$ + ":";
+	}
+	
+	.@part = select(.@menu$)-1;
+	
+	if(!getcharid(1)){
+		clear;
+		mes .mes$;
+		mes "ไม่สามารถลงทะเบียนได้";
+		mes "เนื่องจากไม่มีปาร์ตี้";
+		end;
+	}
+	
+	if(getcharid(1) == .party[.@part]){
+		clear;
+		mes .mes$;
+		mes "สวัสดีท่าน "+strcharinfo(0)+"";
+		mes "เป็นสมาชิกของปาร์ตี้ "+getpartyname(.party[.@part])+"";
+		mes "กรุณารอสักครู่";
+		sleep2 1000;
+		goto Menu_Pass;
+		end;
+	}
+	
+	if(#delay_element_dun > gettimetick(2)){
+		.@sec_time	= #delay_element_dun-gettimetick(2);
+		.@min_time	= .@sec_time/60;
+		.@hour_time	= .@min_time/60;
+		.@text_time	= .@min_time-(60*.@hour_time);
+		.@text2_time	= .@sec_time-(60*.@min_time);
+		if(.@hour_time >= 0 && .@hour_time <= 9){
+			.@hour_time$ = "0"+.@hour_time+"";
+		}
+		else if(.@hour_time > 9){
+			.@hour_time$ = ""+.@hour_time+"";
+		}
+		if(.@text_time >= 0 && .@text_time <= 9){
+			.@text_time$ = "0"+.@text_time+"";
+		}
+		else if(.@text_time > 9){
+			.@text_time$ = ""+.@text_time+"";
+		}
+		if(.@text2_time >= 0 && .@text2_time <= 9){
+			.@text2_time$ = "0"+.@text2_time+"";
+		}
+		else if(.@text2_time > 9){
+			.@text2_time$ = ""+.@text2_time+"";
+		}
+		clear;
+		mes .mes$;
+		mes "เหลือ : ("+.@hour_time$+"ชม : "+.@text_time$+" นาที : "+.@text2_time$+" วินาที)";
+		mes "ถึงจะสามารถลงดันได้อีกครั้ง";
+		end;
+	}
+	
+	if(.map$[(.@part*3)+2] == "2"){
+		.@sec_time	= .time_out[.@part]-gettimetick(2);
+		.@min_time	= .@sec_time/60;
+		.@hour_time	= .@min_time/60;
+		.@text_time	= .@min_time-(60*.@hour_time);
+		.@text2_time	= .@sec_time-(60*.@min_time);
+		if(.@hour_time >= 0 && .@hour_time <= 9){
+			.@hour_time$ = "0"+.@hour_time+"";
+		}
+		else if(.@hour_time > 9){
+			.@hour_time$ = ""+.@hour_time+"";
+		}
+		if(.@text_time >= 0 && .@text_time <= 9){
+			.@text_time$ = "0"+.@text_time+"";
+		}
+		else if(.@text_time > 9){
+			.@text_time$ = ""+.@text_time+"";
+		}
+		if(.@text2_time >= 0 && .@text2_time <= 9){
+			.@text2_time$ = "0"+.@text2_time+"";
+		}
+		else if(.@text2_time > 9){
+			.@text2_time$ = ""+.@text2_time+"";
+		}
+		clear;
+		mes .mes$;
+		mes "ไม่สามารถลง "+.map$[(.@part*3)]+" ได้";
+		mes "ปาร์ตี้ "+getpartyname(.party[.@part])+" ลงอยู่";
+		mes "จะจบลงในเวลา";
+		mes "เหลือ : ("+.@hour_time$+"ชม : "+.@text_time$+" นาที : "+.@text2_time$+" วินาที)";
+		end;
+	}
+	if(getcharid(0) != getpartyleader(getcharid(1),2)){
+		clear;
+		mes .mes$;
+		mes "ท่านไม่ใช่หัวหน้าสมาชิกปาร์ตี้";
+		end;
+	}
+	if(.cash_use){
+		if(#CASHPOINTS < .cash_use){
+			clear;
+			mes .mes$;
+			mes "Cash ของท่านไม่เพียงพอ";
+			end;
+		}
+	}
+	if(.zeny_use){
+		if(Zeny < .zeny_use){
+			clear;
+			mes .mes$;
+			mes "Zeny ของท่านไม่เพียงพอ";
+			end;
+		}
+	}
+	if(.item_use){
+		if(countitem(.item_use) < .item_am){
+			clear;
+			mes .mes$;
+			mes ""+getitemname(.item_use)+" ของท่านไม่เพียงพอ";
+			end;
+		}
+	}
+	if(.cash_use){ #CASHPOINTS = #CASHPOINTS -.cash_use; }
+	if(.zeny_use){ Zeny = Zeny -.zeny_use; }
+	if(.item_use){ delitem .item_use,.item_am; }
+	
+	.map$[(.@part*3)+2] = 2;
+	.party[.@part] = getcharid(1);
+	.monster[.@part] = 0;
+	if(.@part == 0){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R01_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R01_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R01_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R01_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R01_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R01_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R01_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R01";
+	}
+	if(.@part == 1){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R02_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R02_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R02_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R02_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R02_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R02_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R02_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R02";
+	}
+	if(.@part == 2){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R03_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R03_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R03_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R03_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R03_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R03_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R03_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R03";
+	}
+	if(.@part == 3){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R04_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R04_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R04_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R04_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R04_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R04_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R04_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R04";
+	}
+	if(.@part == 4){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R05_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R05_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R05_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R05_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R05_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R05_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R05_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R05";
+	}
+	if(.@part == 5){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R06_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R06_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R06_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R06_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R06_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R06_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R06_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R06";
+	}
+	if(.@part == 6){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R07_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R07_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R07_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R07_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R07_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R07_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R07_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R07";
+	}
+	if(.@part == 7){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R08_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R08_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R08_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R08_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R08_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R08_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R08_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R08";
+	}
+	if(.@part == 8){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R09_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R09_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R09_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R09_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R09_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R09_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R09_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R09";
+	}
+	if(.@part == 9){
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R10_1";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R10_2";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R10_3";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R10_4";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R10_5";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R10_6";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnDie_R10_7";
+		killmonster .map$[(.@part*3)+1],""+strnpcinfo(3)+"::OnBossDie_R10";
+	}
+	
+	.time_out[.@part] = gettimetick(2)+.delay_dun;
+	
+	for ( .@i=0; .@i<getarraysize(.mob); .@i++ ){
+		if(.@part == 0){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R01_1",0,0; }
+		if(.@part == 1){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R02_1",0,0; }
+		if(.@part == 2){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R03_1",0,0; }
+		if(.@part == 3){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R04_1",0,0; }
+		if(.@part == 4){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R05_1",0,0; }
+		if(.@part == 5){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R06_1",0,0; }
+		if(.@part == 6){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R07_1",0,0; }
+		if(.@part == 7){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R08_1",0,0; }
+		if(.@part == 8){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R09_1",0,0; }
+		if(.@part == 9){ areamonster .map$[(.@part*3)+1],128,85,160,74,""+getmonsterinfo(.mob[.@i],MOB_NAME)+"",.mob[.@i],.am[.@i],""+strnpcinfo(3)+"::OnDie_R10_1",0,0; }
+		.monster[.@part] = .monster[.@part] +.am[.@i];
+	}
+	
+	Menu_Pass:
+	#delay_element_dun = gettimetick(2)+.delay_player;
+	warp .map$[(.@part*3)+1],100,82;
+	end;
+	
+OnDie_R01_1:
+	.@room = 0;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R01_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R01_2:
+	.@room = 0;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R01_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R01_3:
+	.@room = 0;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R01_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R01_4:
+	.@room = 0;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R01_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R01_5:
+	.@room = 0;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R01_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R01_6:
+	.@room = 0;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R01_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R01_7:
+	.@room = 0;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R01",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R01:
+	.@room = 0;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R01_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R01_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R01_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R01_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R01_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R01_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R01_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R01";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R02_1:
+	.@room = 1;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R02_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R02_2:
+	.@room = 1;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R02_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R02_3:
+	.@room = 1;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R02_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R02_4:
+	.@room = 1;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R02_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R02_5:
+	.@room = 1;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R02_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R02_6:
+	.@room = 1;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R02_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R02_7:
+	.@room = 1;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R02",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R02:
+	.@room = 1;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R02_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R02_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R02_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R02_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R02_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R02_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R02_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R02";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R03_1:
+	.@room = 2;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R03_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R03_2:
+	.@room = 2;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R03_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R03_3:
+	.@room = 2;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R03_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R03_4:
+	.@room = 2;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R03_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R03_5:
+	.@room = 2;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R03_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R03_6:
+	.@room = 2;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R03_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R03_7:
+	.@room = 2;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R03",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R03:
+	.@room = 2;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R03_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R03_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R03_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R03_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R03_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R03_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R03_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R03";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R04_1:
+	.@room = 3;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R04_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R04_2:
+	.@room = 3;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R04_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R04_3:
+	.@room = 3;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R04_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R04_4:
+	.@room = 3;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R04_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R04_5:
+	.@room = 3;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R04_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R04_6:
+	.@room = 3;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R04_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R04_7:
+	.@room = 3;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R04",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R04:
+	.@room = 3;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R04_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R04_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R04_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R04_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R04_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R04_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R04_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R04";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R05_1:
+	.@room = 4;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R05_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R05_2:
+	.@room = 4;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R05_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R05_3:
+	.@room = 4;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R05_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R05_4:
+	.@room = 4;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R05_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R05_5:
+	.@room = 4;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R05_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R05_6:
+	.@room = 4;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R05_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R05_7:
+	.@room = 4;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R05",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R05:
+	.@room = 4;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R05_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R05_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R05_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R05_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R05_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R05_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R05_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R05";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R06_1:
+	.@room = 5;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R06_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R06_2:
+	.@room = 5;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R06_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R06_3:
+	.@room = 5;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R06_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R06_4:
+	.@room = 5;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R06_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R06_5:
+	.@room = 5;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R06_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R06_6:
+	.@room = 5;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R06_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R06_7:
+	.@room = 5;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R06",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R06:
+	.@room = 5;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R06_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R06_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R06_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R06_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R06_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R06_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R06_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R06";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R07_1:
+	.@room = 6;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R07_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R07_2:
+	.@room = 6;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R07_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R07_3:
+	.@room = 6;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R07_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R07_4:
+	.@room = 6;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R07_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R07_5:
+	.@room = 6;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R07_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R07_6:
+	.@room = 6;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R07_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R07_7:
+	.@room = 6;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R07",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R07:
+	.@room = 6;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R07_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R07_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R07_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R07_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R07_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R07_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R07_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R07";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R08_1:
+	.@room = 7;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R08_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R08_2:
+	.@room = 7;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R08_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R08_3:
+	.@room = 7;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R08_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R08_4:
+	.@room = 7;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R08_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R08_5:
+	.@room = 7;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R08_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R08_6:
+	.@room = 7;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R08_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R08_7:
+	.@room = 7;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R08",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R08:
+	.@room = 7;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R08_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R08_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R08_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R08_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R08_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R08_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R08_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R08";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R09_1:
+	.@room = 8;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R09_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R09_2:
+	.@room = 8;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R09_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R09_3:
+	.@room = 8;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R09_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R09_4:
+	.@room = 8;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R09_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R09_5:
+	.@room = 8;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R09_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R09_6:
+	.@room = 8;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R09_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R09_7:
+	.@room = 8;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R09",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R09:
+	.@room = 8;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R09_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R09_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R09_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R09_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R09_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R09_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R09_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R09";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnDie_R10_1:
+	.@room = 9;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณทางเดินไปยังรูปปั้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob2); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,153,170,118,""+getmonsterinfo(.mob2[.@i],MOB_NAME)+"",.mob2[.@i],.am2[.@i],""+strnpcinfo(3)+"::OnDie_R10_2",0,0;
+			.monster[.@room] = .monster[.@room] +.am2[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R10_2:
+	.@room = 9;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Prontera",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob3); .@i++ ){
+			areamonster .map$[(.@room*3)+1],103,303,139,273,""+getmonsterinfo(.mob3[.@i],MOB_NAME)+"",.mob3[.@i],.am3[.@i],""+strnpcinfo(3)+"::OnDie_R10_3",0,0;
+			.monster[.@room] = .monster[.@room] +.am3[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	end;
+
+OnDie_R10_3:
+	.@room = 9;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Yuno",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob4); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,220,224,186,""+getmonsterinfo(.mob4[.@i],MOB_NAME)+"",.mob4[.@i],.am4[.@i],""+strnpcinfo(3)+"::OnDie_R10_4",0,0;
+			.monster[.@room] = .monster[.@room] +.am4[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R10_4:
+	.@room = 9;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Geffen",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob5); .@i++ ){
+			areamonster .map$[(.@room*3)+1],188,304,224,271,""+getmonsterinfo(.mob5[.@i],MOB_NAME)+"",.mob5[.@i],.am5[.@i],""+strnpcinfo(3)+"::OnDie_R10_5",0,0;
+			.monster[.@room] = .monster[.@room] +.am5[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R10_5:
+	.@room = 9;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ โมเดลเมือง Morocc",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob6); .@i++ ){
+			areamonster .map$[(.@room*3)+1],104,217,140,186,""+getmonsterinfo(.mob6[.@i],MOB_NAME)+"",.mob6[.@i],.am6[.@i],""+strnpcinfo(3)+"::OnDie_R10_6",0,0;
+			.monster[.@room] = .monster[.@room] +.am6[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R10_6:
+	.@room = 9;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์ ได้เกิดบริเวณ รูปปั้้นวาไครี่",bc_yellow,0xFFFF00,400,20;
+		for ( .@i=0; .@i<getarraysize(.mob7); .@i++ ){
+			areamonster .map$[(.@room*3)+1],157,250,170,237,""+getmonsterinfo(.mob7[.@i],MOB_NAME)+"",.mob7[.@i],.am7[.@i],""+strnpcinfo(3)+"::OnDie_R10_7",0,0;
+			.monster[.@room] = .monster[.@room] +.am7[.@i];
+		}
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnDie_R10_7:
+	.@room = 9;
+	.monster[.@room] = .monster[.@room] -1;
+	if(.monster[.@room] <= 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน บอสประจำห้องได้จุติที่ เวทีประกวดแล้ว",bc_yellow,0xFFFF00,400,25;
+		.@mvp_id = .mvp[rand(getarraysize(.mvp))];
+		monster .map$[(.@room*3)+1],164,371,""+getmonsterinfo(.@mvp_id,MOB_NAME)+"",.@mvp_id,1,""+strnpcinfo(3)+"::OnBossDie_R10",0,0;
+	}
+	if(.monster[.@room] > 0){
+		mapannounce .map$[(.@room*3)+1],"ห้องของท่าน มอนเตอร์คงเหลือ "+.monster[.@room]+" ตัว",bc_yellow,0xFFFF00,400,20;
+	}
+	
+	end;
+
+OnBossDie_R10:
+	.@room = 9;
+	announce ""+strnpcinfo(0)+" : "+.map$[(.@room*3)]+" ได้สังหารบอสประจำห้องแล้ว ยินดีด้วย",bc_all,0xFFFF00,400,25;
+	.map$[(.@room*3)+2] = 1;
+	.delay[.@room] = 0;
+	.party[.@room] = 0;
+	.monster[.@room] = 0;
+	.time_out[.@room] = 0;
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R10_1";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R10_2";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R10_3";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R10_4";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R10_5";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R10_6";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnDie_R10_7";
+	killmonster .map$[(.@room*3)+1],""+strnpcinfo(3)+"::OnBossDie_R10";
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 5 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 4 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 3 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 2 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapannounce .map$[(.@room*3)+1],""+.map$[(.@room*3)]+" มีเวลา 1 วินาที สำหรับการเก็บกวาดของรางวัลให้เรียบร้อย",bc_yellow,0xFFFF00,400,25;
+	sleep2 1000;
+	mapwarp .map$[(.@room*3)+1],"morocc",156,104;
+	end;
+
+OnInit:
+	
+	waitingroom "Festival Dungeon",0;					//	ตั้งชื่อ Waitingroom
+	
+	.mes$ = "^FF3300[ Festival Dungeon ]^000000";		//	ตั้ง Head Dialog
+	
+	//.delay_player	= 60;		//	กำหนดดีเลย์ผู้เล่น	วินาที
+	.delay_player	= 60;		//	กำหนดดีเลย์ผู้เล่น	วินาที
+	.delay_dun		= 60*30;		//	กำหนดจำกัดเวลาดัน	วินาที
+	.time_limit		= 60;		//	กำหนดการเบรคดันหากไม่พบผู้เล่น	วินาที
+	
+	.cash_use		= 10;		//	กำหนด Cash ในการลงดัน		หากไม่ต้องการใส่ 0
+	.zeny_use		= 1000000;	//	กำหนด Zeny ในการลงดัน		หากไม่ต้องการใส่ 0
+	.item_use		= 0;		//	กำหนด Item ในการลงดัน		หากไม่ต้องการใส่ 0
+	.item_am		= 0;		//	กำหนด จำนวน Item ในการลงดัน	หากไม่ต้องการใส่ 0
+	
+	deletearray .map$;
+	//						ชื่อโชว์เมนู		ชื่อแผนที่		สถานะห้ามแก้ไข
+	setarray .map$[0]	,"Room 01"	,"festival_01"	,1
+						,"Room 02"	,"festival_02"	,1
+						,"Room 03"	,"festival_03"	,1
+						,"Room 04"	,"festival_04"	,1
+						,"Room 05"	,"festival_05"	,1
+						,"Room 06"	,"festival_06"	,1
+						,"Room 07"	,"festival_07"	,1
+						,"Room 08"	,"festival_08"	,1
+						,"Room 09"	,"festival_09"	,1
+						,"Room 10"	,"festival_10"	,1
+						;
+	
+	deletearray .delay;
+	setarray .delay[0]	,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						;
+	
+	deletearray .party;
+	setarray .party[0]	,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						,0
+						;
+	
+	deletearray .time_out;
+	setarray .time_out[0]	,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							;
+	
+	deletearray .monster;
+	setarray .monster[0]	,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							,0
+							;
+	
+	deletearray .mvp;
+	//	กำหนดรหัสบอสตัวสุดท้ายตรงเวที
+	setarray .mvp[0]	,2202,2249,2250,2251,2252,2253,2254,2255,2256,2317,2320,2441,2442,2476,2529,2942,2996,3073;
+	
+	deletearray .mob;	deletearray .am;
+	deletearray .mob2;	deletearray .am2;
+	deletearray .mob3;	deletearray .am3;
+	deletearray .mob4;	deletearray .am4;
+	deletearray .mob5;	deletearray .am5;
+	deletearray .mob6;	deletearray .am6;
+	deletearray .mob7;	deletearray .am7;
+	
+	//	กำหนดรหัสมอนเตอร์ เวฟที่ 1 ตรง ทางเข้างาน
+	setarray .mob[0]	,1001	,1002	,1010;
+	setarray .am[0]		,10		,20		,10;
+	
+	//	กำหนดรหัสมอนเตอร์ เวฟที่ 2 ตรง ทางเดินก่อนถึงรูปปั้นวาไครี่
+	setarray .mob2[0]	,1001	,1002	,1010;
+	setarray .am2[0]	,10		,20		,10;
+	
+	//	กำหนดรหัสมอนเตอร์ เวฟที่ 2 ตรง โมเดลเมือง Prontera
+	setarray .mob3[0]	,1001	,1002	,1010	,1004	,1005;
+	setarray .am3[0]	,10		,20		,10		,5		,5;
+	
+	//	กำหนดรหัสมอนเตอร์ เวฟที่ 2 ตรง โมเดลเมือง Yuno
+	setarray .mob4[0]	,1001	,1002	,1010	,1004	,1005;
+	setarray .am4[0]	,10		,20		,10		,5		,5;
+	
+	//	กำหนดรหัสมอนเตอร์ เวฟที่ 2 ตรง โมเดลเมือง Geffen
+	setarray .mob5[0]	,1001	,1002	,1010	,1004	,1005;
+	setarray .am5[0]	,10		,20		,10		,5		,5;
+	
+	//	กำหนดรหัสมอนเตอร์ เวฟที่ 2 ตรง โมเดลเมือง Morocc
+	setarray .mob6[0]	,1001	,1002	,1010	,1004	,1005;
+	setarray .am6[0]	,10		,20		,10		,5		,5;
+	
+	//	กำหนดรหัสมอนเตอร์ เวฟที่ 2 ตรง รูปปั้้นวาไครี่
+	setarray .mob7[0]	,1001	,1002	,1010;
+	setarray .am7[0]	,10		,20		,10;
+	
+	while(1){
+		for ( .@i=0; .@i<getarraysize(.map$); .@i=.@i+3 ){
+			if(.time_out[(.@i)/3] > gettimetick(2) && .map$[.@i+2] == "2"){
+				if(.time_out[(.@i)/3]-gettimetick(2) == 60 || .time_out[(.@i)/3]-gettimetick(2) == 30 || .time_out[(.@i)/3]-gettimetick(2) <= 10){
+					mapannounce .map$[.@i+1],""+strnpcinfo(0)+" : ห้อง "+.map$[.@i]+" เหลือเวลาอีก ("+(.time_out[(.@i)/3]-gettimetick(2))+") วินาที",0xFFFF00;
+				}
+			}
+			if(.time_out[(.@i)/3] <= gettimetick(2) && .map$[.@i+2] == "2"){
+				.map$[.@i+2] = 1;
+				.delay[(.@i)/3] = 0;
+				.party[(.@i)/3] = 0;
+				.monster[(.@i)/3] = 0;
+				.time_out[(.@i)/3] = 0;
+				if((.@i/3) == 0){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R01";
+				}
+				if((.@i/3) == 1){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R02";
+				}
+				if((.@i/3) == 2){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R03";
+				}
+				if((.@i/3) == 3){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R04";
+				}
+				if((.@i/3) == 4){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R05";
+				}
+				if((.@i/3) == 5){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R06";
+				}
+				if((.@i/3) == 6){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R07";
+				}
+				if((.@i/3) == 7){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R08";
+				}
+				if((.@i/3) == 8){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R09";
+				}
+				if((.@i/3) == 9){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R10";
+				}
+				mapwarp .map$[(.@i)+1],"morocc",156,104;
+				announce ""+strnpcinfo(0)+" : ห้องที่ "+.map$[.@i]+" หมดเวลา หรือ ผ่ายแพ้ ในการลงดันครั้งนี้",bc_all,0xFFFF00;
+			}
+			if(!getmapusers(""+.map$[.@i+1]+"") && .map$[.@i+2] == "2"){
+				if(.time_limit-.delay[(.@i)/3] == 60 || .time_limit-.delay[(.@i)/3] == 30 || .time_limit-.delay[(.@i)/3] <= 10){
+					announce ""+strnpcinfo(0)+" : ห้อง "+.map$[.@i]+" เนื่องจากไม่พบผู้เล่นในแผนที่ ถูกนับเวลา ("+(.time_limit-.delay[(.@i)/3])+") วินาที",bc_all,0xFFFF00;
+				}
+				.delay[(.@i)/3] ++;
+			}
+			if(.map$[.@i+2] == "1"){
+				.delay[(.@i)/3] = 0;
+			}
+			if(getmapusers(""+.map$[.@i+1]+"") && .map$[.@i+2] == "2"){
+				.delay[(.@i)/3] = 0;
+			}
+			if(.delay[(.@i)/3] >= .time_limit){
+				.map$[.@i+2] = 1;
+				.delay[(.@i)/3] = 0;
+				.party[(.@i)/3] = 0;
+				.monster[(.@i)/3] = 0;
+				.time_out[(.@i)/3] = 0;
+				if((.@i/3) == 0){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R01_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R01";
+				}
+				if((.@i/3) == 1){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R02_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R02";
+				}
+				if((.@i/3) == 2){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R03_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R03";
+				}
+				if((.@i/3) == 3){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R04_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R04";
+				}
+				if((.@i/3) == 4){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R05_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R05";
+				}
+				if((.@i/3) == 5){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R06_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R06";
+				}
+				if((.@i/3) == 6){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R07_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R07";
+				}
+				if((.@i/3) == 7){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R08_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R08";
+				}
+				if((.@i/3) == 8){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R09_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R09";
+				}
+				if((.@i/3) == 9){
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_1";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_2";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_3";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_4";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_5";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_6";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnDie_R10_7";
+					killmonster .map$[(.@i)+1],""+strnpcinfo(3)+"::OnBossDie_R10";
+				}
+				announce ""+strnpcinfo(0)+" : ห้องที่ "+.map$[.@i]+" ถูกล้างแผนที่แล้ว เนื่องจาก ไม่พบผู้เล่น หรือ ยอมแพ้",bc_all,0xFFFF00;
+			}
+		}
+		sleep 1000;
+	}
+	end;
+	
+}
+
+festival_01	mapflag	nomemo
+festival_01	mapflag	noteleport
+festival_01	mapflag	nosave
+
+festival_02	mapflag	nomemo
+festival_02	mapflag	noteleport
+festival_02	mapflag	nosave
+
+festival_03	mapflag	nomemo
+festival_03	mapflag	noteleport
+festival_03	mapflag	nosave
+
+festival_04	mapflag	nomemo
+festival_04	mapflag	noteleport
+festival_04	mapflag	nosave
+
+festival_05	mapflag	nomemo
+festival_05	mapflag	noteleport
+festival_05	mapflag	nosave
+
+festival_06	mapflag	nomemo
+festival_06	mapflag	noteleport
+festival_06	mapflag	nosave
+
+festival_07	mapflag	nomemo
+festival_07	mapflag	noteleport
+festival_07	mapflag	nosave
+
+festival_08	mapflag	nomemo
+festival_08	mapflag	noteleport
+festival_08	mapflag	nosave
+
+festival_09	mapflag	nomemo
+festival_09	mapflag	noteleport
+festival_09	mapflag	nosave
+
+festival_10	mapflag	nomemo
+festival_10	mapflag	noteleport
+festival_10	mapflag	nosave
+

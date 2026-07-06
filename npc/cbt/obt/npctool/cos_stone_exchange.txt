@@ -1,0 +1,165 @@
+// =========================================================================================
+// Script Name: Soul Forge - Stone Decomposer (Shop Window Version)
+// Description: ย่อยหินคอสตูม 3 ชิ้น แลกรับกล่อง Costume Stone Box (3400) 1 กล่อง
+// Feature: คัดกรองเหลือเฉพาะ Item ID (ลบ Enchant ID ออกทั้งหมดแล้ว)
+// =========================================================================================
+
+-	shop	Stone_Forge_Shop	-1,909:-1
+
+morocc,100,52,6	script	Stone Forge	713,{
+	
+	mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+	mes "^FF0000สวัสดียอดนักรบ!^000000";
+	mes "ข้าคือช่างหลอมหินเวทมนตร์...";
+	mes "หากคุณมี ^0000FFหินคอสตูม (Costume Stone)^000000 ที่ไม่ต้องการ";
+	mes "นำมาให้ข้า ^FF00003 ชิ้น^000000 (ผสมชนิดกันได้) ข้าจะหลอมรวมมัน";
+	mes "และแลกเป็น ^00AA00กล่องหินคอสตูมใบใหม่ (1 กล่อง)^000000 ให้เจ้าเอง";
+	next;
+
+Start_Menu:
+	switch(select("- เปิดหน้าต่างเตาหลอม (ลากไอเทมใส่):- ดูรูปแคตตาล็อกหินที่รับแลก:- คุยทีหลัง")) {
+		case 1:
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes "ลากหินที่ต้องการหลอมมาใส่หน้าต่างได้เลย";
+			mes "^FF0000*ข้อควรระวัง: จำนวนหินรวมทั้งหมดต้องหารด้วย 3 ลงตัวเท่านั้น!*^000000";
+			close2;
+			callshop "Stone_Forge_Shop",2;
+			npcshopattach "Stone_Forge_Shop";
+			end;
+			
+		case 2:
+			goto Category_Menu;
+			
+		case 3:
+			mes "^FF3300[ "+strnpcinfo(0)+" ]^000000";
+			mes "ตามใจเจ้า... ถ้ามีหินเหลือใช้ก็กลับมาหาข้าได้";
+			close;
+	}
+
+// ========================================================
+// ?? ระบบแสดงรูปและรายการหิน (Mini-Icon View)
+// ========================================================
+Category_Menu:
+	mes "^FF3300[ แคตตาล็อกหินที่รับหลอม ]^000000";
+	mes "เลือกหมวดหมู่ที่ต้องการตรวจสอบ:";
+	next;
+	.@cat = select("- หิน Normal (Top):- หิน Normal (Mid):- หิน Normal (Low):- หิน Normal (Garment):- หิน Effect Stones:- กลับเมนูหลัก");
+	
+	if (.@cat == 6) goto Start_Menu;
+	
+	deletearray .@ViewList[0];
+	switch(.@cat) {
+		case 1: copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Top[0], getarraysize(.Grp_Top); break;
+		case 2: copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Mid[0], getarraysize(.Grp_Mid); break;
+		case 3: copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Low[0], getarraysize(.Grp_Low); break;
+		case 4: copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Garment[0], getarraysize(.Grp_Garment); break;
+		case 5: copyarray .@ViewList[getarraysize(.@ViewList)], .Grp_Effect[0], getarraysize(.Grp_Effect); break;
+	}
+
+	mes "^FF3300[ รายการไอเทม ]^000000";
+	for (.@i = 0; .@i < getarraysize(.@ViewList); .@i++) {
+		mes "^i[" + .@ViewList[.@i] + "]^FFFFFF_^000000 " + getitemname(.@ViewList[.@i]);
+	}
+	next;
+	goto Category_Menu;
+
+// ========================================================
+// ?? ระบบประมวลผลการรับไอเทมจากหน้าต่างร้านค้า
+// ========================================================
+OnSellItem:
+	freeloop(1);
+	dispbottom "[ Stone Forge ] : กำลังตรวจสอบหินในเตาหลอม...";
+	dispbottom "----------------------------------";
+
+	.@total_valid = 0;
+	.@reward_id = 3400; // ไอเทมที่จะได้รับ (Costume Stone Box)
+
+	// --- ขั้นตอนที่ 1: ตรวจสอบและนับจำนวนหินทั้งหมดที่ลากใส่มา ---
+	for( .@i=0; .@i<getarraysize(@sold_nameid); .@i++ ) {
+		.@item_id = @sold_nameid[.@i];
+		.@amount = @sold_quantity[.@i];
+
+		if (.@amount <= 0) continue;
+
+		// เช็คความถูกต้อง 
+		if (inarray(.Allowed_List[0], .@item_id) == -1) {
+			dispbottom "• พบไอเทมที่ไม่ใช่หินคอสตูม ขอยกเลิกการทำรายการทั้งหมด!", 0xFF0000;
+			deletearray @sold_nameid[0];
+			deletearray @sold_quantity[0];
+			freeloop(0);
+			end;
+		}
+		
+		.@total_valid += .@amount;
+	}
+
+	// --- ขั้นตอนที่ 2: ตรวจสอบเงื่อนไข 3 ชิ้น แลก 1 กล่อง ---
+	if (.@total_valid == 0) {
+		deletearray @sold_nameid[0];
+		deletearray @sold_quantity[0];
+		freeloop(0);
+		end;
+	}
+
+	if (.@total_valid % 3 != 0) {
+		dispbottom "• ไม่สามารถหลอมได้! (คุณใส่หินมาทั้งหมด "+.@total_valid+" ชิ้น)", 0xFF0000;
+		dispbottom "• จำนวนหินรวมกันต้องหารด้วย 3 ลงตัว (เช่น 3, 6, 9, 12 ชิ้น)", 0xFF0000;
+		deletearray @sold_nameid[0];
+		deletearray @sold_quantity[0];
+		freeloop(0);
+		end;
+	}
+
+	// --- ขั้นตอนที่ 3: หักไอเทมออกจากกระเป๋า และจ่ายรางวัล ---
+	for( .@i=0; .@i<getarraysize(@sold_nameid); .@i++ ) {
+		.@item_id = @sold_nameid[.@i];
+		.@amount = @sold_quantity[.@i];
+		
+		if (.@amount > 0) {
+			delitem .@item_id, .@amount; // ลบหิน
+			dispbottom "• สลายวิญญาณ "+getitemname(.@item_id)+" จำนวน "+.@amount+" ชิ้น", 0x777777;
+		}
+	}
+
+	// คำนวณกล่องที่จะได้รับ (จำนวนหินทั้งหมด หาร 3)
+	.@reward_amount = .@total_valid / 3;
+	getitem .@reward_id, .@reward_amount; // แจกกล่อง
+	specialeffect 154; // แสดงเอฟเฟกต์ตีบวกสำเร็จบนหัวตัวละคร
+
+	dispbottom "----------------------------------";
+	dispbottom "[ Stone Forge ] : สำเร็จ! ได้รับ "+getitemname(.@reward_id)+" จำนวน "+.@reward_amount+" กล่อง", 0x00FF00;
+	
+	// คืนค่าตัวแปรระบบ
+	deletearray @sold_nameid[0];
+	deletearray @sold_quantity[0];
+	freeloop(0);
+	end;
+
+OnInit:
+	// ==== Load Stone Array (เฉพาะ Item ID) ====
+	// หมวด Normal Stone
+	setarray .Grp_Top[0], 6636, 6637, 6638, 6639, 6640, 6641, 6716, 6740, 6741, 6790, 6791, 6792, 6943, 6944, 6999, 25000, 25068, 25069, 25171, 25172, 25304;
+	setarray .Grp_Mid[0], 6642, 6643, 6717, 6742, 6743, 6744, 6945, 6946, 6947, 6948, 6949, 6950, 25001, 25002, 25003, 25004, 25005, 25006, 25007, 25060, 25061, 25070, 25141, 25173, 25175;
+	setarray .Grp_Low[0], 6644, 6645, 6718, 6745, 6951, 25008, 25009, 25010, 25011, 25012, 25013, 25014, 25015, 25016, 25017, 25062, 25063, 25064, 25065, 25066, 25071, 25072, 25139, 25174, 25227, 25228, 25229, 25305;
+	setarray .Grp_Garment[0], 6908, 6963, 6964, 25067, 25170, 25302, 25303, 25306;
+	
+	// หมวด Effect Stone (รวม Top, Mid, Low ไว้ในหมวดเดียว)
+	setarray .Grp_Effect[0], 1000305, 25138, 1000307;
+
+	// รวมรายการทั้งหมดเข้าสู่ลิสต์ตรวจสอบ .Allowed_List (ใช้เช็คตอนขาย)
+	deletearray .Allowed_List[0];
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Top[0], getarraysize(.Grp_Top);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Mid[0], getarraysize(.Grp_Mid);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Low[0], getarraysize(.Grp_Low);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Garment[0], getarraysize(.Grp_Garment);
+	copyarray .Allowed_List[getarraysize(.Allowed_List)], .Grp_Effect[0], getarraysize(.Grp_Effect);
+
+	// ล้าง Shop ชั่วคราวก่อนยัดไอเทมใหม่
+	npcshopdelitem "Stone_Forge_Shop", 909;
+	
+	// นำไอเทมที่อนุญาตขึ้นทะเบียนใน Shop 
+	for (.@i = 0; .@i < getarraysize(.Allowed_List); .@i++) {
+		npcshopadditem "Stone_Forge_Shop", .Allowed_List[.@i], 1;
+	}
+	end;
+}

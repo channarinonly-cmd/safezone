@@ -1,0 +1,16 @@
+-	script	roulette_menu	-1,{
+	end;
+	
+OnRouLetteClick:
+	if (opencollection()){
+		dispbottom "ทำการเปิดหน้าต่าง Collection",0xFFFFFF;
+		end;
+	} else {
+		end;
+	}
+
+OnInit:
+	$@roulette_npc$ = "roulette_menu";
+	$@roulette_event$ = "OnRouLetteClick";
+	end;
+}

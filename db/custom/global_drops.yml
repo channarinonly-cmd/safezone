@@ -1,0 +1,263 @@
+###########################################################################
+# Whispering Rain
+###########################################################################
+# Event Global Drop
+#
+# 0 = DROPEFFECT_NONE
+# 1 = DROPEFFECT_CLIENT
+# 2 = DROPEFFECT_BLUE_PILLAR
+# 3 = DROPEFFECT_YELLOW_PILLAR
+# 4 = DROPEFFECT_PURPLE_PILLAR
+# 5 = DROPEFFECT_GREEN_PILLAR
+# 6 = DROPEFFECT_RED_PILLAR
+
+############################################################################
+#
+#Header:
+#  Type: GLOBAL_DROP_DB
+#  Version: 1
+#
+#Body:
+#  - Name: Global Drop # ไม่มีความสำคัญ
+#    ReduceMap: # แมปที่ลดดรอปเรท คิดเป็น % ตรงๆ
+#      - Map: prontera
+#        Rate: 50
+#    MapLists: # กำหนดแมปที่จะให้ดรอป , หากไม่กำหนดจะดรอปทุกแมป
+#      - Map: Prontera
+#      - Map: Morocc
+#      - Mob: Orc Lord
+#    MobLists: # กำหนดมอนสเตอร์ที่จะให้ดรอป , หากไม่กำหนดจะดรอปทุกมอนสเตอร์ , ตรวจดู RACE ด้วย
+#      - Mob: Poring
+#      - Mob: Pupa
+#    NoMobLists:
+#      - Mob: BLACK_MUSHROOM 
+#      - Mob: POPORING
+#    TargetItems:
+#      - Item: Blade # ชื่อ AegisName
+#        Rate: 8000 # % ดรอป , เลขสุ่ม drops.conf
+#        IsStamina: true # check stamina
+#        Option: Group_1 # ชื่อกลุ่มออฟชัน
+#        Refine: 7 # หากไม่กำหนด จะมีค่าเป็น 0
+#        Announce: true # หากไม่กำหนด จะมีค่าเป็น false
+#        # AutoLoot: true # หากไม่กำหนด จะมีค่าเป็น false
+#        # Limit: 1 # หากไม่กำหนด จะมีค่าเป็น 0 , เมื่อกำหนด เวลาดอรปไอเทมจะถูกบรรทึกใน table "global_drop"
+#        # Identify: true # หากไม่กำหนด จะมีค่าเป็น true , หาก true ไอเทมที่ดรอปจะถูกส่อง , หาก false ไอเทมที่ดรอปจะไม่ถูกส่อง
+#        IsVip: false # หากไม่กำหนด จะมีค่าเป็น false , ดรอปเฉพาะ VIP เท่านั้น
+#        LevelRange: 5 # หากไม่กำหนด จะมีค่าเป็น 0 , กำหนดระยะห่างระหว่างเลเวลของมอนสเตอร์กับผู้เล่น ที่จะให้ดรอปไอเทม
+#        DropEffect: DROPEFFECT_BLUE_PILLAR # เสาดรอป
+#        MobLevelMin: 1 # เลเวลต่ำสุดของมอนสเตอร์
+#        MobLevelMax: 20 # เลเวลสูงสุดของมอนสเตอร์
+###########################################################################
+Header:
+  Type: GLOBAL_DROP_DB
+  Version: 1
+
+Body:
+
+##############stamina#############
+#
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 50
+#        MobLevelMin: 1
+#        MobLevelMax: 20
+#        IsStamina: true
+##        LevelRange: 20
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 150
+#        MobLevelMin: 21
+#        MobLevelMax: 40
+#        IsStamina: true
+##        LevelRange: 20
+#
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 80
+#        MobLevelMin: 41
+#        MobLevelMax: 60
+#        IsStamina: true
+##        LevelRange: 20
+#
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 100
+#        MobLevelMin: 61
+#        MobLevelMax: 80
+#        IsStamina: true
+##        LevelRange: 20
+#
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 200
+#        MobLevelMin: 81
+#        MobLevelMax: 99
+#        IsStamina: true
+##        LevelRange: 20
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 300
+#        MobLevelMin: 100
+#        MobLevelMax: 120
+#        IsStamina: true
+##        LevelRange: 20
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 400
+#        MobLevelMin: 121
+#        MobLevelMax: 140
+#        IsStamina: true
+##        LevelRange: 20
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 500
+#        MobLevelMin: 141
+#        MobLevelMax: 160
+#        IsStamina: true
+##        LevelRange: 20
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 600
+#        MobLevelMin: 161
+#        MobLevelMax: 180
+#        IsStamina: true
+##        LevelRange: 20
+#  - Name: miner stamina
+#    TargetItems:
+#      - Item: Stamaina_Potion
+#        Rate: 700
+#        MobLevelMin: 181
+#        MobLevelMax: 199
+#        IsStamina: true
+##        LevelRange: 20
+
+  - Name: Global Drop # ไม่มีความสำคัญ
+    TargetItems:
+      - Item: Elunium # ชื่อ AegisName
+        Rate: 6 # % ดรอป , เลขสุ่ม drops.conf
+        IsStamina: true # check stamina
+        Announce: true # หากไม่กำหนด จะมีค่าเป็น false
+        DropEffect: DROPEFFECT_BLUE_PILLAR # เสาดรอป
+        MobLevelMin: 99 # เลเวลต่ำสุดของมอนสเตอร์
+        MobLevelMax: 114 # เลเวลสูงสุดของมอนสเตอร์
+  - Name: Global Drop # ไม่มีความสำคัญ
+    TargetItems:
+      - Item: Oridecon # ชื่อ AegisName
+        Rate: 6 # % ดรอป , เลขสุ่ม drops.conf
+        IsStamina: true # check stamina
+        Announce: true # หากไม่กำหนด จะมีค่าเป็น false
+        DropEffect: DROPEFFECT_BLUE_PILLAR # เสาดรอป
+        MobLevelMin: 99 # เลเวลต่ำสุดของมอนสเตอร์
+        MobLevelMax: 114 # เลเวลสูงสุดของมอนสเตอร์
+        
+##############สงกรานต์##########################
+#  - Name: songkran # ไม่มีความสำคัญ
+#    TargetItems:
+#      - Item: Fine_Sand
+#        Rate: 100 # % ดรอป , เลขสุ่ม drops.conf
+#        IsStamina: true # check stamina
+#        MobLevelMin: 1 # เลเวลต่ำสุดของมอนสเตอร์
+#        MobLevelMax: 20 # เลเวลสูงสุดของมอนสเตอร์
+#  - Name: songkran # ไม่มีความสำคัญ
+#    TargetItems:
+#      - Item: Fine_Sand
+#        Rate: 150
+#        IsStamina: true
+#        MobLevelMin: 21
+#        MobLevelMax: 40
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Fine_Sand
+#        Rate: 200
+#        IsStamina: true
+#        MobLevelMin: 41
+#        MobLevelMax: 60
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Fine_Sand
+#        Rate: 400
+#        IsStamina: true
+#        MobLevelMin: 61
+#        MobLevelMax: 80
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Fine_Sand
+#        Rate: 600
+#        IsStamina: true
+#        MobLevelMin: 81
+#        MobLevelMax: 90
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Fine_Sand
+#        Rate: 800
+#        IsStamina: true
+#        MobLevelMin: 91
+#        MobLevelMax: 99
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Fine_Sand
+#        Rate: 1000
+#        IsStamina: true
+#        MobLevelMin: 99
+#        MobLevelMax: 114
+#
+#
+#  - Name: songkran # ไม่มีความสำคัญ
+#    TargetItems:
+#      - Item: Clean_Water
+#        Rate: 100 # % ดรอป , เลขสุ่ม drops.conf
+#        IsStamina: true # check stamina
+#        MobLevelMin: 1 # เลเวลต่ำสุดของมอนสเตอร์
+#        MobLevelMax: 20 # เลเวลสูงสุดของมอนสเตอร์
+#  - Name: songkran # ไม่มีความสำคัญ
+#    TargetItems:
+#      - Item: Clean_Water
+#        Rate: 100
+#        IsStamina: true
+#        MobLevelMin: 21
+#        MobLevelMax: 40
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Clean_Water
+#        Rate: 120
+#        IsStamina: true
+#        MobLevelMin: 41
+#        MobLevelMax: 60
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Clean_Water
+#        Rate: 200
+#        IsStamina: true
+#        MobLevelMin: 61
+#        MobLevelMax: 80
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Clean_Water
+#        Rate: 500
+#        IsStamina: true
+#        MobLevelMin: 81
+#        MobLevelMax: 90
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Clean_Water
+#        Rate: 1000
+#        IsStamina: true
+#        MobLevelMin: 91
+#        MobLevelMax: 99
+#  - Name: songkran
+#    TargetItems:
+#      - Item: Clean_Water
+#        Rate: 1500
+#        IsStamina: true
+#        MobLevelMin: 99
+#        MobLevelMax: 114
+#

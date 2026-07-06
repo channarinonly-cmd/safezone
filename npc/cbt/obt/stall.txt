@@ -1,0 +1,43 @@
+function	script	F_CallStallVending	{
+	.@lv = getarg(0);
+	mes "[ระบบตั้งร้านออฟไลน์]";
+	mes "คุณกำลังจะเปิดร้านขายของเลเวล " + .@lv;
+	mes "กรุณาเลือกสกุลเงินที่ต้องการใช้ค่ะ";
+	next;
+	if (select("ขายเป็นเงิน Zeny:ขายเป็นแต้ม Cash") == 1) {
+		stall_currency = 0; // <--- ลบ @ ออก
+	} else {
+		stall_currency = 1; // <--- ลบ @ ออก
+	}
+	open_stall "ALL_ASSISTANT_VENDING", .@lv;
+	end;
+}
+
+function	script	F_CallStallBuying	{
+	.@lv = getarg(0);
+	mes "[ระบบตั้งร้านออฟไลน์]";
+	mes "คุณกำลังจะเปิดร้านรับซื้อของเลเวล " + .@lv;
+	mes "กรุณาเลือกสกุลเงินที่ต้องการใช้ค่ะ";
+	next;
+	if (select("ซื้อด้วยเงิน Zeny:ซื้อด้วยแต้ม Cash") == 1) {
+		stall_currency = 0; // <--- ลบ @ ออก
+	} else {
+		stall_currency = 1; // <--- ลบ @ ออก
+	}
+	open_stall "ALL_ASSISTANT_BUYING", .@lv;
+	end;
+}
+
+// ===================================================
+// สคริปต์แก้บั๊กตั้งร้านออฟไลน์ (กระตุ้นสร้างตัวแปร Cash)
+// ===================================================
+-	script	Fix_Stall_Cash	-1,{
+OnPCLoginEvent:
+	// เมื่อผู้เล่นล็อกอินเข้าเกม ถ้ายอด Cash เป็น 0 หรือไม่มีประวัติเลย
+	// เราจะสับขาหลอกให้ระบบสร้างข้อมูลลง Database แบบเนียนๆ
+	if (#CASHPOINTS == 0) {
+		#CASHPOINTS = 1;
+		#CASHPOINTS = 0;
+	}
+	end;
+}

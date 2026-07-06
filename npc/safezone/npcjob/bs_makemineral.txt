@@ -1,0 +1,219 @@
+izlude,141,129,5	script	ช่างตีเหล็กขั้นเทพ	89,{
+    // ตรวจสอบว่าเป็น Blacksmith และมีระดับสูงพอ
+    mes "[ช่างตีเหล็กขั้นเทพ]";
+    mes "ยินดีต้อนรับสู่การบริการสกัด Elunium และ Oridecon!";
+    mes "เงื่อนไขการใช้บริการ:";
+    mes "- อาชีพที่สามารถใช้บริการนี้ได้: Blacksmith";
+    mes "- ระดับ Base Level ต้อง 95 ขึ้นไป";
+    mes "- สกิลที่ต้องการ: BS_IRON และ BS_STEE ต้องระดับ 5 ขึ้นไป";
+    mes "คุณต้องมีเงื่อนไขทั้งหมดนี้จึงจะใช้บริการได้!";
+    next;
+    
+    if (Class != Job_Blacksmith && Class != Job_Whitesmith && Class != Job_Mechanic) {
+        mes "[ช่างตีเหล็กขั้นเทพ]";
+        mes "เฉพาะช่างตีเหล็กเท่านั้นที่สามารถใช้บริการนี้ได้!";
+        close;
+    }
+    
+    if (BaseLevel < 95) {
+        mes "[ช่างตีเหล็กขั้นเทพ]";
+        mes "คุณต้องมีระดับ 95 ขึ้นไปจึงจะสามารถสกัดได้!";
+        close;
+    }
+    
+    // ใช้ Skill ID สำหรับ BS_IRON (ID = 94) และ BS_STEE (ID = 95)
+    if (getskilllv(94) < 5 || getskilllv(95) < 5) {
+        mes "[ช่างตีเหล็กขั้นเทพ]";
+        mes "คุณต้องอัพสกิล BS_IRON และ BS_STEE ให้ถึงเลเวล 5 เพื่อใช้บริการนี้!";
+        close;
+    }
+
+    mes "[ช่างตีเหล็กขั้นเทพ]";
+    mes "ยินดีต้อนรับช่างตีเหล็กขั้นเทพ!";
+    mes "ฉันสามารถช่วยคุณสกัด Elunium หรือ Oridecon ได้";
+    mes "ระบบจะเลือกอุปกรณ์ที่ดีที่สุดโดยอัตโนมัติ";
+    next;
+    
+    menu 
+        "สกัด Elunium",L_EXTRACT_ELU,
+        "สกัด Oridecon",L_EXTRACT_ORI,
+        "ไม่เป็นไร",L_END;
+        
+L_EXTRACT_ELU:
+    // กำหนดสูตรการสกัด Elunium
+    setarray @required_items[0],999,20,1000,5;  // Steel 20 + Star Crumb 5
+    setarray @required_items[4],985,1,999,3;  // Emveretarcon 1 + Steel 3 (ทางเลือก)
+    set @base_rate,20; // โอกาสพื้นฐาน 30%
+    set @result_item,985; // Elunium
+    set @process_name$,"สกัด Elunium";
+    goto L_SHOW_MENU;
+
+L_EXTRACT_ORI:
+    // กำหนดสูตรการสกัด Oridecon
+    setarray @required_items[0],999,20,1000,5;  // Steel 20 + Star Crumb 5
+    setarray @required_items[4],999,3,1015,2;  // Steel 3 + Coal 2 (ทางเลือก)
+    set @base_rate,20; // โอกาสพื้นฐาน 10%
+    set @result_item,984; // Oridecon
+    set @process_name$,"สกัด Oridecon";
+    goto L_SHOW_MENU;
+
+L_SHOW_MENU:
+    mes "[ช่างตีเหล็กขั้นเทพ]";
+    mes "เลือกสูตรสำหรับ "+@process_name$+":";
+    next;
+    
+    // สูตรที่ 1
+    mes "สูตร 1:";
+    mes "- " + getitemname(@required_items[0]) + " x" + @required_items[1];
+    mes "- " + getitemname(@required_items[2]) + " x" + @required_items[3];
+    
+    // สูตรที่ 2
+//    mes "สูตร 2:";
+//    mes "- " + getitemname(@required_items[4]) + " x" + @required_items[5];
+//    mes "- " + getitemname(@required_items[6]) + " x" + @required_items[7];
+    next;
+    
+    menu 
+        "ใช้สูตร 1",L_CHOOSE_FORMULA1,
+ //       "ใช้สูตร 2",L_CHOOSE_FORMULA2,
+        "ยกเลิก",L_END;
+        
+L_CHOOSE_FORMULA1:
+    set @item1,@required_items[0];
+    set @qty1,@required_items[1];
+    set @item2,@required_items[2];
+    set @qty2,@required_items[3];
+    goto L_CHECK_ITEMS;
+
+L_CHOOSE_FORMULA2:
+    set @item1,@required_items[4];
+    set @qty1,@required_items[5];
+    set @item2,@required_items[6];
+    set @qty2,@required_items[7];
+    goto L_CHECK_ITEMS;
+
+L_CHECK_ITEMS:
+    // ตรวจสอบวัตถุดิบ
+    if (countitem(@item1) < @qty1 || countitem(@item2) < @qty2) {
+        mes "[ช่างตีเหล็กขั้นเทพ]";
+        mes "คุณต้องมีวัตถุดิบดังต่อไปนี้:";
+        mes "- " + getitemname(@item1) + " x" + @qty1;
+        mes "- " + getitemname(@item2) + " x" + @qty2;
+        close;
+    }
+    
+    // ตรวจสอบทั่งเหล็ก (ต้องมีอย่างน้อย 1 ประเภท)
+    if (countitem(989) < 1 && countitem(988) < 1 && countitem(987) < 1&& countitem(986) < 1) {
+        mes "[ช่างตีเหล็กขั้นเทพ]";
+        mes "คุณต้องมีทั่งเหล็กอย่างน้อย 1 ประเภทเพื่อสกัด!";
+        close;
+    }
+    
+    // เช็คพื้นที่ในกระเป๋า
+    if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 3000)) {
+        mes "[ช่างตีเหล็กขั้นเทพ]";
+        mes "คุณมีน้ำหนักเกินหรือช่องเก็บของไม่พอ!";
+        close;
+    }
+    
+    // หาทั่งที่ดีที่สุด
+    set @anvil_bonus,0;
+    set @anvil_name$,"ไม่มี";
+    
+    if (countitem(989) > 0) { // Emperium Anvil (+10%)
+        set @anvil_bonus,10;
+        set @anvil_name$,"Emperium Anvil";
+    } else if (countitem(988) > 0) { // Golden Anvil (+5%)
+        set @anvil_bonus,5;
+        set @anvil_name$,"Golden Anvil";
+    } else if (countitem(987) > 0) { // Oridecon Anvil (+3%)
+        set @anvil_bonus,3;
+        set @anvil_name$,"Oridecon Anvil";
+    } else if (countitem(986) > 0) { // Anvil (+1%)
+        set @anvil_bonus,1;
+        set @anvil_name$,"Anvil";
+    }
+    
+    // หาค้อนที่ดีที่สุด
+    set @hammer_bonus,0;
+    set @hammer_name$,"ไม่มี";
+    
+    if (countitem(615) > 0) { // Oridecon Hammer (+5%)
+        set @hammer_bonus,5;
+        set @hammer_name$,"Oridecon Hammer";
+    } else if (countitem(614) > 0) { // Golden Hammer (+3%)
+        set @hammer_bonus,3;
+        set @hammer_name$,"Golden Hammer";
+    } else if (countitem(613) > 0) { // Iron Hammer (+1%)
+        set @hammer_bonus,1;
+        set @hammer_name$,"Iron Hammer";
+    }
+	if (countitem(615) < 1 && countitem(614) < 1 && countitem(613) < 1) {
+		mes "[ช่างตีเหล็กขั้นเทพ]";
+		mes "คุณต้องมีค้อนตีเหล็ก (Hammer) อย่างน้อย 1 ชิ้น!";
+		close;
+	}
+    // คำนวณโอกาสสำเร็จทั้งหมด
+    set @total_rate,@base_rate + @anvil_bonus + @hammer_bonus;
+    if (@total_rate > 95) set @total_rate,95; // จำกัดสูงสุด 95%
+    
+    // แสดงสรุป
+    mes "[ช่างตีเหล็กขั้นเทพ]";
+    mes "สรุปการสกัด:";
+    mes "วัตถุดิบ:";
+    mes "- " + getitemname(@item1) + " x" + @qty1;
+    mes "- " + getitemname(@item2) + " x" + @qty2;
+    mes "อุปกรณ์:";
+    mes "- " + @anvil_name$ + " (+" + @anvil_bonus + "%)";
+    mes "- " + @hammer_name$ + " (+" + @hammer_bonus + "%)";
+    mes "โอกาสสำเร็จทั้งหมด: " + @total_rate + "%";
+    mes "ต้องการดำเนินการไหม?";
+    next;
+    
+    menu 
+        "สกัดเลย!",L_DO_EXTRACT,
+        "ยกเลิก",L_END;
+        
+L_DO_EXTRACT:
+    // หักลบวัตถุดิบ
+    delitem @item1,@qty1;
+    delitem @item2,@qty2;
+    
+    // หักลบค้อนที่ใช้จริง
+    if (@hammer_name$ == "Oridecon Hammer") {
+        delitem 615, 1;
+    } else if (@hammer_name$ == "Golden Hammer") {
+        delitem 614, 1;
+    } else if (@hammer_name$ == "Iron Hammer") {
+        delitem 613, 1;
+    }
+
+    if (rand(100) < @total_rate) {
+        getitem @result_item,1;
+        mes "[ช่างตีเหล็กขั้นเทพ]";
+        mes "ยินดีด้วย! การ "+@process_name$+" สำเร็จ!";
+        mes "คุณได้รับ " + getitemname(@result_item) + " 1 ชิ้น!";
+        specialeffect2 135;  // เอฟเฟค refine สำเร็จ
+// ประกาศเมื่อสำเร็จ
+	if (@result_item == 985) { // Elunium
+		announce "ช่างตีเหล็กขั้นเทพ: " + strcharinfo(0) + " ได้สกัด Elunium สำเร็จ!", bc_map;
+	} else if (@result_item == 984) { // Oridecon
+		announce "ช่างตีเหล็กขั้นเทพ: " + strcharinfo(0) + " ได้สกัด Oridecon สำเร็จ!", bc_map;
+        }
+    } else {
+        mes "[ช่างตีเหล็กขั้นเทพ]";
+        mes "เสียใจด้วย! การ "+@process_name$+" ล้มเหลว!";
+        mes "วัตถุดิบได้หายไปแล้ว";
+        specialeffect2 155;  // เอฟเฟค refine ล้มเหลว
+    }
+    close;
+
+    
+L_END:
+    mes "[ช่างตีเหล็กขั้นเทพ]";
+    mes "แล้วเจอกันใหม่นะ!";
+    close;
+	
+OnInit:
+    waitingroom "ถลุง Elunium&Oridecon",0;
+}

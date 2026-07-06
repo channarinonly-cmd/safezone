@@ -1,0 +1,231 @@
+// --------------------------------------------------
+// สคริปต์หลัก
+-	script	CheckStaminaWeightKill	-1,{
+}
+
+function	script	check_weight_and_end_stamina	{
+	if (checkweight(1201,1) == 0 || (MaxWeight - Weight < 3000)) {
+		// เซฟเวลาปัจจุบันลง Database ก่อนปิดบัฟ
+		if (getstatus(SC_STAMINA)) {
+			.@total_time = getstatus(SC_STAMINA, 5) / 1000;
+			query_sql "SELECT `Boxstamina_time` FROM `stamina` WHERE `account_id`=" + getcharid(3), .@BoxTime;
+			if (.@total_time < .@BoxTime) query_sql "UPDATE `stamina` SET `stamina_time` = 0, `Boxstamina_time` = " + .@total_time + " WHERE `account_id` = " + getcharid(3);
+			else query_sql "UPDATE `stamina` SET `stamina_time` = " + (.@total_time - .@BoxTime) + " WHERE `account_id` = " + getcharid(3);
+		}
+		sc_end SC_STAMINA;
+		sc_end SC_AUTOATTACK;
+		if (#AI_self$ != "") {
+			pcstopfollow getCharID(3,#AI_self$);
+		}
+		warp "SavePoint",0,0;
+	}
+	return;
+}
+
+// Stamina Check Script
+-	script	Stamina#Check	-1,{
+OnPCLogoutEvent:
+	// เซฟเวลาปัจจุบันลง Database เมื่อล็อกเอาท์
+	if (getstatus(SC_STAMINA)) {
+		.@total_time = getstatus(SC_STAMINA, 5) / 1000;
+		query_sql "SELECT `Boxstamina_time` FROM `stamina` WHERE `account_id`=" + getcharid(3), .@BoxTime;
+		if (.@total_time < .@BoxTime) query_sql "UPDATE `stamina` SET `stamina_time` = 0, `Boxstamina_time` = " + .@total_time + " WHERE `account_id` = " + getcharid(3);
+		else query_sql "UPDATE `stamina` SET `stamina_time` = " + (.@total_time - .@BoxTime) + " WHERE `account_id` = " + getcharid(3);
+	}
+	sc_end SC_STAMINA;
+	end;
+OnPCLoginEvent:
+	if (Get_StaminaX == 0) {
+		getitem 30034, 1;
+		Get_StaminaX = 1;
+	}
+
+	if (#StaminaX == 0) {
+		query_sql("INSERT INTO `stamina` (account_id,stamina_time,stamina_plus,Boxstamina_time,Boxstamina_plus) VALUES (" + getcharid(3) + ",28800,0,0,0)");
+		#StaminaX = 1;
+	}
+	end;
+OnGiveStamina:
+	announce "กำลังรีเซ็ต Stamina หลักทุกไอดี", bc_all;
+	query_sql "UPDATE `stamina` set `stamina_time` = 28800, `stamina_plus` = 0";
+	dispbottom "Stamina ถูกรีเซ็ตเป็น 28800 (เวลาสะสม Boxstamina คงเดิม)", 0x00FF00;
+	end;
+
+OnClock2359:
+	addrid(0);
+	doevent strnpcinfo(0)+"::OnGiveStamina";
+	end;
+} 
+
+// --------------------------------------------------
+// Stamina Update Script (Optimized - 1 Minute Interval)
+-	script	Stamina#Update	-1,{
+OnPCLoginEvent:
+	if (getstatus(SC_STAMINA)) {
+		deltimer strnpcinfo(0) + "::OnMin";
+		addtimer 60000, strnpcinfo(0) + "::OnMin";
+	}
+	end;
+
+OnSec:
+OnMin:
+	if(getstatus(SC_STAMINA)) {
+		// ใช้เวลาจริงจากบัฟเป็นหลัก เพื่อป้องกัน Database ติดลบ
+		.@total_time = getstatus(SC_STAMINA, 5) / 1000;
+		query_sql "SELECT `Boxstamina_time` FROM `stamina` WHERE `account_id` = " + getcharid(3), .@BoxTime;
+		
+		if (.@total_time <= 0) {
+			query_sql "UPDATE `stamina` SET `stamina_time` = 0, `Boxstamina_time` = 0 WHERE `account_id` = " + getcharid(3);
+			sc_end SC_STAMINA;
+			sc_end SC_AUTOATTACK;
+			
+			if (#AI_self$ != "") {
+				pcstopfollow getCharID(3, #AI_self$);
+			}
+			
+			dispbottom "Stamina หลักและเวลาสะสมของคุณหมดแล้ว ระบบ Auto Attack ถูกปิดการทำงาน", 0xFF0000;
+			end;
+		} else if (.@total_time < .@BoxTime) {
+			query_sql "UPDATE `stamina` SET `stamina_time` = 0, `Boxstamina_time` = " + .@total_time + " WHERE `account_id` = " + getcharid(3);
+		} else {
+			query_sql "UPDATE `stamina` SET `stamina_time` = " + (.@total_time - .@BoxTime) + " WHERE `account_id` = " + getcharid(3);
+		}
+
+		addtimer 60000, strnpcinfo(0) + "::OnMin";
+	} else {
+		sc_end SC_AUTOATTACK;
+	}
+	end;
+
+OnPCDieEvent:
+	// เซฟเวลาปัจจุบันลง Database เมื่อตาย (ก่อนที่บัฟจะหาย)
+	if (getstatus(SC_STAMINA)) {
+		.@total_time = getstatus(SC_STAMINA, 5) / 1000;
+		query_sql "SELECT `Boxstamina_time` FROM `stamina` WHERE `account_id`=" + getcharid(3), .@BoxTime;
+		if (.@total_time < .@BoxTime) query_sql "UPDATE `stamina` SET `stamina_time` = 0, `Boxstamina_time` = " + .@total_time + " WHERE `account_id` = " + getcharid(3);
+		else query_sql "UPDATE `stamina` SET `stamina_time` = " + (.@total_time - .@BoxTime) + " WHERE `account_id` = " + getcharid(3);
+	}
+	sc_end SC_STAMINA;
+	end;
+}
+
+// --------------------------------------------------
+// Stamina 1 Hour Function
+function	script	Stamina_1Hour	{
+	query_sql "SELECT `stamina_plus` FROM `stamina` WHERE `account_id` = " + getcharid(3), .@StaminaPlus_Day;
+	if (.@StaminaPlus_Day >= 4) {
+		dispbottom "Stamina Plus สามารถใช้ได้ 4 ครั้งต่อวันเท่านั้น โปรดรอในวันถัดไป", 0xFF0000;
+		return;
+	}
+
+	query_sql "UPDATE `stamina` SET `stamina_time` = (`stamina_time` + 3600) WHERE `account_id` = " + getcharid(3);
+	query_sql "UPDATE `stamina` SET `stamina_plus` = (`stamina_plus` + 1) WHERE `account_id` = " + getcharid(3);
+	dispbottom "Stamina Plus 1 ชั่วโมง ถูกใช้งาน", 0xFFFFFF;
+	delitem 30035, 1;
+	
+	// อัปเดตเวลาบนหลอดบัฟทันทีที่กดใช้
+	if (getstatus(SC_STAMINA)) {
+		query_sql "SELECT `stamina_time`, `Boxstamina_time` FROM `stamina` WHERE `account_id`=" + getcharid(3), .@StaminaTime, .@BoxTime;
+		sc_start SC_STAMINA, (.@StaminaTime + .@BoxTime) * 1000, 1;
+	}
+	return;
+}
+
+// --------------------------------------------------
+// Stamina 4 Hour Function (Unlimited Usage)
+function	script	Stamina_4Hour	{
+	query_sql "UPDATE `stamina` SET `stamina_time` = (`stamina_time` + 14400) WHERE `account_id` = " + getcharid(3);
+	dispbottom "Stamina Plus 4 ชั่วโมง ถูกใช้งาน", 0xFFFFFF;
+	delitem 35012, 1;
+	
+	// อัปเดตเวลาบนหลอดบัฟทันทีที่กดใช้
+	if (getstatus(SC_STAMINA)) {
+		query_sql "SELECT `stamina_time`, `Boxstamina_time` FROM `stamina` WHERE `account_id`=" + getcharid(3), .@StaminaTime, .@BoxTime;
+		sc_start SC_STAMINA, (.@StaminaTime + .@BoxTime) * 1000, 1;
+	}
+	return;
+}
+
+// ฟังก์ชั่น F_Stamina (ควบคุมการเปิด-ปิด)
+function	script	F_Stamina	{
+	// ดึงเวลาจากฐานข้อมูลเพื่อเตรียมคำนวณ
+	query_sql "SELECT `stamina_time`, `Boxstamina_time` FROM `stamina` WHERE `account_id`=" + getcharid(3), .@StaminaTime, .@BoxTime;
+
+	// ถ้าเปิดบัฟอยู่ ให้ดึงเวลาจริงระดับวินาทีมาโชว์เลย!
+	if (getstatus(SC_STAMINA)) {
+		.@total_time = getstatus(SC_STAMINA, 5) / 1000;
+	} else {
+		.@total_time = .@StaminaTime + .@BoxTime;
+	}
+
+	.@time_m = .@total_time / 60;
+	.@time_s = .@total_time % 60;
+	
+	mes "[Kafra Stamina]";
+	if (.@total_time < 60)
+		.@time_txt$ = callfunc("F_InsertPlural", .@time_s, "วินาที");
+	else
+		.@time_txt$ = callfunc("F_InsertPlural", .@time_m, "นาที") + " " + callfunc("F_InsertPlural", .@time_s, "วินาที");
+
+	mes "Stamina รวมคงเหลือ ^00AA00" + .@time_txt$ + "^000000";
+	
+	// โชว์แยกเวลาหลักและสะสม ให้ตรงกับเวลาจริง
+	if (getstatus(SC_STAMINA)) {
+		if (.@total_time < .@BoxTime) {
+			.@show_box = .@total_time;
+			.@show_main = 0;
+		} else {
+			.@show_box = .@BoxTime;
+			.@show_main = .@total_time - .@BoxTime;
+		}
+		mes "^999999(แบ่งเป็น เวลาหลัก: " + (.@show_main/60) + " นาที / สะสม: " + (.@show_box/60) + " นาที)^000000";
+	} else {
+		mes "^999999(แบ่งเป็น เวลาหลัก: " + (.@StaminaTime/60) + " นาที / สะสม: " + (.@BoxTime/60) + " นาที)^000000";
+	}
+	
+	query_sql "SELECT `stamina_plus` FROM `stamina` WHERE `account_id`=" + getcharid(3), .@StaminaPlus_Day;
+	mes "สามารถเพิ่มเวลาได้อีก ^0000FF(" + .@StaminaPlus_Day + "/4)^000000 ครั้ง ต่อวัน";
+	mes "สะสมเวลาหลักได้สูงสุด 720 นาที";
+	next;
+	
+	// เช็คสถานะปัจจุบัน ถ้าเปิดอยู่ให้แสดงปุ่ม "ปิด" ถ้าปิดอยู่ให้แสดงปุ่ม "เปิด"
+	if (getstatus(SC_STAMINA)) {
+		if (select("ปิดระบบ Stamina", "ยกเลิก") == 1) {
+			// ก่อนปิดบัฟ เซฟเวลาลงฐานข้อมูลแบบเป๊ะๆ ทันที
+			if (.@total_time < .@BoxTime) {
+				query_sql "UPDATE `stamina` SET `stamina_time` = 0, `Boxstamina_time` = " + .@total_time + " WHERE `account_id` = " + getcharid(3);
+			} else {
+				query_sql "UPDATE `stamina` SET `stamina_time` = " + (.@total_time - .@BoxTime) + " WHERE `account_id` = " + getcharid(3);
+			}
+
+			sc_end SC_STAMINA;
+			if (getstatus(SC_AUTOATTACK)) {
+				sc_end SC_AUTOATTACK;
+				if (#AI_self$ != "") {
+					pcstopfollow getCharID(3,#AI_self$);
+				}
+				dispbottom "Auto Attack ถูกปิดใช้งาน", 0xFFFFFF;
+			}
+			deltimer "Stamina#Update::OnMin";
+			dispbottom "Stamina ถูกปิดใช้งาน", 0xFFFFFF;
+		}
+	} else {
+		if (select("เปิดระบบ Stamina", "ยกเลิก") == 1) {
+			if (.@total_time <= 0) {
+				mes "[Kafra Stamina]";
+				mes "Stamina รวมของคุณหมดแล้ว";
+				mes "ไม่สามารถทำการเปิดได้";
+				close;
+			}
+			sc_start SC_STAMINA, .@total_time * 1000, 1;
+			deltimer "Stamina#Update::OnMin";
+			addtimer 60000, "Stamina#Update::OnMin";
+			dispbottom "Stamina ถูกเปิดใช้งาน", 0xFFFFFF;
+		}
+	}
+	close;
+}
+
+izlude	mapflag	nostamina
+moc_fild19	mapflag	nostamina
+morocc	mapflag	nostamina

@@ -1,0 +1,70 @@
+//==================================================
+// ฟังก์ชัน: F_Premi_VIPBuffItem
+// เงื่อนไข:
+//  - ต้องเป็น VIP (#PREMIUM_SERVICE_TIME > gettimetick(2))
+//  - ต้องมีสถานะ SC_AUTOATTACK อยู่ (getstatus(SC_AUTOATTACK))
+//  - ต้องมี Zeny >= 6500  หักทุกครั้ง
+// บัฟที่ได้รับ:
+//  - All Status +7 (อาหาร 15 นาที)
+//  - Buff พระ (Bless/Agi/Angelus/Gloria/Magnificat)
+//==================================================
+function	script	F_Premi_VIPBuffItem	{
+
+//	// เช็ค VIP ก่อน
+//	if (#PREMIUM_SERVICE_TIME <= gettimetick(2)) {
+//		dispbottom "ต้องอยู่ในสถานะ VIP ก่อนจึงจะใช้ไอเท็มนี้ได้", 0xFFCC00;
+//		end;
+//	}
+
+	// เช็คว่ามีสถานะ AutoAttack อยู่ไหม
+	if (!getstatus(SC_AUTOATTACK)) {
+		dispbottom "สามารถใช้ได้เฉพาะเมื่อเปิดโหมด AutoAttack เท่านั้น", 0xFF9999;
+		end;
+	}
+	
+//	// กันกดใช้ซ้ำตอนบัฟยังอยู่
+//	if (getstatus(SC_STRFood) || getstatus(SC_BLESSING)) {
+//		dispbottom "ตอนนี้คุณมีบัฟอยู่แล้ว ยังไม่จำเป็นต้องใช้ซ้ำ", 0xFFCC00;
+//		end;
+//	}
+	// ราคาใช้บริการ
+	.@zeny_cost = 6500;
+
+	// เช็คเงิน
+	if (Zeny < .@zeny_cost) {
+		dispbottom "ต้องมี Zeny อย่างน้อย " + .@zeny_cost + " Zeny เพื่อใช้บัฟนี้", 0xFF5555;
+		end;
+	}
+
+	// หัก Zeny
+	Zeny -= .@zeny_cost;
+
+	// ---------------------------
+	// ชุดบัฟ All Stat +7 (อาหาร)
+	// ---------------------------
+	sc_start SC_STRFood, 1800000, 7;
+	sc_start SC_AGIFood, 1800000, 7;
+	sc_start SC_VITFood, 1800000, 7;
+	sc_start SC_INTFood, 1800000, 7;
+	sc_start SC_DEXFood, 1800000, 7;
+	sc_start SC_LUKFood, 1800000, 7;
+
+	// ---------------------------
+	// ชุดบัฟพระ (Buff Service)
+	// ---------------------------
+	sc_start SC_BLESSING,     1800000, 7;
+	sc_start SC_INCREASEAGI,  1800000, 7;
+	sc_start SC_ANGELUS,      1800000, 7;
+	sc_start SC_GLORIA,       1800000, 5;
+	sc_start SC_MAGNIFICAT,   1800000, 5;
+
+	specialeffect2 EF_INCAGILITY;
+	specialeffect2 EF_BLESSING;
+	specialeffect2 EF_GLORIA;
+	specialeffect2 EF_MAGNIFICAT;
+	specialeffect2 EF_ANGELUS;
+
+	dispbottom "VIP Buff: All+7 + Buff Service ใช้งานแล้ว (-" + .@zeny_cost + " Zeny)", 0x99FF99;
+	dispbottom "เป็นเวลา 30 นาที", 0x99FF99;
+	end;
+}

@@ -1,0 +1,246 @@
+
+ปรับแต่ง db/custom/char_bonus.yml / db/custom/char_bonus_combos.yml
+
+สามารถ reload ได้ด้วย @reloadstatusdb
+
+-- อธิบาย --
+
+  - Job: All << สำหรับตัวละครที่เล่นอยู่
+    LevelNeed: 99 << เวลที่ต้องการ
+    Icon: EFST_ENDURE
+    BonusScript: |
+      bonus bMaxSP,10000;
+
+ตั้งค่าบอทหลักๆ ได้ใน misc.conf
+--
+
+1 สกิลสามารถกำหนดได้หลายประเภท เช่น Heal
+
+db/custom/ai_attack_skill.txt << กำหนดสกิลโจมตี
+db/custom/ai_support_skill.txt << กำหนดสกิลบัฟ
+db/custom/ai_heal_skill.txt << กำหนดสกิลฮิว
+db/custom/ai_sphere.txt << กำหนดสีพวก มอง Zen เสกลูกแก้ว
+-- 
+@reloadskilldb
+
+
+
+db/custom/ai_item_ammo.txt << กำหนดไอเทมประเภทกระสุน
+db/custom/ai_item_flywing.txt << กำหนด fly wing
+db/custom/ai_item_buff.txt << กำหนดไอเทมบัฟ
+-- 
+@reloaditemdb
+
+หากไม่กำหนด AI จะมองไม่เห็น
+
+--
+
+สำหรับทำไอค่อนไฟล์ Lub
+
+  EFST_AUTOATTACK = 1701,
+--
+
+--
+mapflag สำหรับ ห้ามใช้ Auatoattack
+
+  noautoattack
+
+ตัวอย่าง
+
+morocc  mapflag noautoattack
+
+การเรียกบอท ถูกทำผ่าน function << เพื่อให้ทำไอเทมมาเรียกใช้ได้ง่ายขึ้น
+--
+  - Id: 35001
+    AegisName: Test_Item_I
+    Name: Test Item
+    Type: Delayconsume
+    Buy: 1
+    Weight: 1
+    Script: |
+      callfunc "F_AutoAT";
+
+ตัวอย่าง item
+
+--
+SQL
+
+CREATE TABLE IF NOT EXISTS `aa_common_config` (
+  `char_id` int(10) unsigned NOT NULL,
+  `stopmelee` tinyint(1) NOT NULL DEFAULT 0,
+  `pickup_item_config` int(10) unsigned NOT NULL DEFAULT 0,
+  `aggressive_behavior` tinyint(1) NOT NULL DEFAULT 0,
+  `autositregen_conf` tinyint(1) NOT NULL DEFAULT 0,
+  `autositregen_maxhp` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `autositregen_minhp` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `autositregen_maxsp` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `autositregen_minsp` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `tp_use_teleport` tinyint(1) NOT NULL DEFAULT 0,
+  `tp_use_flywing` tinyint(1) NOT NULL DEFAULT 0,
+  `tp_min_hp` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `tp_delay_nomobmeet` int(10) unsigned NOT NULL DEFAULT 0,
+  `skill_rate` int(10) unsigned NOT NULL DEFAULT 0,
+  `teleport_boss` tinyint(1) NOT NULL DEFAULT 0,
+  `auto_swap` tinyint(1) NOT NULL DEFAULT 0,
+  `quiver_check` tinyint(1) NOT NULL DEFAULT 0,
+  `focus_mob` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`char_id`),
+  UNIQUE KEY `char_id` (`char_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=tis620;
+
+CREATE TABLE IF NOT EXISTS `aa_items` (
+  `char_id` int(10) unsigned NOT NULL,
+  `type` smallint(5) unsigned NOT NULL,
+  `item_id` int(10) unsigned NOT NULL,
+  `min_hp` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `min_sp` smallint(5) unsigned NOT NULL DEFAULT 0,
+  UNIQUE KEY `char_id` (`char_id`,`type`,`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=tis620;
+
+-- aa_items type:
+-- 0 = auto buff item
+-- 1 = auto potion (min_hp/min_sp = HP/SP percent)
+-- 2 = pickup item list
+-- 3 = keep from storage list
+-- 4 = auto buy item (min_hp = buy below amount, min_sp = buy up to amount)
+
+CREATE TABLE IF NOT EXISTS `aa_mobs` (
+  `char_id` int(10) unsigned NOT NULL,
+  `mob_id` int(10) unsigned NOT NULL,
+  UNIQUE KEY `char_id` (`char_id`,`mob_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=tis620;
+
+CREATE TABLE IF NOT EXISTS `aa_skills` (
+  `char_id` int(10) unsigned NOT NULL,
+  `type` smallint(5) unsigned NOT NULL,
+  `skill_id` smallint(5) unsigned NOT NULL,
+  `skill_lv` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `min_hp` smallint(5) unsigned NOT NULL DEFAULT 0,
+  UNIQUE KEY `char_id` (`char_id`,`type`,`skill_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=tis620;
+
+CREATE TABLE IF NOT EXISTS `aa_flee_mobs` (
+  `char_id` int(10) unsigned NOT NULL,
+  `mob_id` int(10) unsigned NOT NULL,
+  UNIQUE KEY `char_id` (`char_id`,`mob_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=tis620;
+
+
+วิธีใช้ magnus ทุกเผ่า
+
+  - Id: 2220
+    AegisName: Hat
+    Name: Hat
+    Type: Armor
+    Buy: 1000
+    Weight: 200
+    Defense: 2
+    Locations:
+      Head_Top: true
+    ArmorLevel: 1
+    Refineable: true
+    View: 16
+    EquipScript: |
+      magnus_all(1);
+    UnEquipScript: |
+      magnus_all(0);
+
+
+magnus_all(1); // เปิดให้ magnus ทุกเผ่าใช้ได้
+magnus_all(0); // ปิดให้ magnus ทุกเผ่าใช้ได้
+
+-- Logs --
+Rework for 2024-2025
+-- End of Logs --
+
+----
+// script สำหรับสร้าง table เอาไว้ให้ระบบใช้
+
+-	script	F_GLOBAL_DROP_SQL	-1,{
+	end;
+
+OnInit:
+	query_sql "CREATE TABLE IF NOT EXISTS `global_drop` (`id` int(11) NOT NULL AUTO_INCREMENT,`time` datetime NOT NULL,`account_id` INT(20) NOT NULL,`char_id` int(20) NOT NULL,`char_name` varchar(255) NOT NULL,`map` varchar(255) NOT NULL,`x` int(5) NOT NULL,`y` int(5) NOT NULL,`mobid` int(10) NOT NULL,`nameid` int(20) NOT NULL,`refine` int(5) NOT NULL, PRIMARY KEY (`id`));";
+	end;
+
+}
+
+---- Info ------
+
+รีโหลดไฟล์ db/custom/global_drops.yml ได้ด้วย @reloadstatus
+
++-- Logs --
++V1 
++- เริ่มทำระบบ charm/charm Upgrade
++
++V1.1
++- แกไข max stack ต่างๆ
++
++V1.2
++- เพิ่มระบบ max effect ของ Charm Upgrade
++- เพิ่ม script function ที่ใช้งานร่วมกัน
++
++-- End of Logs --
++
++ตัวอย่าง item_db.yml
++
++  - Id: 100101
++    AegisName: Test_Charm
++    Name: Test Charm
++    Type: Charm
++    CharmMaxEffect: 5 # กำหนดจำนวนส่งผลโบนัส
++    CharmScript: |
++      bonus bStr,1;
++
++  - Id: 100102
++    AegisName: Test_Charm_Upgrade
++    Name: Test Charm Upgrade
++    Type: Charm_Upgrade
++    Refineable: true
++    CharmUpgradeMaxEffect: 1
++    CharmScript: |
++      .@r = getcharmhrefine();
++      bonus bLuk,.@r;
++
++  - Id: 100103
++    AegisName: Test_Charm_Upgrade_II
++    Name: Test Charm Upgrade
++    Type: Charm_Upgrade
++    Refineable: true
++    CharmUpgradeMaxEffect: 5 # กำหนดค่า จำนวน charm ที่จะส่งผล โบนัส
++    CharmScript: |
++      .@r = getcharmrefine();
++      bonus bDex,.@r;
++
++-- script เพิ่มเติม --
++
++getcharmrefine(); ไว้ดึงระบบตีบวกของชาม
++getcharmgrade(); ไว้ดึงเกรดของชาม
++
++-- V1.2 Added --
++
++getcharmhrefine(); ไว้ดึงค่าตีบวกสูงสุดของ charm เลขนั้นๆ
++getcharmhgrade(); ไว้ดึงค่าเกรดสูงสุดของ charm เลขนั้นๆ
++
++-- หมายเหตุสำคัญ --
++
++CharmMaxEffect จะสามารถใช้ได้เพียงกับ "Charm" ธรรมดาเท่านั้น
++
++หากไม่กำหนด CharmUpgradeMaxEffect จะมีค่าตั้งต้นเท่ากับ "1"
++
++-- เพิ่มเติม --
++หากต้องการกำหนด ให้ Charm Upgrade มีผลแค่ 1 ชื่น/itemid
++
++ให้กำหนด CharmUpgradeMaxEffect มีค่าเป็น 1 / หรือไม่ต้องกำหนด
++และใช้งาน 
++- getcharmhrefine();
++หรือ
++- getcharmhgrade();
++
++ของ V1.2 แทน [ของดั้งเดิม V1.1 ยังทำงานได้ปกติ แต่มันจะดึง เฉพาะ ตำแหน่งตัวมันเอง]
+
++-- Change Logs --
++- 1.0 เริ่มระบบ Vending Cash
++- 1.1 เพิ่มตัวตรวจสอบ Cash เมื่อทำการซื้อขาย
++-- End of Log --
+

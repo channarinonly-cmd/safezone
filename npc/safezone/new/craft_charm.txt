@@ -1,0 +1,197 @@
+morocc,132,58,3	script	Charm Skill#1	4_M_BARMUND,{
+	mes "[ Charm Skill ]";
+	mes "สวัสดีครับนายท่าน ";
+	next;
+	mes "[ Charm Skill ]";
+	mes "นายท่านต้องการให้ข้าช่วยเรื่องอะไร ?";
+	next;
+	switch(select("- Charm Skill :- ยกเลิกการสนทนา")) {
+		case 1: set .@shop$, "UPG_ACC"; break;
+		case 2: close;
+	}
+	close2;
+	callshop .@shop$, 1;
+	npcshopattach .@shop$;
+	end;
+
+OnBuyItem:
+	// ใช้ไอเท็มแรกที่ซื้อ (หนึ่งครั้ง/การกดซื้อ)
+	if (getarraysize(@bought_nameid) <= 0) end;
+	copyarray .@uitem[0], @bought_nameid[0], getarraysize(@bought_nameid);
+
+	// เคลียร์ตัวแปรจาก shop
+	deletearray @bought_nameid[0], getarraysize(@bought_nameid);
+	deletearray @bought_quantity[0], getarraysize(@bought_quantity);
+	deletearray .@itemuse[0], getarraysize(.@itemuse);
+	deletearray .@itemusemany[0], getarraysize(.@itemusemany);
+
+	// ค่าเริ่มต้น
+	set .@broken, 0;     // โอกาสพัง (%)
+	set .@zenyuse, 0;    // ค่าใช้จ่ายต่อครั้ง
+
+	// สูตรต่อไอเท็มปลายทาง (ตัวอย่าง)
+	if (.@uitem[0] == 6000229) {
+	if (Class != Job_Thief) {
+		mes "[Charm Skill]";
+		mes "ขอโทษครับ, การสร้าง Charm Skill นี้สามารถทำได้เฉพาะ Job Class Thief เท่านั้น!";
+		close;
+		return;
+	}
+	
+		// เพิ่มไอเท็มหลายตัวในสูตร
+		setarray .@itemuse[0], 6000235, 921,918;  // ใช้ไอเท็ม 6000235 และ 601
+		setarray .@itemusemany[0], 10, 100,50;    // ใช้ 20 ชิ้นของ 6000235 และ 10 ชิ้นของ 601
+		set .@broken, 70; 
+		set .@zenyuse, 150000; 
+	}
+	
+	else if (.@uitem[0] == 6000230) { 
+	if (Class != Job_Acolyte) {
+		mes "[Charm Skill]";
+		mes "ขอโทษครับ, การสร้างCharm Skillนี้สามารถทำได้เฉพาะ Job Class Acolyte เท่านั้น!";
+		close;
+		return;
+	}
+		setarray .@itemuse[0], 6000235,932,1020; 
+		setarray .@itemusemany[0], 10,100,50; 
+		set .@broken, 70; 
+		set .@zenyuse, 150000; 
+	}
+	else if (.@uitem[0] == 6000231) { 
+	if (Class != Job_Swordman) {
+		mes "[Charm Skill]";
+		mes "ขอโทษครับ, การสร้างCharm Skillนี้สามารถทำได้เฉพาะ Job Class Swordman เท่านั้น!";
+		close;
+		return;
+	}
+		setarray .@itemuse[0], 6000235,931,7053; 
+		setarray .@itemusemany[0], 10,100,50; 
+		set .@broken, 70; 
+		set .@zenyuse, 150000; 
+	}
+	else if (.@uitem[0] == 6000232) { 
+	if (Class != Job_Merchant) {
+		mes "[Charm Skill]";
+		mes "ขอโทษครับ, การสร้างCharm Skillนี้สามารถทำได้เฉพาะ Job Class Merchant เท่านั้น!";
+		close;
+		return;
+	}
+		setarray .@itemuse[0], 6000235,960,950; 
+		setarray .@itemusemany[0], 10,100,50; 
+		set .@broken, 70; 
+		set .@zenyuse, 150000; 
+	}
+	else if (.@uitem[0] == 6000233) { 
+	if (Class != Job_Mage) {
+		mes "[Charm Skill]";
+		mes "ขอโทษครับ, การสร้างCharm Skillนี้สามารถทำได้เฉพาะ Job Class Mage เท่านั้น!";
+		close;
+		return;
+	}
+		setarray .@itemuse[0], 6000235,1055,1056; 
+		setarray .@itemusemany[0], 10,100,50; 
+		set .@broken, 70; 
+		set .@zenyuse, 150000; 
+	}
+	else if (.@uitem[0] == 6000234) { 
+	if (Class != Job_Archer) {
+		mes "[Charm Skill]";
+		mes "ขอโทษครับ, การสร้างCharm Skillนี้สามารถทำได้เฉพาะ Job Class Archer เท่านั้น!";
+		close;
+		return;
+	}
+		setarray .@itemuse[0], 6000235,930,936; 
+		setarray .@itemusemany[0], 10,100,50; 
+		set .@broken, 70; 
+		set .@zenyuse, 150000; 
+	}
+	else { 
+		mes "[Charm Skill]"; 
+		mes "ไม่พบสูตรสำหรับไอเท็มนี้"; 
+		close; 
+	}
+
+	// แสดงรายการของที่ใช้ (หลายไอเท็ม)
+	mes "[Charm Skill]";
+	mes "จะสร้าง: ^i["+.@uitem[0]+"]^FFFFFF_^000000"+getitemname(.@uitem[0])+"  (โอกาสสำเร็จ "+(100-.@broken)+"%)";
+	mes "สิ้นเปลือง:";
+
+	// ตัวแปรเก็บข้อความรายการไอเท็มแบบหลายบรรทัด
+	set .@matmsg$, "";
+	for (set .@k, 0; .@k < getarraysize(.@itemuse); set .@k, .@k + 1) {
+		set .@matmsg$, .@matmsg$ + " - ^i[" + .@itemuse[.@k] + "]^FFFFFF_^000000 x" + .@itemusemany[.@k] + "\n";
+	}
+
+	mes .@matmsg$ + " + Zeny " + callfunc("F_InsertComma", .@zenyuse);
+	next;
+
+
+	// ให้ผู้เล่นเลือกว่าจะทำการสร้างหรือไม่
+	mes "[Charm Skill]";
+	mes "คุณต้องการสร้างไอเท็มนี้หรือไม่?";
+	next;
+	switch(select("ยืนยันการสร้าง", "ยกเลิก")) {
+		case 1:  // ถ้าเลือกยืนยันการสร้าง
+			// ทำการตรวจสอบและดำเนินการสร้าง
+			mes "[Charm Skill]";
+			mes "กำลังสร้างไอเท็ม...";
+			break;
+		case 2:  // ถ้าเลือกยกเลิก
+			mes "[Charm Skill]";
+			mes "การสร้างถูกยกเลิก";
+			close;
+			break;
+	}
+	
+
+	// ตรวจสอบของที่ใช้ + เงิน
+	for (set .@k,0; .@k<getarraysize(.@itemuse); set .@k,.@k+1) {
+		if (countitem(.@itemuse[.@k]) < .@itemusemany[.@k]) {
+			mes "[Charm Skill]"; mes "ไอเทมไม่เพียงพอ!"; close;
+		}
+	}
+	if (Zeny < .@zenyuse) { mes "[Charm Skill]"; mes "เงินไม่พอ!"; close; }
+
+	// เตรียมข้อความของที่หาย (ก่อนตัดของ) — รวมชื่อ+จำนวน
+	set .@matmsg$, "";
+	for (set .@k,0; .@k<getarraysize(.@itemuse); set .@k,.@k+1) {
+		if (.@k > 0) set .@matmsg$, .@matmsg$ + ", ";
+		set .@matmsg$, .@matmsg$ + getitemname(.@itemuse[.@k]) + " x" + .@itemusemany[.@k];
+	}
+
+	// ตัดของ + เงิน (ครั้งเดียว)
+	if (!checkweight(.@uitem[0], 1)) {
+		mes "[Charm Skill]";
+		mes "ช่องว่างหรือพกพาน้ำหนักไม่พอสำหรับรับไอเท็มที่สร้าง!";
+		close;
+	}
+	for (set .@k,0; .@k<getarraysize(.@itemuse); set .@k,.@k+1)
+		delitem .@itemuse[.@k], .@itemusemany[.@k];
+	set Zeny, Zeny - .@zenyuse;
+
+	// สุ่มผลครั้งเดียว
+	if (.@broken >= rand(100)) {
+		specialeffect2 155;
+		mes "^FF0000ล้มเหลว... รอบนี้ชิบหาย หมดกัน!^000000";
+		// ประกาศความพังทั้งเซิร์ฟ (ภาษาแรงแต่ไม่โจมตีกลุ่มชาติพันธุ์)
+		announce "[Craft Fail] "+strcharinfo(0)+" พยายามสร้าง "+getitemname(.@uitem[0])+" แต่พัง! เสีย "+.@matmsg$+" และ Zeny "+callfunc("F_InsertComma",.@zenyuse)+" — ชิบหายหมด!", bc_all;
+		close;
+	} else {
+		specialeffect2 154;
+		getitem .@uitem[0], 1;
+		mes "^0000FFสำเร็จ! ได้รับ "+getitemname(.@uitem[0])+"^000000";
+		// ประกาศสำเร็จทั้งเซิร์ฟ
+		announce "[Craft] "+strcharinfo(0)+" สร้าง "+getitemname(.@uitem[0])+" สำเร็จ!", bc_all;
+		close;
+	}
+	end;
+
+OnInit:
+	waitingroom "   Charm Skill",0;
+	end;
+}
+
+// Shop
+-	shop	UPG_ACC	-1,6000229:-1,6000230:-1,6000231:-1,6000232:-1,6000233:-1,6000234:-1
+
+/////////////////////////

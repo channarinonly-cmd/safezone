@@ -1,0 +1,58 @@
+RA_INCLUDE = -I../../
+
+JSON_DIR   = ../../3rdparty/json
+
+VOICE_OBJ = $(patsubst %.cpp,obj/%.o,$(wildcard *.cpp))
+VOICE_H   = $(wildcard *.hpp)
+
+VOICE_INCLUDE = \
+	$(RA_INCLUDE) \
+	-I$(JSON_DIR)/include
+
+VOICE_DEFS = -DWITH_SQL
+
+HAVE_MYSQL=@HAVE_MYSQL@
+ifeq ($(HAVE_MYSQL),yes)
+	SERVER_DEPENDS=voice-server
+else
+	SERVER_DEPENDS=needs_mysql
+endif
+ALL_DEPENDS=server
+
+@SET_MAKE@
+
+#####################################################################
+.PHONY: all server clean help needs_mysql
+
+all: $(ALL_DEPENDS)
+
+server: $(SERVER_DEPENDS)
+
+clean:
+	@echo "	CLEAN	voice"
+	@rm -rf obj ../../voice-server@EXEEXT@
+
+help:
+	@echo "possible targets are 'server' 'all' 'clean' 'help'"
+	@echo "'server'  - voice server"
+	@echo "'all'     - builds all above targets"
+	@echo "'clean'   - cleans builds and objects"
+	@echo "'help'    - outputs this message"
+
+#####################################################################
+
+needs_mysql:
+	@echo "MySQL not found or disabled by the configure script"
+	@exit 1
+
+obj:
+	@echo "	MKDIR	$@"
+	@mkdir -p $@
+
+voice-server: $(VOICE_OBJ)
+	@echo "	LD	voice-server@EXEEXT@"
+	@@CXX@ @LDFLAGS@ -o ../../voice-server@EXEEXT@ $(VOICE_OBJ) @LIBS@ @MYSQL_LIBS@ -lpthread
+
+obj/%.o: %.cpp $(VOICE_H) | obj
+	@echo "	CXX	$<"
+	@@CXX@ @CXXFLAGS@ $(VOICE_INCLUDE) $(VOICE_DEFS) @MYSQL_CFLAGS@ @CPPFLAGS@ -c -o $@ $<

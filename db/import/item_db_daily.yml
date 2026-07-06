@@ -1,0 +1,576 @@
+Header:
+  Type: ITEM_DB
+  Version: 3
+
+Body:
+  # ==========================================
+  # ⚔️ กลุ่ม: อาวุธระยะประชิด (Melee Weapons)
+  # ==========================================
+  - Id: 1302
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1502
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1205
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1214
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1211
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1105
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1402
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1202
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1505
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1208
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1408
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1102
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1301
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1501
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1204
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1213
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1210
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1104
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1401
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1201
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1504
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1207
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1407
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1101
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1550
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1553
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1554
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1555
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1556
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1276
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1277
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1514
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1253
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1522
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1410
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1802
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1819
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1818
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1810
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1822
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1820
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1821
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1812
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1808
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1804
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1163
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1226
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1220
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1128
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1464
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1255
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1127
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1517
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1461
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1120
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1361
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1158
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1164
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1160
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1309
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1162
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1261
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1266
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1257
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1258
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1551
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1552
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1558
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1568
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1569
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1570
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1571
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1557
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1559
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1560
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1564
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+  - Id: 1573
+    Inherit: true
+    RandomOptionGroup: Daily_Melee_Weapon
+
+  # ==========================================
+  # 🏹 กลุ่ม: อาวุธระยะไกล (Ranged Weapons)
+  # ==========================================
+  - Id: 1701
+    Inherit: true
+    RandomOptionGroup: Daily_Ranged_Weapon
+  - Id: 1702
+    Inherit: true
+    RandomOptionGroup: Daily_Ranged_Weapon
+  - Id: 1710
+    Inherit: true
+    RandomOptionGroup: Daily_Ranged_Weapon
+  - Id: 1711
+    Inherit: true
+    RandomOptionGroup: Daily_Ranged_Weapon
+  - Id: 1715
+    Inherit: true
+    RandomOptionGroup: Daily_Ranged_Weapon
+  - Id: 1716
+    Inherit: true
+    RandomOptionGroup: Daily_Ranged_Weapon
+  - Id: 1726
+    Inherit: true
+    RandomOptionGroup: Daily_Ranged_Weapon
+
+  # ==========================================
+  # 🪄 กลุ่ม: คทาเวทมนตร์ (Magic Weapons)
+  # ==========================================
+  - Id: 1602
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1605
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1601
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1604
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1611
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1472
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1625
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1613
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1614
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+  - Id: 1615
+    Inherit: true
+    RandomOptionGroup: Daily_Magic_Weapon
+
+  # ==========================================
+  # 👕 กลุ่ม: เสื้อ (Armor)
+  # ==========================================
+  - Id: 2302
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2306
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2308
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2313
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2317
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2315
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2333
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2310
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2324
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2339
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2331
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2319
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2314
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2316
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2325
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2323
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2321
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2332
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2335
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2330
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2338
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2328
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2322
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2336
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2371
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2326
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2320
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2318
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2359
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+  - Id: 2311
+    Inherit: true
+    RandomOptionGroup: Daily_Armor
+
+  # ==========================================
+  # 🛡️ กลุ่ม: โล่ (Shields)
+  # ==========================================
+  - Id: 2105
+    Inherit: true
+    RandomOptionGroup: Daily_Shield
+  - Id: 2102
+    Inherit: true
+    RandomOptionGroup: Daily_Shield
+  - Id: 2107
+    Inherit: true
+    RandomOptionGroup: Daily_Shield
+  - Id: 2104
+    Inherit: true
+    RandomOptionGroup: Daily_Shield
+  - Id: 2106
+    Inherit: true
+    RandomOptionGroup: Daily_Shield
+  - Id: 2108
+    Inherit: true
+    RandomOptionGroup: Daily_Shield
+
+  # ==========================================
+  # 🧣 กลุ่ม: ผ้าคลุม (Garments)
+  # ==========================================
+  - Id: 2502
+    Inherit: true
+    RandomOptionGroup: Daily_Garment
+  - Id: 2506
+    Inherit: true
+    RandomOptionGroup: Daily_Garment
+  - Id: 2523
+    Inherit: true
+    RandomOptionGroup: Daily_Garment
+  - Id: 2504
+    Inherit: true
+    RandomOptionGroup: Daily_Garment
+  - Id: 2525
+    Inherit: true
+    RandomOptionGroup: Daily_Garment
+  - Id: 2507
+    Inherit: true
+    RandomOptionGroup: Daily_Garment
+  - Id: 2505
+    Inherit: true
+    RandomOptionGroup: Daily_Garment
+  - Id: 2508
+    Inherit: true
+    RandomOptionGroup: Daily_Garment
+
+  # ==========================================
+  # 👢 กลุ่ม: รองเท้า (Shoes)
+  # ==========================================
+  - Id: 2402
+    Inherit: true
+    RandomOptionGroup: Daily_Shoes
+  - Id: 2405
+    Inherit: true
+    RandomOptionGroup: Daily_Shoes
+  - Id: 2404
+    Inherit: true
+    RandomOptionGroup: Daily_Shoes
+  - Id: 2409
+    Inherit: true
+    RandomOptionGroup: Daily_Shoes
+  - Id: 2408
+    Inherit: true
+    RandomOptionGroup: Daily_Shoes
+  - Id: 2406
+    Inherit: true
+    RandomOptionGroup: Daily_Shoes
+  - Id: 2432
+    Inherit: true
+    RandomOptionGroup: Daily_Shoes
+
+  # ==========================================
+  # 🎩 กลุ่ม: หมวก (Headgears)
+  # ==========================================
+  - Id: 2211
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2226
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5015
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2218
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2203
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2220
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2208
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2216
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2232
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2228
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2277
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2224
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2243
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2230
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2285
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2217
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5168
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2233
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2229
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2280
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5045
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2287
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5003
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5030
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2252
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5134
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2289
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5017
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2231
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2213
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2221
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5141
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5804
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 5158
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear
+  - Id: 2299
+    Inherit: true
+    RandomOptionGroup: Daily_Headgear

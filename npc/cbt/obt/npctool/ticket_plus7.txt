@@ -1,0 +1,83 @@
+//====================================================
+// ฟังก์ชันใช้งานไอเทม +7 Upgrade Ticket (รับเฉพาะ +6)
+//====================================================
+function	script	F_Upgrade7_Ticket	{
+	// รับค่า Item ID ของ Ticket เพื่อเอาไว้คืนผู้เล่นเวลายกเลิก
+	.@item_id = getarg(0);
+	
+	// ลิสต์ส่วนสวมใส่ที่ต้องการให้ตีบวกได้
+	setarray .@parts[0], EQI_HEAD_TOP, EQI_ARMOR, EQI_HAND_L, EQI_HAND_R, EQI_GARMENT, EQI_SHOES;
+	setarray .@names$[0], "หมวก (Head Top)", "ชุดเกราะ (Armor)", "โล่/อาวุธซ้าย (Left Hand)", "อาวุธขวา (Right Hand)", "ผ้าคลุม (Garment)", "รองเท้า (Shoes)";
+
+	.@menu$ = "";
+	.@count = 0;
+	
+	// ตรวจสอบชิ้นส่วนที่สวมใส่อยู่
+	for (.@i = 0; .@i < getarraysize(.@parts); ++.@i) {
+		// เช็คว่ามีไอเทมใส่ในช่องนั้นไหม และไอเทมนั้นอนุญาตให้ตีบวกได้หรือไม่
+		if (getequipid(.@parts[.@i]) > 0 && getequipisenableref(.@parts[.@i])) {
+			// ?? เช็คว่าตีบวกปัจจุบันต้องเป็น +6 เท่านั้น ??
+			if (getequiprefinerycnt(.@parts[.@i]) == 6) {
+				.@menu$ += .@names$[.@i] + " (+" + getequiprefinerycnt(.@parts[.@i]) + " " + getequipname(.@parts[.@i]) + "):";
+				.@valid_parts[.@count] = .@parts[.@i]; // เก็บค่า index ช่องที่ใช้งานได้ไว้
+				.@count++;
+			}
+		}
+	}
+	.@menu$ += "ยกเลิก (Cancel)";
+
+	// ถ้าไม่มีไอเทมใดเข้าเงื่อนไขเลย
+	if (.@count == 0) {
+		mes "[+7 Upgrade Ticket]";
+		mes "คุณไม่มีไอเทมสวมใส่ที่สามารถอัปเกรดเป็น +7 ได้";
+		mes "^FF0000(ต้องเป็นไอเทมที่ตีบวกได้, สวมใส่อยู่ และมีระดับ +6 เท่านั้น)^000000";
+		close2;
+		getitem .@item_id, 1; // คืนตั๋ว
+		end;
+	}
+
+	// สร้างเมนูให้ผู้เล่นเลือก
+	mes "[+7 Upgrade Ticket]";
+	mes "กรุณาเลือกอุปกรณ์ ^0000FF+6^000000 ที่คุณต้องการอัปเกรดเป็น +7";
+	next;
+	.@s = select(.@menu$) - 1;
+	
+	// หากเลือก "ยกเลิก"
+	if (.@s == .@count) {
+		getitem .@item_id, 1; // คืนตั๋ว
+		close;
+	}
+
+	.@part = .@valid_parts[.@s];
+
+	// ยืนยันการตีบวก
+	mes "[+7 Upgrade Ticket]";
+	mes "คุณต้องการอัปเกรด";
+	mes "^0000FF+" + getequiprefinerycnt(.@part) + " " + getequipname(.@part) + "^000000";
+	mes "ให้กลายเป็น ^FF0000+7^000000 ใช่หรือไม่?";
+	next;
+	if (select("ใช่ ทำเลย!:ยกเลิก") == 2) {
+		getitem .@item_id, 1; // คืนตั๋ว
+		close;
+	}
+
+	// ?? ป้องกันบัค: ตรวจสอบอีกรอบว่าผู้เล่นแอบถอดของหรือสลับของระหว่างเปิดหน้าเมนูหรือไม่
+	// และเช็คให้ชัวร์ว่ายังคงเป็น +6 อยู่
+	if (getequipid(.@part) <= 0 || getequiprefinerycnt(.@part) != 6) {
+		mes "[+7 Upgrade Ticket]";
+		mes "เกิดข้อผิดพลาด! ไอเทมเป้าหมายสูญหายหรือระดับการตีบวกไม่ใช่ +6";
+		close2;
+		getitem .@item_id, 1; // คืนตั๋ว
+		end;
+	}
+
+	// ทำการตีบวก 1 ครั้ง (จาก +6 เป็น +7)
+	successrefitem .@part;
+
+	specialeffect2 EF_REFINE; // แสดงเอฟเฟกต์แสงตีบวก
+	
+	mes "[+7 Upgrade Ticket]";
+	mes "อัปเกรดเสร็จสิ้น!";
+	mes "อุปกรณ์ของคุณกลายเป็น ^FF0000+7^000000 เรียบร้อยแล้ว!";
+	close;
+}

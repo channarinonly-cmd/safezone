@@ -1,0 +1,197 @@
+//- 1. ลบตารางเก่า (ถ้ามี) แล้วสร้างใหม่ให้รองรับระบบ Multi-Event
+//DROP TABLE IF EXISTS `cbt_register`;
+//CREATE TABLE `cbt_register` (
+//  `id` int(11) NOT NULL AUTO_INCREMENT,
+//  `account_id` int(11) NOT NULL,
+//  `char_id` int(11) NOT NULL,
+//  `name` varchar(30) NOT NULL,
+//  `class` varchar(30) NOT NULL,
+//  `base_level` int(11) NOT NULL,
+//  `job_level` int(11) NOT NULL,
+//  `event_type` varchar(32) NOT NULL DEFAULT 'CBT_99_50',
+//  `play_time` datetime DEFAULT NULL,
+//  PRIMARY KEY (`id`)
+//) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+//
+//- 2. เคลียร์ตัวแปรเก่า (ถ้าต้องการความชัวร์ แต่เปลี่ยนชื่อตัวแปรในสคริปต์แล้ว ไม่ทำก็ได้ครับ) 
+//@set #CBT_Reward_Received 0
+//-- DELETE FROM `acc_reg_num_db` WHERE `key` IN ('#CBTRank', '#OBTX');
+
+// ======================================================
+// ตัวหลัก (Master NPC)
+// ======================================================
+morocc,150,107,5	script	CBT Register	4_F_KAFRA8,{
+	mes "[พนักงานลงทะเบียน]";
+	mes "สวัสดีค่ะ ยินดีต้อนรับเข้าสู่ช่วง OBT";
+	mes "ผู้ที่ได้รับรางวัล สามารถกดรับรงวัลได้ที่กล่องอิเมลได้เลยนะคะ";
+	close;
+
+	.@NPCName$ = "[พนักงานลงทะเบียน]";
+	.@MinBase = 99;
+	.@MinJob = 50;
+	
+	// --- ไอดีไอเทมรางวัล ---
+	.@Item99 = 5388;      // รางวัลลงทะเบียน 99/50
+	.@ItemRank1 = 35001;   // รางวัลอันดับ 1
+	.@ItemRank2 = 35002;   // รางวัลอันดับ 2
+	.@ItemRank3 = 35003;   // รางวัลอันดับ 3
+	.@ItemCash = 30000;    // รางวัล Cash Point (อันดับ 4-10)
+	.@ItemExtra1 = 12208;  // รางวัลอันดับ 11+ (ชิ้นที่ 1)
+	.@ItemExtra2 = 14592;  // รางวัลอันดับ 11+ (ชิ้นที่ 2)
+
+	mes .@NPCName$;
+	mes "สวัสดีค่ะ ยินดีต้อนรับเข้าสู่ช่วง CBT";
+	mes "เฉพาะ ^0000FFClass 1^000000 ที่เลเวลครบเงื่อนไข";
+	mes "สามารถลงทะเบียนรับรางวัลได้ที่นี่ค่ะ";
+	next;
+	
+	.@menu = select("ของรางวัลที่จะได้รับ:ลงทะเบียน CBT (99/50):ตรวจสอบรายชื่อล่าสุด:ยกเลิก");
+	
+	if (.@menu == 1) {
+		mes .@NPCName$;
+		mes "เงื่อนไข: Base Lv."+.@MinBase+" / Job Lv."+.@MinJob;
+		mes "-------------------------";
+		mes "รางวัลพิเศษสำหรับ Ranking:";
+		mes "อันดับ 1 : ^i[" + .@ItemRank1 + "] ^0055FF" + getitemname(.@ItemRank1) + "^000000";
+		mes "+ ^i[" + .@Item99 + "] ^0055FF" + getitemname(.@Item99) + "^000000";
+		mes "--------------";
+		mes "อันดับ 2 : ^i[" + .@ItemRank2 + "] ^0055FF" + getitemname(.@ItemRank2) + "^000000";
+		mes "+ ^i[" + .@Item99 + "] ^0055FF" + getitemname(.@Item99) + "^000000";
+		mes "--------------";
+		mes "อันดับ 3 : ^i[" + .@ItemRank3 + "] ^0055FF" + getitemname(.@ItemRank3) + "^000000";
+		mes "+ ^i[" + .@Item99 + "] ^0055FF" + getitemname(.@Item99) + "^000000";
+		mes "--------------";
+		mes "อันดับ 4-10 : ^i[" + .@ItemCash + "] ^0055FF" + getitemname(.@ItemCash) + "^000000 50 ชิ้น";
+		next;
+		mes .@NPCName$;
+		mes "รางวัลสำหรับผู้ลงทะเบียนทั่วไป:";
+		mes "(อันดับที่ 11 เป็นต้นไป)";
+		mes "1. ^i[" + .@ItemExtra1 + "] " + getitemname(.@ItemExtra1) + " 2 ชิ้น";
+		mes "2. ^i[" + .@ItemExtra2 + "] " + getitemname(.@ItemExtra2) + " 2 ชิ้น";
+		mes "-------------------------";
+		close;
+	}
+
+	if (.@menu == 2) {
+		// 1. เช็คด้วย account_id (getcharid(3)) เพื่อป้องกันการลงทะเบียนซ้ำแม้จะเปลี่ยนตัวละคร
+		query_sql "SELECT 1 FROM `cbt_register` WHERE `account_id` = '"+getcharid(3)+"' AND `event_type` = 'CBT_99_50'", .@exists;
+		if (.@exists) {
+			mes .@NPCName$;
+			mes "ไอดีของคุณทำการลงทะเบียนไปเรียบร้อยแล้วค่ะ";
+			mes "ไม่สามารถใช้ตัวละครอื่นในไอดีเดียวกันลงทะเบียนซ้ำได้";
+			close;
+		}
+
+		// 2. เช็คอาชีพ (ห้าม Novice)
+		if (Class == Job_Novice || Class == Job_Summoner) {
+			mes .@NPCName$;
+			mes "ขออภัยค่ะ ^FF0000Novice ไม่สามารถลงทะเบียนได้^000000";
+			mes "กรุณาเปลี่ยนอาชีพเป็น ^0000FFClass 1^000000 ก่อนนะคะ";
+			close;
+		}
+
+		// 3. เช็คเลเวล
+		if (BaseLevel < .@MinBase || JobLevel < .@MinJob) {
+			mes .@NPCName$;
+			mes "เลเวลของคุณยังไม่ถึงเงื่อนไข ^FF0000"+.@MinBase+"/"+.@MinJob+"^000000";
+			close;
+		}
+
+		// 4. บันทึกข้อมูล (เน้น account_id เป็นหลัก)
+		.@class_name$ = jobname(Class);
+		query_sql "INSERT INTO `cbt_register` (account_id, char_id, name, class, base_level, job_level, event_type, play_time) VALUES ("+getcharid(3)+","+getcharid(0)+",'"+escape_sql(strcharinfo(0))+"','"+.@class_name$+"',"+BaseLevel+","+JobLevel+",'CBT_99_50', NOW())";
+		
+		// 5. ส่งค่า Global ไปที่ฟังก์ชัน Check_Faction
+		callfunc "Check_Faction", 1;
+
+		mes .@NPCName$;
+		mes "ลงทะเบียนสำเร็จเรียบร้อย!";
+		mes "ระบบบันทึกข้อมูลไอดีของท่านแล้ว";
+		mes "-------------------------";
+		mes "ทีมงานจะส่งของรางวัลให้ในวัน ^FF0000เปิด OBT^000000";
+		mes "ผ่านระบบจดหมาย (MEXP) ค่ะ";
+		
+		announce "ประกาศ: ไอดี [" + getcharid(3) + "] ลงทะเบียน CBT 99/50 สำเร็จ!", bc_all;
+		close;
+	}
+
+	if (.@menu == 3) {
+		mes "รายชื่อ 10 อันดับแรกที่ลงทะเบียน:";
+		// เรียงตาม ID ที่ Insert เข้าไป ใครมาก่อนได้อันดับก่อน
+		query_sql "SELECT name, class FROM `cbt_register` WHERE `event_type` = 'CBT_99_50' ORDER BY id ASC LIMIT 10", .@r_name$, .@r_class$;
+		
+		if (!getarraysize(.@r_name$)) {
+			mes "ยังไม่มีข้อมูลผู้ลงทะเบียน";
+		} else {
+			for (.@i = 0; .@i < getarraysize(.@r_name$); .@i++) {
+				mes "^0000FF"+(.@i+1)+". "+.@r_name$[.@i]+"^000000 ("+.@r_class$[.@i]+")";
+			}
+		}
+		close;
+	}
+	close;
+
+OnInit:
+//	waitingroom "ลงทะเบียน CBT 99/50", 0;
+	waitingroom "รับรางวัล 99/50", 0;
+	end;
+}
+
+// ======================================================
+// ตัวจำลอง (Duplicate NPC) ไปยังเมืองอื่นๆ
+// ======================================================
+prontera,115,73,5	duplicate(CBT Register)	CBT Register#2	4_F_KAFRA8
+//payon,160,120,5		duplicate(CBT Register)	CBT Register#3	4_F_KAFRA8
+//alberta,115,60,5	duplicate(CBT Register)	CBT Register#4	4_F_KAFRA8
+
+
+-	script	CBT_OBT_Distributor	-1,{
+
+OnPCLoginEvent:
+	// 1. ป้องกันการรับรางวัลซ้ำ
+	if (#CBT_Reward_Received) end;
+
+	// 2. ตรวจสอบข้อมูลการลงทะเบียน
+	query_sql "SELECT id FROM `cbt_register` WHERE `account_id` = '"+getcharid(3)+"' AND `event_type` = 'CBT_99_50' LIMIT 1", .@reg_id;
+	
+	if (.@reg_id) {
+		deletearray .@items[0], getarraysize(.@items);
+		deletearray .@amt[0], getarraysize(.@amt);
+
+		// 3. คำนวณอันดับ
+		query_sql "SELECT COUNT(*) FROM `cbt_register` WHERE `event_type` = 'CBT_99_50' AND `id` <= "+.@reg_id, .@my_rank;
+
+		// 4. เงื่อนไขการแจกรางวัลตามอันดับ
+		if (.@my_rank == 1) {
+			.@items[0] = 5388; .@amt[0] = 1;
+			.@items[1] = 35001; .@amt[1] = 1;
+			.@is_top = 1;
+		}
+		else if (.@my_rank == 2) {
+			.@items[0] = 5388; .@amt[0] = 1;
+			.@items[1] = 35002; .@amt[1] = 1;
+			.@is_top = 1;
+		}
+		else if (.@my_rank == 3) {
+			.@items[0] = 5388; .@amt[0] = 1;
+			.@items[1] = 35003; .@amt[1] = 1;
+			.@is_top = 1;
+		}
+		else if (.@my_rank >= 4 && .@my_rank <= 10) {
+			.@items[0] = 30000; .@amt[0] = 50;
+			.@is_top = 1;
+		}
+		else {
+			// อันดับที่ 11 ขึ้นไป ได้ไอเทม 2 อย่าง อย่างละ 2 ชิ้น
+			.@items[0] = 12208; .@amt[0] = 2;
+			.@items[1] = 14592; .@amt[1] = 2;
+		}
+
+		// 5. ส่งจดหมายฉบับเดียว
+		.@title$ = (.@is_top) ? "ยินดีด้วย! คุณติดอันดับ CBT Rank "+.@my_rank : "รางวัลลงทะเบียน CBT 99/50";
+		mail getcharid(0), "ทีมงาน", "รางวัลกิจกรรม", .@title$, 0, .@items, .@amt;
+		
+		#CBT_Reward_Received = 1;
+	}
+	end;
+}

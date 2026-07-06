@@ -1,0 +1,77 @@
+// =======================================================
+// 1. ฟังก์ชันแสดงรายงานภาษี (Core Logic)
+// =======================================================
+function	script	F_Revenue_Report_Main	{
+	mes "[พนักงานสรรพากร]";
+	mes "สวัสดีค่ะ นี่คือรายงานสรุปยอดการจัดเก็บภาษี";
+	mes "ของเซิร์ฟเวอร์ และงบประมาณของแต่ละเมืองค่ะ";
+	mes "^0000FF------------------------------^000000";
+
+	// ส่วนที่ 1: รายเมือง (Local)
+	query_sql("SELECT `town_name`, CAST(`treasury` AS SIGNED) FROM `mayor_towns` WHERE `is_active` = 1 ORDER BY `town_id` ASC", .@t_name$, .@t_money);
+
+	mes "^008800[ งบประมาณคลังเทศบาลเมือง (Local) ]^000000";
+	if (getarraysize(.@t_name$)) {
+		for( set .@i, 0; .@i < getarraysize(.@t_name$); set .@i, .@i + 1 ) {
+			mes "เมือง " + .@t_name$[.@i] + " : ^FF0000" + callfunc("F_InsertComma", .@t_money[.@i]) + "^000000 Zeny";
+		}
+	} else {
+		mes "ยังไม่มีข้อมูลเทศบาลเมืองที่เปิดใช้งาน";
+	}
+	mes "^0000FF------------------------------^000000";
+
+	// ส่วนที่ 2: สถิติรวม (Global) - อ้างอิงจาก castle_money แถวที่ 0
+	query_sql("SELECT CAST(`money` AS SIGNED) FROM `castle_money` WHERE `castle` = 0", .@total_money);
+
+	mes "^0000FF[ สถิติภาษีรวมทั้งโลก (Global) ]^000000";
+	mes "ยอดเงินหมุนเวียน : ^FF0000" + callfunc("F_InsertComma", .@total_money[0]) + "^000000 Zeny";
+	mes "^0000FF------------------------------^000000";
+	mes "";
+	mes "^777777*หมายเหตุ: สถิติรวมทั้งโลก นับรวมตั้งแต่งบเทศบาลเมือง และภาษีที่เก็บได้จากพื้นที่นอกเขตเมืองทั้งหมดค่ะ^000000";
+	return;
+}
+
+// =======================================================
+// 2. ฟังก์ชันเมนูสรรพากร (แยกชื่อไม่ให้ซ้ำกับ Tool Dealer)
+// =======================================================
+function	script	F_Revenue_Dept_Menu	{
+	// ระบบเช็กฝ่ายตามแผนที่
+	.@map$ = strcharinfo(3);
+	if (.@map$ == "morocc" || compare(.@map$, "moc_")) {
+		callfunc "Check_Faction", 1; 
+	} else if (.@map$ == "prontera" || compare(.@map$, "prt_")) {
+		callfunc "Check_Faction", 2; 
+	}
+
+	// เรียกรายงานภาษี
+	callfunc "F_Revenue_Report_Main";
+	
+	next;
+	if (select("ขอบคุณสำหรับข้อมูล:ปิดหน้าต่าง") == 2) close;
+	
+	mes "[พนักงาน]";
+	mes "ขอให้การผจญภัยในโลกแห่งนี้ราบรื่นนะคะ!";
+	close;
+}
+
+// =======================================================
+// 3. ตัว NPC สรรพากร (กางป้ายแชท)
+// =======================================================
+-	script	Revenue_Dept_NPC	-1,{
+OnStartTrade:
+L_Click:
+	// เปลี่ยนมาเรียกใช้ฟังก์ชันชื่อใหม่ที่แยกออกมา
+	callfunc "F_Revenue_Dept_Menu";
+	end;
+
+OnInit:
+	if (strnpcinfo(0) == "Revenue_Dept_NPC") end;
+	waitingroom "  กรมสรรพากร",0;
+	end;
+}
+
+// =======================================================
+// 4. การวางพิกัด NPC สรรพากร
+// =======================================================
+morocc,170,84,3	duplicate(Revenue_Dept_NPC)	กรมสรรพากร#moc	90
+prontera,142,100,3	duplicate(Revenue_Dept_NPC)	กรมสรรพากร#prt	90

@@ -1,0 +1,49 @@
+// สคริปต์เช็คคะแนน Stamina
+morocc,171,76,3	script	เช็คคะแนน Stamina	4_M_SAKRAYROYAL,{
+    callfunc "F_Stamina2";
+OnInit:
+
+	waitingroom "เช็คแต้ม Stamina ต่างๆ",0; // ชื่อห้องที่ใช้
+}
+
+
+function	script	F_Stamina2	{
+	query_sql "SELECT `boxstamina` FROM `login` WHERE `account_id`="+getcharid(3)+"",.@BoxStaminaTime;
+	
+	mes "[Kafra Stamina]";	mes "ยินดีต้อนรับ!";
+	mes "นี่คือแต้ม Stamina ทั้งหมดที่คุณมีขณะนี้";
+	mes "_________________";
+    mes "Box Stamina คงเหลือ "+.@BoxStaminaTime+ "Points. ";
+    query_sql "SELECT `BoxStamina_plus` FROM `stamina` WHERE `account_id`="+getcharid(3)+"",.@BoxStaminaPlus_Day;
+    mes "สามารถเพิ่มเวลาได้อีก ^0000FF("+.@BoxStaminaPlus_Day+"/5000)^000000 Points. จากการฟังเพลง";
+    mes "สะสมได้สูงสุด 10000  Points.";
+	mes "คุณมี ^0000ff Fish Stamina ^000000 จำนวน: ^ff0000" + #fish_stamina + "^000000 แต้ม";
+	mes "คุณมี ^0000ff Miner Stamina ^000000 จำนวน: ^ff0000" + stamina + "^000000 แต้ม";
+    end;
+}
+
+morocc,169,79,3	script	WhoOnlineNPC	4_M_CHNMAN,{
+
+    mes "[ตรวจสอบสถานะของผู้เล่น]";
+    mes "กรุณาเลือกตัวเลือก:";
+    menu "ตรวจสอบการป้องกัน",Resist,"ตรวจสอบการโจมตี",StatsDamage,"ตรวจสอบCharbonus",Charbonus;
+    
+    Resist:
+        atcommand "@resist";
+        mes "ตรวจสอบการป้องกัน เรียบร้อยแล้ว!";
+        close;
+    
+    StatsDamage:
+        atcommand "@statsdamage";
+        mes "ตรวจสอบการโจมตี เรียบร้อยแล้ว!";
+        close;
+		
+    Charbonus:
+        atcommand "@charbonus";
+        mes "ตรวจสอบCharbonus เรียบร้อยแล้ว!";
+        close;
+        
+    OnInit:
+        waitingroom "ตรวจสอบสถานะของผู้เล่น",0; // ชื่อห้องที่ใช้
+    end;
+}

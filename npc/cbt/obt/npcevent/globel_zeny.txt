@@ -1,0 +1,114 @@
+// ========================================================
+// 1. Main NPC (ตัวหลักที่มี Logic ทั้งหมด)
+// ========================================================
+morocc,170,77,4	script	Bounty Map#main	110,{
+	// ==========================================
+	// เช็กว่าผู้เล่นกำลังกดคุยกับ NPC ที่แมพไหน
+	// แล้วค่อยส่งรหัสฝ่ายไปให้ Check_Faction
+	// ==========================================
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1; // ถ้าคุยที่มอรอค ส่งรหัส 1
+	} else if (strcharinfo(3) == "payon") {
+		callfunc "Check_Faction", 2; // ถ้าคุยที่พาย่อน ส่งรหัส 2
+	}
+	// ==========================================
+	mes "[ Bounty Map ]";
+	
+	.@raw_data$ = getbountymaps();
+	explode(.@map_list$, .@raw_data$, "|");
+	
+	if (.@map_list$[0] == "GLOBAL") {
+		mes "โหมด: ^FF0000ทั่วทั้งเซิร์ฟเวอร์ (Global)^000000";
+		mes "ขณะนี้กิจกรรมเปิดให้ดรอป Zeny";
+		mes "^0000FFทุกแผนที่^000000 ทั่วโลก!";
+		
+	} else if (.@map_list$[0] == "GM") {
+		mes "โหมด: ^FF0000GM บังคับเลือกพื้นที่^000000";
+		mes "แมพรับโบนัส Zeny ตอนนี้คือ:";
+		mes "^0000FF- " + .@map_list$[1] + "^000000";
+		
+	} else if (.@map_list$[0] == "AUTO") {
+		mes "โหมด: ^FF0000สุ่มอัตโนมัติ (แยกตามระดับ)^000000";
+		mes "แมพฟาร์มในรอบนี้ได้แก่:";
+		mes "[ผู้เล่นใหม่] ^0000FF" + .@map_list$[1] + "^000000";
+		mes "[ระดับกลาง] ^0000FF" + .@map_list$[2] + "^000000";
+		mes "[ระดับสูง] ^0000FF" + .@map_list$[3] + "^000000";
+		
+	} else {
+		mes "^FF0000ยังไม่ได้ตั้งค่าแมพในระบบ^000000";
+	}
+	
+	mes " ";
+	mes "^FF0000*เงื่อนไข: คุณต้องมีสตามิน่า (Stamina)*";
+	mes "ถึงจะได้รับ Zeny จากมอนสเตอร์!^000000";
+	
+	next;
+	if (BountyMsgOff == 0) {
+		if (select("ปิดข้อความเงินเด้ง:ออก") == 1) {
+			BountyMsgOff = 1; 
+			mes "[ ระบบ ]"; mes "ปิดข้อความแจ้งเตือนเรียบร้อยแล้ว!";
+		}
+	} else {
+		if (select("เปิดข้อความเงินเด้ง:ออก") == 1) {
+			BountyMsgOff = 0;
+			mes "[ ระบบ ]"; mes "เปิดข้อความแจ้งเตือนเรียบร้อยแล้ว!";
+		}
+	}
+	close;
+
+OnInit:
+	waitingroom "เช็ค Bounty Map", 0;
+	end;
+}
+
+// ========================================================
+// 2. Duplicated NPCs (ป้ายประกาศตามเมืองอื่นๆ)
+// ========================================================
+prontera,139,98,5	duplicate(Bounty Map#main)	Bounty Map#prt	110
+//payon,84,132,3	duplicate(Bounty Map#main)	Bounty Map#pay	110
+//geffen,120,110,4	duplicate(Bounty Map#main)	Bounty Map#gef	110
+//alberta,116,65,4	duplicate(Bounty Map#main)	Bounty Map#alb	110
+
+// ========================================================
+// 3. ระบบประกาศแจ้งเตือน (ตัวควบคุมเบื้องหลัง - ไม่ต้องก๊อปปี้)
+// ========================================================
+-	script	Bounty_Announcer	-1,{
+OnInit:
+	.@interval_mins = 60; 
+	
+OnLoop:
+	.@raw_data$ = getbountymaps();
+	explode(.@map_list$, .@raw_data$, "|");
+	if (.@map_list$[0] == "GLOBAL") {
+		sleep 60000;
+		goto OnLoop;
+	}
+
+	.@left_secs = (.@interval_mins * 60) - (gettimetick(2) % (.@interval_mins * 60));
+	
+	if (.@left_secs > 300) {
+		sleep (.@left_secs - 300) * 1000;
+		announce "[Bounty Map] แผนที่ฟาร์ม Zeny จะทำการสับเปลี่ยนในอีก 5 นาที!", bc_blue|bc_all;
+	}
+	
+	.@left_secs = (.@interval_mins * 60) - (gettimetick(2) % (.@interval_mins * 60));
+	if (.@left_secs > 60 && .@left_secs <= 300) {
+		sleep (.@left_secs - 60) * 1000;
+		announce "[Bounty Map] เตรียมตัว! แผนที่ฟาร์ม Zeny จะทำการสับเปลี่ยนในอีก 1 นาที!", bc_blue|bc_all;
+	}
+	
+	.@left_secs = (.@interval_mins * 60) - (gettimetick(2) % (.@interval_mins * 60));
+	if (.@left_secs > 0 && .@left_secs <= 60) {
+		sleep (.@left_secs * 1000) + 1000; 
+		
+		.@raw_data2$ = getbountymaps();
+		explode(.@map_list2$, .@raw_data2$, "|");
+		
+		if (.@map_list2$[0] == "AUTO") {
+			announce "[Bounty Map] แผนที่ฟาร์มรอบนี้คือ: " + .@map_list2$[1] +", "+ .@map_list2$[2] +", "+ .@map_list2$[3], bc_yellow|bc_all;
+		} else if (.@map_list2$[0] == "GM") {
+			announce "[Bounty Map] โบนัส Zeny (โหมด GM) บังคับใช้ที่แผนที่: " + .@map_list2$[1], bc_yellow|bc_all;
+		}
+	}
+	goto OnLoop;
+}

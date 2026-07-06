@@ -1,0 +1,1011 @@
+//======================================================
+// Item Buff Master (The Final Masterpiece)
+// -----------------------------------------------------
+// - แก้บัคเวลาเคลือบธาตุ 420 ชั่วโมง (โชว์ 240 นาทีเป๊ะ 100%)
+// - ใช้ bonus_script แสดงไอคอนธาตุตามสี (แดง น้ำเงิน เขียว เหลือง)
+// - ปลอดภัย ไม่กวนกั้ม/ยา/VIP 100% (ใช้ Flag 2)
+//======================================================
+
+morocc,151,54,5	script	Item Buff Master::Item_Buff_NPC	4_F_KAFRA1,{
+
+	if (strcharinfo(3) == "morocc") {
+		callfunc "Check_Faction", 1;
+	} else if (strcharinfo(3) == "prontera") {
+		callfunc "Check_Faction", 2; 
+	}
+
+	.cost = 10000;
+	.buff_sec = 4 * 60 * 60; // 4 ชั่วโมง
+	.lock_cost = 1; 
+	.debug = 0; 
+
+	setarray .Grp_Armor1[0], 2317, 2315,2319;
+	setarray .Grp_Armor2[0], 2331;
+	setarray .Grp_Armor3[0], 2322,2372;
+	setarray .Grp_Armor4[0], 2336,2371,2359;
+	setarray .Grp_Armor5[0], 2326,2320;
+	setarray .Grp_Armor6[0], 2318;
+
+	setarray .Grp_Head1[0], 2285, 2280,5388,5359,5414,5416,5561,18850,5360,18939,18600,35099,35096,5208,8550020,8550029,8550028,35114;
+	setarray .Grp_Head2[0], 5017, 2229;
+	setarray .Grp_Head3[0], 2274, 2254,5761;
+	setarray .Grp_Head4[0], 2258, 2235, 5016, 5019, 2256,18856,18534,8550023;
+	setarray .Grp_Head5[0], 2233, 5007,18528,18580,5506,5507,5286,18539,18797,18563,35109,35108,5420,35111;
+
+	setarray .Grp_Shield1[0], 2102;
+	setarray .Grp_Shield2[0], 2104;
+	setarray .Grp_Shield3[0], 2106;
+
+	setarray .Grp_Shoe1[0], 2404;
+	setarray .Grp_Shoe2[0], 2406,2432;
+
+	setarray .Grp_Garm1[0], 2504;
+	setarray .Grp_Garm2[0], 2506,2523,2589;
+
+	setarray .Grp_WpnEle[0], 1119,1264, 1127, 1220, 1226, 1532, 1162,1158, 1164, 1129, 1163,1266,1261,1251,1253,1361,1363,21003,1309,1802,1819,1818,1810,1822,1820,1821,1812,1808,1804,1229,1149,21015,13454,28106,13033;
+	setarray .Grp_WpnDmg[0], 1275, 1276, 1277, 1278,1366,16040,28007;
+	setarray .Grp_WpnBow[0], 1715, 1716, 1726,18130;
+	setarray .Grp_WpnStaff[0], 1611, 1615, 1472,1573,1629,1564,1680,2025;
+
+	mes "[Item Buff Master]";
+	mes "ไอเทมของคุณน่าเบื่ออยู่หรือเปล่า?? !";
+	mes "มาคุยกับข้า ข้าจะรับไอเทมของคุณบางชนิดที่จะได้รับบัฟเพิ่ม!";
+	next;
+	
+	mes "[Item Buff Master]";
+	mes "^FF0000เมื่อเสีย 10,000z จะสุ่มรับพลังแฝง 1 อย่าง และจะอยู่ 4 ชั่วโมง^000000";
+	mes "^FF0000ถ้าถอด/สลับไอเทมในสล็อตนั้น บัฟจะหายทันที^000000";
+	mes "^00AAFF(ยกเว้นท่านจะใช้บริการ ผนึกบัฟ กับข้า)^000000";
+	next;
+	mes "[Item Buff Master]";
+	mes "เลือกเมนู:";
+	next;
+
+	switch(select("สุ่มบัฟ:ดูรายการบัฟที่สุ่มได้ (Preview):ดูรายชื่อไอเทมที่รับทำพิธี (โชว์รูป):ดูบัฟที่ใช้อยู่ (สรุป):ผนึกบัฟกันสูญหาย (Lock Buff)")) {
+		case 2: callsub S_PreviewMenu; close;
+		case 3: callsub S_ShowAllowedItems; close;
+		case 4: callsub S_ShowAllBuffs_Summary; close;
+		case 5: callsub S_LockBuffMenu; close;
+		case 1: break;
+	}
+
+	callsub S_ShowAllBuffs;
+	if (Zeny < .cost) { mes "เงินเจ้าไม่พอ!"; close; }
+
+	mes "[Item Buff Master]";
+	mes "เลือกชนิดอุปกรณ์ที่ต้องการสุ่มบัฟ";
+	next;
+
+	.@slot = callsub(S_SelectEquipSlot);
+	if (.@slot < 0) { mes "เจ้าต้องสวมใส่อุปกรณ์ก่อน!"; close; }
+
+	.@iid = getequipid(.@slot);
+	.@ref = getequiprefinerycnt(.@slot);
+	if (.@ref < 6) { mes "[Item Buff Master]"; mes "ต้องเป็นไอเทมตีบวก +6 ขึ้นไป!"; close; }
+
+	.@groupID = callsub(S_GetItemGroup, .@slot, .@iid);
+	if (.@groupID == 0) { mes "[Item Buff Master]"; mes "ข้าไม่รับไอเทมชิ้นนี้..."; close; }
+
+	.@idx = callfunc("F_IBUFF_SlotToIdx", .@slot);
+
+	mes "[Item Buff Master]";
+	mes "เมื่อสุ่มใหม่ บัฟเดิมของช่อง ^0000FF"+callfunc("F_IBUFF_SlotName$", .@idx)+"^000000 จะหายทันที";
+	mes "ต้องการสุ่มหรือไม่?";
+	next;
+	if (select("สุ่มบัฟ:ยกเลิก") == 2) close;
+	
+	if (getequipid(.@slot) != .@iid || getequiprefinerycnt(.@slot) != .@ref) { mes "[Item Buff Master]"; mes "อุปกรณ์มีการเปลี่ยนแปลง ข้าทำพิธีต่อไม่ได้!"; close; }
+	if (Zeny < .cost) { mes "[Item Buff Master]"; mes "อ้าว! เงินเจ้าน่ะไม่พอแล้ว!"; close; }
+
+	Zeny -= .cost;
+
+	@IBUFF_SLOT = .@slot; @IBUFF_IID = .@iid; @IBUFF_REF = .@ref; @IBUFF_IDX = .@idx; @IBUFF_NPCDBG = .debug;
+	if (.@ref >= 9) .@tier = 9;
+	else if (.@ref >= 8) .@tier = 8;
+	else if (.@ref >= 7) .@tier = 7;
+	else .@tier = 6;
+
+	callsub S_RollAndApplyByGroup, .@groupID, .@tier;
+
+	mes "[Item Buff Master]";
+	mes "บัฟถูกติดตั้งเรียบร้อย! (4 ชั่วโมง)";
+	next;
+	callsub S_ShowAllBuffs;
+	close;
+
+S_ShowAllowedItems:
+	mes "[Item Buff Master]";
+	mes "เลือกหมวดหมู่ที่ต้องการดูรายชื่อไอเทม";
+	next;
+	.@s = select("ชุดเกราะ (Armor):หมวก (Headgear):โล่ (Shield):รองเท้า (Shoes):ผ้าคลุม (Garment):อาวุธ (Weapon):ยกเลิก");
+	if (.@s == 7) close;
+	mes "[Item Buff Master]";
+	mes "รายชื่อไอเทมที่รองรับในหมวดหมู่นี้:";
+	mes "--------------------------------";
+	deletearray .@list; .@c = 0;
+	if (.@s == 1) {
+		copyarray .@list[.@c], .Grp_Armor1[0], getarraysize(.Grp_Armor1); .@c += getarraysize(.Grp_Armor1);
+		copyarray .@list[.@c], .Grp_Armor2[0], getarraysize(.Grp_Armor2); .@c += getarraysize(.Grp_Armor2);
+		copyarray .@list[.@c], .Grp_Armor3[0], getarraysize(.Grp_Armor3); .@c += getarraysize(.Grp_Armor3);
+		copyarray .@list[.@c], .Grp_Armor4[0], getarraysize(.Grp_Armor4); .@c += getarraysize(.Grp_Armor4);
+		copyarray .@list[.@c], .Grp_Armor5[0], getarraysize(.Grp_Armor5); .@c += getarraysize(.Grp_Armor5);
+		copyarray .@list[.@c], .Grp_Armor6[0], getarraysize(.Grp_Armor6); .@c += getarraysize(.Grp_Armor6);
+	} else if (.@s == 2) {
+		copyarray .@list[.@c], .Grp_Head1[0], getarraysize(.Grp_Head1); .@c += getarraysize(.Grp_Head1);
+		copyarray .@list[.@c], .Grp_Head2[0], getarraysize(.Grp_Head2); .@c += getarraysize(.Grp_Head2);
+		copyarray .@list[.@c], .Grp_Head3[0], getarraysize(.Grp_Head3); .@c += getarraysize(.Grp_Head3);
+		copyarray .@list[.@c], .Grp_Head4[0], getarraysize(.Grp_Head4); .@c += getarraysize(.Grp_Head4);
+		copyarray .@list[.@c], .Grp_Head5[0], getarraysize(.Grp_Head5); .@c += getarraysize(.Grp_Head5);
+	} else if (.@s == 3) {
+		copyarray .@list[.@c], .Grp_Shield1[0], getarraysize(.Grp_Shield1); .@c += getarraysize(.Grp_Shield1);
+		copyarray .@list[.@c], .Grp_Shield2[0], getarraysize(.Grp_Shield2); .@c += getarraysize(.Grp_Shield2);
+		copyarray .@list[.@c], .Grp_Shield3[0], getarraysize(.Grp_Shield3); .@c += getarraysize(.Grp_Shield3);
+	} else if (.@s == 4) {
+		copyarray .@list[.@c], .Grp_Shoe1[0], getarraysize(.Grp_Shoe1); .@c += getarraysize(.Grp_Shoe1);
+		copyarray .@list[.@c], .Grp_Shoe2[0], getarraysize(.Grp_Shoe2); .@c += getarraysize(.Grp_Shoe2);
+	} else if (.@s == 5) {
+		copyarray .@list[.@c], .Grp_Garm1[0], getarraysize(.Grp_Garm1); .@c += getarraysize(.Grp_Garm1);
+		copyarray .@list[.@c], .Grp_Garm2[0], getarraysize(.Grp_Garm2); .@c += getarraysize(.Grp_Garm2);
+	} else if (.@s == 6) {
+		copyarray .@list[.@c], .Grp_WpnEle[0], getarraysize(.Grp_WpnEle); .@c += getarraysize(.Grp_WpnEle);
+		copyarray .@list[.@c], .Grp_WpnDmg[0], getarraysize(.Grp_WpnDmg); .@c += getarraysize(.Grp_WpnDmg);
+		copyarray .@list[.@c], .Grp_WpnBow[0], getarraysize(.Grp_WpnBow); .@c += getarraysize(.Grp_WpnBow);
+		copyarray .@list[.@c], .Grp_WpnStaff[0], getarraysize(.Grp_WpnStaff); .@c += getarraysize(.Grp_WpnStaff);
+	}
+	for(.@i=0; .@i<.@c; .@i++) {
+		mes "^i["+.@list[.@i]+"]^FFFFFF_^000000 ^FF0000 " + getitemname(.@list[.@i]) + " ^000000";
+		if (.@i % 12 == 11 && .@i < .@c-1) { next; mes "[Item Buff Master]"; mes "รายชื่อไอเทม (ต่อ):"; mes "--------------------------------"; }
+	}
+	mes "--------------------------------";
+	close;
+
+S_GetItemGroup:
+	.@slot = getarg(0); .@iid = getarg(1);
+	if (.@slot == EQI_ARMOR) {
+		if (inarray(.Grp_Armor1, .@iid) != -1) return 11; if (inarray(.Grp_Armor2, .@iid) != -1) return 12;
+		if (inarray(.Grp_Armor3, .@iid) != -1) return 13; if (inarray(.Grp_Armor4, .@iid) != -1) return 14;
+		if (inarray(.Grp_Armor5, .@iid) != -1) return 15; if (inarray(.Grp_Armor6, .@iid) != -1) return 16;
+	} else if (.@slot == EQI_HEAD_TOP) {
+		if (inarray(.Grp_Head1, .@iid) != -1) return 21; if (inarray(.Grp_Head2, .@iid) != -1) return 22;
+		if (inarray(.Grp_Head3, .@iid) != -1) return 23; if (inarray(.Grp_Head4, .@iid) != -1) return 24;
+		if (inarray(.Grp_Head5, .@iid) != -1) return 25;
+	} else if (.@slot == EQI_HAND_L) {
+		if (inarray(.Grp_Shield1, .@iid) != -1) return 31; if (inarray(.Grp_Shield2, .@iid) != -1) return 32;
+		if (inarray(.Grp_Shield3, .@iid) != -1) return 33;
+	} else if (.@slot == EQI_SHOES) {
+		if (inarray(.Grp_Shoe1, .@iid) != -1) return 41; if (inarray(.Grp_Shoe2, .@iid) != -1) return 42;
+	} else if (.@slot == EQI_GARMENT) {
+		if (inarray(.Grp_Garm1, .@iid) != -1) return 51; if (inarray(.Grp_Garm2, .@iid) != -1) return 52;
+	} else if (.@slot == EQI_HAND_R) {
+		if (inarray(.Grp_WpnEle, .@iid) != -1) return 61; if (inarray(.Grp_WpnDmg, .@iid) != -1) return 62;
+		if (inarray(.Grp_WpnBow, .@iid) != -1) return 63; if (inarray(.Grp_WpnStaff, .@iid) != -1) return 64;
+	}
+	return 0;
+
+S_PreviewMenu:
+	mes "[Item Buff Master]";
+	mes "เลือกอุปกรณ์ที่สวมใส่อยู่เพื่อดูรายการบัฟที่เป็นไปได้";
+	next;
+	.@slot = callsub(S_SelectEquipSlot);
+	if (.@slot < 0) { mes "ท่านยังไม่ได้สวมใส่อุปกรณ์ใดๆ!"; close; }
+	.@iid = getequipid(.@slot); .@ref = getequiprefinerycnt(.@slot);
+	if (.@ref < 6) { mes "[Item Buff Master]"; mes "ไอเทมต้องตีบวก +6 ขึ้นไป จึงจะมีบัฟแฝงให้ท่านสุ่มได้นะ!"; close; }
+	.@groupID = callsub(S_GetItemGroup, .@slot, .@iid);
+	if (.@groupID == 0) { mes "[Item Buff Master]"; mes "ไอเทมชิ้นนี้ไม่ได้อยู่ในรายการที่รับทำพิธี..."; close; }
+
+	if (.@ref >= 9) .@tier = 9; else if (.@ref >= 8) .@tier = 8; else if (.@ref >= 7) .@tier = 7; else .@tier = 6;
+	mes "[Item Buff Master]";
+	mes "ไอเทม: ^FF0000" + getitemname(.@iid) + " +" + .@ref + "^000000";
+	mes "ระดับขั้นบัฟ: ^00AAFFTier " + .@tier + "^000000";
+	mes "--------------------------------";
+	if (.@groupID == 11) {
+		if (.@tier==6) { mes "- ASPD +5%, DROP +2%"; mes "- Critical +5, DROP +2%"; mes "- ลด SP 10%, DROP +2%"; }
+		else if (.@tier==7) { mes "- ASPD +8%, DROP +5%"; mes "- Critical +8, DROP +5%"; mes "- ลด SP 15%, ATK +3, DROP +5%"; }
+		else if (.@tier==8) { mes "- ASPD +12%, DROP +10%"; mes "- Critical +12, DROP +10%"; mes "- ลด SP 20%, ATK +6, DROP +10%"; }
+		else { mes "- ASPD +15%, DROP +15%"; mes "- Critical +15, DROP +15%"; mes "- ลด SP 30%, ATK +10, DROP +15%"; }
+	} else if (.@groupID == 12) {
+		if (.@tier==6) { mes "- ASPD +5%, DROP +2%"; mes "- Critical +5, DROP +2%"; mes "- SP Recov +5%, DROP +2%"; }
+		else if (.@tier==7) { mes "- ASPD +8%, ATK +3, DROP +5%"; mes "- Critical +8, ATK +3, DROP +5%"; mes "- SP Recov +10%, FLEE +5, DROP +5%"; }
+		else if (.@tier==8) { mes "- ASPD +12%, ATK +6, DROP +10%"; mes "- Critical +12, ATK +6, DROP +10%"; mes "- SP Recov +15%, FLEE +10, DROP +10%"; }
+		else { mes "- ASPD +15%, ATK +10, DROP +15%"; mes "- Critical +15, ATK +10, DROP +15%"; mes "- SP Recov +20%, FLEE +13, DROP +15%"; }
+	} else if (.@groupID == 13 || .@groupID == 25 || .@groupID == 64) {
+		if (.@tier==6) { mes "- ลด Delay 5%, DROP +2%"; mes "- ลดเวลาร่าย 5%, DROP +2%"; }
+		else if (.@tier==7) { mes "- ลด Delay 10%, MATK +3%, DROP +5%"; mes "- ลดเวลาร่าย 10%, MATK +3%, DROP +5%"; }
+		else if (.@tier==8) { mes "- ลด Delay 15%, MATK +6%, DROP +10%"; mes "- ลดเวลาร่าย 15%, MATK +6%, DROP +10%"; }
+		else { mes "- ลด Delay 20%, MATK +10%, DROP +15% (หมวด 25 มี FLEE+13 ด้วย)"; mes "- ลดเวลาร่าย 20%, MATK +10%, DROP +15% (หมวด 25 มี FLEE+13 ด้วย)"; }
+	} else if (.@groupID == 14 || .@groupID == 15 || .@groupID == 21) {
+		if (.@tier==6) { mes "- ASPD +4-6%, DROP +2%"; mes "- Critical +4-6, DROP +2%"; }
+		else if (.@tier==7) { mes "- ASPD +7-10%, DROP +5% (หมวด 21 มี FLEE+5)"; mes "- Critical +7-10, DROP +5% (หมวด 21 มี FLEE+5)"; }
+		else if (.@tier==8) { mes "- ASPD +10-14%, DROP +10% (หมวด 21 มี FLEE+10)"; mes "- Critical +10-14, DROP +10% (หมวด 21 มี FLEE+10)"; }
+		else { mes "- ASPD +13-18%, DROP +15%"; mes "- Critical +13-18, DROP +15%"; }
+	} else if (.@groupID == 16) {
+		if (.@tier==6) { mes "- ASPD +5%, DROP +2%"; mes "- Critical +5, DROP +2%"; mes "- Ignore DEF 15%, DROP +2%"; }
+		else if (.@tier==7) { mes "- ASPD +8%, DROP +5%"; mes "- Critical +8, DROP +5%"; mes "- Ignore DEF 20%, HIT +10, DROP +5%"; }
+		else if (.@tier==8) { mes "- ASPD +12%, DROP +10%"; mes "- Critical +12, DROP +10%"; mes "- Ignore DEF 30%, HIT +15, DROP +10%"; }
+		else { mes "- ASPD +15%, DROP +15%"; mes "- Critical +15, DROP +15%"; mes "- Ignore DEF 40%, HIT +20, DROP +15%"; }
+	} else if (.@groupID == 22) {
+		if (.@tier==6) { mes "- Bash แรง 4%, DROP +2%"; mes "- ASPD +5%, DROP +2%"; mes "- Critical +5, DROP +2%"; }
+		else if (.@tier==7) { mes "- Bash แรง 8%, FLEE +5, DROP +5%"; mes "- ASPD +8%, FLEE +5, DROP +5%"; mes "- Critical +8, FLEE +5, DROP +5%"; }
+		else if (.@tier==8) { mes "- Bash แรง 12%, FLEE +10, DROP +10%"; mes "- ASPD +11%, FLEE +10, DROP +10%"; mes "- Critical +11, FLEE +10, DROP +10%"; }
+		else { mes "- Bash แรง 15%, FLEE +13, ATK 3%, DROP +15%"; mes "- ASPD +14%, FLEE +13, ATK 3%, DROP +15%"; mes "- Critical +14, FLEE +13, ASPD 3%, DROP +15%"; }
+	} else if (.@groupID == 23) {
+		if (.@tier==6) { mes "- ASPD+5%, Cri+5, DROP+2%"; mes "- ATK+5%, ASPD+5%, DROP+2%"; mes "- Bash แรง 5%, ASPD+5%, DROP+2%"; }
+		else if (.@tier==7) { mes "- ASPD+8%, Cri+8, DROP+6%"; mes "- ATK+8%, ASPD+8%, DROP+6%"; mes "- Bash แรง 8%, ASPD+8%, DROP+6%"; }
+		else if (.@tier==8) { mes "- ASPD+12%, Cri+12, DROP+11%"; mes "- ATK+12%, ASPD+12%, DROP+11%"; mes "- Bash แรง 12%, ASPD+12%, DROP+11%"; }
+		else { mes "- ASPD+15%, Cri+15, ATK 3%, DROP+16%"; mes "- ATK+18%, ASPD+15%, DROP+16%"; mes "- Bash แรง 15%, ASPD+15%, ATK 3%, DROP+16%"; }
+	} else if (.@groupID == 24) {
+		if (.@tier==6) { mes "- Bash 6%, ASPD 6%, Drop 2%"; mes "- ASPD 6%, Cri 6, Drop 2%"; mes "- ATK 6%, ASPD 6%, Drop 2%"; mes "- ลด Delay 6%, MATK 6%, Drop 2%"; mes "- ลดร่าย 6%, MATK 6%, Drop 2%"; }
+		else if (.@tier==7) { mes "- Bash 9%, ASPD 9%, Drop 7%"; mes "- ASPD 9%, Cri 9, Drop 7%"; mes "- ATK 9%, ASPD 9%, Drop 7%"; mes "- ลด Delay 9%, MATK 9%, Drop 7%"; mes "- ลดร่าย 9%, MATK 9%, Drop 7%"; }
+		else if (.@tier==8) { mes "- Bash 13%, ASPD 13%, Drop 12%"; mes "- ASPD 13%, Cri 13, Drop 12%"; mes "- ATK 13%, ASPD 13%, Drop 12%"; mes "- ลด Delay 13%, MATK 13%, Drop 12%"; mes "- ลดร่าย 13%, MATK 13%, Drop 12%"; }
+		else { mes "- ทุกสายจะบวกเพิ่มเป็น 16%, และได้ ATK +3%, Drop +17%"; }
+	} else if (.@groupID == 31) {
+		if (.@tier==6) { mes "- Fire Bolt 5%, Drop 2%"; mes "- Cold Bolt 5%, Drop 2%"; mes "- Lightning Bolt 5%, Drop 2%"; }
+		else if (.@tier==7) { mes "- Fire Bolt 10%, Drop 5%"; mes "- Cold Bolt 10%, Drop 5%"; mes "- Lightning Bolt 10%, Drop 5%"; }
+		else if (.@tier==8) { mes "- Fire Bolt 15%, Drop 10%"; mes "- Cold Bolt 15%, Drop 10%"; mes "- Lightning Bolt 15%, Drop 10%"; }
+		else { mes "- (ทุกธาตุ) Bolt 20%, FLEE +15, Drop +15%"; }
+	} else if (.@groupID == 32 || .@groupID == 33 || .@groupID == 41 || .@groupID == 42 || .@groupID == 51 || .@groupID == 52) {
+		mes "- สาย ASPD + (หลบหลีก/เกราะ/ดรอป)";
+		mes "- สาย Critical + (หลบหลีก/เกราะ/ดรอป)";
+		mes "- สายลดร่าย/ลดดีเลย์/SP + (หลบหลีก/ดรอป)";
+		mes "^888888*(โบนัสเพิ่มขึ้นตามระดับการตีบวก)*^000000";
+	} else if (.@groupID == 61) {
+		mes "- สุ่มเปลี่ยนธาตุอาวุธ (ไฟ, น้ำ, ลม, ดิน, ศักดิ์สิทธิ์)";
+		if (.@tier==6) mes "- และได้รับโบนัส: ASPD +3%, DROP +2%";
+		else if (.@tier==7) mes "- และได้รับโบนัส: ASPD +6%, DROP +5%";
+		else if (.@tier==8) mes "- และได้รับโบนัส: ASPD +9%, DROP +10%";
+		else mes "- และได้รับโบนัส: ASPD +12%, ATK +3%, DROP +15%";
+	} else if (.@groupID == 62) {
+		if (.@tier==6) { mes "- Critical +8, ASPD +4%, DROP +2%"; mes "- ATK +7%, ASPD +4%, DROP +2%"; mes "- โจมตีไกล +7%, ASPD +4%, DROP +2%"; }
+		else if (.@tier==7) { mes "- Critical +12, ASPD +8%, DROP +6%"; mes "- ATK +12%, ASPD +8%, DROP +6%"; mes "- โจมตีไกล +12%, ASPD +8%, DROP +6%"; }
+		else if (.@tier==8) { mes "- Critical +15, ASPD +12%, DROP +12%"; mes "- ATK +15%, ASPD +12%, DROP +12%"; mes "- โจมตีไกล +15%, ASPD +12%, DROP +12%"; }
+		else { mes "- Critical +18, ASPD +15%, ATK +3%, DROP +15%"; mes "- ATK +21%, ASPD +15%, DROP +15%"; mes "- โจมตีไกล +18%, ASPD +15%, ATK +3%, DROP +15%"; }
+	} else if (.@groupID == 63) {
+		if (.@tier==6) { mes "- โจมตีไกล 4%, DROP +2%"; mes "- ASPD 4%, DROP +2%"; }
+		else if (.@tier==7) { mes "- โจมตีไกล 8%, ASPD 4%, DROP +5%"; mes "- ASPD 8%, Critical 4, DROP +5%"; }
+		else if (.@tier==8) { mes "- โจมตีไกล 11%, ASPD 8%, DROP +10%"; mes "- ASPD 11%, Critical 8, DROP +10%"; }
+		else { mes "- โจมตีไกล 14%, ASPD 10%, ATK 3%, DROP +15%"; mes "- ASPD 14%, Critical 10, ATK 3%, DROP +15%"; }
+	}
+	mes "--------------------------------";
+	close;
+
+S_RollAndApplyByGroup:
+	.@grp = getarg(0); .@tier = getarg(1);
+	if (.@grp == 11) { 
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - Critical +5\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bUseSPrate,-10; bonus2 bDropAddRace,RC_All,2; }", " - ลดการใช้ SP 10%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +8%\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,8; bonus2 bDropAddRace,RC_All,5; }", " - Critical +8\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bUseSPrate,-15; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - ลดการใช้ SP 15%\n - ATK +3\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +12%\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,12; bonus2 bDropAddRace,RC_All,10; }", " - Critical +12\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bUseSPrate,-20; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }", " - ลดการใช้ SP 20%\n - ATK +6\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +15%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,15; bonus2 bDropAddRace,RC_All,15; }", " - Critical +15\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bUseSPrate,-30; bonus bAtk,10; bonus2 bDropAddRace,RC_All,15; }", " - ลดการใช้ SP 30%\n - ATK +10\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 12) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - Critical +5\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bSPrecovRate,5; bonus2 bDropAddRace,RC_All,2; }", " - SP Recovery +5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +8%\n - ATK +3\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,8; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - Critical +8\n - ATK +3\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bSPrecovRate,10; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - SP Recovery +10%\n - FLEE +5\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +12%\n - ATK +6\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,12; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }", " - Critical +12\n - ATK +6\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bSPrecovRate,15; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - SP Recovery +15%\n - FLEE +10\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus bAtk,10; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +15%\n - ATK +10\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,15; bonus bAtk,10; bonus2 bDropAddRace,RC_All,15; }", " - Critical +15\n - ATK +10\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bSPrecovRate,20; bonus bFlee,13; bonus2 bDropAddRace,RC_All,15; }", " - SP Recovery +20%\n - FLEE +13\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 13) {
+		.@pick = rand(2);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-5; bonus2 bDropAddRace,RC_All,2; }", " - ลด Delay 5%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCastrate,-5; bonus2 bDropAddRace,RC_All,2; }", " - ลดเวลาร่าย 5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }", " - ลด Delay 10%\n - MATK +3%\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCastrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }", " - ลดเวลาร่าย 10%\n - MATK +3%\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }", " - ลด Delay 15%\n - MATK +6%\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCastrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }", " - ลดเวลาร่าย 15%\n - MATK +6%\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-20; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }", " - ลด Delay 20%\n - MATK +10%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCastrate,-20; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }", " - ลดเวลาร่าย 20%\n - MATK +10%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 14) {
+		.@pick = rand(2);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - Critical +5\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +8%\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCritical,8; bonus2 bDropAddRace,RC_All,5; }", " - Critical +8\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +12%\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCritical,12; bonus2 bDropAddRace,RC_All,10; }", " - Critical +12\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +15%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCritical,15; bonus2 bDropAddRace,RC_All,15; }", " - Critical +15\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 15) {
+		.@pick = rand(2);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,6; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +6%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCritical,6; bonus2 bDropAddRace,RC_All,2; }", " - Critical +6\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,10; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +10%\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCritical,10; bonus2 bDropAddRace,RC_All,5; }", " - Critical +10\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,14; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +14%\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCritical,14; bonus2 bDropAddRace,RC_All,10; }", " - Critical +14\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,18; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +18%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCritical,18; bonus2 bDropAddRace,RC_All,15; }", " - Critical +18\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 16) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - Critical +5\n - DROP +2%";
+			else callsub S_Apply, "{ bonus2 bIgnoreDefRaceRate,RC_All,15; bonus2 bDropAddRace,RC_All,2; }", " - Ignore DEF 15%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +8%\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,8; bonus2 bDropAddRace,RC_All,5; }", " - Critical +8\n - DROP +5%";
+			else callsub S_Apply, "{ bonus2 bIgnoreDefRaceRate,RC_All,20; bonus bHit,10; bonus2 bDropAddRace,RC_All,5; }", " - Ignore DEF 20%\n - HIT +10\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +12%\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,12; bonus2 bDropAddRace,RC_All,10; }", " - Critical +12\n - DROP +10%";
+			else callsub S_Apply, "{ bonus2 bIgnoreDefRaceRate,RC_All,30; bonus bHit,15; bonus2 bDropAddRace,RC_All,10; }", " - Ignore DEF 30%\n - HIT +15\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +15%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,15; bonus2 bDropAddRace,RC_All,15; }", " - Critical +15\n - DROP +15%";
+			else callsub S_Apply, "{ bonus2 bIgnoreDefRaceRate,RC_All,40; bonus bHit,20; bonus2 bDropAddRace,RC_All,15; }", " - Ignore DEF 40%\n - HIT +20\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 21) {
+		.@pick = rand(2);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,4; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +4%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCritical,4; bonus2 bDropAddRace,RC_All,2; }", " - Critical +4\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,7; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +7%\n - FLEE +5\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCritical,7; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - Critical +7\n - FLEE +5\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,10; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +10%\n - FLEE +10\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCritical,10; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - Critical +10\n - FLEE +10\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,13; bonus bFlee,13; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +13%\n - FLEE +13\n - ATK +3%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCritical,13; bonus bFlee,13; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +13\n - FLEE +13\n - ASPD +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 22) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,4; bonus2 bDropAddRace,RC_All,2; }", " - Bash แรงขึ้น 4%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - Critical +5\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,8; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - Bash แรงขึ้น 8%\n - FLEE +5\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,8; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +8%\n - FLEE +5\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCritical,8; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - Critical +8\n - FLEE +5\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,12; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - Bash แรงขึ้น 12%\n - FLEE +10\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,11; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +11%\n - FLEE +10\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCritical,11; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - Critical +11\n - FLEE +10\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,15; bonus bFlee,13; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Bash แรงขึ้น 15%\n - FLEE +13\n - ATK +3%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,14; bonus bFlee,13; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +14%\n - FLEE +13\n - ATK +3%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCritical,14; bonus bFlee,13; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +14\n - FLEE +13\n - ASPD +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 23) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - Critical +5\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAtkRate,5; bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ATK +5%\n - ASPD +5%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus2 bSkillAtk,5,5; bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - Bash แรงขึ้น 5%\n - ASPD +5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus bCritical,8; bonus2 bDropAddRace,RC_All,6; }", " - ASPD +8%\n - Critical +8\n - DROP +6%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAtkRate,8; bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,6; }", " - ATK +8%\n - ASPD +8%\n - DROP +6%";
+			else callsub S_Apply, "{ bonus2 bSkillAtk,5,8; bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,6; }", " - Bash แรงขึ้น 8%\n - ASPD +8%\n - DROP +6%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus bCritical,12; bonus2 bDropAddRace,RC_All,11; }", " - ASPD +12%\n - Critical +12\n - DROP +11%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAtkRate,12; bonus bAspdRate,12; bonus2 bDropAddRace,RC_All,11; }", " - ATK +12%\n - ASPD +12%\n - DROP +11%";
+			else callsub S_Apply, "{ bonus2 bSkillAtk,5,12; bonus bAspdRate,12; bonus2 bDropAddRace,RC_All,11; }", " - Bash แรงขึ้น 12%\n - ASPD +12%\n - DROP +11%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus bCritical,15; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,16; }", " - ASPD +15%\n - Critical +15\n - ATK +3%\n - DROP +16%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAtkRate,18; bonus bAspdRate,15; bonus2 bDropAddRace,RC_All,16; }", " - ATK +18%\n - ASPD +15%\n - DROP +16%";
+			else callsub S_Apply, "{ bonus2 bSkillAtk,5,15; bonus bAspdRate,15; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,16; }", " - Bash แรงขึ้น 15%\n - ASPD +15%\n - ATK +3%\n - DROP +16%";
+		}
+		return;
+	}
+	if (.@grp == 24) {
+		.@pick = rand(5);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,6; bonus bAspdRate,6; bonus2 bDropAddRace,RC_All,2; }", " - Bash แรงขึ้น 6%\n - ASPD +6%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,6; bonus bCritical,6; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +6%\n - Critical +6\n - DROP +2%";
+			else if (.@pick==2) callsub S_Apply, "{ bonus bAtkRate,6; bonus bAspdRate,6; bonus2 bDropAddRace,RC_All,2; }", " - ATK +6%\n - ASPD +6%\n - DROP +2%";
+			else if (.@pick==3) callsub S_Apply, "{ bonus bDelayrate,-6; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,2; }", " - ลด Delay 6%\n - MATK +6%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCastrate,-6; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,2; }", " - ลดเวลาร่าย 6%\n - MATK +6%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,9; bonus bAspdRate,9; bonus2 bDropAddRace,RC_All,7; }", " - Bash แรงขึ้น 9%\n - ASPD +9%\n - DROP +7%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,9; bonus bCritical,9; bonus2 bDropAddRace,RC_All,7; }", " - ASPD +9%\n - Critical +9\n - DROP +7%";
+			else if (.@pick==2) callsub S_Apply, "{ bonus bAtkRate,9; bonus bAspdRate,9; bonus2 bDropAddRace,RC_All,7; }", " - ATK +9%\n - ASPD +9%\n - DROP +7%";
+			else if (.@pick==3) callsub S_Apply, "{ bonus bDelayrate,-9; bonus bMatkRate,9; bonus2 bDropAddRace,RC_All,7; }", " - ลด Delay 9%\n - MATK +9%\n - DROP +7%";
+			else callsub S_Apply, "{ bonus bCastrate,-9; bonus bMatkRate,9; bonus2 bDropAddRace,RC_All,7; }", " - ลดเวลาร่าย 9%\n - MATK +9%\n - DROP +7%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,13; bonus bAspdRate,13; bonus2 bDropAddRace,RC_All,12; }", " - Bash แรงขึ้น 13%\n - ASPD +13%\n - DROP +12%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,13; bonus bCritical,13; bonus2 bDropAddRace,RC_All,12; }", " - ASPD +13%\n - Critical +13\n - DROP +12%";
+			else if (.@pick==2) callsub S_Apply, "{ bonus bAtkRate,13; bonus bAspdRate,13; bonus2 bDropAddRace,RC_All,12; }", " - ATK +13%\n - ASPD +13%\n - DROP +12%";
+			else if (.@pick==3) callsub S_Apply, "{ bonus bDelayrate,-13; bonus bMatkRate,13; bonus2 bDropAddRace,RC_All,12; }", " - ลด Delay 13%\n - MATK +13%\n - DROP +12%";
+			else callsub S_Apply, "{ bonus bCastrate,-13; bonus bMatkRate,13; bonus2 bDropAddRace,RC_All,12; }", " - ลดเวลาร่าย 13%\n - MATK +13%\n - DROP +12%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,16; bonus bAspdRate,16; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,17; }", " - Bash แรงขึ้น 16%\n - ASPD +16%\n - ATK +3%\n - DROP +17%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,16; bonus bCritical,16; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,17; }", " - ASPD +16%\n - Critical +16\n - ATK +3%\n - DROP +17%";
+			else if (.@pick==2) callsub S_Apply, "{ bonus bAtkRate,18; bonus bAspdRate,16; bonus2 bDropAddRace,RC_All,17; }", " - ATK +18%\n - ASPD +16%\n - DROP +17%";
+			else if (.@pick==3) callsub S_Apply, "{ bonus bDelayrate,-16; bonus bMatkRate,16; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,17; }", " - ลด Delay 16%\n - MATK +16%\n - ATK +3%\n - DROP +17%";
+			else callsub S_Apply, "{ bonus bCastrate,-16; bonus bMatkRate,16; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,17; }", " - ลดเวลาร่าย 16%\n - MATK +16%\n - ATK +3%\n - DROP +17%";
+		}
+		return;
+	}
+	if (.@grp == 25) {
+		.@pick = rand(2);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-5; bonus2 bDropAddRace,RC_All,2; }", " - ลด Delay 5%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCastrate,-5; bonus2 bDropAddRace,RC_All,2; }", " - ลดเวลาร่าย 5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }", " - ลด Delay 10%\n - MATK +3%\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCastrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }", " - ลดเวลาร่าย 10%\n - MATK +3%\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }", " - ลด Delay 15%\n - MATK +6%\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCastrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }", " - ลดเวลาร่าย 15%\n - MATK +6%\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-20; bonus bFlee,13; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }", " - ลด Delay 20%\n - FLEE +13\n - MATK +10%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCastrate,-20; bonus bFlee,13; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }", " - ลดเวลาร่าย 20%\n - FLEE +13\n - MATK +10%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 31) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,19,5; bonus2 bDropAddRace,RC_All,2; }", " - Fire Bolt แรงขึ้น 5%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus2 bSkillAtk,14,5; bonus2 bDropAddRace,RC_All,2; }", " - Cold Bolt แรงขึ้น 5%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus2 bSkillAtk,20,5; bonus2 bDropAddRace,RC_All,2; }", " - Lightning Bolt แรงขึ้น 5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,19,10; bonus2 bDropAddRace,RC_All,5; }", " - Fire Bolt แรงขึ้น 10%\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus2 bSkillAtk,14,10; bonus2 bDropAddRace,RC_All,5; }", " - Cold Bolt แรงขึ้น 10%\n - DROP +5%";
+			else callsub S_Apply, "{ bonus2 bSkillAtk,20,10; bonus2 bDropAddRace,RC_All,5; }", " - Lightning Bolt แรงขึ้น 10%\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,19,15; bonus2 bDropAddRace,RC_All,10; }", " - Fire Bolt แรงขึ้น 15%\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus2 bSkillAtk,14,15; bonus2 bDropAddRace,RC_All,10; }", " - Cold Bolt แรงขึ้น 15%\n - DROP +10%";
+			else callsub S_Apply, "{ bonus2 bSkillAtk,20,15; bonus2 bDropAddRace,RC_All,10; }", " - Lightning Bolt แรงขึ้น 15%\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,19,20; bonus bFlee,15; bonus2 bDropAddRace,RC_All,15; }", " - Fire Bolt แรงขึ้น 20%\n - FLEE +15\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus2 bSkillAtk,14,20; bonus bFlee,15; bonus2 bDropAddRace,RC_All,15; }", " - Cold Bolt แรงขึ้น 20%\n - FLEE +15\n - DROP +15%";
+			else callsub S_Apply, "{ bonus2 bSkillAtk,20,20; bonus bFlee,15; bonus2 bDropAddRace,RC_All,15; }", " - Lightning Bolt แรงขึ้น 20%\n - FLEE +15\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 32) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - Critical +5\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bAtkRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ATK +5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,9; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +9%\n - FLEE +5\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,9; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - Critical +9\n - FLEE +5\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bAtkRate,8; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - ATK +8%\n - FLEE +5\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,13; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +13%\n - FLEE +10\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,13; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - Critical +13\n - FLEE +10\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bAtkRate,12; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - ATK +12%\n - FLEE +10\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus bFlee,13; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +15%\n - FLEE +13\n - ATK +3%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,15; bonus bFlee,13; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +15\n - FLEE +13\n - ASPD +3%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bAtkRate,15; bonus bFlee,13; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ATK +15%\n - FLEE +13\n - ASPD +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 33) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,4; bonus2 bDropAddRace,RC_All,2; }", " - Bash แรงขึ้น 4%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,6; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +6%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCritical,6; bonus2 bDropAddRace,RC_All,2; }", " - Critical +6\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,8; bonus bHit,5; bonus2 bDropAddRace,RC_All,5; }", " - Bash แรงขึ้น 8%\n - HIT +5\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,10; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +10%\n - FLEE +5\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCritical,10; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - Critical +10\n - FLEE +5\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,12; bonus bHit,10; bonus2 bDropAddRace,RC_All,10; }", " - Bash แรงขึ้น 12%\n - HIT +10\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,14; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +14%\n - FLEE +10\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCritical,14; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - Critical +14\n - FLEE +10\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus2 bSkillAtk,5,16; bonus bHit,13; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Bash แรงขึ้น 16%\n - HIT +13\n - ASPD +3%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAspdRate,16; bonus bFlee,13; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +16%\n - FLEE +13\n - ATK +3%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCritical,16; bonus bFlee,13; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +16\n - FLEE +13\n - ASPD +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 41) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - Critical +5\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCastrate,-5; bonus2 bDropAddRace,RC_All,2; }", " - ลดเวลาร่าย 5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,9; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +9%\n - FLEE +5\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,9; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - Critical +9\n - FLEE +5\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCastrate,-10; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - ลดเวลาร่าย 10%\n - FLEE +5\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,13; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +13%\n - FLEE +10\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,13; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - Critical +13\n - FLEE +10\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCastrate,-15; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - ลดเวลาร่าย 15%\n - FLEE +10\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,16; bonus bFlee,13; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +16%\n - FLEE +13\n - ATK +3%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,16; bonus bFlee,13; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +16\n - FLEE +13\n - ASPD +3%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCastrate,-20; bonus bFlee,13; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ลดเวลาร่าย 20%\n - FLEE +13\n - MATK +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 42) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,6; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +6%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,6; bonus2 bDropAddRace,RC_All,2; }", " - Critical +6\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bSPrecovRate,5; bonus2 bDropAddRace,RC_All,2; }", " - SP Recovery +5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,10; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +10%\n - FLEE +5\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,10; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - Critical +10\n - FLEE +5\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bSPrecovRate,10; bonus bFlee,5; bonus2 bDropAddRace,RC_All,5; }", " - SP Recovery +10%\n - FLEE +5\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,14; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +14%\n - FLEE +10\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,14; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - Critical +14\n - FLEE +10\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bSPrecovRate,15; bonus bFlee,10; bonus2 bDropAddRace,RC_All,10; }", " - SP Recovery +15%\n - FLEE +10\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,18; bonus bFlee,13; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +18%\n - FLEE +13\n - ATK +3%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,18; bonus bFlee,13; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +18\n - FLEE +13\n - ASPD +3%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bSPrecovRate,20; bonus bFlee,13; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - SP Recovery +20%\n - FLEE +13\n - ATK +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 51) {
+		.@pick = rand(4);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,5; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +5%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,5; bonus2 bDropAddRace,RC_All,2; }", " - Critical +5\n - DROP +2%";
+			else if (.@pick==2) callsub S_Apply, "{ bonus bDelayrate,-5; bonus2 bDropAddRace,RC_All,2; }", " - ลด Delay 5%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bLongAtkRate,3; bonus2 bDropAddRace,RC_All,2; }", " - โจมตีไกล 3%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,8; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +8%\n - ATK +3\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,8; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - Critical +8\n - ATK +3\n - DROP +5%";
+			else if (.@pick==2) callsub S_Apply, "{ bonus bDelayrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }", " - ลด Delay 10%\n - MATK +3%\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bLongAtkRate,6; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - โจมตีไกล 6%\n - ATK +3\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,12; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +12%\n - ATK +6\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,12; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }", " - Critical +12\n - ATK +6\n - DROP +10%";
+			else if (.@pick==2) callsub S_Apply, "{ bonus bDelayrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }", " - ลด Delay 15%\n - MATK +6%\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bLongAtkRate,8; bonus bAtk,6; bonus2 bDropAddRace,RC_All,10; }", " - โจมตีไกล 8%\n - ATK +6\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,15; bonus bAtk,10; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +15%\n - ATK +10\n - ATK +3%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,15; bonus bAtk,10; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +15\n - ATK +10\n - ASPD +3%\n - DROP +15%";
+			else if (.@pick==2) callsub S_Apply, "{ bonus bDelayrate,-20; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }", " - ลด Delay 20%\n - MATK +10%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bLongAtkRate,12; bonus bAtk,10; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - โจมตีไกล 12%\n - ATK +10\n - ASPD +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 52) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,6; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +6%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,6; bonus2 bDropAddRace,RC_All,2; }", " - Critical +6\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bUseSPrate,-10; bonus2 bDropAddRace,RC_All,2; }", " - ลดการใช้ SP 10%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,9; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +9%\n - ATK +3\n - DROP +5%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,9; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - Critical +9\n - ATK +3\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bUseSPrate,-15; bonus bAtk,3; bonus2 bDropAddRace,RC_All,5; }", " - ลดการใช้ SP 15%\n - ATK +3\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,13; bonus bAtk,7; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +13%\n - ATK +7\n - DROP +10%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,13; bonus bAtk,7; bonus2 bDropAddRace,RC_All,10; }", " - Critical +13\n - ATK +7\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bUseSPrate,-20; bonus bAtk,7; bonus2 bDropAddRace,RC_All,10; }", " - ลดการใช้ SP 20%\n - ATK +7\n - DROP +10%";
+		} else { 
+			if (.@pick==0) callsub S_Apply, "{ bonus bAspdRate,16; bonus bAtk,12; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +16%\n - ATK +12\n - ATK +3%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bCritical,16; bonus bAtk,12; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +16\n - ATK +12\n - ASPD +3%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bUseSPrate,-25; bonus bAtk,12; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ลดการใช้ SP 25%\n - ATK +12\n - ASPD +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 61) {
+		.@pick = rand(5);
+		// ตัด sc_start ออกทั้งหมด ให้เหลือแต่ bonus bAtkEle!
+		if (.@pick==0) { .@ele = 3; .@ele$ = " - ธาตุไฟ"; }
+		else if (.@pick==1) { .@ele = 1; .@ele$ = " - ธาตุน้ำ"; }
+		else if (.@pick==2) { .@ele = 4; .@ele$ = " - ธาตุลม"; }
+		else if (.@pick==3) { .@ele = 2; .@ele$ = " - ธาตุดิน"; }
+		else { .@ele = 6; .@ele$ = " - ธาตุศักดิ์สิทธิ์"; }
+
+		if (.@tier==6) callsub S_Apply, "{ bonus bAtkEle,"+.@ele+"; bonus bAspdRate,3; bonus2 bDropAddRace,RC_All,2; }", .@ele$ + "\n - ASPD +3%\n - DROP +2%";
+		else if (.@tier==7) callsub S_Apply, "{ bonus bAtkEle,"+.@ele+"; bonus bAspdRate,6; bonus2 bDropAddRace,RC_All,5; }", .@ele$ + "\n - ASPD +6%\n - DROP +5%";
+		else if (.@tier==8) callsub S_Apply, "{ bonus bAtkEle,"+.@ele+"; bonus bAspdRate,9; bonus2 bDropAddRace,RC_All,10; }", .@ele$ + "\n - ASPD +9%\n - DROP +10%";
+		else callsub S_Apply, "{ bonus bAtkEle,"+.@ele+"; bonus bAspdRate,12; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", .@ele$ + "\n - ASPD +12%\n - ATK +3%\n - DROP +15%";
+		return;
+	}
+	if (.@grp == 62) {
+		.@pick = rand(3);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bCritical,8; bonus bAspdRate,4; bonus2 bDropAddRace,RC_All,2; }", "Critical +8\n - ASPD +4%\n - DROP +2%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAtkRate,7; bonus bAspdRate,4; bonus2 bDropAddRace,RC_All,2; }", "ATK +7%\n - ASPD +4%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bLongAtkRate,7; bonus bAspdRate,4; bonus2 bDropAddRace,RC_All,2; }", "โจมตีไกลแรง +7%\n - ASPD +4%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bCritical,12; bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,6; }", " - Critical +12\n - ASPD +8%\n - DROP +6%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAtkRate,12; bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,6; }", " - ATK +12%\n - ASPD +8%\n - DROP +6%";
+			else callsub S_Apply, "{ bonus bLongAtkRate,12; bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,6; }", "โจมตีไกลแรง +12%\n - ASPD +8%\n - DROP +6%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bCritical,15; bonus bAspdRate,12; bonus2 bDropAddRace,RC_All,12; }", " - Critical +15\n - ASPD +12%\n - DROP +12%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAtkRate,15; bonus bAspdRate,12; bonus2 bDropAddRace,RC_All,12; }", " - ATK +15%\n - ASPD +12%\n - DROP +12%";
+			else callsub S_Apply, "{ bonus bLongAtkRate,15; bonus bAspdRate,12; bonus2 bDropAddRace,RC_All,12; }", " - โจมตีไกลแรง +15%\n - ASPD +12%\n - DROP +12%";
+		} else {
+			if (.@pick==0) callsub S_Apply, "{ bonus bCritical,18; bonus bAspdRate,15; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - Critical +18\n - ASPD +15%\n - ATK +3%\n - DROP +15%";
+			else if (.@pick==1) callsub S_Apply, "{ bonus bAtkRate,21; bonus bAspdRate,15; bonus2 bDropAddRace,RC_All,15; }", " - ATK +21%\n - ASPD +15%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bLongAtkRate,18; bonus bAspdRate,15; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - โจมตีไกลแรง +18%\n - ASPD +15%\n - ATK +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 63) {
+		.@pick = rand(2);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bLongAtkRate,4; bonus2 bDropAddRace,RC_All,2; }", " - โจมตีไกลแรง 4%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bAspdRate,4; bonus2 bDropAddRace,RC_All,2; }", " - ASPD +4%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bLongAtkRate,8; bonus bAspdRate,4; bonus2 bDropAddRace,RC_All,5; }", " - โจมตีไกลแรง 8%\n - ASPD +4%\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bAspdRate,8; bonus bCritical,4; bonus2 bDropAddRace,RC_All,5; }", " - ASPD +8%\n - Critical +4\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bLongAtkRate,11; bonus bAspdRate,8; bonus2 bDropAddRace,RC_All,10; }", " - โจมตีไกลแรง 11%\n - ASPD +8%\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bAspdRate,11; bonus bCritical,8; bonus2 bDropAddRace,RC_All,10; }", " - ASPD +11%\n - Critical +8\n - DROP +10%";
+		} else {
+			if (.@pick==0) callsub S_Apply, "{ bonus bLongAtkRate,14; bonus bAspdRate,10; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - โจมตีไกลแรง 14%\n - ASPD +10%\n - ATK +3%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bAspdRate,14; bonus bCritical,10; bonus bAtkRate,3; bonus2 bDropAddRace,RC_All,15; }", " - ASPD +14%\n - Critical +10\n - ATK +3%\n - DROP +15%";
+		}
+		return;
+	}
+	if (.@grp == 64) {
+		.@pick = rand(2);
+		if (.@tier==6) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-5; bonus2 bDropAddRace,RC_All,2; }", " - ลด Delay 5%\n - DROP +2%";
+			else callsub S_Apply, "{ bonus bCastrate,-5; bonus2 bDropAddRace,RC_All,2; }", " - ลดเวลาร่าย 5%\n - DROP +2%";
+		} else if (.@tier==7) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }", " - ลด Delay 10%\n - MATK +3%\n - DROP +5%";
+			else callsub S_Apply, "{ bonus bCastrate,-10; bonus bMatkRate,3; bonus2 bDropAddRace,RC_All,5; }", " - ลดเวลาร่าย 10%\n - MATK +3%\n - DROP +5%";
+		} else if (.@tier==8) {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }", " - ลด Delay 15%\n - MATK +6%\n - DROP +10%";
+			else callsub S_Apply, "{ bonus bCastrate,-15; bonus bMatkRate,6; bonus2 bDropAddRace,RC_All,10; }", " - ลดเวลาร่าย 15%\n - MATK +6%\n - DROP +10%";
+		} else {
+			if (.@pick==0) callsub S_Apply, "{ bonus bDelayrate,-20; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }", " - ลด Delay 20%\n - MATK +10%\n - DROP +15%";
+			else callsub S_Apply, "{ bonus bCastrate,-20; bonus bMatkRate,10; bonus2 bDropAddRace,RC_All,15; }", " - ลดเวลาร่าย 20%\n - MATK +10%\n - DROP +15%";
+		}
+		return;
+	}
+	return;
+
+//==================================================
+// WRITE DB & APPLY BUFF
+//==================================================
+S_Apply:
+	.@script$ = callfunc("F_IBUFF_NormalizeScript$", getarg(0));
+	.@name$ = (getargcount() >= 2) ? getarg(1) : callfunc("F_IBUFF_FormatName$", .@script$);
+	.@idx = @IBUFF_IDX; 
+	.@cid = getcharid(3); 
+	.@now = gettimetick(2); 
+	.@exp = .@now + .buff_sec;
+	.@scr_esc$  = callfunc("F_IBUFF_EscapeSQL$", .@script$);
+	.@name_esc$ = callfunc("F_IBUFF_EscapeSQL$", .@name$);
+
+	query_sql("REPLACE INTO `item_buff_slot` (`char_id`,`slot_idx`,`item_id`,`refine`,`script`,`buff_name`,`is_locked`,`expire_ts`) VALUES ("+
+		.@cid+","+.@idx+","+@IBUFF_IID+","+@IBUFF_REF+",'"+.@scr_esc$+"','"+.@name_esc$+"',0,"+.@exp+")");
+		
+	callfunc "F_IBUFF_SyncAndRebuild_SlotBound";
+	specialeffect2 EF_BLESSING;
+	dispbottom "[Item Buff] พลังแฝงทำงานเรียบร้อย";
+	return;
+
+//==================================================
+// เมนู UI ต่างๆ
+//==================================================
+S_SelectEquipSlot:
+	.@menu$ = ""; .@idx2 = 0;
+	if (getequipid(EQI_ARMOR)    != -1) { .@opt[.@idx2]=EQI_ARMOR;    .@name$[.@idx2]="Armor";    .@idx2++; }
+	if (getequipid(EQI_HEAD_TOP) != -1) { .@opt[.@idx2]=EQI_HEAD_TOP; .@name$[.@idx2]="Headgear"; .@idx2++; }
+	if (getequipid(EQI_HAND_L)   != -1) { .@opt[.@idx2]=EQI_HAND_L;   .@name$[.@idx2]="Shield";   .@idx2++; }
+	if (getequipid(EQI_SHOES)    != -1) { .@opt[.@idx2]=EQI_SHOES;    .@name$[.@idx2]="Footgear"; .@idx2++; }
+	if (getequipid(EQI_GARMENT)  != -1) { .@opt[.@idx2]=EQI_GARMENT;  .@name$[.@idx2]="Garment";  .@idx2++; }
+	if (getequipid(EQI_HAND_R)   != -1) { .@opt[.@idx2]=EQI_HAND_R;   .@name$[.@idx2]="Weapon";   .@idx2++; }
+
+	if (.@idx2 <= 0) return -1;
+	for (.@i=0; .@i<.@idx2; .@i++) .@menu$ += .@name$[.@i] + " (+"+getequiprefinerycnt(.@opt[.@i])+"):";
+	.@pick = select(.@menu$) - 1;
+	return .@opt[.@pick];
+
+S_ShowAllBuffs:
+	callfunc "F_IBUFF_SyncAndRebuild_SlotBound";
+	.@now = gettimetick(2); .@rows = 0;
+	for (.@i=0; .@i<6; .@i++) {
+		.@slot = callfunc("F_IBUFF_IdxToSlot", .@i);
+		.@eqid = getequipid(.@slot);
+		if (.@eqid < 0) continue;
+		.@r = query_sql("SELECT `buff_name`,`expire_ts`,`item_id`,`is_locked` FROM `item_buff_slot` WHERE `char_id`="+getcharid(3)+" AND `slot_idx`="+.@i+" LIMIT 1", .@bname$, .@exp, .@iid, .@locked);
+		if (.@r <= 0 || .@iid != .@eqid) continue;
+		.@rem = .@exp - .@now;
+		if (.@rem <= 0) continue;
+		.@min = .@rem / 60; .@hr  = .@min / 60; .@min = .@min % 60;
+		if (.@rows == 0) mes "[บัฟที่ใช้อยู่ตอนนี้]";
+		.@rows++;
+		mes "^0000FF"+callfunc("F_IBUFF_SlotName$", .@i)+"^000000 : ^FF0000"+getitemname(.@eqid)+"^000000 " + (.@locked ? "^00AA00[ผนึกแล้ว]^000000" : "");
+		mes " ^0000FF"+.@bname$+"^000000";
+		mes "  - เหลือเวลา: ^FF0000"+.@hr+" ชม "+.@min+" นาที^000000";
+	}
+	if (.@rows == 0) { mes "[บัฟที่ใช้อยู่ตอนนี้]"; mes "- ไม่มีบัฟจากระบบนี้"; }
+	next;
+	return;
+
+S_ShowAllBuffs_Summary:
+	callfunc "F_IBUFF_SyncAndRebuild_SlotBound";
+	.@cid = getcharid(3); .@now = gettimetick(2); .@rows = 0;
+	mes "[บัฟที่ใช้อยู่ตอนนี้ (สรุป)]";
+	for (.@i=0; .@i<6; .@i++) {
+		.@slot = callfunc("F_IBUFF_IdxToSlot", .@i);
+		.@eqid = getequipid(.@slot);
+		if (.@eqid < 0) continue;
+		.@r = query_sql("SELECT buff_name,expire_ts,item_id,is_locked FROM item_buff_slot WHERE char_id="+.@cid+" AND slot_idx="+.@i+" LIMIT 1", .@bname$, .@exp, .@iid, .@locked);
+		if (.@r <= 0 || .@iid != .@eqid) continue;
+		.@rem = .@exp - .@now;
+		if (.@rem <= 0) continue;
+		.@min = .@rem/60; .@hr  = .@min/60; .@min = .@min%60;
+		.@rows++;
+		mes "^0000FF"+callfunc("F_IBUFF_SlotName$", .@i)+"^000000 : ^FF0000"+getitemname(.@eqid)+"^000000 " + (.@locked ? "^00AA00[Locked]^000000" : "");
+		mes "  ^0000FF"+.@bname$+"^000000  (^FF0000"+.@hr+"h "+.@min+"m^000000)";
+	}
+	if (.@rows == 0) mes "- ไม่มีบัฟจากระบบนี้";
+	next;
+	return;
+
+S_LockBuffMenu:
+	mes "[Item Buff Master]";
+	mes "ข้าสามารถใช้เวทมนตร์ผนึกบัฟไว้ให้ชั่วคราวได้";
+	mes "หากผนึกแล้ว เมื่อถอดหรือสลับอุปกรณ์ บัฟจะไม่หายไป! (จนกว่าเวลาจะหมดลง)";
+	mes "ค่าบริการ: ^FF0000" + .lock_cost + " Cash Points^000000";
+	next;
+	.@slot = callsub(S_SelectEquipSlot);
+	if (.@slot < 0) close;
+	.@idx = callfunc("F_IBUFF_SlotToIdx", .@slot);
+	.@r = query_sql("SELECT `is_locked`, `expire_ts` FROM `item_buff_slot` WHERE `char_id`="+getcharid(3)+" AND `slot_idx`="+.@idx, .@is_locked, .@exp);
+	if (.@r <= 0 || .@exp <= gettimetick(2)) { mes "อุปกรณ์นี้ยังไม่มีบัฟหรือบัฟหมดอายุแล้ว!"; close; }
+	if (.@is_locked == 1) { mes "บัฟในชิ้นนี้ถูกผนึกไว้แล้ว สบายใจได้!"; close; }
+	
+	mes "ยืนยันการผนึกบัฟให้ ^0000FF"+getitemname(getequipid(.@slot))+"^000000 หรือไม่?";
+	next;
+	if (select("ยืนยัน:ยกเลิก") == 2) close;
+	if (#CASHPOINTS < .lock_cost) { mes "Cash Point ของท่านไม่พอ"; close; }
+	
+	#CASHPOINTS -= .lock_cost;
+	query_sql("UPDATE `item_buff_slot` SET `is_locked`=1 WHERE `char_id`="+getcharid(3)+" AND `slot_idx`="+.@idx);
+	mes "ผนึกเสร็จสิ้น! ตอนนี้ท่านสามารถถอดสลับอุปกรณ์ได้ตามสบาย บัฟไม่หายแน่นอน!";
+	close;
+
+OnInit:
+	delwaitingroom;
+	waitingroom " สุ่มบัฟไอเทม (Item Buff) ", 0;
+	end;
+} 
+
+//======================================================
+// SYSTEM CORE - EVENT HANDLERS
+//======================================================
+-	script	ItemBuffSystem	-1,{
+OnInit:
+	end;
+
+OnPCLoginEvent:
+OnPCStatCalcEvent:
+OnPCUnequipItemEvent:
+OnPCEquipItemEvent:
+	.@current_state = getequipid(EQI_ARMOR) + getequipid(EQI_HAND_R) + getequipid(EQI_HAND_L) + getequipid(EQI_HEAD_TOP);
+	if (@IBUFF_LAST_STATE == .@current_state) end;
+	@IBUFF_LAST_STATE = .@current_state;
+
+	deltimer "ItemBuffSystem::OnIBUFF_Rebuild";
+	addtimer 1000, "ItemBuffSystem::OnIBUFF_Rebuild";
+	end;
+
+OnIBUFF_Rebuild:
+	callfunc "F_IBUFF_SyncAndRebuild_SlotBound";
+	end;
+
+OnIBUFF_Warn10Min:
+	if (@IBUFF_WARN_IDX >= 0) dispbottom "^FFA500[Item Buff]^000000 บัฟ ^00AAFF"+callfunc("F_IBUFF_SlotName$", @IBUFF_WARN_IDX)+"^000000 จะหมดในอีก ^FF000010 นาที^000000";
+	else dispbottom "^FFA500[Item Buff]^000000 บัฟของคุณจะหมดในอีก ^FF000010 นาที^000000";
+	end;
+
+OnIBUFF_Warn1Min:
+	if (@IBUFF_WARN_IDX >= 0) dispbottom "^FF0000[Item Buff]^000000 บัฟ ^00AAFF"+callfunc("F_IBUFF_SlotName$", @IBUFF_WARN_IDX)+"^000000 จะหมดในอีก ^FFFF001 นาที^000000";
+	else dispbottom "^FF0000[Item Buff]^000000 บัฟของคุณจะหมดในอีก ^FFFF001 นาที^000000";
+	end;
+
+OnIBUFF_ExpireTick:
+	if (@IBUFF_WARN_IDX >= 0) dispbottom "^FF0000[Item Buff]^000000 บัฟ ^00AAFF"+callfunc("F_IBUFF_SlotName$", @IBUFF_WARN_IDX)+"^000000 ของคุณ ^FF0000หมดเวลาแล้ว^000000";
+	else dispbottom "^FF0000[Item Buff]^000000 บัฟของคุณ ^FF0000หมดเวลาแล้ว^000000";
+	callfunc "F_IBUFF_SyncAndRebuild_SlotBound";
+	end;
+} 
+
+//======================================================
+// GLOBAL FUNCTIONS 
+//======================================================
+function	script	F_IBUFF_PosToIdx	{
+	.@pos = getarg(0);
+	if (.@pos & EQP_ARMOR)    return 0;
+	if (.@pos & EQP_HEAD_TOP) return 1;
+	if (.@pos & EQP_HAND_L)   return 2;
+	if (.@pos & EQP_SHOES)    return 3;
+	if (.@pos & EQP_GARMENT)  return 4;
+	if (.@pos & EQP_HAND_R)   return 5;
+	if (.@pos & EQP_WEAPON)   return 5;
+	return -1;
+}
+
+function	script	F_IBUFF_SlotToIdx	{
+	.@s = getarg(0);
+	if (.@s == EQI_ARMOR) return 0; if (.@s == EQI_HEAD_TOP) return 1;
+	if (.@s == EQI_HAND_L) return 2; if (.@s == EQI_SHOES) return 3;
+	if (.@s == EQI_GARMENT) return 4; if (.@s == EQI_HAND_R) return 5;
+	return -1;
+}
+
+function	script	F_IBUFF_IdxToSlot	{
+	.@idx = getarg(0);
+	switch (.@idx) {
+		case 0: return EQI_ARMOR; case 1: return EQI_HEAD_TOP; case 2: return EQI_HAND_L;
+		case 3: return EQI_SHOES; case 4: return EQI_GARMENT; case 5: return EQI_HAND_R;
+	}
+	return -1;
+}
+
+function	script	F_IBUFF_SlotName$	{
+	.@idx = getarg(0);
+	switch (.@idx) {
+		case 0: return "Armor"; case 1: return "Headgear"; case 2: return "Shield";
+		case 3: return "Footgear"; case 4: return "Garment"; case 5: return "Weapon";
+	}
+	return "Unknown";
+}
+
+function	script	F_IBUFF_FormatName$	{
+	.@s$ = getarg(0);
+	.@s$ = replacestr(.@s$, "{", ""); .@s$ = replacestr(.@s$, "}", "");
+	.@s$ = replacestr(.@s$, "\t", " "); .@s$ = replacestr(.@s$, ";", "; ");
+	.@s$ = replacestr(.@s$, "  ", " ");
+	.@s$ = replacestr(.@s$, "  ", " ");
+	while (getstrlen(.@s$) > 0 && substr(.@s$, 0, 1) == " ") { .@len = getstrlen(.@s$);
+		if (.@len <= 1) .@s$ = ""; else .@s$ = substr(.@s$, 1, .@len - 1);
+	}
+	while (getstrlen(.@s$) > 0 && substr(.@s$, getstrlen(.@s$) - 1, 1) == " ") { .@len = getstrlen(.@s$);
+		if (.@len <= 1) .@s$ = ""; else .@s$ = substr(.@s$, 0, .@len - 1);
+	}
+	if (getstrlen(.@s$) > 90) .@s$ = substr(.@s$, 0, 90) + "...";
+	return .@s$;
+}
+
+function	script	F_IBUFF_NormalizeScript$	{
+	.@s$ = getarg(0); .@len = getstrlen(.@s$);
+	if (.@len <= 0) return "{ }";
+	if (substr(.@s$, 0, 1) != "{") .@s$ = "{ " + .@s$;
+	.@len = getstrlen(.@s$);
+	if (.@len > 0 && substr(.@s$, .@len-1, 1) != "}") .@s$ = .@s$ + " }";
+	return .@s$;
+}
+
+function	script	F_IBUFF_EscapeSQL$	{
+	.@s$ = getarg(0); .@s$ = replacestr(.@s$, "\\", "\\\\"); .@s$ = replacestr(.@s$, "'", "''"); return .@s$;
+}
+
+function	script	F_IBUFF_SyncAndRebuild_SlotBound	{
+	.@cid = getcharid(3);
+	.@now = gettimetick(2);
+	query_sql("DELETE FROM `item_buff_slot` WHERE `expire_ts` <= "+.@now);
+	
+	// ล้างบัฟเก่า (ปลอดภัยกับกั้ม ใช้ Flag 2)
+	bonus_script_clear 2;
+	
+	deltimer "ItemBuffSystem::OnIBUFF_ExpireTick"; 
+	deltimer "ItemBuffSystem::OnIBUFF_Warn10Min"; 
+	deltimer "ItemBuffSystem::OnIBUFF_Warn1Min";
+	
+	.@next_exp = 0; .@next_idx = -1; 
+	
+	for (.@i=0; .@i<6; .@i++) {
+		.@slot = callfunc("F_IBUFF_IdxToSlot", .@i); 
+		.@eqid = getequipid(.@slot);
+		
+		if (.@eqid < 0) { 
+			query_sql("DELETE FROM `item_buff_slot` WHERE `char_id`="+.@cid+" AND `slot_idx`="+.@i+" AND `is_locked`=0");
+			continue; 
+		}
+		
+		.@eqref = getequiprefinerycnt(.@slot);
+		.@r = query_sql("SELECT `item_id`,`refine`,`script`,`expire_ts`,`is_locked` FROM `item_buff_slot` WHERE `char_id`="+.@cid+" AND `slot_idx`="+.@i+" LIMIT 1", .@db_iid, .@db_ref, .@scr$, .@exp, .@locked);
+		if (.@r <= 0) continue;
+		
+		if (.@db_iid != .@eqid || .@db_ref != .@eqref) { 
+			if (.@locked == 0) { query_sql("DELETE FROM `item_buff_slot` WHERE `char_id`="+.@cid+" AND `slot_idx`="+.@i); }
+			continue; 
+		}
+		
+		.@rem = .@exp - .@now;
+		if (.@rem <= 0) { query_sql("DELETE FROM `item_buff_slot` WHERE `char_id`="+.@cid+" AND `slot_idx`="+.@i); continue; }
+		
+		// กำหนดไอคอนให้แสดงผลถูกต้อง (ใช้ EFST_ แทน SC_)
+		.@icon = EFST_BLESSING;
+		if (.@i == 0) .@icon = EFST_DEFENDER;
+		else if (.@i == 1) .@icon = EFST_MAGNIFICAT;
+		else if (.@i == 2) .@icon = EFST_REFLECTSHIELD;
+		else if (.@i == 3) .@icon = EFST_WINDWALK;
+		else if (.@i == 4) .@icon = EFST_ASSUMPTIO;
+		else if (.@i == 5) {
+			// ตั้งค่าเริ่มต้นเป็น 0 (ไม่แสดงรูปไอคอนใดๆ)
+			.@icon = 0; 
+			
+			// เช็คธาตุ ถ้าพบว่ามีโบนัสธาตุ ถึงจะแสดงรูปไอคอน
+			if (replacestr(.@scr$, "bAtkEle,3", "") != .@scr$) .@icon = EFST_PROPERTYFIRE;
+			else if (replacestr(.@scr$, "bAtkEle,1", "") != .@scr$) .@icon = EFST_PROPERTYWATER;
+			else if (replacestr(.@scr$, "bAtkEle,4", "") != .@scr$) .@icon = EFST_PROPERTYWIND;
+			else if (replacestr(.@scr$, "bAtkEle,2", "") != .@scr$) .@icon = EFST_PROPERTYGROUND;
+			else if (replacestr(.@scr$, "bAtkEle,6", "") != .@scr$) .@icon = EFST_ASPERSIO;
+		}
+
+		// แปะบัฟ (เวลาใส่เป็น .@rem วินาทีเพียวๆ ไม่ต้องคูณ 1000 แล้วครับ)
+		.@tmp$ = callfunc("F_IBUFF_NormalizeScript$", .@scr$);
+		bonus_script .@tmp$, .@rem, 2, 1, .@icon;
+		
+		if (.@next_exp == 0 || .@exp < .@next_exp) { .@next_exp = .@exp; .@next_idx = .@i; }
+	}
+	
+	if (.@next_exp > 0) {
+		.@sec = .@next_exp - .@now; if (.@sec < 1) .@sec = 1;
+		@IBUFF_WARN_IDX = .@next_idx;
+		if (.@sec > 600) addtimer ((.@sec - 600) * 1000), "ItemBuffSystem::OnIBUFF_Warn10Min";
+		if (.@sec > 60) addtimer ((.@sec - 60) * 1000), "ItemBuffSystem::OnIBUFF_Warn1Min";
+		addtimer (.@sec * 1000) + 50, "ItemBuffSystem::OnIBUFF_ExpireTick";
+	} else { 
+		@IBUFF_WARN_IDX = -1; 
+	}
+	return;
+}
+
+//======================================================
+// จุดวาง NPC เมืองอื่นๆ
+//======================================================
+prontera,141,86,5	duplicate(Item_Buff_NPC)	Item Buff Master#Prontera	4_F_KAFRA1

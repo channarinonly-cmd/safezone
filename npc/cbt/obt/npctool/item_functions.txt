@@ -1,0 +1,223 @@
+// ============================================================
+// ฟังก์ชันกดยูสไอเทม Stamina Potion (3502=ขุดแร่, 3503=ตกปลา)
+// ============================================================
+
+function	script	F_UseStaminaPotion	{
+	set .@item_id, getarg(0, 3502);
+	
+	// [แก้ปัญหาขวดหายก่อนกด]
+	// คืนขวดที่ระบบเกมเผลอหักไปตอนดับเบิ้ลคลิกกลับมาก่อน 1 ขวดทันที!
+	getitem .@item_id, 1; 
+	
+	if (.@item_id == 3502) {
+		set .@pts_per_bottle, 100;     
+		set .@item_name$, "Miner Stamina Potion";
+		set .@sys_name$, "Miner";
+		set .@current_pts, stamina;       
+	} else if (.@item_id == 3503) {
+		set .@pts_per_bottle, 100;     
+		set .@item_name$, "Fish Stamina Potion";
+		set .@sys_name$, "Fishing";
+		set .@current_pts, #fish_stamina; 
+	} else {
+		return; 
+	}
+
+	set .@max_stamina, 500000;     
+
+	// นับจำนวนขวดที่มีอยู่จริง (ตอนนี้ได้คืนมาครบแล้ว)
+	set .@have, countitem(.@item_id); 
+	set .@menu_open, 0;
+
+	if (.@current_pts >= .@max_stamina) {
+		dispbottom "^FF0000[ระบบ]^000000 แต้ม " + .@sys_name$ + " ของคุณเต็มลิมิต (" + .@max_stamina + ") แล้ว!";
+		// ไม่ต้องคืนของซ้ำแล้ว เพราะคืนไปตั้งแต่บรรทัดแรกสุด
+		return;
+	}
+
+	set .@max_need, (.@max_stamina - .@current_pts) / .@pts_per_bottle;
+	if (((.@max_stamina - .@current_pts) % .@pts_per_bottle) > 0) { set .@max_need, .@max_need + 1; }
+	set .@max_can_use, (.@max_need > .@have) ? .@have : .@max_need;
+
+	if (.@have > 1) {
+		set .@menu_open, 1;
+		mes "^00FF00[ " + .@item_name$ + " ]^000000";
+		mes "แต้มปัจจุบัน: ^00CCFF" + .@current_pts + " / " + .@max_stamina + "^000000";
+		mes "คุณมีขวดยาในตัวทั้งหมด: ^0000FF" + .@have + "^000000 ขวด";
+		mes "สามารถกดใช้งานได้สูงสุด: ^FF0000" + .@max_can_use + "^000000 ขวด";
+		next;
+		switch(select("ใช้งาน 1 ขวด", "ใช้งานรวดเดียวทั้งหมด ("+.@max_can_use+" ขวด)", "ระบุจำนวนเอง", "ยกเลิก")) {
+			case 1: set .@use_amt, 1; break;
+			case 2: set .@use_amt, .@max_can_use; break;
+			case 3:
+				mes "ระบุจำนวนขวดที่ต้องการใช้งาน:";
+				input .@use_amt;
+				// ถ้ายกเลิก หรือใส่เลข 0 ก็แค่ปิดเมนูไป (ของคืนไว้ในตัวแล้ว)
+				if (.@use_amt <= 0) { close; }
+				if (.@use_amt > .@max_can_use) { set .@use_amt, .@max_can_use; }
+				break;
+			case 4: close; // ปิดเมนูเฉยๆ ไม่ต้องคืนของแล้ว
+		}
+
+		// ดักจับผู้เล่นฝากของลงคลังระหว่างเปิดเมนูค้างไว้
+		set .@real_left, countitem(.@item_id); 
+		if (.@use_amt > .@real_left) {
+			set .@use_amt, .@real_left; 
+		}
+	} else {
+		set .@use_amt, 1;
+	}
+
+	if (.@use_amt <= 0) return; // กันบัคกรณีตัวเลขติดลบ
+
+	// หักไอเทมตามจำนวนที่เลือก "จริงๆ" รวดเดียว
+	delitem .@item_id, .@use_amt;
+
+	set .@total_give, .@use_amt * .@pts_per_bottle;
+	if (.@current_pts + .@total_give > .@max_stamina) {
+		set .@total_give, .@max_stamina - .@current_pts;
+	}
+
+	// อัปเดตแต้มแยกตามระบบ
+	if (.@item_id == 3502) {
+		set stamina, stamina + .@total_give;
+		set .@current_pts, stamina;
+		if (@my_total_stamina_3502 >= .@use_amt) set @my_total_stamina_3502, @my_total_stamina_3502 - .@use_amt;
+		else set @my_total_stamina_3502, 0;
+	} else if (.@item_id == 3503) {
+		set #fish_stamina, #fish_stamina + .@total_give;
+		set .@current_pts, #fish_stamina;
+		if (@my_total_stamina_3503 >= .@use_amt) set @my_total_stamina_3503, @my_total_stamina_3503 - .@use_amt;
+		else set @my_total_stamina_3503, 0;
+	}
+
+	specialeffect2 312; 
+	dispbottom "^00FF00["+.@sys_name$+"]^000000 ฟื้นฟูพลังงาน " + .@total_give + " แต้ม! (ใช้รวดเดียว " + .@use_amt + " ขวด)";
+	dispbottom "พลังงานคงเหลือรวม: ^00CCFF" + .@current_pts + " / " + .@max_stamina + " Points^000000";
+	
+	if (.@menu_open) close;
+	return;
+}
+
+// ============================================================
+// ระบบดรอปขวด Stamina (รองรับ 3502 ขุดแร่ และ 3503 ตกปลา)
+// ============================================================
+
+-	script	fish_stamina	-1,{
+OnPCLoginEvent:
+	set @next_stamina_check, 0; 
+	
+	// เช็คยอดกระเป๋าตัวละครอื่นที่ออฟไลน์อยู่ แยกรายไอเทม
+	set @other_inv_3502, 0; set @other_inv_3503, 0;
+	set .@acc_id, getcharid(3);
+	query_sql("SELECT IFNULL(SUM(amount),0) FROM `inventory` WHERE char_id != "+getcharid(0)+" AND char_id IN (SELECT char_id FROM `char` WHERE account_id="+.@acc_id+") AND nameid=3502", @other_inv_3502);
+	query_sql("SELECT IFNULL(SUM(amount),0) FROM `inventory` WHERE char_id != "+getcharid(0)+" AND char_id IN (SELECT char_id FROM `char` WHERE account_id="+.@acc_id+") AND nameid=3503", @other_inv_3503);
+	end;
+
+OnNPCKillEvent:
+	// บังคับว่าต้องมีบัฟ SC_STAMINA ก่อนถึงจะดรอปยา
+	if (!getstatus(SC_STAMINA)) end; 
+
+	// ระบบเช็คคลังและรถเข็นแบบ Real-time ทุกๆ 60 วินาที
+	if (gettimetick(2) >= @next_stamina_check) {
+		set .@acc_id, getcharid(3);
+		set .@sto_3502, 0; set .@cart_3502, 0;
+		set .@sto_3503, 0; set .@cart_3503, 0;
+
+		query_sql("SELECT IFNULL(SUM(amount),0) FROM `storage` WHERE account_id="+.@acc_id+" AND nameid=3502", .@sto_3502);
+		query_sql("SELECT IFNULL(SUM(amount),0) FROM `cart_inventory` WHERE char_id IN (SELECT char_id FROM `char` WHERE account_id="+.@acc_id+") AND nameid=3502", .@cart_3502);
+		
+		query_sql("SELECT IFNULL(SUM(amount),0) FROM `storage` WHERE account_id="+.@acc_id+" AND nameid=3503", .@sto_3503);
+		query_sql("SELECT IFNULL(SUM(amount),0) FROM `cart_inventory` WHERE char_id IN (SELECT char_id FROM `char` WHERE account_id="+.@acc_id+") AND nameid=3503", .@cart_3503);
+
+		set @offline_stamina_3502, .@sto_3502 + .@cart_3502 + @other_inv_3502;
+		set @offline_stamina_3503, .@sto_3503 + .@cart_3503 + @other_inv_3503;
+
+		set @next_stamina_check, gettimetick(2) + 60; 
+	}
+
+	set @my_total_stamina_3502, countitem(3502) + @offline_stamina_3502;
+	set @my_total_stamina_3503, countitem(3503) + @offline_stamina_3503;
+
+	set .@mob_lv, getmonsterinfo(killedrid, MOB_LV);
+	set .@base_rate, 0;
+
+	// กำหนดเรทฐานตามเลเวลของมอนสเตอร์ (ฐาน 10,000)
+	if (.@mob_lv >= 1 && .@mob_lv <= 20) { set .@base_rate, 100; }         
+	else if (.@mob_lv >= 21 && .@mob_lv <= 40) { set .@base_rate, 200; }   
+	else if (.@mob_lv >= 41 && .@mob_lv <= 60) { set .@base_rate, 300; }   
+	else if (.@mob_lv >= 61 && .@mob_lv <= 80) { set .@base_rate, 600; }   
+	else if (.@mob_lv >= 81 && .@mob_lv <= 99) { set .@base_rate, 1000; }  
+	else if (.@mob_lv >= 100 && .@mob_lv <= 120) { set .@base_rate, 1200; }
+	else if (.@mob_lv >= 121 && .@mob_lv <= 140) { set .@base_rate, 1500; }
+	else if (.@mob_lv >= 141 && .@mob_lv <= 160) { set .@base_rate, 2000; }
+	else if (.@mob_lv >= 161 && .@mob_lv <= 180) { set .@base_rate, 2500; }
+	else if (.@mob_lv >= 181) { set .@base_rate, 3000; }                   
+
+	if (.@base_rate == 0) end;
+
+	// เรทตั้งต้นเท่ากัน
+	set .@base_3502, .@base_rate;
+	set .@base_3503, .@base_rate;
+
+	// ==========================================
+	// โบนัส 3503: ตีเผ่าปลา ได้เรทขวดตกปลา *2 (ไม่ต้องสนธาตุ)
+	// ==========================================
+	set .@mob_race, getmonsterinfo(killedrid, MOB_RACE);
+	if (.@mob_race == 5) {
+		set .@base_3503, .@base_3503 * 2; 
+	}
+
+	// ==========================================
+	// กฎเนิร์ฟสถานะ
+	// ==========================================
+	set .@level_gap, BaseLevel - .@mob_lv; 
+	if (.@level_gap >= 20) { 
+		// โดนเนิร์ฟ 90% ทั้งคู่ ถ้าเลเวลห่างเกิน 20
+		set .@base_3502, (.@base_3502 * 10) / 100; 
+		set .@base_3503, (.@base_3503 * 10) / 100; 
+	}
+	
+	if (getstatus(SC_AUTOATTACK)) { 
+		// สายตีออโต้โดนเนิร์ฟเรททั้งคู่ 30%
+		set .@base_3502, (.@base_3502 * 70) / 100; 
+		set .@base_3503, (.@base_3503 * 70) / 100; 
+	}
+
+	// ==========================================
+	// คำนวณเรทและดรอป: 3502 (Miner Stamina)
+	// ==========================================
+	set .@rate_3502, .@base_3502;
+	if (@my_total_stamina_3502 >= 3000) { set .@rate_3502, 0; } 
+	else if (@my_total_stamina_3502 >= 2000) { set .@rate_3502, (.@base_3502 * 10) / 100; } 
+	else if (@my_total_stamina_3502 >= 1000) { set .@rate_3502, (.@base_3502 * 30) / 100; } 
+	else if (@my_total_stamina_3502 >= 300) { set .@rate_3502, (.@base_3502 * 60) / 100; }
+
+	if (.@rate_3502 > 0) {
+		if (rand(1, 10000) <= .@rate_3502) {
+			getitem 3502, 1;
+			set @my_total_stamina_3502, countitem(3502) + @offline_stamina_3502;
+			specialeffect2 610; 
+			dispbottom "^FF8800[Miner System]^000000 ได้รับ Miner Stamina Potion! (ดองไว้รวม: " + @my_total_stamina_3502 + " ขวด)";
+		}
+	}
+
+	// ==========================================
+	// คำนวณเรทและดรอป: 3503 (Fish Stamina)
+	// ==========================================
+	set .@rate_3503, .@base_3503; 
+	if (@my_total_stamina_3503 >= 3000) { set .@rate_3503, 0; } 
+	else if (@my_total_stamina_3503 >= 2000) { set .@rate_3503, (.@base_3503 * 10) / 100; } 
+	else if (@my_total_stamina_3503 >= 1000) { set .@rate_3503, (.@base_3503 * 30) / 100; } 
+	else if (@my_total_stamina_3503 >= 300) { set .@rate_3503, (.@base_3503 * 60) / 100; }
+
+	if (.@rate_3503 > 0) {
+		if (rand(1, 10000) <= .@rate_3503) {
+			getitem 3503, 1;
+			set @my_total_stamina_3503, countitem(3503) + @offline_stamina_3503;
+			specialeffect2 610; 
+			dispbottom "^00CCFF[Fishing System]^000000 ได้รับ Fish Stamina Potion! (ดองไว้รวม: " + @my_total_stamina_3503 + " ขวด)";
+		}
+	}
+	end;
+}

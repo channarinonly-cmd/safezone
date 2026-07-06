@@ -1,0 +1,331 @@
+# This file is a part of rAthena.
+#   Copyright(C) 2022 rAthena Development Team
+#   https://rathena.org - https://github.com/rathena
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+###########################################################################
+# Item Combo Database
+###########################################################################
+#
+# Settings
+#
+###########################################################################
+# - Combos:                 List of combo sets.
+#    - Combo:               Sequence of items to define a combo (minimum of 2 items).
+#       - <item name>       AEGIS name of the item
+#   Script                  Script to execute when one of the combos is equipped. (Default: null)
+#   Clear                   Remove the defined combos from database. (Default: false)
+###########################################################################
+
+Header:
+  Type: COMBO_DB
+  Version: 1
+
+Body:
+  - Combos:
+      - Combo:
+          - C_Wing_Of_Angel_Move_GD2   #3103
+          - C_Love_Daddy_20132   #3105
+          - C_Magic_Heir_TW22   #3106
+          - Golden_Fish22   #3107
+    Script: |
+      skill "AL_TELEPORT",1;
+      bonus2 bExpAddRace,RC_All,26;
+      bonus2 bDropAddRace,RC_All,26;
+      bonus bAddMaxWeight,5000;
+  - Combos:
+      - Combo:
+          - Well_Baked_Toast2   #3122
+          - Medal_Swordman   #2720
+    Script: |
+      bonus bVit,2;
+      bonus bBaseAtk,5;
+      bonus2 bSkillAtk,"BS_BASH",10;
+  - Combos:
+      - Combo:
+          - Well_Baked_Toast2   #3122
+          - Medal_Acolyte   #2722
+    Script: |
+      bonus bInt,2;
+      bonus bMdef,2;
+      bonus2 bSkillHeal,"AL_HEAL",5;
+  - Combos:
+      - Combo:
+          - Well_Baked_Toast2   #3122
+          - Medal_Thief   #2721
+    Script: |
+      bonus bAgi,2;
+      bonus bFlee,10;
+      bonus2 bSkillAtk,"TF_ENVENOM",10;
+  - Combos:
+      - Combo:
+          - Well_Baked_Toast2   #3122
+          - Medal_Mage   #2723
+    Script: |
+      bonus bInt,2;
+      bonus bMatk,5;
+      bonus2 bSkillAtk,"MG_FIREBOLT",10;
+      bonus2 bSkillAtk,"MG_LIGHTNINGBOLT",10;
+      bonus2 bSkillAtk,"MG_COLDBOLT",10;
+  - Combos:
+      - Combo:
+          - Well_Baked_Toast2   #3122
+          - Medal_Merchant   #2725
+    Script: |
+      bonus bStr,2;
+      bonus bDef,5;
+      bonus2 bSkillAtk,"MC_MAMMONITE",10;
+  - Combos:
+      - Combo:
+          - Well_Baked_Toast2   #3122
+          - Medal_Archer   #2724
+    Script: |
+      bonus bDex,2;
+      bonus bHit,5;
+      bonus2 bSkillAtk,"AC_DOUBLE",10;
+  - Combos:
+      - Combo:
+          - Black_Feather2
+          - Shadow_Ring2
+    Script: |
+      bonus4 bAutoSpellOnSkill,"TK_JUMPKICK","RG_RAID",5,1000;
+  - Combos:
+      - Combo:
+          - FlyingGalapago2
+          - Falconer_Claw2
+    Script: |
+      bonus2 bSkillAtk,"HT_BLITZBEAT",200;
+  - Combos:
+      - Combo:
+          - Claw_Of_Garm    # 1815
+          - Boxer_Glove2    # 400490
+    Script: |
+      .@r = getequiprefinerycnt(EQI_HAND_R);
+      bonus4 bAutoSpellOnSkill,"MO_FINGEROFFENSIVE","CH_SOULCOLLECT",1,1000;
+      bonus bMaxHPrate,-2*.@r;
+      bonus2 bSkillAtk,"MO_FINGEROFFENSIVE",10*.@r;
+      bonus3 bAddEff,Eff_Bleeding,100*.@r,ATF_LONG;
+  - Combos:
+      - Combo:
+          - Shield_Of_Death2
+          - Shield_Ring2
+    Script: |
+      bonus bHPrecovRate,100;
+      autobonus "{ bonus bAllStats,10; bonus bHit,20; bonus bBaseAtk,25; bonus bAtkRate,10; bonus bDef,-100; }",100,7000;
+  - Combos:
+      - Combo:
+          - Bilitary_Beret
+          - Shield_Ring2
+    Script: |
+      bonus2 bSkillAtk,"CR_HOLYCROSS",50;
+  - Combos:
+      - Combo:
+          - Officer_Cap2
+          - Double_Badge2
+    Script: |
+      .@r = getequiprefinerycnt(EQI_HEAD_TOP);
+      bonus2 bSkillAtk,"AC_DOUBLE",.@r*50;
+  - Combos:
+      - Combo:
+          - C_Small_Poring_Band
+          - C_BirthDay_Balloon_TW
+          - C_Poring_Soap_Pipe
+          - C_Popping_Poring_Aura
+    Script: |
+      bonus2 bAddMonsterDropItem,984,10;
+      bonus2 bAddMonsterDropItem,985,10;
+  - Combos:
+      - Combo:
+          - Eyes_SHARPSHOOTING
+          - Felock_Cap2
+    Script: |
+      // ปรับลดโบนัสเซ็ตลงเหลือ 20%
+      bonus2 bSkillAtk,"SN_SHARPSHOOTING",20;
+  - Combos:
+      - Combo:
+          - Mob_Scarf_W
+          - Soul_Destroyer_Ring
+          - Adv_Angel_School_Cap2
+    Script: |
+      if (getmapflag(strcharinfo(3),mf_pvp)) {
+        dispbottom "Ban PVP & GVG";
+        end;
+      }
+      if (getmapflag(strcharinfo(3),mf_gvg)) {
+        dispbottom "Ban PVP & GVG";
+        end;
+      }
+      if (Class == Job_Assassin){
+        skill "ASC_BREAKER",10;
+      }
+  - Combos:
+      - Combo:
+          - Giant_Helm2
+          - Fashionable_Sack2
+    Script: |
+      bonus2 bSkillAtk,"ITM_TOMAHAWK",500;
+  - Combos:
+      - Combo:
+          - Cylinder_Hairband2
+          - ChemicalGlove2
+    Script: |
+      // ลดการใช้ SP ของสกิล Cart Cannon ลง 30 หน่วย (ต้องใส่เครื่องหมาย -)
+      bonus2 bSkillUseSP,"GN_CARTCANNON",30;
+  - Combos:
+      - Combo:
+          - Spiritual_Ring3
+          - Shrine_Maiden_Hat2
+    Script: |
+      .@r = getequiprefinerycnt(EQI_HEAD_TOP);
+      bonus bDex,2;
+      bonus bMatkRate,6;
+      bonus bVariableCastrate,-.@r;
+  - Combos:
+      - Combo:
+          - Shrine_Maiden_Hat2
+          - Spiritual_Ring3
+    Script: |
+      if (getmapflag(strcharinfo(3),mf_pvp)) {
+        dispbottom "Ban PVP & GVG";
+        end;
+      }
+      if (getmapflag(strcharinfo(3),mf_gvg)) {
+        dispbottom "Ban PVP & GVG";
+        end;
+      }
+      bonus2 bSkillAtk,"AL_HEAL",100;
+      bonus2 bSkillAtk,"PR_MAGNUS",200;
+      bonus bSPrecovRate,9;
+  - Combos:
+      - Combo:
+          - sun_wukong_burning_halo
+          - sun_wukong_circlet
+          - sun_wukong_golden_aura
+          - sun_wukong_heavenly_golden_staff
+    Script: |
+      bonus2 bSubRace,RC_Player_Human,8;
+      
+  - Combos:
+      - Combo:
+          - Blackbeard_Aura
+          - Blackbeard_Hat
+          - Blackbeard_Cloth
+          - Blackbeard_Robe
+    Script: |
+      bonus2 bSubClass,RC_Boss,8;
+      
+  - Combos:
+      - Combo:
+          - Glove_Of_Mage
+          - Black_Mage_Hat
+    Script: |
+      bonus2 bIgnoreMdefRaceRate,RC_All,40;
+      bonus bDelayrate,-15;
+      bonus4 bAutoSpellOnSkill,"WZ_VERMILION","WZ_METEOR",10,50;
+      if (getequiprefinerycnt(EQI_HEAD_TOP) >= 9) {
+          bonus bMatkRate, 10;
+          bonus bMatk, 50;
+      }
+  - Combos:
+      - Combo:
+          - Exorcismus_Ribbon
+          - Magnus_Ring
+    Script: |
+      if (getmapflag(strcharinfo(3),mf_pvp) || getmapflag(strcharinfo(3),mf_gvg)) {
+        dispbottom "Ban PVP & GVG";
+        end;
+      }
+      .@r = getequiprefinerycnt(EQI_HEAD_TOP);
+      bonus bDex,2;
+      bonus bMatkRate,6;
+      bonus bVariableCastrate,-.@r;
+      bonus2 bSkillAtk,"AL_HEAL",100;
+      bonus2 bSkillAtk,"PR_MAGNUS",100;
+      bonus bSPrecovRate,9;
+      
+  - Combos:
+      - Combo:
+          - Sharpshooting_Grace
+          - Felock_Cap2
+    Script: |
+      bonus2 bSkillAtk,"SN_SHARPSHOOTING",10 * getequiprefinerycnt(EQI_HEAD_TOP);
+      
+  - Combos:
+      - Combo:
+          - Ignition_Helm
+          - Ignition_Ring
+    Script: |
+      if (!getmapflag(strcharinfo(3), mf_pvp) && !getmapflag(strcharinfo(3), mf_gvg)) {
+         
+         // 🛑 แก้ไขชื่อคำสั่งให้ถูกต้องแล้วครับ
+         bonus2 bSkillUseSP,"RK_IGNITIONBREAK",20; 
+         
+         bonus bDelayRate,-30;                        
+         bonus2 bSkillCooldown,"RK_IGNITIONBREAK",-1000; 
+         
+         .@helm_r = getequiprefinerycnt(EQI_HEAD_TOP);
+         if (.@helm_r >= 9) {
+            bonus2 bSkillAtk,"RK_IGNITIONBREAK",150;
+         } else if (.@helm_r >= 7) {
+            bonus2 bSkillAtk,"RK_IGNITIONBREAK",100;
+         } else if (.@helm_r >= 5) {
+            bonus2 bSkillAtk,"RK_IGNITIONBREAK",50;
+         }
+         
+         .@weap_r = getequiprefinerycnt(EQI_HAND_R);
+         if (.@weap_r > 0) {
+            bonus2 bSkillAtk,"RK_IGNITIONBREAK", 15 * .@weap_r;
+         }
+      }
+      
+  - Combos:
+      - Combo:
+          - Rolling_Hat2
+          - Mob_Scarf_W
+    Script: |
+      // ดักแผนที่ PVP / GVG สำหรับความสามารถคอมโบ
+      if (!getmapflag(strcharinfo(3), mf_pvp) && !getmapflag(strcharinfo(3), mf_gvg)) {
+         
+         // ดึงค่าการตีบวกของอาวุธที่ถือในมือขวามาคำนวณ
+         .@weap_ref = getequiprefinerycnt(EQI_HAND_R);
+         
+         // ถ้ามีอาวุธและตีบวก 1 ขึ้นไป จะคูณสเตตัสตามขั้นการตีบวก
+         if (.@weap_ref > 0) {
+            bonus bBaseAtk, 10 * .@weap_ref;
+            bonus2 bSkillAtk,"GC_ROLLINGCUTTER", 10 * .@weap_ref;
+            bonus bShortAtkRate, 2 * .@weap_ref;
+         }
+      }
+      
+  - Combos:
+      - Combo:
+          - Scarlet_Bow     # 18130 Crimson Bow
+          - Heaven_Cage2    # 8550020 Heaven Cage
+    Script: |
+      .@hat_ref = getequiprefinerycnt(EQI_HEAD_TOP);
+      .@bow_ref = getequiprefinerycnt(EQI_HAND_R);
+      
+      // เช็คเงื่อนไข: ต้องตีบวก 9 ขึ้นไปทั้งหมวกและธนู คอมโบถึงจะทำงาน
+      if (.@hat_ref >= 9 && .@bow_ref >= 9) {
+        // คำนวณความแรง 80% ต่อขั้นการตีบวก
+        .@bonus_hat = .@hat_ref * 80;
+        .@bonus_bow = .@bow_ref * 80;
+        
+        .@total_bonus = .@bonus_hat + .@bonus_bow;
+        
+        if (.@total_bonus > 0) {
+          bonus2 bSkillAtk,"HT_BLITZBEAT",.@total_bonus;
+        }
+      }

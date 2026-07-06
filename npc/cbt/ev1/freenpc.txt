@@ -1,0 +1,169 @@
+//======================================================
+// ALL-IN-ONE NPC (UNLIMITED) - MULTI-NPC VERSION
+// - แจก Zeny: 100,000 /ครั้ง (ไม่จำกัด)
+// - แจก CC: 500 /ครั้ง (ไม่จำกัด)
+// - ตั้ง Base 50 / Job 50 (ไม่จำกัด)
+// - ร้านทั่วไป (ใช้ราคาตาม DB เพื่อแก้บั๊กแจ้งเตือน)
+// - [เพิ่ม] ระบบหน่วงเวลา (Cooldown) ป้องกันการกดรัว
+// - [เพิ่ม] ระบบป้องกันเงินล้น (Max Zeny Overflow Protection)
+//======================================================
+
+// --- 1. ตัวหลัก (Master NPC แจกของ) ---
+morocc,160,50,4	script	ALL_IN_ONE	4_F_KAFRA1,{
+
+	.@NPCName$ = "[แจกของ]";
+
+	// [ระบบป้องกันมาโคร] เช็คดีเลย์ 3 วินาที กันกดรัว
+	if (@allinone_delay > gettimetick(2)) {
+		mes .@NPCName$;
+		mes "ใจเย็นๆ สิ! รออีก ^FF0000" + (@allinone_delay - gettimetick(2)) + "^000000 วินาที ค่อยกดใหม่นะ";
+		close;
+	}
+
+	mes .@NPCName$;
+	mes "เลือกเมนู:";
+	next;
+
+	switch(select("แจก Zeny (1m):แจก CC (500):รับทั้งคู่:ร้านทั่วไป:ร้านพิเศษ:เพิ่มเลเวลguild:ออก")) {
+
+		case 1:
+			// [ป้องกันเงินล้น]
+			if (Zeny + 1000000 > MAX_ZENY) {
+				mes .@NPCName$;
+				mes "^FF0000เงินของคุณใกล้จะล้นแล้ว!^000000";
+				mes "กรุณาใช้ Zeny บางส่วนก่อนมารับเพิ่มนะคะ";
+				close;
+			}
+
+			Zeny += 1000000;
+			@allinone_delay = gettimetick(2) + 3; // ติดดีเลย์ 3 วินาที
+			mes .@NPCName$;
+			mes "รับ Zeny +1,000,000 แล้ว";
+			close;
+
+		case 2:
+			#CASHPOINTS += 500;
+			@allinone_delay = gettimetick(2) + 3; // ติดดีเลย์ 3 วินาที
+			mes .@NPCName$;
+			mes "รับ CC +500 แล้ว";
+			close;
+
+		case 3:
+			// [ป้องกันเงินล้น]
+			if (Zeny + 1000000 > MAX_ZENY) {
+				mes .@NPCName$;
+				mes "^FF0000เงินของคุณใกล้จะล้นแล้ว!^000000";
+				mes "กรุณาใช้ Zeny บางส่วนก่อนมารับเพิ่มนะคะ";
+				close;
+			}
+
+			Zeny += 1000000;
+			#CASHPOINTS += 500;
+			@allinone_delay = gettimetick(2) + 3; // ติดดีเลย์ 3 วินาที
+			mes .@NPCName$;
+			mes "รับเรียบร้อย!";
+			mes "- Zeny +1,000,000";
+			mes "- CC +500";
+			close;
+
+		case 4:
+			callshop "onezeny_general", 1;
+			end;
+
+		case 5:
+			mes "[ร้าน (พิเศษ)]";
+			mes "เลือกหมวดสินค้า:";
+			next;
+			switch(select("Armor:Head Top:Shield:Shoes:Garment:Weapon:กลับ")) {
+				case 1: callshop "onezeny_sp_armor", 1;  end;
+				case 2: callshop "onezeny_sp_head", 1;   end;
+				case 3: callshop "onezeny_sp_shield", 1; end;
+				case 4: callshop "onezeny_sp_shoes", 1;  end;
+				case 5: callshop "onezeny_sp_garm", 1;   end;
+				case 6: callshop "onezeny_sp_weapon", 1; end;
+				case 7: close; 
+			}
+			end;
+
+		case 6:
+			.@GID = getcharid(2);
+			if (.@GID == 0) {
+				mes .@NPCName$;
+				mes "คุณไม่ได้เข้าร่วมกิลด์!";
+				close;
+			}
+			if (strcharinfo(0) != getguildmaster(.@GID)) {
+				mes .@NPCName$;
+				mes "คุณไม่ได้เป็นหัวหน้ากิลด์!";
+				close;
+			}
+			query_sql "SELECT `guild_lv` FROM `guild` WHERE `guild_id`=" + .@GID, .@guild_lv;
+			if (.@guild_lv >= 50) {
+				mes .@NPCName$;
+				mes "กิลด์ของคุณเลเวลตัน (50) แล้ว!";
+				close;
+			}
+			mes .@NPCName$;
+			mes "เพิ่มเลเวลกิลด์เรียบร้อยแล้ว";
+			atcommand "@guildlvup 50";
+			close;
+
+		case 7:
+			close;
+	}
+	end;
+
+OnInit:
+	delwaitingroom;
+	waitingroom "แจกของ",0;
+	end;
+}
+
+// --- การเพิ่ม NPC แจกของ เมืองอื่นๆ (Duplicate) ---
+// รูปแบบ: Map,X,Y,Dir  duplicate(ชื่อตัวหลัก)  ชื่อNPCใหม่#id  ViewID
+prontera,152,119,4	duplicate(ALL_IN_ONE)	ALL_IN_ONE#pro	4_F_KAFRA1
+//payon,160,115,4	duplicate(ALL_IN_ONE)	ALL_IN_ONE#pay	4_F_KAFRA1
+//alberta,115,60,4	duplicate(ALL_IN_ONE)	ALL_IN_ONE#alb	4_F_KAFRA1
+
+
+//================ SHOP: ทั่วไป & พิเศษ & CBT (ระบบ Global ไม่ต้องทำซ้ำ) ================
+-	shop	onezeny_general	-1,3502:-1,30035:-1,23213:-1,12887:-1,6000243:-1,714:-1,984:-1,985:-1,6635:-1,6634:-1,969:-1,6000229:-1,6000230:-1,6000231:-1,6000232:-1,6000233:-1,6000234:-1
+-	shop	onezeny_sp_armor	-1,2317:-1,2315:-1,2331:-1,2322:-1,2336:-1,2326:-1,2318:-1
+-	shop	onezeny_sp_head		-1,2285:-1,2280:-1,5017:-1,2229:-1,2274:-1,2254:-1,2258:-1,2235:-1,5016:-1,5019:-1,2256:-1,2233:-1
+-	shop	onezeny_sp_shield	-1,2102:-1,2104:-1,2106:-1
+-	shop	onezeny_sp_shoes	-1,2404:-1,2406:-1
+-	shop	onezeny_sp_garm		-1,2504:-1,2506:-1
+-	shop	onezeny_sp_weapon	-1,1119:-1,1127:-1,1220:-1,1226:-1,1522:-1,1532:-1,1162:-1,1164:-1,1716:-1,1714:-1,1713:-1,1715:-1,1611:-1,1615:-1
+-	shop	cbt_shop2	-1,3321:1000000,3322:1000000,3323:1000000,3324:1000000,3325:1000000
+-	shop	cbt_shop1	-1,8120001:1000000,8120002:1000000,8120003:1000000,8120004:1000000,8120005:1000000,8120006:1000000,8120009:1000000,3408:1000000,3400:100000
+
+
+//======================================================
+// 2. ตัวหลัก (Master NPC ทดสอบของสวมใส่)
+//======================================================
+morocc,155,50,6	script	ทดสอบของสวมใส่	113,{
+	
+	.@NPCName$ = "[พนักงาน]";
+
+	mes .@NPCName$;
+	mes "NPC นี้ จะมีตัวตนแค่ CBT เท่านั้น";
+	next;
+	switch(select("สมุดสุ่มCard:ยกเลิก")){
+		case 1:
+			callshop "cbt_shop2",1;
+			end;
+		case 2:
+			close;
+	}
+	end;
+	
+OnInit:
+	waitingroom "ทดสอบของสวมใส่",0;
+	end;
+}
+
+// --- การเพิ่ม NPC ทดสอบของ เมืองอื่นๆ (Duplicate) ---
+// รูปแบบ: Map,X,Y,Dir	duplicate(ชื่อตัวหลัก)  ชื่อNPCใหม่#id  ViewID
+prontera,158,119,6	duplicate(ทดสอบของสวมใส่)	ทดสอบของสวมใส่#pro	113
+//payon,165,115,6	duplicate(ทดสอบของสวมใส่)	ทดสอบของสวมใส่#pay	113
+//alberta,120,60,6	duplicate(ทดสอบของสวมใส่)	ทดสอบของสวมใส่#alb	113
