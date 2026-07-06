@@ -261,3 +261,38 @@ Memory manager: Memory leaks found at 2026/07/06 15h17m21s (Unknown version).
 0001 : npc.cpp line 4263 size 16 address 0x0x7ff5504
 0002 : npc.cpp line 4263 size 32 address 0x0x8a00124
 0003 : npc.cpp line 4263 size 32 address 0x0x8a00164
+
+Memory manager: Memory leaks found at 2026/07/06 16h17m02s (Git Hash 712ef24a09d22393799a7f0bdf3558f6157b3a5e).
+0001 : npc.cpp line 4263 size 16 address 0x0x85f73b4
+0002 : npc.cpp line 4263 size 32 address 0x0x9001fe4
+0003 : npc.cpp line 4263 size 32 address 0x0x9002024
+
+Memory manager: Memory leaks found at 2026/07/06 16h35m47s (Git Hash 764c6766eb385e841547de7643d276bd259476ac).
+0001 : npc.cpp line 4263 size 16 address 0x0x85a24a4
+0002 : npc.cpp line 4263 size 32 address 0x0x8fad0c4
+0003 : npc.cpp line 4263 size 32 address 0x0x8fad104
+
+Memory manager: Memory leaks found at 2026/07/06 16h48m16s (Git Hash 764c6766eb385e841547de7643d276bd259476ac).
+0001 : npc.cpp line 4263 size 16 address 0x0x8af44a4
+0002 : npc.cpp line 4263 size 32 address 0x0x94ff0c4
+0003 : npc.cpp line 4263 size 32 address 0x0x94ff104
+
+Memory manager: Memory leaks found at 2026/07/06 17h39m02s (Git Hash 764c6766eb385e841547de7643d276bd259476ac).
+0001 : npc.cpp line 4263 size 16 address 0x0x89ce4a4
+0002 : npc.cpp line 4263 size 32 address 0x0x93d90c4
+0003 : npc.cpp line 4263 size 32 address 0x0x93d9104
+
+Memory manager: Memory leaks found at 2026/07/06 17h49m18s (Git Hash 764c6766eb385e841547de7643d276bd259476ac).
+0001 : npc.cpp line 4263 size 16 address 0x0x8e823b4
+0002 : npc.cpp line 4263 size 32 address 0x0x988cfe4
+0003 : npc.cpp line 4263 size 32 address 0x0x988d024
+
+Memory manager: Memory leaks found at 2026/07/06 18h12m40s (Git Hash 764c6766eb385e841547de7643d276bd259476ac).
+0001 : npc.cpp line 4263 size 16 address 0x0x86093b4
+0002 : npc.cpp line 4263 size 32 address 0x0x9013fe4
+0003 : npc.cpp line 4263 size 32 address 0x0x9014024
+
+Memory manager: Memory leaks found at 2026/07/06 18h26m57s (Git Hash 764c6766eb385e841547de7643d276bd259476ac).
+0001 : npc.cpp line 4263 size 16 address 0x0x7adb4a4
+0002 : npc.cpp line 4263 size 32 address 0x0x84e60c4
+0003 : npc.cpp line 4263 size 32 address 0x0x84e6104

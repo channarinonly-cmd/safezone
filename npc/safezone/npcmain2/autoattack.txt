@@ -179,6 +179,85 @@ OnAutoReturnFarm:
 	set @AI_return_reason, 0;
 	set @AI_store_retry, 0;
 	end;
+
+// ==================================================
+// ระบบรับคำสั่งจาก Web
+// ==================================================
+OnWebStorage:
+	getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
+	@AI_return_timer = @ai_timer;
+	autostart(false); // ปิด AI 
+	if (#AI_self$ != "") pcstopfollow getCharID(3,#AI_self$);
+	deltimer strnpcinfo(3)+"::OnWeightCheck";
+	
+	warp "SavePoint", 0, 0;
+	dispbottom "[Web] ได้รับคำสั่งฝากของ บังคับกลับจุดเซฟ...";
+	addtimer 2000, strnpcinfo(3)+"::OnWebForceStorage"; // หน่วง 2 วินาทีให้โหลดแมปเสร็จ
+	end;
+
+OnWebForceStorage:
+	autoattackstore();
+	dispbottom "[Web] จัดการสัมภาระเสร็จสิ้น รอเดินทางกลับ...";
+	addtimer 2000, strnpcinfo(3)+"::OnWebReturnFarm"; // หน่วง 2 วินาทีก่อนวาร์ปกลับ
+	end;
+
+OnWebBuy:
+	getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
+	@AI_return_timer = @ai_timer;
+	autostart(false); // ปิด AI
+	if (#AI_self$ != "") pcstopfollow getCharID(3,#AI_self$);
+	deltimer strnpcinfo(3)+"::OnWeightCheck";
+	
+	warp "SavePoint", 0, 0;
+	dispbottom "[Web] ได้รับคำสั่งซื้อของ บังคับกลับจุดเซฟ...";
+	addtimer 2000, strnpcinfo(3)+"::OnWebForceBuy"; // หน่วง 2 วินาทีให้โหลดแมปเสร็จ
+	end;
+
+OnWebForceBuy:
+	autoattackstore(); // ฝากของก่อนเพื่อเคลียร์น้ำหนัก
+	.@bought = autoattackbuy();
+	if (.@bought > 0) dispbottom "[Web] ซื้อของสำเร็จ จำนวน " + .@bought + " ชิ้น";
+	else dispbottom "[Web] ของในตัวมีเพียงพอแล้ว หรือ ซื้อไม่สำเร็จ";
+	
+	dispbottom "[Web] จัดการสัมภาระเสร็จสิ้น รอเดินทางกลับ...";
+	addtimer 2000, strnpcinfo(3)+"::OnWebReturnFarm"; // หน่วง 2 วินาทีก่อนวาร์ปกลับ
+	end;
+
+OnWebReturnFarm:
+	if (@AI_return_map$ == "") end;
+	warp @AI_return_map$, @AI_return_x, @AI_return_y;
+	dispbottom "[Web] วาร์ปกลับจุดฟาร์ม รอเปิดระบบ AI...";
+	addtimer 2000, strnpcinfo(3)+"::OnWebResumeAI"; // หน่วง 2 วินาทีให้โหลดแมปฟาร์มเสร็จ
+	end;
+
+OnWebResumeAI:
+	if (@AI_return_map$ == "") end;
+	
+	// บังคับเปิด Stamina (กรณีที่บัฟหาย จะได้รันต่อได้)
+	if (!getstatus(SC_STAMINA)) {
+		sc_start SC_STAMINA, 86400000, 0; // ให้บัฟ Stamina 24 ชม.
+	}
+
+	// บังคับเปิด Auto Attack
+	if(@AI_return_timer){
+		autostart(true,@AI_return_timer);
+	}else{
+		autostart(true);
+	}
+	
+	deltimer strnpcinfo(3)+"::OnWeightCheck";
+	addtimer 5000, strnpcinfo(3)+"::OnWeightCheck";
+	dispbottom "[Web] กลับมาฟาร์มต่อเรียบร้อยแล้ว";
+
+	set @AI_return_map$, "";
+	set @AI_return_x, 0;
+	set @AI_return_y, 0;
+	set @AI_return_timer, 0;
+	set @AI_return_reason, 0;
+	set @AI_store_retry, 0;
+	end;
+// ==================================================
+
 OnMainAI:
 	autoattackset("12;0");
 	if(!sc_check(SC_AUTOATTACK)){
@@ -1451,43 +1530,3 @@ gefg_cas02	mapflag	noautoattack
 gefg_cas03	mapflag	noautoattack
 gefg_cas04	mapflag	noautoattack
 gefg_cas05	mapflag	noautoattack
-
-//// ==========================================
-//// Guild War Maps (WoE Second Edition)
-//// ==========================================
-//
-//// Nidhoggur (Yuno)
-//schg_cas01	mapflag	noautoattack
-//schg_cas02	mapflag	noautoattack
-//schg_cas03	mapflag	noautoattack
-//schg_cas04	mapflag	noautoattack
-//schg_cas05	mapflag	noautoattack
-//
-//// Valfreyja (Rachel)
-//arug_cas01	mapflag	noautoattack
-//arug_cas02	mapflag	noautoattack
-//arug_cas03	mapflag	noautoattack
-//arug_cas04	mapflag	noautoattack
-//arug_cas05	mapflag	noautoattack
-//
-//// ==========================================
-//// Guild War Maps (WoE Training Edition / TE)
-//// ==========================================
-//
-//// Gloria (Prontera TE)
-//te_prt_g01	mapflag	noautoattack
-//te_prt_g02	mapflag	noautoattack
-//te_prt_g03	mapflag	noautoattack
-//te_prt_g04	mapflag	noautoattack
-//te_prt_g05	mapflag	noautoattack
-//
-//// Kafras (Aldebaran TE)
-//te_alde_g01	mapflag	noautoattack
-//te_alde_g02	mapflag	noautoattack
-//te_alde_g03	mapflag	noautoattack
-//te_alde_g04	mapflag	noautoattack
-//te_alde_g05	mapflag	noautoattack
-//
-//
-//
-//

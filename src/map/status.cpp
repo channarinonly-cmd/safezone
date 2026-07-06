@@ -14372,19 +14372,29 @@ switch(type) {
 						web_cmd = cmd_data;
 					}
 				}
-				Sql_FreeResult(mmysql_handle); // ต้อง FreeResult เคลียร์หน่วยความจำก่อนสั่ง Query ถัดไป
+				Sql_FreeResult(mmysql_handle);
 			}
 
+			// --- ระบบรับคำสั่ง Remote Control จากหน้าเว็บ ---
 			if (!web_cmd.empty()) {
-				// ลบคำสั่งใน DB ทิ้ง เพื่อไม่ให้บอทรับคำสั่งซ้ำ
 				Sql_Query(mmysql_handle, "UPDATE `aa_runtime_status` SET `command`='' WHERE `char_id`=%d", sd->status.char_id);
 				
 				if (web_cmd == "storage" || web_cmd == "buy") {
-					// บังคับวาร์ปกลับจุดเซฟ 
-					pc_setpos(sd, mapindex_name2id(sd->status.save_point.map), sd->status.save_point.x, sd->status.save_point.y, CLR_TELEPORT);
+					// 1. สั่งหยุดการกระทำและลบสถานะ AI ทิ้งทันที (ปลดล็อกการวาร์ป)
+					unit_stop_attack(&sd->bl);
+					unit_stop_walking(&sd->bl, 1);
+					status_change_end(&sd->bl, SC_AUTOATTACK, -1);
+
+					// 2. สะกิดเรียก NPC ให้ทำงานแยกกัน
+					if (web_cmd == "storage") {
+						npc_event(sd, "AutoAI_Main::OnWebStorage", 0);
+					} else if (web_cmd == "buy") {
+						npc_event(sd, "AutoAI_Main::OnWebBuy", 0);
+					}
 				}
 			}
 			// ------------------------------------------
+
 
 if (pc_isdead(sd)) {
 	aa_sync_web_status(sd, "dead");
