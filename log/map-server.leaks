@@ -256,3 +256,8 @@ Memory manager: Memory leaks found at 2026/07/06 14h28m55s (Unknown version).
 0001 : npc.cpp line 4263 size 16 address 0x0x91e2504
 0002 : npc.cpp line 4263 size 32 address 0x0x9bed124
 0003 : npc.cpp line 4263 size 32 address 0x0x9bed164
+
+Memory manager: Memory leaks found at 2026/07/06 15h17m21s (Unknown version).
+0001 : npc.cpp line 4263 size 16 address 0x0x7ff5504
+0002 : npc.cpp line 4263 size 32 address 0x0x8a00124
+0003 : npc.cpp line 4263 size 32 address 0x0x8a00164
