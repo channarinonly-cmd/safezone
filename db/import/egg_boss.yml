@@ -1,0 +1,110 @@
+# ============================================================
+# Safezone Boss Codex Relic
+# Put this block under Body: in db/re/item_db_equip.yml
+# Item ID: 35235
+# This item applies the passive Codex bonuses while equipped.
+# ============================================================
+  - Id: 35235
+    AegisName: Boss_Codex_Relic
+    Name: Boss Codex Relic
+    Type: Armor
+    Buy: 10
+    Weight: 0
+    Defense: 0
+    Locations:
+      Costume_Garment: true
+    ArmorLevel: 1
+    EquipLevelMin: 1
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc("F_BossCodex_Bonus");
+# ============================================================
+# Safezone Boss Egg / Boss Codex System
+# Put this block under Body: in db/re/item_db_usable.yml
+# Item IDs: 35230 - 35234
+# ============================================================
+  - Id: 35230
+    AegisName: Boss_Egg_Rare
+    Name: Rare Boss Egg
+    Type: Usable
+    Buy: 10
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc("F_BossEgg_Open",1);
+  - Id: 35231
+    AegisName: Boss_Egg_Epic
+    Name: Epic Boss Egg
+    Type: Usable
+    Buy: 10
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc("F_BossEgg_Open",2);
+  - Id: 35232
+    AegisName: Boss_Egg_Legend
+    Name: Legendary Boss Egg
+    Type: Usable
+    Buy: 10
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc("F_BossEgg_Open",3);
+  - Id: 35233
+    AegisName: Boss_Egg_Mythic
+    Name: Mythic Boss Egg
+    Type: Usable
+    Buy: 10
+    Weight: 10
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    Script: |
+      callfunc("F_BossEgg_Open",4);
+  - Id: 35234
+    AegisName: Boss_Fragment
+    Name: Boss Fragment
+    Type: Etc
+    Buy: 10
+    Weight: 1
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true

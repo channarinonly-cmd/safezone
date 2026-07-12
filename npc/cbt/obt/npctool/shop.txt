@@ -107,14 +107,13 @@ morocc,123,102,5	script	Tool Dealer#0102	99,{
 //OnInit: showscript "ร้านขายของใช้ทั่วไป"; initnpctimer; end; }
 
 // เมืองอื่นๆ
-prontera,147,92,5	script	Tool Dealer#08	31994,{ callfunc "F_Tool_Dealer_Menu"; end;
-OnTimer30000: npcspeed 120; npcwalkto 147+rand(-5,5), 92+rand(-5,5); setnpctimer 0; end;
-OnInit: showscript "ร้านขายของใช้ทั่วไป"; initnpctimer; end; }
+prontera,146,97,5	script	Tool Dealer#08	99,{
+	callfunc "F_Tool_Dealer_Menu";
+	end;
+}
 
-prt_fild08,341,219,5	script	Tool Dealer#001	31994,{ callfunc "F_Tool_Dealer_Menu"; end;
-OnTimer30000: npcspeed 120; npcwalkto 341+rand(-5,5), 219+rand(-5,5); setnpctimer 0; end;
-OnInit: showscript "ร้านขายของใช้ทั่วไป"; initnpctimer; end; }
 
-izlude,130,150,5	script	Tool Dealer#002	31994,{ callfunc "F_Tool_Dealer_Menu"; end;
-OnTimer30000: npcspeed 120; npcwalkto 130+rand(-5,5), 150+rand(-5,5); setnpctimer 0; end;
-OnInit: showscript "ร้านขายของใช้ทั่วไป"; initnpctimer; end; }
+izlude,130,150,5	script	Tool Dealer#10	99,{
+	callfunc "F_Tool_Dealer_Menu";
+	end;
+}

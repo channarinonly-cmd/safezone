@@ -179,7 +179,7 @@ L_MainMenu:
 
 L_GetRandomJob:
 	if ($FP_ClassMode == 1) set $@bot_job, rand(1, 6);
-	else set $@bot_job, rand(1, 12); 
+	else set $@bot_job, .job_pool[rand(0, getarraysize(.job_pool) - 1)];
 	return;
 
 // =========================================================
@@ -187,10 +187,11 @@ L_GetRandomJob:
 // =========================================================
 L_GetMapConfig:
 	.@map$ = getarg(0);
-	for(.@i=0; .@i<getarraysize(.blacklist$); .@i++) { if (.@map$ == .blacklist$[.@i]) { set $@allow_spawn, 0; return; } }
-	.@in_whitelist = 0;
-	for(.@i=0; .@i<getarraysize(.whitelist$); .@i++) { if (.@map$ == .whitelist$[.@i]) { .@in_whitelist = 1; break; } }
-	if (!.@in_whitelist) { set $@allow_spawn, 0; return; }
+	set $@allow_spawn, 0;
+	if (.@map$ == "" || getmapusers(.@map$) == -1) return;
+	if (getmapflag(.@map$, mf_gvg) || getmapflag(.@map$, mf_battleground)) return;
+	for(.@i=0; .@i<getarraysize(.blacklist$); .@i++) { if (.@map$ == .blacklist$[.@i]) return; }
+	for(.@i=0; .@i<getarraysize(.block_keyword$); .@i++) { if (.block_keyword$[.@i] != "" && compare(.@map$, .block_keyword$[.@i])) return; }
 
 	set $@allow_spawn, 1;
 	set $@bot_job_override, -1; 
@@ -238,7 +239,18 @@ L_GetSpawnCoords:
 	else if (.@map$ == "prontera") { set $@sp_x, rand(130, 170); set $@sp_y, rand(80, 130); }
 	else if (.@map$ == "payon") { set $@sp_x, rand(130, 170); set $@sp_y, rand(100, 150); }
 	else if (.@map$ == "geffen") { set $@sp_x, rand(100, 140); set $@sp_y, rand(100, 140); }
-	else { set $@sp_x, 0; set $@sp_y, 0; }
+	else {
+		set $@sp_x, 0;
+		set $@sp_y, 0;
+		if (playerattached()) {
+			.@cur_map$ = strcharinfo(3);
+			if (.@cur_map$ == .@map$) {
+				getmapxy(.@cur_map$, .@px, .@py, BL_PC);
+				set $@sp_x, .@px + rand(0, 16) - 8;
+				set $@sp_y, .@py + rand(0, 16) - 8;
+			}
+		}
+	}
 	return;
 
 // =========================================================
@@ -274,7 +286,9 @@ L_SpawnFakePC:
 	callsub L_GetSpawnCoords, .@map$;
 	callsub L_GetRandomJob;
 	.@job_id = ($@bot_job_override != -1) ? $@bot_job_override : $@bot_job;
-	.@base_mob = (.@is_town) ? 1060 : .valid_mobs[.@job_id]; 
+	if (.@is_town && .@job_id > 6) .@job_id = rand(1, 6);
+	callsub L_GetJobBaseMob, .@job_id;
+	.@base_mob = (.@is_town) ? 1060 : $@job_base_mob;
 	
 	callsub L_GetRandomName;
 	monster .@map$, $@sp_x, $@sp_y, $@rnd_name$, .@base_mob, 1, strnpcinfo(0)+"::"+ .@event$;
@@ -286,6 +300,7 @@ L_SpawnFakePC:
 		callsub L_CustomizeAppearance, .@GID, .@job_id;
 		$FP_ChatQueue[getarraysize($FP_ChatQueue)] = .@GID;
 		setunitdata .@GID, UMOB_SPEED, $@bot_speed; 
+		callsub L_ApplyMapCombatProfile, .@map$, .@GID, .@job_id;
 		callsub L_TrackNovice, .@map$, .@GID; 
 	}
 	return;
@@ -299,6 +314,7 @@ L_SpawnWarpBot:
 	}
 	callsub L_GetRandomJob;
 	.@job_id = $@bot_job;
+	if (.@job_id > 6) .@job_id = rand(1, 6);
 	.@base_mob = 1060; 
 	callsub L_GetRandomName;
 	monster $WB_Map$[.@idx], .@sx, .@sy, $@rnd_name$, .@base_mob, 1, strnpcinfo(0)+"::OnParade";
@@ -326,7 +342,10 @@ OnCheckClone:
 	if (!.@found) $FP_CloneMaps$[getarraysize($FP_CloneMaps$)] = .@map$;
 
 	if ($@bot_force_amount > 0) .@target_bots = $@bot_force_amount;
-	else { .@target_bots = getmapusers(.@map$) * 5; if (.@target_bots > 50) .@target_bots = 50; }
+	else .@target_bots = getmapusers(.@map$) * 5;
+	.@is_town_cap = (getmapflag(.@map$, mf_town) || .@map$ == "prontera" || .@map$ == "morocc" || .@map$ == "payon" || .@map$ == "geffen" || .@map$ == "alberta" || .@map$ == "izlude" || .@map$ == "aldebaran") ? 1 : 0;
+	if (.@is_town_cap && .@target_bots > 500) .@target_bots = 500;
+	else if (!.@is_town_cap && .@target_bots > 200) .@target_bots = 200;
 
 	.@current_bots = mobcount(.@map$, strnpcinfo(0)+"::OnFieldDead");
 	if (.@map$ == "new_1-1") {
@@ -338,14 +357,15 @@ OnCheckClone:
 		freeloop(1);
 		for (.@j=0; .@j<.@spawn_amt; .@j++) {
 			
-			sleep rand(1000, 3000); 
+			sleep rand(120, 350); 
 
 			if (getmapusers(.@map$) == 0) break; 
 			callsub L_GetMapConfig, .@map$;
 			callsub L_GetRandomJob;
 			.@job_id = ($@bot_job_override != -1) ? $@bot_job_override : $@bot_job;
-			callsub L_GetNativeMob, .@map$;
-			.@base_mob = $@native_mob;
+			if ((getmapflag(.@map$, mf_town) || .@map$ == "prontera" || .@map$ == "morocc" || .@map$ == "payon" || .@map$ == "geffen" || .@map$ == "alberta" || .@map$ == "izlude" || .@map$ == "aldebaran") && .@job_id > 6) .@job_id = rand(1, 6);
+			callsub L_GetJobBaseMob, .@job_id;
+			.@base_mob = $@job_base_mob;
 
 			callsub L_GetSpawnCoords, .@map$;
 			callsub L_GetRandomName;
@@ -359,6 +379,7 @@ OnCheckClone:
 				setunitdata .@cloneGID, UMOB_MODE, $@bot_mode;
 				setunitdata .@cloneGID, UMOB_SPEED, $@bot_speed;
 				callsub L_CustomizeAppearance, .@cloneGID, .@job_id; 
+				callsub L_ApplyMapCombatProfile, .@map$, .@cloneGID, .@job_id;
 				callsub L_TrackNovice, .@map$, .@cloneGID; 
 			}
 		}
@@ -385,18 +406,22 @@ OnFieldDead:
 		
 		callsub L_GetMapConfig, .@map$;
 		if ($@bot_force_amount > 0) .@target_bots = $@bot_force_amount;
-		else { .@target_bots = getmapusers(.@map$) * 2; if (.@target_bots > 50) .@target_bots = 20; }
+		else .@target_bots = getmapusers(.@map$) * 5;
+		.@is_town_cap = (getmapflag(.@map$, mf_town) || .@map$ == "prontera" || .@map$ == "morocc" || .@map$ == "payon" || .@map$ == "geffen" || .@map$ == "alberta" || .@map$ == "izlude" || .@map$ == "aldebaran") ? 1 : 0;
+	if (.@is_town_cap && .@target_bots > 500) .@target_bots = 500;
+	else if (!.@is_town_cap && .@target_bots > 200) .@target_bots = 200;
 		
 		.@current_bots = mobcount(.@map$, strnpcinfo(0)+"::OnFieldDead");
 
 		if (.@current_bots < .@target_bots) { 
-			sleep rand(1000, 3000); 
+			sleep rand(120, 350); 
 
 			callsub L_GetMapConfig, .@map$;
 			callsub L_GetRandomJob;
 			.@job_id = ($@bot_job_override != -1) ? $@bot_job_override : $@bot_job;
-			callsub L_GetNativeMob, .@map$;
-			.@base_mob = $@native_mob;
+			if ((getmapflag(.@map$, mf_town) || .@map$ == "prontera" || .@map$ == "morocc" || .@map$ == "payon" || .@map$ == "geffen" || .@map$ == "alberta" || .@map$ == "izlude" || .@map$ == "aldebaran") && .@job_id > 6) .@job_id = rand(1, 6);
+			callsub L_GetJobBaseMob, .@job_id;
+			.@base_mob = $@job_base_mob;
 			
 			callsub L_GetSpawnCoords, .@map$;
 			callsub L_GetRandomName;
@@ -408,6 +433,7 @@ OnFieldDead:
 				setunitdata .@cloneGID, UMOB_MODE, $@bot_mode;
 				setunitdata .@cloneGID, UMOB_SPEED, $@bot_speed;
 				callsub L_CustomizeAppearance, .@cloneGID, .@job_id; 
+				callsub L_ApplyMapCombatProfile, .@map$, .@cloneGID, .@job_id;
 				callsub L_TrackNovice, .@map$, .@cloneGID; 
 			}
 		}
@@ -480,9 +506,27 @@ OnTimer1000:
 // =========================================================
 // สแกนและดึง ID มอนสเตอร์เจ้าถิ่นมาเป็นร่างต้น (เพื่อให้สเตตัสสูสีกับแมพ)
 // =========================================================
+L_GetJobBaseMob:
+	.@job_id = getarg(0);
+	set $@job_base_mob, 1060;
+	if (.@job_id == 1 || .@job_id == 7) set $@job_base_mob, 1652;
+	else if (.@job_id == 2 || .@job_id == 9) set $@job_base_mob, 1657;
+	else if (.@job_id == 3 || .@job_id == 11) set $@job_base_mob, 1656;
+	else if (.@job_id == 4 || .@job_id == 8) set $@job_base_mob, 1655;
+	else if (.@job_id == 5 || .@job_id == 10) set $@job_base_mob, 1654;
+	else if (.@job_id == 6 || .@job_id == 12) set $@job_base_mob, 1653;
+	else if (.@job_id == 14) set $@job_base_mob, 2221;
+	else if (.@job_id == 15) set $@job_base_mob, 2224;
+	else if (.@job_id == 16) set $@job_base_mob, 2223;
+	else if (.@job_id == 17) set $@job_base_mob, 2225;
+	else if (.@job_id == 18) set $@job_base_mob, 2222;
+	else if (.@job_id == 19) set $@job_base_mob, 2226;
+	else if (.@job_id == 20) set $@job_base_mob, 2227;
+	return;
+
 L_GetNativeMob:
 	.@map$ = getarg(0);
-	set $@native_mob, 1002; // ค่าเริ่มต้น (Poring)
+	set $@native_mob, 1014; // default for unknown maps
 
 	for (.@i = 10; .@i <= 99; .@i++) {
 		if (.whitelist$[.@i] == .@map$) {
@@ -501,6 +545,95 @@ L_GetNativeMob:
 	}
 	return;
 	
+L_ApplyMapCombatProfile:
+    .@map$ = getarg(0);
+    .@GID = getarg(1);
+    .@job_id = getarg(2);
+    if (!unitexists(.@GID)) return;
+
+    if (.@map$ == "prontera" || .@map$ == "morocc" || .@map$ == "payon" || .@map$ == "geffen" || .@map$ == "alberta" || .@map$ == "izlude" || .@map$ == "aldebaran" || .@map$ == "new_1-1") {
+        return;
+    }
+
+    .@tier = 2;
+    .@known_tier = 0;
+    for (.@i = 0; .@i < getarraysize(.whitelist$); .@i++) {
+        if (.whitelist$[.@i] == .@map$) {
+            if (.@i >= 80) .@tier = 5;
+            else if (.@i >= 60) .@tier = 4;
+            else if (.@i >= 40) .@tier = 3;
+            else if (.@i >= 20) .@tier = 2;
+            else .@tier = 1;
+            .@known_tier = 1;
+            break;
+        }
+    }
+    if (.@map$ == "new_1-3") .@tier = 1;
+    if (!.@known_tier) {
+        if (compare(.@map$, "gl_") || compare(.@map$, "moc_pryd") || compare(.@map$, "in_sphinx") || compare(.@map$, "alde_dun") || compare(.@map$, "c_tower")) .@tier = 4;
+        else if (compare(.@map$, "lou_") || compare(.@map$, "ama_") || compare(.@map$, "gon_") || compare(.@map$, "tur_dun")) .@tier = 3;
+        else if (compare(.@map$, "_dun") || compare(.@map$, "orcsdun") || compare(.@map$, "pay_dun") || compare(.@map$, "gef_dun") || compare(.@map$, "iz_dun")) .@tier = 3;
+        else .@tier = 2;
+    }
+
+    .@lv = 12 + (.@tier * 16) + rand(0, 8);
+    .@hp = 800 + (.@tier * .@tier * 650) + rand(0, .@tier * 300);
+    .@atk_min = 35 + (.@tier * 38) + rand(0, .@tier * 10);
+    .@atk_max = .@atk_min + 35 + (.@tier * 28);
+    .@def = 5 + (.@tier * 8);
+    .@mdef = 2 + (.@tier * 5);
+    .@hit = 180 + (.@tier * 85) + rand(0, 35);
+    .@flee = 55 + (.@tier * 28);
+    .@range = 1;
+
+    if (.@job_id == 3 || .@job_id == 11 || .@job_id == 19 || .@job_id == 20) {
+        .@range = 8;
+        .@atk_min = .@atk_min * 85 / 100;
+        .@atk_max = .@atk_max * 90 / 100;
+        .@hit += 80;
+        .@flee += 10;
+    }
+    else if (.@job_id == 2 || .@job_id == 9 || .@job_id == 16) {
+        .@range = 6;
+        .@atk_min = .@atk_min * 90 / 100;
+        .@atk_max = .@atk_max * 95 / 100;
+        .@mdef += 8;
+    }
+    else if (.@job_id == 1 || .@job_id == 7 || .@job_id == 14) {
+        .@hp = .@hp * 120 / 100;
+        .@def += 8;
+    }
+    else if (.@job_id == 6 || .@job_id == 12 || .@job_id == 17) {
+        .@hit += 55;
+        .@flee += 18;
+        .@atk_min = .@atk_min * 105 / 100;
+        .@atk_max = .@atk_max * 110 / 100;
+    }
+    else if (.@job_id == 4 || .@job_id == 8 || .@job_id == 15) {
+        .@hp = .@hp * 110 / 100;
+        .@mdef += 10;
+    }
+
+    else if (.@job_id == 5 || .@job_id == 10 || .@job_id == 18) {
+        .@hp = .@hp * 115 / 100;
+        .@atk_min = .@atk_min * 110 / 100;
+        .@atk_max = .@atk_max * 115 / 100;
+    }
+
+    setunitdata .@GID, UMOB_LEVEL, .@lv;
+    setunitdata .@GID, UMOB_MAXHP, .@hp;
+    setunitdata .@GID, UMOB_HP, .@hp;
+    setunitdata .@GID, UMOB_ATKMIN, .@atk_min;
+    setunitdata .@GID, UMOB_ATKMAX, .@atk_max;
+    setunitdata .@GID, UMOB_DEF, .@def;
+    setunitdata .@GID, UMOB_MDEF, .@mdef;
+    setunitdata .@GID, UMOB_HIT, .@hit;
+    setunitdata .@GID, UMOB_FLEE, .@flee;
+    setunitdata .@GID, UMOB_ATKRANGE, .@range;
+    setunitdata .@GID, UMOB_MODE, 1183;
+    setunitdata .@GID, UMOB_AI, 1;
+    return;
+
 L_CustomizeAppearance:
 	.@GID = getarg(0); .@job_id = getarg(1);
 	setunitdata .@GID, UMOB_CLASS, (.@job_id == 0) ? 0 : .@job_id;
@@ -515,6 +648,13 @@ L_CustomizeAppearance:
 	else if (.@job_id == 5 || .@job_id == 10) .@w_id = 1301;
 	else if (.@job_id == 6) .@w_id = 1201; 
 	else if (.@job_id == 12) .@w_id = 1252;
+	else if (.@job_id == 14) .@w_id = 1101;
+	else if (.@job_id == 15) .@w_id = 1501;
+	else if (.@job_id == 16) .@w_id = 1601;
+	else if (.@job_id == 17) .@w_id = 1301;
+	else if (.@job_id == 18) .@w_id = 1301;
+	else if (.@job_id == 19) .@w_id = 1701;
+	else if (.@job_id == 20) .@w_id = 1701;
 	else .@w_id = 1201; 
 	
 	setunitdata .@GID, UMOB_WEAPON, .@w_id;
@@ -532,7 +672,8 @@ L_GetRandomName:
 
 OnInit:
 	setarray .Maps$[0], "prontera","payon","morocc","geffen","alberta","moc_fild12"; 
-	setarray .valid_mobs[0], 1060, 1652, 1657, 1656, 1655, 1654, 1653, 1652, 1655, 1657, 1654, 1656, 1653;
+	setarray .valid_mobs[0], 1060, 1652, 1657, 1656, 1655, 1654, 1653, 1652, 1655, 1657, 1654, 1656, 1653, 1060, 2221, 2224, 2223, 2225, 2222, 2226, 2227;
+	setarray .job_pool[0], 1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20;
 	
 	setarray .whitelist$[0], "prontera", "morocc", "payon", "geffen", "alberta", "izlude", "aldebaran";
 	setarray .whitelist$[10], "prt_sew01", "prt_sew02", "prt_sew03", "prt_sew04", "mjo_dun01", "mjo_dun02", "mjo_dun03";
@@ -544,6 +685,10 @@ OnInit:
 
 	setarray .blacklist$[0], "yuno", "lighthalzen", "job_test", "bossnia", "guild_vs1", "guild_vs2";
 	setarray .blacklist$[10], "1@tower", "2@tower", "3@tower", "4@tower", "5@tower", "6@tower", "1@glast", "2@glast";
+
+	setarray .block_keyword$[0], "@", "guild_", "guild_vs", "g_cas", "prtg_cas", "payg_cas", "gefg_cas", "aldeg_cas";
+	setarray .block_keyword$[8], "schg_cas", "arug_cas", "pvp_", "bat_", "event", "evt_", "quiz", "arena";
+	setarray .block_keyword$[16], "bossnia", "ordeal", "@tower", "e_tower";
 
 	setarray .hat_top[0], 0, 0, 0, 0, 44, 4, 17, 9, 2, 15, 5, 16;
 	setarray .hat_top[12], 1, 14, 19, 45, 20, 28, 30, 37, 38, 39;
@@ -645,3 +790,6 @@ OnCheckMap:
 	addtimer 3000, "FP_MapTracker::OnCheckMap";
 	end;
 }
+
+
+

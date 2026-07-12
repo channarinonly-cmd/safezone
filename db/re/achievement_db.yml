@@ -1788,7 +1788,7 @@ Body:
     Group: Chatting
     Name: Who made the king
     Rewards:
-      TitleID: 1046
+      TitleId: 1046
     Score: 10
   - Id: 170000
     Group: Chatting
@@ -2805,3 +2805,182 @@ Body:
     Rewards:
       TitleId: 1052
     Score: 20
+  - Id: 280100
+    Group: Battle
+    Name: "[F] Poring Farmer"
+    Targets:
+      - Id: 0
+        Mob: PORING
+        Count: 1000
+    Rewards:
+      TitleId: 1100
+    Score: 10
+  - Id: 280101
+    Group: Battle
+    Name: "[F] Lunatic Hunter"
+    Targets:
+      - Id: 0
+        Mob: LUNATIC
+        Count: 1000
+    Rewards:
+      TitleId: 1101
+    Score: 10
+  - Id: 280102
+    Group: Battle
+    Name: "[F] Fabre Cleaner"
+    Targets:
+      - Id: 0
+        Mob: FABRE
+        Count: 1000
+    Rewards:
+      TitleId: 1102
+    Score: 10
+  - Id: 280103
+    Group: Battle
+    Name: "[E] Rocker Breaker"
+    Targets:
+      - Id: 0
+        Mob: ROCKER
+        Count: 1000
+    Rewards:
+      TitleId: 1103
+    Score: 10
+  - Id: 280104
+    Group: Battle
+    Name: "[D] Orc Butcher"
+    Targets:
+      - Id: 0
+        Mob: ORK_WARRIOR
+        Count: 3000
+    Rewards:
+      TitleId: 1104
+    Score: 20
+  - Id: 280105
+    Group: Battle
+    Name: "[D] Orc Archer Hunter"
+    Targets:
+      - Id: 0
+        Mob: ORC_ARCHER
+        Count: 3000
+    Rewards:
+      TitleId: 1105
+    Score: 20
+  - Id: 280106
+    Group: Battle
+    Name: "[C] Undead Cleaner"
+    Targets:
+      - Id: 0
+        Mob: ZOMBIE
+        Count: 2500
+      - Id: 1
+        Mob: SKELETON
+        Count: 2500
+    Rewards:
+      TitleId: 1106
+    Score: 30
+  - Id: 280107
+    Group: Battle
+    Name: "[B] Raydric Slayer"
+    Targets:
+      - Id: 0
+        Mob: RAYDRIC
+        Count: 5000
+    Rewards:
+      TitleId: 1107
+    Score: 40
+  - Id: 280108
+    Group: Battle
+    Name: "[B] Sting Hunter"
+    Targets:
+      - Id: 0
+        Mob: STING
+        Count: 5000
+    Rewards:
+      TitleId: 1108
+    Score: 40
+  - Id: 280109
+    Group: Battle
+    Name: "[SS] Baphomet Chaser"
+    Targets:
+      - Id: 0
+        Mob: BAPHOMET
+        Count: 10
+    Rewards:
+      TitleId: 1109
+    Score: 100
+  - Id: 280200
+    Group: Battle
+    Name: "[A] Magma Dungeon Hunter"
+    Targets:
+      - Id: 0
+        Mob: KAHO
+        Count: 2000
+      - Id: 1
+        Mob: EXPLOSION
+        Count: 3000
+      - Id: 2
+        Mob: LAVA_GOLEM
+        Count: 1000
+      - Id: 3
+        Mob: BLAZZER
+        Count: 2000
+    Rewards:
+      TitleId: 1200
+    Score: 50
+
+  - Id: 280201
+    Group: Battle
+    Name: "[S] Gefenia Hunter"
+    Targets:
+      - Id: 0
+        Mob: INCUBUS
+        Count: 3000
+      - Id: 1
+        Mob: SUCCUBUS
+        Count: 3000
+      - Id: 2
+        Mob: VIOLY
+        Count: 3000
+      - Id: 3
+        Mob: MINI_DEMON
+        Count: 3000
+      - Id: 4
+        Mob: BLOODY_KNIGHT
+        Count: 1000
+    Rewards:
+      TitleId: 1201
+    Score: 80
+
+  - Id: 280202
+    Group: Battle
+    Name: "[SS] Wander Man Hunter"
+    Targets:
+      - Id: 0
+        Mob: WANDER_MAN
+        Count: 2000
+    Rewards:
+      TitleId: 1202
+    Score: 120
+
+  - Id: 280203
+    Group: Battle
+    Name: "[SSS] Louyang Master"
+    Targets:
+      - Id: 0
+        Mob: HYEGUN
+        Count: 5000
+      - Id: 1
+        Mob: MIYABI_NINGYO
+        Count: 5000
+      - Id: 2
+        Mob: DANCING_DRAGON
+        Count: 5000
+      - Id: 3
+        Mob: CIVIL_SERVANT
+        Count: 5000
+      - Id: 4
+        Mob: WICKED_NYMPH
+        Count: 5000
+    Rewards:
+      TitleId: 1203
+    Score: 200

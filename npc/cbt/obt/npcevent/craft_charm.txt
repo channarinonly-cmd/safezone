@@ -1,7 +1,7 @@
 // =======================================================
 // 1. Dummy Shop
 // =======================================================
--	shop	UPG_ACC	-1,6000229:-1,6000230:-1,6000231:-1,6000232:-1,6000233:-1,6000234:-1
+-	shop	UPG_ACC	-1,35220:-1,35221:-1,35222:-1,35223:-1,35224:-1,35225:-1,35226:-1,35227:-1,35228:-1,35229:-1,35230:-1
 
 // =======================================================
 // 2. Main NPC (ตัวหลัก เก็บ Logic ทั้งหมดไว้ที่นี่)
@@ -42,29 +42,38 @@ OnBuyItem:
 	set .@broken, 0;
 	set .@zenyuse, 0;
 
-	if (.@uitem[0] == 6000229) { 
-		if (Class != Job_Thief) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Thief เท่านั้น!"; close; }
-		setarray .@itemuse[0], 6000235, 921, 918; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	if (.@uitem[0] == 35220) { 
+		setarray .@itemuse[0], 2249, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
 	}
-	else if (.@uitem[0] == 6000230) { 
-		if (Class != Job_Acolyte) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Acolyte เท่านั้น!"; close; }
-		setarray .@itemuse[0], 6000235, 932, 1020; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	else if (.@uitem[0] == 35221) { 
+		setarray .@itemuse[0], 5159,6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
 	}
-	else if (.@uitem[0] == 6000231) { 
-		if (Class != Job_Swordman) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Swordman เท่านั้น!"; close; }
-		setarray .@itemuse[0], 6000235, 931, 7053; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	else if (.@uitem[0] == 35222) { 
+		setarray .@itemuse[0], 5165, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
 	}
-	else if (.@uitem[0] == 6000232) { 
-		if (Class != Job_Merchant) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Merchant เท่านั้น!"; close; }
-		setarray .@itemuse[0], 6000235, 960, 950; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	else if (.@uitem[0] == 35223) { 
+		setarray .@itemuse[0], 5166, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
 	}
-	else if (.@uitem[0] == 6000233) { 
-		if (Class != Job_Mage) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Mage เท่านั้น!"; close; }
-		setarray .@itemuse[0], 6000235, 1055, 1056; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	else if (.@uitem[0] == 35224) { 
+		setarray .@itemuse[0], 2256, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
 	}
-	else if (.@uitem[0] == 6000234) { 
-		if (Class != Job_Archer) { mes "[Charm Skill]"; mes "เฉพาะ Job Class Archer เท่านั้น!"; close; }
-		setarray .@itemuse[0], 6000235, 930, 936; setarray .@itemusemany[0], 10, 100, 50; set .@broken, 70; set .@zenyuse, 150000;
+	else if (.@uitem[0] == 35225) { 
+		setarray .@itemuse[0], 5002, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 35226) { 
+		setarray .@itemuse[0], 5161, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 35227) { 
+		setarray .@itemuse[0], 5019, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 35228) { 
+		setarray .@itemuse[0], 5349, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 35229) { 
+		setarray .@itemuse[0], 5164, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
+	}
+	else if (.@uitem[0] == 35230) { 
+		setarray .@itemuse[0], 5007, 6000235, 984, 985, 3209; setarray .@itemusemany[0], 1,10, 20, 20,5; set .@broken, 70; set .@zenyuse, 150000;
 	}
 	else { mes "[Charm Skill]"; mes "ไม่พบสูตรสำหรับไอเท็มนี้"; close; }
 

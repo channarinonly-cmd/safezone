@@ -10,7 +10,6 @@
 //= Warp Points for Einbroch
 //===== Additional Comments: =================================
 //= 1.4 Updated Warps, work done by SSUNNY@YOUNG in Korean eA site [Vicious]
-//= 1.5 Added missing warps, updated coordinates [Gepard]
 //============================================================
 
 //Dungeon Warps

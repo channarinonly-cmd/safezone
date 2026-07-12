@@ -14,7 +14,6 @@
 //= 1.4 Updated spawns with info from RO Monthly [Playtester]
 //= 1.5 Updated spawn amounts to official [Playtester]
 //= 1.6 Even more accurate spawns [Playtester]
-//= 1.7 Corrected MVP spawn variance. [Gepard]
 //============================================================
 
 //======== [Veins Field-01] ==================================

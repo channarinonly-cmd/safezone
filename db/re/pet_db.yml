@@ -91,7 +91,8 @@ Body:
     IntimacyFed: 40
     CaptureRate: 1500
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -131,7 +132,8 @@ Body:
     IntimacyFed: 30
     CaptureRate: 1000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -151,7 +153,8 @@ Body:
     CaptureRate: 1500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -181,7 +184,8 @@ Body:
     IntimacyFed: 40
     CaptureRate: 2000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -200,7 +204,8 @@ Body:
     IntimacyFed: 30
     CaptureRate: 1500
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -219,7 +224,8 @@ Body:
     IntimacyFed: 20
     CaptureRate: 1000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -236,7 +242,8 @@ Body:
     IntimacyFed: 10
     CaptureRate: 500
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -255,7 +262,8 @@ Body:
     CaptureRate: 1500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -286,7 +294,8 @@ Body:
     CaptureRate: 1000
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -306,7 +315,8 @@ Body:
     CaptureRate: 1500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -337,7 +347,8 @@ Body:
     CaptureRate: 1500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -355,7 +366,8 @@ Body:
     CaptureRate: 1000
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -374,7 +386,8 @@ Body:
     IntimacyFed: 30
     CaptureRate: 1000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -404,7 +417,8 @@ Body:
     IntimacyFed: 30
     CaptureRate: 1000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -423,7 +437,8 @@ Body:
     IntimacyFed: 20
     CaptureRate: 1000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -451,7 +466,8 @@ Body:
     IntimacyFed: 20
     CaptureRate: 500
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -482,7 +498,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -502,7 +519,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -531,7 +549,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -551,7 +570,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -580,7 +600,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -610,7 +631,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -643,7 +665,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -665,7 +688,8 @@ Body:
 ##    CaptureRate: 200
 ##    SpecialPerformance: false
 ##    AllowAutoFeed: true
-##    Script: >##      petloot 0;
+##    Script: >
+##      petloot 0;
 ##      .@i = getpetinfo(PETINFO_INTIMATE);
 ##      
 ##      if (.@i >= PET_INTIMATE_LOYAL) {
@@ -686,7 +710,8 @@ Body:
     IntimacyFed: 30
     CaptureRate: 500
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -716,7 +741,8 @@ Body:
     CaptureRate: 300
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -739,7 +765,8 @@ Body:
     CaptureRate: 800
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -769,7 +796,8 @@ Body:
     IntimacyFed: 50
     CaptureRate: 2000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -786,7 +814,8 @@ Body:
     CaptureRate: 2000
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -805,7 +834,8 @@ Body:
     CaptureRate: 2000
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -879,7 +909,8 @@ Body:
     CaptureRate: 800
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -916,7 +947,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -934,7 +966,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -952,7 +985,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -972,7 +1006,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -992,7 +1027,8 @@ Body:
     CaptureRate: 50
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1012,7 +1048,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1031,7 +1068,8 @@ Body:
     CaptureRate: 50
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1051,7 +1089,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1081,7 +1120,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1099,7 +1139,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1119,7 +1160,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1139,7 +1181,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1157,7 +1200,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1175,7 +1219,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1195,7 +1240,8 @@ Body:
     CaptureRate: 500
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1213,7 +1259,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1243,7 +1290,8 @@ Body:
     CaptureRate: 200
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1291,7 +1339,8 @@ Body:
     IntimacyFed: 10
     CaptureRate: 0
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_CORDIAL) {
@@ -1306,7 +1355,8 @@ Body:
     IntimacyFed: 10
     CaptureRate: 1000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1352,7 +1402,8 @@ Body:
     CaptureRate: 5000
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1368,7 +1419,8 @@ Body:
     IntimacyFed: 50
     CaptureRate: 2000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1397,7 +1449,8 @@ Body:
     IntimacyFed: 50
     CaptureRate: 2000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1426,7 +1479,8 @@ Body:
     IntimacyFed: 50
     CaptureRate: 2000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1453,7 +1507,8 @@ Body:
     IntimacyFed: 50
     CaptureRate: 2000
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1503,7 +1558,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1539,7 +1595,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1568,7 +1625,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1584,34 +1642,7 @@ Body:
         bonus bMaxHPrate,1;
         bonus bHealPower,2;
       }
-  - Mob: MOONLIGHT
-    EggItem: Moonlight_Egg
-    FoodItem: Pet_Food
-    Fullness: 1
-    HungryDelay: 120
-    IntimacyFed: 15
-    CaptureRate: 0
-    SpecialPerformance: false
-    AllowAutoFeed: true
-    Script: >      petloot 0;
-      .@i = getpetinfo(PETINFO_INTIMATE);
-      
-      if (.@i >= PET_INTIMATE_LOYAL) {
-        bonus bCritical,6;
-        bonus bHit,6;
-        petautobonus "{ bonus2 bHPRegenRate,500,1000; bonus2 bSPRegenRate,20,1000; }",30,5000,BF_WEAPON|BF_SHORT;
-      } else if (.@i >= PET_INTIMATE_CORDIAL) {
-        bonus bCritical,5;
-        bonus bHit,5;
-        petautobonus "{ bonus2 bHPRegenRate,400,1000; bonus2 bSPRegenRate,10,1000; }",30,5000,BF_WEAPON|BF_SHORT;
-      } else if (.@i >= PET_INTIMATE_NEUTRAL) {
-        bonus bCritical,4;
-        bonus bHit,4;
-        petautobonus "{ bonus2 bHPRegenRate,300,1000; }",20,5000,BF_WEAPON|BF_SHORT;
-      } else {
-        bonus bCritical,3;
-        bonus bHit,3;
-      }
+
   - Mob: SAVAGE
     EggItem: Savage_Egg
     FoodItem: Pet_Food
@@ -1621,7 +1652,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1646,7 +1678,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1678,7 +1711,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1702,7 +1736,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1727,7 +1762,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1748,7 +1784,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1786,7 +1823,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1808,7 +1846,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1835,7 +1874,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1862,7 +1902,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1885,7 +1926,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1910,7 +1952,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1939,7 +1982,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1960,7 +2004,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -1993,7 +2038,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -2017,7 +2063,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_CORDIAL) {
@@ -2032,7 +2079,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -2057,7 +2105,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -2083,7 +2132,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -2107,7 +2157,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -2130,7 +2181,8 @@ Body:
     CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       
       if (.@i >= PET_INTIMATE_LOYAL) {
@@ -2153,7 +2205,8 @@ Body:
 #    CaptureRate: 0
 #    SpecialPerformance: false
 #    AllowAutoFeed: true
-#    Script: >#      petloot 0;
+#    Script: >
+#      petloot 0;
 #      .@i = getpetinfo(PETINFO_INTIMATE);
 #      
 #      if (.@i >= PET_INTIMATE_LOYAL) {
@@ -2177,7 +2230,8 @@ Body:
 #    CaptureRate: 0
 #    SpecialPerformance: false
 #    AllowAutoFeed: true
-#    Script: >#      petloot 0;
+#    Script: >
+#      petloot 0;
 #      .@i = getpetinfo(PETINFO_INTIMATE);
 #      
 #      if (.@i >= PET_INTIMATE_LOYAL) {
@@ -2200,7 +2254,8 @@ Body:
 #    CaptureRate: 0
 #    SpecialPerformance: false
 #    AllowAutoFeed: true
-#    Script: >#      petloot 0;
+#    Script: >
+#      petloot 0;
 #      .@intimate = getpetinfo(PETINFO_INTIMATE);
 #      if (.@intimate == PET_INTIMATE_AWKWARD || .@intimate == PET_INTIMATE_SHY) {
 #         bonus bHit,6;
@@ -2250,7 +2305,8 @@ Body:
     FoodItem: Pet_Food
     Fullness: 2
     IntimacyFed: 20
-    Script: >      petloot 0;
+    Script: >
+      petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
       if (.@i >= PET_INTIMATE_LOYAL) {
         bonus2 bAddRace2,RC2_EP172ALPHA,15;
@@ -2260,67 +2316,674 @@ Body:
         bonus2 bAddRace2,RC2_EP172ALPHA,4;
       }
 
-  - Mob: PHREEONI2
-    TameItem: Unripe_Apple
-    EggItem: Phreeoni_Egg
-    EquipItem: Backpack
-    FoodItem: Pet_Food
-    Fullness: 3
-    IntimacyFed: 50
-    CaptureRate: 2000
-    AllowAutoFeed: true
-    Script: >
-      petloot 0;
-      .@i = getpetinfo(PETINFO_INTIMATE);
-      
-      if (.@i >= PET_INTIMATE_LOYAL) {
-        bonus bLuk,3;
-        bonus bCritical,1;
-      } else if (.@i >= PET_INTIMATE_CORDIAL) {
-        bonus bLuk,2;
-        bonus bCritical,1;
-      }
-    Evolution:
-      - Target: MASTERING
-        ItemRequirements:
-          - Item: Leaf_Of_Yggdrasil
-            Amount: 10
-          - Item: Unripe_Apple
-            Amount: 3
+
+# ============================================================
+# Safezone Boss Pet Eggs v10 EXACT - pet_db append + no apple unknown accessory
+# EggItem values MUST match item_db AegisName values 1:1.
+# ============================================================
+
+
   - Mob: BAPHOMET
-    TameItem: Book_Of_Devil
-    EggItem: Baphomet_Egg
+    EggItem: SZ_Boss_Baphomet_Egg
     EquipItem: Skull_Helm
     FoodItem: Pet_Food
     Fullness: 2
     IntimacyFed: 10
-    CaptureRate: 200
+    CaptureRate: 0
     SpecialPerformance: false
     AllowAutoFeed: true
     Script: |
       petloot 0;
       .@i = getpetinfo(PETINFO_INTIMATE);
-      
-      // ระดับสนิทสนม (Loyal)
       if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 278; // Evil Aura
+        dispbottom "[Baphomet] : จิตวิญญาณแห่งความมืดจะคอยรับใช้ท่าน... มานองเลือดกันเถอะ!";
+        bonus bAtkRate,8;
+        bonus bCritical,15;
         bonus bFlee,20;
-        bonus bMaxSPrate,7;
-        bonus bLongAtkRate,5;
+        bonus3 bAutoSpell,SM_MAGNUMBREAK,5,20;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bAtkRate,4;
+        bonus bCritical,8;
+        bonus bFlee,10;
       }
-      // ระดับเป็นมิตร (Cordial)
-      else if (.@i >= PET_INTIMATE_CORDIAL) {
-        bonus bFlee,16;
+  - Mob: PHREEONI
+    EggItem: SZ_Boss_Phreeoni_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 9; // Green Aura
+        dispbottom "[Phreeoni] : จะไม่มีศัตรูคนใดสามารถหลบการโจมตีของท่านพ้น!";
+        bonus bHit,70;
+        bonus bPerfectHitRate,15;
+        bonus bIgnoreDefRate,50;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bHit,40;
+        bonus bPerfectHitRate,8;
+      }
+  - Mob: ORK_HERO
+    EggItem: SZ_Boss_Ork_Hero_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 5; // Blessing Aura
+        dispbottom "[Orc Hero] : เพื่อเกียรติยศของเผ่าออร์ค! ข้าจะปกป้องท่านจากสถานะผิดปกติ!";
+        bonus bVit,7;
+        bonus bMaxHPrate,10;
+        bonus2 bResEff,Eff_Stun,10000;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bVit,4;
+        bonus bMaxHPrate,5;
+        bonus2 bResEff,Eff_Stun,5000;
+      }
+  - Mob: ORC_LORD
+    EggItem: SZ_Boss_Orc_Lord_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 10; // Kyrie Shield
+        dispbottom "[Orc Lord] : ดาเมจที่โจมตีมาหาเจ้า ข้าจะส่งคืนมันกลับไปเป็นทวีคูณ!";
+        bonus bMaxHPrate,12;
+        bonus bShortWeaponDamageReturn,15;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMaxHPrate,6;
+        bonus bShortWeaponDamageReturn,7;
+      }
+  - Mob: OSIRIS
+    EggItem: SZ_Boss_Osiris_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 9; // Recovery
+        dispbottom "[Osiris] : ข้าคือผู้ปกครองแห่งความตาย... สุขภาพและเวทมนตร์ของท่านจะฟื้นฟูอย่างไร้ขีดจำกัด!";
+        bonus bMaxHPrate,10;
+        bonus bMaxSPrate,10;
+        bonus bHPrecovRate,100;
+        bonus bSPrecovRate,100;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMaxHPrate,5;
         bonus bMaxSPrate,5;
-        bonus bLongAtkRate,3;
+        bonus bHPrecovRate,50;
+        bonus bSPrecovRate,50;
       }
-      // ระดับปกติ (Neutral)
-      else if (.@i >= PET_INTIMATE_NEUTRAL) {
-        bonus bFlee,12;
-        bonus bMaxSPrate,3;
-        bonus bLongAtkRate,1;
+  - Mob: EDDGA
+    EggItem: SZ_Boss_Eddga_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 383; // Fire shield
+        dispbottom "[Eddga] : ตัวข้าดั่งภูผา! ข้าจะไม่ยอมให้สิ่งใดมาขัดขวางการเดินของท่าน!";
+        bonus bMaxHPrate,15;
+        bonus bNoKnockback;
+        bonus bSpeedAddRate,20;
+        bonus2 bSubRace,RC_DemiHuman,-10;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMaxHPrate,7;
+        bonus bSpeedAddRate,10;
       }
-      // ระดับไม่คุ้นเคยหรือเขินอาย (Awkward / Shy)
-      else {
-        bonus bFlee,8;
-        bonus bMaxSPrate,1;
+  - Mob: GOLDEN_BUG
+    EggItem: SZ_Boss_GTB_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 398; // Gold Aura
+        dispbottom "[Golden Thief Bug] : เกราะทองคำของข้าจะสลายเวทมนตร์และสะท้อนพวกมันออกไป!";
+        bonus bMdef,20;
+        bonus bMagicDamageReturn,15;
+        bonus2 bSubEle,Ele_Water,25;
+        bonus2 bSubEle,Ele_Fire,25;
+        bonus2 bSubEle,Ele_Earth,25;
+        bonus2 bSubEle,Ele_Wind,25;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMdef,10;
+        bonus bMagicDamageReturn,7;
+        bonus2 bSubEle,Ele_Water,12;
+        bonus2 bSubEle,Ele_Fire,12;
+        bonus2 bSubEle,Ele_Earth,12;
+        bonus2 bSubEle,Ele_Wind,12;
+      }
+  - Mob: MAYA
+    EggItem: SZ_Boss_Maya_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 398; // Reflect
+        dispbottom "[Maya] : กระจกเงาของราชินีจะทำลายการร่ายเวทของพวกมัน!";
+        bonus bMatkRate,8;
+        bonus bMagicDamageReturn,20;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMatkRate,4;
+        bonus bMagicDamageReturn,10;
+      }
+  - Mob: DRAKE
+    EggItem: SZ_Boss_Drake_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 101; // Water Splash
+        dispbottom "[Drake] : กัปตันเรือผีสิงพร้อมลุย! อาวุธของท่านจะแสดงพลังเต็มที่โดยไม่สนใจขนาดศัตรู!";
+        bonus bAtk,25;
+        bonus bNoSizeFix,1;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bAtk,12;
+      }
+  - Mob: MOONLIGHT
+    EggItem: SZ_Boss_Moonlight_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 5; // Blessing Speed
+        dispbottom "[Moonlight Flower] : วิ่งสิคะเจ้าประคุณ! ร่างกายของท่านจะเบาดุจสายลมปะทะเมฆา!";
+        bonus bAgi,7;
+        bonus bSpeedAddRate,25;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bAgi,4;
+        bonus bSpeedAddRate,15;
+      }
+  - Mob: DOPPELGANGER
+    EggItem: SZ_Boss_Doppelganger_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 381; // Shadow aura
+        dispbottom "[Doppelganger] : ข้าคือเงาของท่าน... และเงาจะโจมตีเร็วราวกับสายฟ้าแลบ!";
+        bonus bAgi,5;
+        bonus bAspdRate,15;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bAgi,2;
+        bonus bAspdRate,8;
+      }
+  - Mob: DARK_LORD
+    EggItem: SZ_Boss_Dark_Lord_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 380; // Dark Orb Aura
+        dispbottom "[Dark Lord] : ราชาแห่งความมืดจะอัญเชิญอุกกาบาตลงมาแผดเผาผู้ที่กล้าแตะต้องท่าน!";
+        bonus bMatkRate,8;
+        bonus bMaxHPrate,8;
+        bonus3 bAutoSpellWhenHit,WZ_METEOR,7,40;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMatkRate,4;
+        bonus bMaxHPrate,4;
+        bonus3 bAutoSpellWhenHit,WZ_METEOR,3,20;
+      }
+  - Mob: KNIGHT_OF_WINDSTORM
+    EggItem: SZ_Boss_Stormy_Knight_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 296; // Blizzard
+        dispbottom "[Stormy Knight] : พายุน้ำแข็งจงพัดกระหน่ำ! แช่แข็งพวกมันให้อยู่ใต้ความเย็นยะเยือก!";
+        bonus bCritical,10;
+        bonus3 bAutoSpell,WZ_STORMGUST,5,30;
+        bonus2 bAddEff,Eff_Freeze,500;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bCritical,5;
+      }
+  - Mob: GARM
+    EggItem: SZ_Boss_Garm_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 296; // Ice Burst
+        dispbottom "[Hatii] : โฮก! กรงเล็บน้ำแข็งของข้าจะแช่แข็งศัตรูที่บังอาจโจมตีท่าน!";
+        bonus2 bWeaponAtkEle,Ele_Water,15;
+        bonus2 bAddEffWhenHit,Eff_Freeze,1000;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus2 bWeaponAtkEle,Ele_Water,7;
+        bonus2 bAddEffWhenHit,Eff_Freeze,400;
+      }
+  - Mob: LORD_OF_DEATH
+    EggItem: SZ_Boss_Lord_Of_Death_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 278; // Death aura
+        dispbottom "[Lord of Death] : ความตายมาเยือนแล้ว... ทุกครั้งที่ท่านฟัน พวกมันจะต้องติดคำสาปและแตกสลาย!";
+        bonus bCritical,10;
+        bonus2 bAddEff,Eff_Curse,300;
+        bonus2 bAddEff,Eff_Stun,300;
+        bonus2 bAddEff,Eff_Bleeding,300;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bCritical,5;
+      }
+  - Mob: TURTLE_GENERAL
+    EggItem: SZ_Boss_Turtle_General_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 383; // Aura
+        dispbottom "[Turtle General] : พลังแห่งราชันย์เต่าจะสยบศัตรูทุกขนาดให้ราพณาสูร!";
+        bonus bStr,5;
+        bonus2 bAddSize,SZ_Small,15;
+        bonus2 bAddSize,SZ_Medium,15;
+        bonus2 bAddSize,SZ_Big,15;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bStr,2;
+        bonus2 bAddSize,SZ_Small,7;
+        bonus2 bAddSize,SZ_Medium,7;
+        bonus2 bAddSize,SZ_Big,7;
+      }
+  - Mob: RANDGRIS
+    EggItem: SZ_Boss_Randgris_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 19; // Angel Wings Level Up
+        dispbottom "[Valkyrie Randgris] : แสงสว่างจงนำทาง! ข้าจะเพิ่มพลังให้ทุกค่าสถานะของท่าน!";
+        bonus bAllStats,4;
+        bonus2 bWeaponAtkEle,Ele_Holy,10;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bAllStats,2;
+      }
+  - Mob: IFRIT
+    EggItem: SZ_Boss_Ifrit_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 384; // Explosion
+        dispbottom "[Ifrit] : เปลวเพลิงแห่งความโกรธเกรี้ยวจงสลายวิญญาณพวกมัน!";
+        bonus bAtkRate,8;
+        bonus2 bWeaponAtkEle,Ele_Fire,15;
+        bonus bCritAtkRate,12;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bAtkRate,4;
+        bonus2 bWeaponAtkEle,Ele_Fire,7;
+        bonus bCritAtkRate,6;
+      }
+  - Mob: GLOOMUNDERNIGHT
+    EggItem: SZ_Boss_Gloom_Under_Night_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 380; // Dark Aura
+        dispbottom "[Gloom Under Night] : ภัยพิบัติจงบังเกิดแด่ปีศาจและสิ่งมีชีวิตศักดิ์สิทธิ์!";
+        bonus2 bAddRace,RC_Demon,30;
+        bonus2 bAddRace,RC_Angel,30;
+        bonus2 bAddEle,Ele_Holy,30;
+        bonus2 bAddEle,Ele_Shadow,30;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus2 bAddRace,RC_Demon,15;
+        bonus2 bAddRace,RC_Angel,15;
+        bonus2 bAddEle,Ele_Holy,15;
+        bonus2 bAddEle,Ele_Shadow,15;
+      }
+  - Mob: TAO_GUNKA
+    EggItem: SZ_Boss_Tao_Gunka_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 383; // Stone Shield
+        dispbottom "[Tao Gunka] : ข้าจะขยายขีดจำกัดความถึกของท่าน แต่อย่าลืมระวังพลังป้องกันล่ะ!";
+        bonus bMaxHPrate,30;
+        bonus bDefRate,-15;
+        bonus bMdefRate,-15;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMaxHPrate,15;
+        bonus bDefRate,-7;
+        bonus bMdefRate,-7;
+      }
+  - Mob: APOCALIPS_H
+    EggItem: SZ_Boss_Vesper_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 382; // Laser Aura
+        dispbottom "[Vesper] : วิเคราะห์จุดอ่อนเสร็จสิ้น... เวทมนตร์ของท่านจะทะลุการป้องกันพวกมัน!";
+        bonus bInt,7;
+        bonus2 bIgnoreMdefRace,RC_All,50;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bInt,4;
+        bonus2 bIgnoreMdefRace,RC_All,25;
+      }
+  - Mob: KIEL_
+    EggItem: SZ_Boss_Kiel_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 10; // Blue Ring
+        dispbottom "[Kiel D-01] : คำนวณความเร็วหลังออกคำสั่ง... ลดเวลารอใช้สกิลลง 15%!";
+        bonus bDex,5;
+        bonus bDelayrate,-15;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bDex,2;
+        bonus bDelayrate,-7;
+      }
+  - Mob: BEELZEBUB
+    EggItem: SZ_Boss_Beelzebub_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 380; // Fly Aura
+        dispbottom "[Beelzebub] : ราชาแมลงวันจะร่นระยะเวลาร่ายมนตร์ให้รวดเร็วฉับพลัน!";
+        bonus bInt,5;
+        bonus bCastrate,-20;
+        bonus bFixedCastrate,-10;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bInt,2;
+        bonus bCastrate,-10;
+      }
+  - Mob: DARK_SNAKE_LORD
+    EggItem: SZ_Boss_Dark_Snake_Lord_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 278; // Poison Aura
+        dispbottom "[Evil Snake Lord] : ดวงตาของท่านจะสว่างไสว จิตใจจะมั่นคง ปราศจากความมืดมนและสับสน!";
+        bonus bAgi,5;
+        bonus bInt,5;
+        bonus2 bResEff,Eff_Blind,10000;
+        bonus2 bResEff,Eff_Chaos,10000;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bAgi,2;
+        bonus bInt,2;
+        bonus2 bResEff,Eff_Blind,5000;
+        bonus2 bResEff,Eff_Chaos,5000;
+      }
+  - Mob: LADY_TANEE
+    EggItem: SZ_Boss_Lady_Tanee_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 9; // Recovery
+        dispbottom "[Lady Tanee] : กล้วยบวชชีไหมคะ? พลังเวทจะล้นหลาม แต่ร่างกายจะบอบบางลงหน่อยนะ!";
+        bonus bMaxSPrate,30;
+        bonus bMaxHPrate,-15;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMaxSPrate,15;
+        bonus bMaxHPrate,-7;
+      }
+  - Mob: MISTRESS
+    EggItem: SZ_Boss_Mistress_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 5; // Blue Aura
+        dispbottom "[Mistress] : ปีกของข้าจะช่วยทดแทนหินเวทมนตร์ของท่านเอง!";
+        bonus bMaxSPrate,10;
+        bonus bNoGemStone,1;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMaxSPrate,5;
+      }
+  - Mob: PHARAOH
+    EggItem: SZ_Boss_Pharaoh_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 381; // Shadow ring
+        dispbottom "[Pharaoh] : คำสาปของฟาโรห์จะช่วยประหยัดพลังงานชีวิตของท่าน!";
+        bonus bUseSPrate,-20;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bUseSPrate,-10;
+      }
+  - Mob: RSX_0806
+    EggItem: SZ_Boss_RSX_0806_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 10; // Kyrie
+        dispbottom "[RSX 0806] : ระบบป้องกันทำงาน! ชุดเกราะของท่านจะแข็งแกร่งดั่งโลหะที่ไม่วันพังทลาย!";
+        bonus bVit,6;
+        bonus bMdef,10;
+        bonus bUnbreakableArmor,1;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bVit,3;
+      }
+  - Mob: ATROCE
+    EggItem: SZ_Boss_Atroce_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 384; // Fire effect
+        dispbottom "[Atroce] : บรู๊ววว! กรงเล็บหมาป่าจะฉีกกระชาก และเพิ่มความเร็วโจมตีแก่ท่าน!";
+        bonus bAtk,25;
+        bonus3 bAutoSpell,AL_INCAGI,2,50;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bAtk,12;
+      }
+  - Mob: DETALE
+    EggItem: SZ_Boss_Detale_Egg
+    EquipItem: Transparent_Headgear
+    FoodItem: Pet_Food
+    Fullness: 2
+    IntimacyFed: 10
+    CaptureRate: 0
+    SpecialPerformance: false
+    AllowAutoFeed: true
+    Script: |
+      petloot 0;
+      .@i = getpetinfo(PETINFO_INTIMATE);
+      if (.@i >= PET_INTIMATE_LOYAL) {
+        specialeffect2 296; // Ice Aura
+        dispbottom "[Detardeurus] : ราชามังกรผู้พิทักษ์! ร่างกายของท่านจะอบอุ่นและไม่มีวันถูกแช่แข็ง!";
+        bonus bMaxHPrate,10;
+        bonus2 bResEff,Eff_Freeze,10000;
+      } else if (.@i >= PET_INTIMATE_CORDIAL) {
+        bonus bMaxHPrate,5;
+        bonus2 bResEff,Eff_Freeze,5000;
       }

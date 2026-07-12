@@ -1,0 +1,237 @@
+// =========================================================================
+//              LionShield PREMIUM NAME & CHAT COLOR CHANGING NPC
+// =========================================================================
+// NPC บริการเปลี่ยนสีชื่อตัวละครและสีข้อความแชทระดับพรีเมียม (Thai CP874)
+// รองรับรหัสสีมาตรฐาน 10 แบบ, ระบบกระพริบรุ้ง RGB (Neon Rainbow), พิมพ์ระบุรหัสสีเอง (Hex Input) พร้อมระบบป้องกันค่าผิดพลาด
+// บันทึกค่าสีแชทถาวรลงฐานข้อมูลด้วยคำสั่ง set_chat_color
+
+morocc,155,95,4	script	ColorChanger	115,{
+
+    mes "[ระบบเปลี่ยนสีชื่อ & สีแชทพรีเมียม]";
+    mes "ยินดีต้อนรับสู่ระบบแต่งสีตัวละครของ LionShield!";
+    mes "ต้องการเลือกปรับแต่งส่วนใดดีครับ?";
+    next;
+    
+    switch(select("เปลี่ยนสีชื่อตัวละคร (Name Color):เปลี่ยนสีข้อความแชท (Chat Color):ล้างสีทั้งหมดเป็นค่าเริ่มต้น (Reset):ยกเลิกเมนู")) {
+        case 1:
+            mes "[เลือกหมวดสีชื่อตัวละคร]";
+            mes "รบกวนเลือกสีชื่อที่ท่านชอบได้เลยครับ:";
+            next;
+            switch(select("สีขาวดั้งเดิม (Default White):สีฟ้าพาสเทล (Soft Sky Blue):สีเหลืองทองจักรพรรดิ (Imperial Gold):สีแดงทับทิม (Ruby Red):สีชมพูเชอร์รี่ (Cherry Pink):สีม่วงเรืองแสง (Neon Violet):สีส้มสดใส (Mandarin Orange):สีเขียวมรกต (Emerald Green):สีฟ้าน้ำทะเล (Ocean Turquoise):สีกระพริบรุ้ง RGB (Neon Rainbow):ระบุรหัสสีเอง (Custom HEX Color...)")) {
+                case 1: set #lion_name_color$, "FFFFFF"; break;
+                case 2: set #lion_name_color$, "3399FF"; break;
+                case 3: set #lion_name_color$, "FFD700"; break;
+                case 4: set #lion_name_color$, "FF0033"; break;
+                case 5: set #lion_name_color$, "FF007F"; break;
+                case 6: set #lion_name_color$, "9900FF"; break;
+                case 7: set #lion_name_color$, "FF9900"; break;
+                case 8: set #lion_name_color$, "00FF66"; break;
+                case 9: set #lion_name_color$, "00FFFF"; break;
+                case 10: set #lion_name_color$, "RGBRGB"; break; // สีกระพริบรุ้ง RGB
+                case 11:
+                    mes "[ระบุรหัสสีชื่อด้วยตนเอง]";
+                    mes "กรุณากรอกรหัสสีแบบฐานสิบหก (HEX Code 6 หลัก)";
+                    mes "ตัวอย่าง: FF00FF (ชมพูบาร์บี้), 000000 (สีดำสนิท)";
+                    next;
+                    input .@hex$;
+                    
+                    // ระบบป้องกันค่าความยาวผิดพลาด (ใช้ getstrlen ของ rAthena)
+                    if (getstrlen(.@hex$) != 6) {
+                        mes "[ระบบควบคุมความปลอดภัย]";
+                        mes "ข้อผิดพลาด: รหัสสีต้องมีความยาว 6 ตัวอักษรพอดี!";
+                        close;
+                    }
+                    
+                    // ระบบตรวจสอบความถูกต้องของอักขระฐาน 16 (0-9, a-f, A-F) โดยใช้ while loop เพื่อความเข้ากันได้
+                    set .@i, 0;
+                    while (.@i < 6) {
+                        set .@c$, charat(.@hex$, .@i);
+                        if (strpos("0123456789ABCDEFabcdef", .@c$) == -1) {
+                            mes "[ระบบควบคุมความปลอดภัย]";
+                            mes "ข้อผิดพลาด: รหัสสีต้องเป็นตัวเลข 0-9 หรืออักษร A-F เท่านั้น!";
+                            close;
+                        }
+                        set .@i, .@i + 1;
+                    }
+                    
+                    // นำสีไปใช้งานจริง
+                    set #lion_name_color$, .@hex$;
+                    break;
+            }
+            mes "[ระบบ]";
+            mes "อัปเดตสีชื่อตัวละครของท่านเรียบร้อยแล้ว!";
+            break;
+            
+        case 2:
+            mes "[เลือกหมวดสีแชทตัวละคร]";
+            mes "รบกวนเลือกสีแชทที่ท่านชอบได้เลยครับ:";
+            next;
+            switch(select("สีแดงเพลิง (Fire Red):สีฟ้าคราม (Sky Blue):สีเหลืองทอง (Bright Gold):สีเขียวนีออน (Neon Green):สีชมพูเข้ม (Hot Pink):สีส้มสด (Vibrant Orange):สีม่วงลาเวนเดอร์ (Lavender Purple):ระบุรหัสสีแชทเอง (Custom RGB Color...)")) {
+                case 1: set #lion_chat_color, 0xFF0000; break; // Red
+                case 2: set #lion_chat_color, 0x3399FF; break; // Blue
+                case 3: set #lion_chat_color, 0xFFD700; break; // Gold
+                case 4: set #lion_chat_color, 0x00FF00; break; // Green
+                case 5: set #lion_chat_color, 0xFF00FF; break; // Pink
+                case 6: set #lion_chat_color, 0xFF9900; break; // Orange
+                case 7: set #lion_chat_color, 0x9900FF; break; // Purple
+                case 8:
+                    mes "[ระบุรหัสสีแชทด้วยตนเอง]";
+                    mes "กรุณากรอกรหัสสีแชทเป็นเลขฐานสิบหก 6 หลัก (RGB)";
+                    mes "ตัวอย่าง: FF0000 (แดง), 00FF00 (เขียว), 0000FF (น้ำเงิน)";
+                    next;
+                    input .@rgb$;
+                    
+                    if (getstrlen(.@rgb$) != 6) {
+                        mes "[ระบบควบคุมความปลอดภัย]";
+                        mes "ข้อผิดพลาด: รหัสสีต้องมีความยาว 6 ตัวอักษรพอดี!";
+                        close;
+                    }
+                    
+                    set .@i, 0;
+                    while (.@i < 6) {
+                        set .@c$, charat(.@rgb$, .@i);
+                        if (strpos("0123456789ABCDEFabcdef", .@c$) == -1) {
+                            mes "[ระบบควบคุมความปลอดภัย]";
+                            mes "ข้อผิดพลาด: รหัสสีต้องเป็นตัวเลข 0-9 หรืออักษร A-F เท่านั้น!";
+                            close;
+                        }
+                        set .@i, .@i + 1;
+                    }
+                    
+                    // แปลงค่ารหัสสีแชทและนำไปใช้ผ่านฟังก์ชันฝังตัว
+                    set #lion_chat_color, strtol(.@rgb$, 16);
+                    break;
+            }
+            mes "[ระบบ]";
+            mes "อัปเดตสีข้อความแชทของท่านเรียบร้อยแล้ว!";
+            break;
+            
+        case 3:
+            set #lion_name_color$, "";
+            set #lion_chat_color, 0;
+            mes "[ระบบ]";
+            mes "รีเซ็ตสีชื่อและสีข้อความแชทกลับเป็นค่าเริ่มต้นเรียบร้อยครับ!";
+            break;
+            
+        case 4:
+            mes "[ระบบ]";
+            mes "ขอบคุณที่เข้ามาใช้บริการ ขอให้สนุกกับการเล่นเกมครับ!";
+            break;
+    }
+    close;
+
+// =========================================================================
+//  Event ดักรับจากไอเทมตั๋วเปลี่ยนสีชื่อตัวละคร (Name Color Ticket)
+// =========================================================================
+OnUseNameTicket:
+    mes "[Name Color Ticket]";
+    mes "คุณต้องการใช้งานตั๋วเปลี่ยนสีชื่อตัวละครตอนนี้เลยหรือไม่?";
+    next;
+    if (select("ใช่, ฉันต้องการเปลี่ยนสีชื่อ:ไม่, ยกเลิกและเก็บตั๋วไว้") == 2) {
+        getitem 3000101, 1; // คืนตั๋วให้ผู้เล่น (ID 3000101)
+        close;
+    }
+
+    mes "[เลือกหมวดสีชื่อตัวละคร]";
+    mes "รบกวนเลือกสีชื่อที่ท่านชอบได้เลยครับ:";
+    next;
+    switch(select("สีขาวดั้งเดิม (Default White):สีฟ้าพาสเทล (Soft Sky Blue):สีเหลืองทองจักรพรรดิ (Imperial Gold):สีแดงทับทิม (Ruby Red):สีชมพูเชอร์รี่ (Cherry Pink):สีม่วงเรืองแสง (Neon Violet):สีส้มสดใส (Mandarin Orange):สีเขียวมรกต (Emerald Green):สีฟ้าน้ำทะเล (Ocean Turquoise):สีกระพริบรุ้ง RGB (Neon Rainbow):ระบุรหัสสีเอง (Custom HEX Color...)")) {
+        case 1: set #lion_name_color$, "FFFFFF"; break;
+        case 2: set #lion_name_color$, "3399FF"; break;
+        case 3: set #lion_name_color$, "FFD700"; break;
+        case 4: set #lion_name_color$, "FF0033"; break;
+        case 5: set #lion_name_color$, "FF007F"; break;
+        case 6: set #lion_name_color$, "9900FF"; break;
+        case 7: set #lion_name_color$, "FF9900"; break;
+        case 8: set #lion_name_color$, "00FF66"; break;
+        case 9: set #lion_name_color$, "00FFFF"; break;
+        case 10: set #lion_name_color$, "RGBRGB"; break; // สีกระพริบรุ้ง RGB
+        case 11:
+            mes "[ระบุรหัสสีชื่อด้วยตนเอง]";
+            mes "กรุณากรอกรหัสสีแบบฐานสิบหก (HEX Code 6 หลัก)";
+            mes "ตัวอย่าง: FF00FF (ชมพูบาร์บี้), 000000 (สีดำสนิท)";
+            next;
+            input .@hex$;
+            
+            if (getstrlen(.@hex$) != 6) {
+                mes "[ระบบควบคุมความปลอดภัย]";
+                mes "ข้อผิดพลาด: รหัสสีต้องมีความยาว 6 ตัวอักษรพอดี!";
+                getitem 3000101, 1; // คืนตั๋ว
+                close;
+            }
+            
+            set .@i, 0;
+            while (.@i < 6) {
+                set .@c$, charat(.@hex$, .@i);
+                if (strpos("0123456789ABCDEFabcdef", .@c$) == -1) {
+                    mes "[ระบบควบคุมความปลอดภัย]";
+                    mes "ข้อผิดพลาด: รหัสสีต้องเป็นตัวเลข 0-9 หรืออักษร A-F เท่านั้น!";
+                    getitem 3000101, 1; // คืนตั๋ว
+                    close;
+                }
+                set .@i, .@i + 1;
+            }
+            
+            set #lion_name_color$, .@hex$;
+            break;
+    }
+    mes "[ระบบ]";
+    mes "อัปเดตสีชื่อตัวละครของท่านเรียบร้อยแล้ว!";
+    close;
+
+// =========================================================================
+//  Event ดักรับจากไอเทมตั๋วเปลี่ยนสีข้อความแชท (Chat Color Ticket)
+// =========================================================================
+OnUseChatTicket:
+    mes "[Chat Color Ticket]";
+    mes "คุณต้องการใช้งานตั๋วเปลี่ยนสีข้อความแชทตอนนี้เลยหรือไม่?";
+    next;
+    if (select("ใช่, ฉันต้องการเปลี่ยนสีแชท:ไม่, ยกเลิกและเก็บตั๋วไว้") == 2) {
+        getitem 3000102, 1; // คืนตั๋วให้ผู้เล่น (ID 3000102)
+        close;
+    }
+
+    mes "[เลือกหมวดสีแชทตัวละคร]";
+    mes "รบกวนเลือกสีแชทที่ท่านชอบได้เลยครับ:";
+    next;
+    switch(select("สีแดงเพลิง (Fire Red):สีฟ้าคราม (Sky Blue):สีเหลืองทอง (Bright Gold):สีเขียวนีออน (Neon Green):สีชมพูเข้ม (Hot Pink):สีส้มสด (Vibrant Orange):สีม่วงลาเวนเดอร์ (Lavender Purple):ระบุรหัสสีแชทเอง (Custom RGB Color...)")) {
+        case 1: set #lion_chat_color, 0xFF0000; break;
+        case 2: set #lion_chat_color, 0x3399FF; break;
+        case 3: set #lion_chat_color, 0xFFD700; break;
+        case 4: set #lion_chat_color, 0x00FF00; break;
+        case 5: set #lion_chat_color, 0xFF00FF; break;
+        case 6: set #lion_chat_color, 0xFF9900; break;
+        case 7: set #lion_chat_color, 0x9900FF; break;
+        case 8:
+            mes "[ระบุรหัสสีแชทด้วยตนเอง]";
+            mes "กรุณากรอกรหัสสีแชทเป็นเลขฐานสิบหก 6 หลัก (RGB)";
+            mes "ตัวอย่าง: FF0000 (แดง), 00FF00 (เขียว), 0000FF (น้ำเงิน)";
+            next;
+            input .@rgb$;
+            
+            if (getstrlen(.@rgb$) != 6) {
+                mes "[ระบบควบคุมความปลอดภัย]";
+                mes "ข้อผิดพลาด: รหัสสีต้องมีความยาว 6 ตัวอักษรพอดี!";
+                getitem 3000102, 1; // คืนตั๋ว
+                close;
+            }
+            
+            set .@i, 0;
+            while (.@i < 6) {
+                set .@c$, charat(.@rgb$, .@i);
+                if (strpos("0123456789ABCDEFabcdef", .@c$) == -1) {
+                    mes "[ระบบควบคุมความปลอดภัย]";
+                    mes "ข้อผิดพลาด: รหัสสีต้องเป็นตัวเลข 0-9 หรืออักษร A-F เท่านั้น!";
+                    getitem 3000102, 1; // คืนตั๋ว
+                    close;
+                }
+                set .@i, .@i + 1;
+            }
+            
+            set #lion_chat_color, strtol(.@rgb$, 16);
+            break;
+    }
+    mes "[ระบบ]";
+    mes "อัปเดตสีข้อความแชทของท่านเรียบร้อยแล้ว!";
+    close;
+}

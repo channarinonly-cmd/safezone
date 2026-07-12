@@ -262,11 +262,11 @@ OnInit:
 		5168,5,  // Bongun Hat [1]
 		2233,5,  // Circlet [1]
 		2229,5,  // Helm [1]
-		2280,5, // Sakkat [0]
+		//2280,5, // Sakkat [0]
 		5045,5, // Magician Hat [0]
 		2287,5, // Pirate Bandana [0]
 		5003,5, // Joker Jester [0]
-		5030,5, // Panda Hat [0]
+		//5030,5, // Panda Hat [0]
 		2252,5, // Wizard Hat [0]
 		5134,5, // Pumpkin-Head [0]
 		2289,5, // Poo Poo Hat [0]
@@ -319,6 +319,7 @@ OnInit:
 	// [Sub Items T3] เกราะไม่มีรู/ของที่เหลือ
 	setarray .SubItemPool_3[0], 
 		2314,10, // Chain Mail [0]
+		2503,10, // Muffler [0]
 		2316,10, // Full Plate [0]
 		2325,10, // Saint's Robe [0]
 		2323,10, // Scapulare [0]
@@ -410,7 +411,38 @@ OnInit:
 		1716,5,  // Gakkung Bow [2]
 		1726,5,  // Hunter Bow [1]
 		1309,5,  // Orcish Axe [4]
-		1162,5;  // Broad Sword [2] 
+		1162,5,  // Broad Sword [2]
+
+		// ///itemclass2-2 Bard / Dancer Weapons
+		1919,5,  // Bass Guitar [1] (Base_Guitar)
+		1917,5,  // Gentle Breeze Guitar [0] (Guitar_Of_Gentle_Breeze)
+		1916,5,  // Green Acre Guitar [0] (Guitar_Of_Vast_Land)
+		1908,5,  // Guitar [1] (Guitar_)
+		1912,5,  // Gumoongoh [2] (Guh_Moon_Goh_)
+		1915,5,  // Loner's Guitar [0] (Guitar_Of_Blue_Solo)
+		1906,5,  // Lute [3] (Lute_)
+		1904,5,  // Mandolin [3] (Mandolin_)
+		1922,5,  // Oriental Lute [2] (Oriental_Lute_)
+		1902,5,  // Violin [4] (Violin_)
+
+		1969,5,  // Blade Whip [0] (Bladed_Whip)
+		1974,5,  // Carrot Whip [0] (Carrot_Whip)
+		1964,5,  // Chemeti Whip [0] (Chemeti)
+		1972,5,  // Electric Eel [2] (Electric_Eel)
+		1971,5,  // Electric Wire [0] (Electric_Wire)
+		1967,5,  // Gaia Whip [0] (Whip_Of_Earth)
+		1966,5,  // Icicle Whip [0] (Whip_Of_Ice_Piece)
+		1962,5,  // Lariat Whip [0] (Lariat)
+		1970,5,  // Queen's Whip [0] (Queen's_Whip)
+		1976,5,  // Queen's Whip [2] (Queen's_Whip_)
+		1957,5,  // Rante Whip [1] (Rante_)
+		1965,5,  // Red Flame Whip [0] (Whip_Of_Red_Flame)
+		1951,5,  // Rope [4] (Rope_)
+		1973,5,  // Sea Witch's Foot [1] (Sea_Witch_Foot)
+		1968,5,  // Skipping Rope [0] (Jump_Rope)
+		1959,5,  // Tail Whip [2] (Tail_)
+		1961,5,  // Whip [2] (Whip_)
+		1953,5;  // Whip [3] (Line_)
 
 	// [Sub Items T4]
 	setarray .SubItemPool_4[0], 

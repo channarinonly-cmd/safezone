@@ -30,4 +30,19 @@
 506,zeny,40
 601,zeny,60
 602,zeny,300
-11573,cc,5,23038,100,yes,70 // White Slim Potion Box
+645,zeny,800
+656,zeny,1500
+657,zeny,3000
+3212,zeny,1500
+
+
+//11573,cc,5,23038,100,yes,90 // White Slim Potion Box
+7621,cc,30,13601,20,yes,90 //token of siegfriend box
+14592,cc,80,13990,10,yes,90 //job box
+12208,cc,80,12900,10,yes,90 //exp box
+12210,cc,80,12210,10,yes,90 //bubble gum
+
+12208,cc,10
+12210,cc,10
+14592,cc,10
+

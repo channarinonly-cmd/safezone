@@ -1,0 +1,208 @@
+// ============================================================
+// NPC: Costume Legendary Quest (ระบบอัปเกรดหมวกคอสบอสออโต้ตรวจจับอุปกรณ์)
+// อ้างอิงระบบจาก Ragnarok Classic GGT (WOE Equipment Upgrade)
+// - ตรวจสอบหมวกที่ผู้เล่นสวมใส่โดยอัตโนมัติ (ช่องสวมใส่ส่วนหัวบน)
+// - โอกาสสำเร็จ 25% (ตั้งค่าได้ในตัวแปรด้านล่าง)
+// - หากล้มเหลว: ไอเทมและวัตถุดิบจะสูญหายทั้งหมด!
+// - หากสำเร็จ: ได้รับหมวกขั้นถัดไปที่ระดับตีบวก +0
+// ============================================================
+
+prontera,152,185,4	script	Legendary Crafter	4_M_REPAIR,{
+
+	// ================= [ ตั้งค่าระบบเควสตรงนี้ ] =================
+	set .@success_rate, 25; // โอกาสสำเร็จ (25%)
+	set .@req_count, 99;    // จำนวนวัตถุดิบที่ต้องใช้ (99 ชิ้น)
+	
+	// วัตถุดิบเควสหลัก (Catalysts)
+	set .@Aegis_Immortal, 35240;  // Aegis of the Immortal (ID ใหม่)
+	set .@Gold_Diamond, 35241;    // Gold Diamond Unbreakable (ID ใหม่)
+	
+	// วัตถุดิบหมวกแคป (สำหรับคราฟ T1 เท่านั้น)
+	set .@C_Gold_Baseball, 46853; // C Gold Baseball Cap (สำหรับสาย Royale)
+	set .@C_Baseball, 42609;      // C Baseball Cap (สำหรับสาย Regal)
+	// ==========================================================
+
+	mes "[Legendary Crafter]";
+	mes "ยินดีต้อนรับสู่ระบบอัปเกรด ^FF7700Costume Legendary Quest^000000";
+	mes "ข้าจะอัปเกรดหมวกที่เจ้าสวมใส่อยู่บนหัว (ส่วนบน) ขึ้นขั้นถัดไป";
+	mes "ด้วยอัตราสำเร็จ ^00FF00" + .@success_rate + "%^000000 เท่านั้น";
+	mes "^FF0000* หากล้มเหลว ไอเทมทั้งหมดจะสลายหายไปทันที! *^000000";
+	next;
+
+	// 1. ตรวจสอบหมวกโดยเริ่มจากช่องหัวบนปกติ (EQI_HEAD_TOP = 0) หรือช่องคอสตูมส่วนบน (EQI_COSTUME_HEAD_TOP = 13)
+	set .@equipped_id, getequipid(EQI_HEAD_TOP);
+	set .@slot_used, EQI_HEAD_TOP;
+	
+	// หากช่องหัวบนปกติไม่ใช่หมวกเริ่มต้น ให้สลับไปเช็คช่องคอสตูมส่วนบน
+	if (.@equipped_id != 2256 && .@equipped_id != 2235 && .@equipped_id != 5007 && .@equipped_id != 2234 && .@equipped_id != 47206) {
+		set .@equipped_id, getequipid(EQI_COSTUME_HEAD_TOP);
+		set .@slot_used, EQI_COSTUME_HEAD_TOP;
+	}
+	
+	if (.@equipped_id <= 0) {
+		mes "[Legendary Crafter]";
+		mes "ข้าไม่พบหมวกสวมใส่อยู่บนหัวส่วนบน (หรือคอสตูมส่วนบน) ของเจ้าเลย";
+		mes "กรุณาสวมใส่หมวกคอสตูมบอสที่ต้องการจะอัปเกรดก่อนคุยกับข้า!";
+		close;
+	}
+
+	set .@base_item, .@equipped_id;
+	set .@base_name$, getitemname(.@base_item);
+
+	// 2. ค้นหารูปแบบการอัปเกรดตามหมวกที่สวมใส่
+	set .@is_base_hat, 0;
+	set .@result_item, 0;
+	set .@req_addon, 0; // วัตถุดิบเสริม (หมวกแคป)
+	set .@cat, 0;       // วัตถุดิบหลอมหลัก
+
+	// --- หมวกเริ่มต้น (Base) -> อัปเกรดเข้าสู่ Tier 1 (มีแยก 2 สาย) ---
+	if (.@equipped_id == 2256) {      // Majestic Goat
+		set .@is_base_hat, 1;
+		set .@royale_target, 35242;
+		set .@regal_target, 35247;
+	} else if (.@equipped_id == 2235) { // Crown
+		set .@is_base_hat, 1;
+		set .@royale_target, 35243;
+		set .@regal_target, 35248;
+	} else if (.@equipped_id == 5007) { // Grand Circlet
+		set .@is_base_hat, 1;
+		set .@royale_target, 35244;
+		set .@regal_target, 35249;
+	} else if (.@equipped_id == 2234) { // Tiara
+		set .@is_base_hat, 1;
+		set .@royale_target, 35245;
+		set .@regal_target, 35250;
+	} else if (.@equipped_id == 5022) { // C Solar Limited
+		set .@is_base_hat, 1;
+		set .@royale_target, 35246;
+		set .@regal_target, 35251;
+	}
+
+	// --- อัปเกรดจาก Tier 1 -> Tier 2 (ใช้วัตถุดิบ Aegis of the Immortal 99 ชิ้น) ---
+	// สาย Royale T1 -> Royale T2
+	else if (.@equipped_id == 35242) { set .@result_item, 35252; set .@cat, .@Aegis_Immortal; }
+	else if (.@equipped_id == 35243) { set .@result_item, 35253; set .@cat, .@Aegis_Immortal; }
+	else if (.@equipped_id == 35244) { set .@result_item, 35254; set .@cat, .@Aegis_Immortal; }
+	else if (.@equipped_id == 35245) { set .@result_item, 35255; set .@cat, .@Aegis_Immortal; }
+	else if (.@equipped_id == 35246) { set .@result_item, 35256; set .@cat, .@Aegis_Immortal; }
+	// สาย Regal T1 -> Regal T2
+	else if (.@equipped_id == 35247) { set .@result_item, 35257; set .@cat, .@Aegis_Immortal; }
+	else if (.@equipped_id == 35248) { set .@result_item, 35258; set .@cat, .@Aegis_Immortal; }
+	else if (.@equipped_id == 35249) { set .@result_item, 35259; set .@cat, .@Aegis_Immortal; }
+	else if (.@equipped_id == 35250) { set .@result_item, 35260; set .@cat, .@Aegis_Immortal; }
+	else if (.@equipped_id == 35251) { set .@result_item, 35261; set .@cat, .@Aegis_Immortal; }
+
+	// --- อัปเกรดจาก Tier 2 -> Tier 3 (ใช้วัตถุดิบ Gold Diamond Unbreakable 99 ชิ้น) ---
+	// สาย Royale T2 -> Royale T3
+	else if (.@equipped_id == 35252) { set .@result_item, 35262; set .@cat, .@Gold_Diamond; }
+	else if (.@equipped_id == 35253) { set .@result_item, 35263; set .@cat, .@Gold_Diamond; }
+	else if (.@equipped_id == 35254) { set .@result_item, 35264; set .@cat, .@Gold_Diamond; }
+	else if (.@equipped_id == 35255) { set .@result_item, 35265; set .@cat, .@Gold_Diamond; }
+	else if (.@equipped_id == 35256) { set .@result_item, 35266; set .@cat, .@Gold_Diamond; }
+	// สาย Regal T2 -> Regal T3
+	else if (.@equipped_id == 35257) { set .@result_item, 35267; set .@cat, .@Gold_Diamond; }
+	else if (.@equipped_id == 35258) { set .@result_item, 35007; set .@cat, .@Gold_Diamond; }
+	else if (.@equipped_id == 35259) { set .@result_item, 35269; set .@cat, .@Gold_Diamond; }
+	else if (.@equipped_id == 35260) { set .@result_item, 35270; set .@cat, .@Gold_Diamond; }
+	else if (.@equipped_id == 35261) { set .@result_item, 35271; set .@cat, .@Gold_Diamond; }
+
+	// ถ้าสวมใส่ไอเทมอื่นๆ ที่ไม่ใช่หมวกเควส
+	if (.@is_base_hat == 0 && .@result_item == 0) {
+		mes "[Legendary Crafter]";
+		mes "หมวก ^FF0000" + .@base_name$ + "^000000 ไม่ได้อยู่ในรายชื่อไอเทมอัปเกรดของข้า";
+		close;
+	}
+
+	// --------------------------------------------------------
+	// ดำเนินการอัปเกรดตามประเภทหมวก
+	// --------------------------------------------------------
+
+	// กรณีที่ 1: เป็นหมวกเริ่มต้น ต้องเลือกสายคราฟก่อน (Royale หรือ Regal)
+	if (.@is_base_hat == 1) {
+		mes "ข้าพบว่าเจ้าสวมใส่หมวกเริ่มต้น ^i[" + .@base_item + "]^FFFFFF_^000000 ^00AAFF" + .@base_name$ + "^000000";
+		mes "เจ้าต้องการอัปเกรดแยกออกไปที่สายพลังงานใด?";
+		next;
+		
+		set .@choice, select(
+			"สาย Royale (ความเร็ว ASPD+3%, DROP+15%)",
+			"สาย Regal (พลังทำลาย ATK+3%, DROP+15%)",
+			"ยกเลิก"
+		);
+		
+		if (.@choice == 3) {
+			mes "[Legendary Crafter]";
+			mes "หากตัดสินใจได้แล้ว ค่อยกลับมาคุยกับข้า!";
+			close;
+		}
+		
+		if (.@choice == 1) {
+			set .@result_item, .@royale_target;
+			set .@req_addon, .@C_Gold_Baseball;
+		} else {
+			set .@result_item, .@regal_target;
+			set .@req_addon, .@C_Baseball;
+		}
+		
+		set .@cat, .@Aegis_Immortal;
+	}
+
+	// เตรียมข้อมูลแสดงผล
+	set .@result_name$, getitemname(.@result_item);
+	set .@cat_name$, getitemname(.@cat);
+
+	mes "[Legendary Crafter]";
+	mes "คุณกำลังจะอัปเกรด ^i[" + .@base_item + "]^FFFFFF_^000000 ^FF7700" + .@base_name$ + "^000000";
+	mes "มุ่งสู่ระดับขั้นถัดไป -> ^i[" + .@result_item + "]^FFFFFF_^000000 ^00AAFF" + .@result_name$ + "^000000";
+	mes "";
+	mes "วัตถุดิบที่จะใช้:";
+	mes "- ^i[" + .@base_item + "]^FFFFFF_^000000 " + .@base_name$ + " x 1 ชิ้น (สวมใส่อยู่)";
+	if (.@req_addon > 0) {
+		mes "- ^i[" + .@req_addon + "]^FFFFFF_^000000 " + getitemname(.@req_addon) + " x 1 ชิ้น";
+	}
+	mes "- ^i[" + .@cat + "]^FFFFFF_^000000 " + .@cat_name$ + " x " + .@req_count + " ชิ้น";
+	mes "";
+	mes "^FF0000** โอกาสสำเร็จ: " + .@success_rate + "% (หากล้มเหลว ของจะหายทั้งหมด!) **^000000";
+	next;
+
+	if (select("ยอมรับความเสี่ยง, เริ่มตีบวก", "ยกเลิก") == 2) {
+		mes "[Legendary Crafter]";
+		mes "ความปลอดภัยไว้ก่อนนั่นแหละดีแล้ว!";
+		close;
+	}
+
+	// ตรวจสอบความปลอดภัยซ้ำก่อนหักของ
+	if (getequipid(.@slot_used) != .@base_item) {
+		mes "[Legendary Crafter]";
+		mes "เจ้าแอบถอดหมวกออกขณะหลอมสร้างงั้นรึ! โปรดใส่มันกลับที่เดิมก่อน";
+		close;
+	}
+
+	if (countitem(.@cat) < .@req_count || (.@req_addon > 0 && countitem(.@req_addon) < 1)) {
+		mes "[Legendary Crafter]";
+		mes "วัตถุดิบในการหลอมสร้างในตัวของเจ้าไม่เพียงพอ!";
+		close;
+	}
+
+	// หักไอเทมและวัตถุดิบทั้งหมด
+	delequip .@slot_used;
+	delitem .@cat, .@req_count;
+	if (.@req_addon > 0) {
+		delitem .@req_addon, 1;
+	}
+
+	// สุ่มผลลัพธ์
+	if (rand(1, 100) <= .@success_rate) {
+		// สำเร็จ: ได้รับหมวกขั้นใหม่ที่บวก +0
+		getitem .@result_item, 1;
+		specialeffect2 EF_BLESSING;
+		mes "[Legendary Crafter]";
+		mes "สำเร็จแล้ว! ข้าได้หลอมสร้างสำเร็จเป็น ^i[" + .@result_item + "]^FFFFFF_^000000 ^00AAFF" + .@result_name$ + "^000000 แล้ว!";
+		announce "[Legendary Upgrade] : ยินดีด้วยกับคุณ " + strcharinfo(0) + " อัปเกรดสำเร็จคอสตูมระดับเทพ [" + .@result_name$ + "] ! ", bc_all, 0xFF00FF;
+	} else {
+		// ล้มเหลว: ของสูญหายทั้งหมด
+		specialeffect2 EF_HIT1;
+		mes "[Legendary Crafter]";
+		mes "^FF0000การอัปเกรดล้มเหลว! พลังงานเตาหลอมเกิดการสะท้อนกลับ ทำให้หมวกและวัตถุดิบของเจ้าสูญสลายหายไปทั้งหมด!^000000";
+	}
+	close;
+}

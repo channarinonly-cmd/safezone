@@ -74,6 +74,15 @@
 
 using namespace rathena;
 
+// chrif_aa_save is implemented in chrif.cpp but not declared in older headers.
+extern void chrif_aa_save(map_session_data* sd);
+
+static inline void autoattack_save_now(map_session_data* sd)
+{
+	if (sd)
+		chrif_aa_save(sd);
+}
+
 const int64 SCRIPT_INT_MIN = INT64_MIN;
 const int64 SCRIPT_INT_MAX = INT64_MAX;
 
@@ -4333,7 +4342,9 @@ static void script_detach_state(struct script_state* st, bool dequeue_event)
 			 * We're done with this NPC session, so we cancel the timer (if existent) and move on
 			 **/
 			if( sd->npc_idle_timer != INVALID_TIMER ) {
-				delete_timer(sd->npc_idle_timer,npc_secure_timeout_timer);
+				const struct TimerData* td = get_timer(sd->npc_idle_timer);
+				if( td != nullptr && td->func == npc_secure_timeout_timer )
+					delete_timer(sd->npc_idle_timer,npc_secure_timeout_timer);
 				sd->npc_idle_timer = INVALID_TIMER;
 			}
 #endif
@@ -4372,6 +4383,11 @@ void script_attach_state(struct script_state* st){
 		sd->npc_item_flag = st->npc_item_flag; // load default.
 		sd->state.disable_atcommand_on_npc = battle_config.atcommand_disable_npc && (!pc_has_permission(sd, PC_PERM_ENABLE_COMMAND));
 #ifdef SECURE_NPCTIMEOUT
+		if( sd->npc_idle_timer != INVALID_TIMER ) {
+			const struct TimerData* td = get_timer(sd->npc_idle_timer);
+			if( td == nullptr || td->func != npc_secure_timeout_timer )
+				sd->npc_idle_timer = INVALID_TIMER;
+		}
 		if( sd->npc_idle_timer == INVALID_TIMER && !sd->state.ignoretimeout )
 			sd->npc_idle_timer = add_timer(gettick() + (SECURE_NPCTIMEOUT_INTERVAL*1000),npc_secure_timeout_timer,sd->bl.id,0);
 		sd->npc_idle_tick = gettick();
@@ -4913,6 +4929,7 @@ void script_reload(void) {
 
 BUILDIN_FUNC(spawn_offline_stall);
 BUILDIN_FUNC(clear_offline_stall);
+BUILDIN_FUNC(clear_offline_stall_type);
 // ==========================================================
 // 1. ระบบเสกบอท (หันหน้าทิศใต้ + ส่องของได้ + แก้อาการ Error Compile)
 // ==========================================================
@@ -4930,7 +4947,11 @@ BUILDIN_FUNC(spawn_fakeplayer)
 		return SCRIPT_CMD_SUCCESS;
 	}
 
-	struct map_session_data* sd = new map_session_data(); 
+	struct map_session_data* sd = (struct map_session_data*)aCalloc(1, sizeof(struct map_session_data)); 
+	// Safezone fake player shadow: init script registries like a real PC before clif_spawn.
+	sd->regs.vars = i64db_alloc(DB_OPT_BASE);
+	sd->regs.arrays = NULL;
+	sd->vars_dirty = false;
 
 	sd->bl.type = BL_PC; 
 	sd->fd = 0; 
@@ -4942,6 +4963,7 @@ BUILDIN_FUNC(spawn_fakeplayer)
 	// 🌟 หลอกเซิร์ฟเวอร์ว่าโหลดตัวละครเสร็จแล้ว
 	sd->state.pc_loaded = 1; 
 	sd->vars_received = 1; 
+	sd->vars_ok = true;
 	sd->state.autotrade = 1; 
 	sd->state.active = 1;
 
@@ -4949,6 +4971,22 @@ BUILDIN_FUNC(spawn_fakeplayer)
 	sd->goldpc_tid = INVALID_TIMER; 
 	sd->pvp_timer = INVALID_TIMER; // (หรือชื่อที่ลูกพี่แก้ไปรอบที่แล้ว)
 	sd->npc_timer_id = INVALID_TIMER; // <--- เติมบรรทัดนี้เข้าไปเลยครับ! อุดรูรั่วของ NPC
+	sd->followtimer = INVALID_TIMER;
+	sd->invincible_timer = INVALID_TIMER;
+	sd->expiration_tid = INVALID_TIMER;
+	sd->autotrade_tid = INVALID_TIMER;
+	sd->respawn_tid = INVALID_TIMER;
+	sd->tid_queue_active = INVALID_TIMER;
+	sd->macro_detect.timer = INVALID_TIMER;
+	sd->skill_keep_using.tid = INVALID_TIMER;
+	sd->npc_idle_timer = INVALID_TIMER;
+	sd->rental_timer = INVALID_TIMER;
+	for (int i = 0; i < MAX_EVENTTIMER; i++)
+		sd->eventtimer[i] = INVALID_TIMER;
+	for (int i = 0; i < MAX_SPIRITBALL; i++)
+		sd->spirit_timer[i] = INVALID_TIMER;
+	for (int i = 0; i < MAX_SPIRITCHARM; i++)
+		sd->spiritcharm_timer[i] = INVALID_TIMER;
 	// 🌟 สุ่มหันหน้า 8 ทิศทางตั้งแต่ตอนเกิด! (ปลอดภัย 100% ไม่พังแน่นอน)
 	sd->ud.dir = rand() % 8;
 
@@ -4965,7 +5003,7 @@ BUILDIN_FUNC(spawn_fakeplayer)
 	sd->ud.dir = 4; 
 
 	if (SQL_ERROR == Sql_Query(mmysql_handle, "SELECT name, class, base_level, hair, hair_color, clothes_color, weapon, shield, head_top, head_mid, head_bottom, sex FROM `char` WHERE char_id = %d", char_id) || Sql_NumRows(mmysql_handle) == 0) {
-		delete sd; 
+		aFree(sd); 
 		script_pushint(st, 0);
 		return SCRIPT_CMD_SUCCESS;
 	}
@@ -5032,7 +5070,7 @@ BUILDIN_FUNC(spawn_fakeplayer)
 	map_addiddb(&sd->bl); 
 	if (map_addblock(&sd->bl)) {
 		map_deliddb(&sd->bl);
-		delete sd; 
+		aFree(sd); 
 		script_pushint(st, 0);
 		return SCRIPT_CMD_SUCCESS; 
 	}
@@ -5060,17 +5098,60 @@ BUILDIN_FUNC(despawn_fakeplayer)
 			chat_leavechat(sd, 0); // 0 คือการบอกเซิร์ฟเวอร์ว่าไม่ได้โดนเตะออก
 		}
 		
+		int old_m = sd->bl.m;
 		clif_clearunit_area(&sd->bl, CLR_OUTSIGHT);
-		map_delblock(&sd->bl);
+		status_change_clear(&sd->bl, 1);
 		map_deliddb(&sd->bl);
-		map_getmapdata(sd->bl.m)->users--; 
-		
-		delete sd; 
+		map_delblock(&sd->bl);
+		if (old_m >= 0 && map_getmapdata(old_m)->users > 0)
+			map_getmapdata(old_m)->users--; 
 		
 		script_pushint(st, 1);
 	} else {
 		script_pushint(st, 0);
 	}
+	return SCRIPT_CMD_SUCCESS;
+}
+
+BUILDIN_FUNC(despawn_fakeplayers_map)
+{
+	const char* mapname = script_getstr(st, 2);
+	int m = map_mapname2mapid(mapname);
+	int cleared = 0;
+
+	if (m < 0) {
+		script_pushint(st, 0);
+		return SCRIPT_CMD_SUCCESS;
+	}
+
+	std::vector<int> fake_ids;
+	struct s_mapiterator* iter = mapit_getallusers();
+	for (TBL_PC* sd = (TBL_PC*)mapit_first(iter); mapit_exists(iter); sd = (TBL_PC*)mapit_next(iter)) {
+		if (sd != nullptr && sd->fd == 0 && sd->bl.m == m)
+			fake_ids.push_back(sd->bl.id);
+	}
+	mapit_free(iter);
+
+	for (int gid : fake_ids) {
+		struct map_session_data* sd = map_id2sd(gid);
+		if (sd == nullptr || sd->fd != 0 || sd->bl.m != m)
+			continue;
+
+		if (sd->chatID > 0)
+			chat_leavechat(sd, 0);
+
+		int old_m = sd->bl.m;
+		clif_clearunit_area(&sd->bl, CLR_OUTSIGHT);
+		status_change_clear(&sd->bl, 1);
+		map_deliddb(&sd->bl);
+		map_delblock(&sd->bl);
+		if (old_m >= 0 && map_getmapdata(old_m)->users > 0)
+			map_getmapdata(old_m)->users--;
+
+		cleared++;
+	}
+
+	script_pushint(st, cleared);
 	return SCRIPT_CMD_SUCCESS;
 }
 // ==========================================================
@@ -23070,6 +23151,7 @@ BUILDIN_FUNC(setmounting) {
  * Retrieves quantity of arguments provided to callfunc/callsub.
  * getargcount() -> amount of arguments received in a function
  **/
+
 BUILDIN_FUNC(getargcount) {
 	struct script_retinfo* ri;
 
@@ -28187,7 +28269,7 @@ static std::unordered_map<t_itemid, s_autoattack_buy_config> autoattack_read_buy
 			t_itemid buy_item_id = buy_id_text.empty() ? item_id : (t_itemid)std::stoi(buy_id_text);
 			int amount_per_buy = amount_text.empty() ? 1 : std::stoi(amount_text);
 			bool auto_open = auto_open_text == "yes" || auto_open_text == "true" || auto_open_text == "1" || auto_open_text == "open";
-			int max_weight_percent = max_weight_text.empty() ? 80 : std::stoi(max_weight_text);
+			int max_weight_percent = max_weight_text.empty() ? 90 : std::stoi(max_weight_text);
 
 			if (buy_item_id <= 0 || amount_per_buy <= 0 || !item_db.exists(buy_item_id))
 				continue;
@@ -28282,6 +28364,61 @@ static int autoattack_open_bought_boxes(map_session_data* sd, const s_autoattack
  * 9 = item pickup
  * 10 = skill rate
 */
+
+// AutoAttack attack-skill target mob compatibility.
+// New runtime stores target_mob_id separately, but old DB table aa_skills only has min_hp.
+// To avoid SQL/load-file changes, saved rows may pack target_mob_id into swarm_min as:
+//   packed = target_mob_id * 100 + swarm_min
+// Real swarm_min is capped to 0..50, so values >= 100 are safe to decode.
+static inline uint32 aa_skill_get_target_mob_id(const s_autoattackskills& skill)
+{
+	if (skill.target_mob_id > 0)
+		return skill.target_mob_id;
+	if (skill.swarm_min >= 100)
+		return skill.swarm_min / 100;
+	return 0;
+}
+
+static inline uint32 aa_skill_get_swarm_min(const s_autoattackskills& skill)
+{
+	if (skill.target_mob_id == 0 && skill.swarm_min >= 100)
+		return skill.swarm_min % 100;
+	return skill.swarm_min;
+}
+
+static void autoattack_dedupe_attack_skills(map_session_data* sd)
+{
+	if (!sd || sd->aa.autoattackskills.empty())
+		return;
+
+	std::vector<s_autoattackskills> unique;
+	unique.reserve(sd->aa.autoattackskills.size());
+
+	for (const auto& skill : sd->aa.autoattackskills) {
+		uint32 target_mob_id = aa_skill_get_target_mob_id(skill);
+
+		auto it = std::find_if(unique.begin(), unique.end(), [skill, target_mob_id](const s_autoattackskills& v) {
+			return v.skill_id == skill.skill_id && aa_skill_get_target_mob_id(v) == target_mob_id;
+		});
+
+		if (it != unique.end()) {
+			// Keep the newest setting for this skill + target mob pair.
+			it->is_active = skill.is_active;
+			it->skill_lv = skill.skill_lv;
+			it->swarm_min = aa_skill_get_swarm_min(skill);
+			it->target_mob_id = target_mob_id;
+			it->last_use = skill.last_use;
+		} else {
+			s_autoattackskills copy = skill;
+			copy.swarm_min = aa_skill_get_swarm_min(skill);
+			copy.target_mob_id = target_mob_id;
+			unique.push_back(copy);
+		}
+	}
+
+	sd->aa.autoattackskills.swap(unique);
+}
+
 BUILDIN_FUNC(autoattackstrinfo)
 {
 	int index = 0, id;
@@ -28433,9 +28570,21 @@ BUILDIN_FUNC(autoattackstrinfo)
 						if(skill){
 							safesnprintf(buffer, sizeof(buffer), msg_txt(NULL,1621),itAutoattackskills.skill_id,skill->desc,itAutoattackskills.skill_lv);
 							buf += buffer;
-							if (itAutoattackskills.swarm_min > 0) {
-								safesnprintf(buffer, sizeof(buffer), "  ใช้เมื่อโดนรุม %d ตัวขึ้นไป\n", itAutoattackskills.swarm_min);
+							uint32 display_swarm_min = aa_skill_get_swarm_min(itAutoattackskills);
+							uint32 display_target_mob_id = aa_skill_get_target_mob_id(itAutoattackskills);
+
+							if (display_swarm_min > 0) {
+								safesnprintf(buffer, sizeof(buffer), "  \343\252\351\340\301\327\350\315\342\264\271\303\330\301 %u \265\321\307\242\326\351\271\344\273\n", display_swarm_min);
 								buf += buffer;
+							}
+
+							if (display_target_mob_id > 0) {
+								std::shared_ptr<s_mob_db> target_mob = mob_db.find(display_target_mob_id);
+								const char* target_name = target_mob ? target_mob->name.c_str() : "Unknown Mob";
+								safesnprintf(buffer, sizeof(buffer), "  \340\273\351\322\313\301\322\302\301\315\271: [%u] %s\n", display_target_mob_id, target_name);
+								buf += buffer;
+							} else {
+								buf += "  \340\273\351\322\313\301\322\302\301\315\271: \267\330\241\301\315\271\312\340\265\315\303\354\n";
 							}
 						}
 					}
@@ -28866,6 +29015,10 @@ case GET_INFO_FLEE_MOB:
 			script_pushint(st, sd->aa.focus_mob);
 			break;
 
+		case 1004: // combat mode: 0=normal, 1=skill only, 2=idle/support
+			script_pushint(st, sd->aa.combat_mode);
+			break;
+
 		case 1002:
 			script_pushint(st, sd->aa.storage_keep_item_id.size());
 			break;
@@ -29050,11 +29203,16 @@ BUILDIN_FUNC(autoattackset)
 				break;
 
 			case GET_INFO_ATTACK_SKILL:
-				if(result.size() == 4 || result.size() == 5){ // id = 4 - autoattackskills (is_active;skill_id;skill_lv;swarm_min)
+				if(result.size() == 4 || result.size() == 5 || result.size() == 6){ // id = 4 - autoattackskills (is_active;skill_id;skill_lv;swarm_min;target_mob_id)
 					struct s_autoattackskills autoattackskills = {};
 					int skill_id = std::stoi(result.at(2));
 					int is_active = std::stoi(result.at(1));
-					int swarm_min = result.size() == 5 ? cap_value(std::stoi(result.at(4)), 0, 50) : 0;
+					int swarm_min = result.size() >= 5 ? cap_value(std::stoi(result.at(4)), 0, 50) : 0;
+					uint32 target_mob_id = result.size() >= 6 ? (uint32)cap_value(std::stoi(result.at(5)), 0, INT_MAX) : 0;
+
+					// target_mob_id: 0 = all monsters, >0 = use this skill only on that mob id
+					if (target_mob_id > 0 && !mob_db.find(target_mob_id))
+						return SCRIPT_CMD_FAILURE;
 
 					//check if skill exist and is support type and has status change
 					skill = skill_db.find(skill_id);
@@ -29063,23 +29221,36 @@ BUILDIN_FUNC(autoattackset)
 						return SCRIPT_CMD_FAILURE;
 
 					if(!is_active){
-						sd->aa.autoattackskills.erase(
-						std::remove_if(sd->aa.autoattackskills.begin(), sd->aa.autoattackskills.end(), [skill_id](s_autoattackskills const &v) {
-							return v.skill_id == skill_id;
-						}),
-						sd->aa.autoattackskills.end());
+						// Backward compatible delete:
+						// 4;0;skill;0          = delete all entries of this skill
+						// 4;0;skill;0;0;mob_id = delete only this skill+mob entry
+						if (result.size() >= 6 && target_mob_id > 0) {
+							sd->aa.autoattackskills.erase(
+							std::remove_if(sd->aa.autoattackskills.begin(), sd->aa.autoattackskills.end(), [skill_id, target_mob_id](s_autoattackskills const &v) {
+								return v.skill_id == skill_id && aa_skill_get_target_mob_id(v) == target_mob_id;
+							}),
+							sd->aa.autoattackskills.end());
+						} else {
+							sd->aa.autoattackskills.erase(
+							std::remove_if(sd->aa.autoattackskills.begin(), sd->aa.autoattackskills.end(), [skill_id](s_autoattackskills const &v) {
+								return v.skill_id == skill_id;
+							}),
+							sd->aa.autoattackskills.end());
+						}
 						break;
 					}
-					auto itAutoattackskills = std::find_if(sd->aa.autoattackskills.begin(), sd->aa.autoattackskills.end(), [skill_id] ( s_autoattackskills const &v) {return v.skill_id == skill_id;});
+					auto itAutoattackskills = std::find_if(sd->aa.autoattackskills.begin(), sd->aa.autoattackskills.end(), [skill_id, target_mob_id] ( s_autoattackskills const &v) {return v.skill_id == skill_id && aa_skill_get_target_mob_id(v) == target_mob_id;});
 					if(itAutoattackskills != sd->aa.autoattackskills.end()){
 						itAutoattackskills->is_active = is_active;
 						itAutoattackskills->skill_lv = std::stoi(result.at(3));
 						itAutoattackskills->swarm_min = swarm_min;
+						itAutoattackskills->target_mob_id = target_mob_id;
 					} else {
 						autoattackskills.is_active = is_active;
 						autoattackskills.skill_id = skill_id;
 						autoattackskills.skill_lv = std::stoi(result.at(3));
 						autoattackskills.swarm_min = swarm_min;
+						autoattackskills.target_mob_id = target_mob_id;
 						autoattackskills.last_use = 1;
 						sd->aa.autoattackskills.push_back(autoattackskills);
 					}
@@ -29130,8 +29301,14 @@ BUILDIN_FUNC(autoattackset)
 				break;
 
 			case GET_INFO_ATTACK:
-				if(result.size() == 2) // id = 6 - melee attack (status)
-					sd->aa.stopmelee = std::stoi(result.at(1));
+				if(result.size() == 2) { // id = 6 - old melee toggle: 0=allow normal, 1=stop normal
+					int stop = std::stoi(result.at(1));
+					sd->aa.stopmelee = stop != 0;
+
+					// Keep old NPC/preset calls compatible with the new combat mode.
+					// stopmelee=0 -> Normal Attack, stopmelee=1 -> Skill Only.
+					sd->aa.combat_mode = sd->aa.stopmelee ? 1 : 0;
+				}
 				break;
 
 			case GET_INFO_TELEPORT:
@@ -29274,6 +29451,27 @@ BUILDIN_FUNC(autoattackset)
 					}
 					break;
 
+				case 1004: // combat mode: 0=normal, 1=skill only, 2=idle/support
+					if(result.size() == 2){
+						int mode = std::stoi(result.at(1));
+						if(mode < 0) mode = 0;
+						if(mode > 2) mode = 2;
+
+						sd->aa.combat_mode = mode;
+
+						// Keep backward compatibility with old stopmelee flag.
+						// Normal mode allows melee; skill-only and idle disable melee.
+						sd->aa.stopmelee = (mode != 0);
+
+						// Idle/support mode must not keep an old monster target.
+						if(mode == 2){
+							sd->aa.target_id = 0;
+							sd->aa.attack_target_id = 0;
+							sd->aa.itempick_id = 0;
+						}
+					}
+					break;
+
 case GET_INFO_FLEE_MOB:
 				if(result.size() == 3){ // id = 13 - flee mob (is_active;monster_id)
 					int i;
@@ -29412,6 +29610,8 @@ case GET_INFO_FLEE_MOB:
 		}
 	}
 
+	autoattack_dedupe_attack_skills(sd);
+	autoattack_save_now(sd);
 	return SCRIPT_CMD_SUCCESS;
 }
 
@@ -29458,6 +29658,7 @@ BUILDIN_FUNC(autoattackclear)
 			sd->aa.pickup_item_config = 0;
 			sd->aa.mobs.aggressive_behavior = 0;
 			sd->aa.stopmelee = 0;
+			sd->aa.combat_mode = 0;
 			sd->aa.focus_mob = false;
 			sd->aa.stay_mode = 0;
 			sd->aa.skill_use_rate = battle_config.autoattack_skill_rate_default;
@@ -29465,6 +29666,7 @@ BUILDIN_FUNC(autoattackclear)
 			break;
 	}
 
+	autoattack_save_now(sd);
 	return SCRIPT_CMD_SUCCESS;
 }
 
@@ -29548,11 +29750,6 @@ BUILDIN_FUNC(autostart)
 	if (!script_rid2sd(sd))
 		return SCRIPT_CMD_FAILURE;
 
-	if(map_getmapflag(sd->bl.m, MF_NOAUTOATTACK)){
-		clif_showscript(&sd->bl, msg_txt(NULL,1635), SELF);
-		return SCRIPT_CMD_SUCCESS;
-	}
-
 	int mode = script_getnum(st, 2);
 	t_tick duration = 0;
 
@@ -29560,6 +29757,13 @@ BUILDIN_FUNC(autostart)
 		duration = script_getnum(st,3);
 	else
 		duration = 86400000;
+
+	// เช็ก noautoattack เฉพาะตอนเปิดเท่านั้น
+	// ตอนปิดต้องให้ปิดได้เสมอ ไม่งั้นถ้าอยู่เมือง/noautoattack แล้วจะปิด SC_AUTOATTACK ไม่ลง
+	if (mode == 1 && map_getmapflag(sd->bl.m, MF_NOAUTOATTACK)) {
+		clif_showscript(&sd->bl, msg_txt(NULL,1635), SELF);
+		return SCRIPT_CMD_SUCCESS;
+	}
 
 	// start
 	if(mode == 1){
@@ -29850,6 +30054,17 @@ static int autoattack_count_item(map_session_data* sd, t_itemid nameid)
 	return amount;
 }
 
+// AutoAttack menu cache
+// Fix: select(autoattackmenulist(type)) and autoattackmenuid(type, choice)
+// must use the same visible ID list. The old code rebuilt the list twice,
+// so monster/drop/skill/item choices could map to a different ID.
+static std::unordered_map<uint64, std::vector<int>> autoattack_menu_cache;
+
+static uint64 autoattack_menu_cache_key(map_session_data* sd, int type)
+{
+	return ((uint64)sd->status.char_id << 8) | (uint64)(type & 0xFF);
+}
+
 BUILDIN_FUNC(autoattackmenulist)
 {
 	TBL_PC* sd;
@@ -29860,10 +30075,19 @@ BUILDIN_FUNC(autoattackmenulist)
 
 	int type = script_getnum(st, 2);
 	std::vector<int> ids = autoattack_menu_ids(sd, type);
-	int count = 0;
+	std::vector<int> visible_ids;
+
+	// Keep display order stable and remove duplicate IDs.
+	std::sort(ids.begin(), ids.end());
+	ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+
+	// Read buy config once per menu build, not once per item row.
+	std::unordered_map<t_itemid, s_autoattack_buy_config> buy_config;
+	if (type == 7)
+		buy_config = autoattack_read_buy_config();
 
 	for (int id : ids) {
-		if (count++ >= 80)
+		if ((int)visible_ids.size() >= 80)
 			break;
 
 		char buffer[CHAT_SIZE_MAX] = { 0 };
@@ -29872,11 +30096,13 @@ BUILDIN_FUNC(autoattackmenulist)
 			std::shared_ptr<s_mob_db> mob = mob_db.find(id);
 			if (!mob)
 				continue;
+
 			safesnprintf(buffer, sizeof(buffer), "%d - %s Lv.%d:", mob->id, mob->name.c_str(), mob->lv);
 		} else if (type == 1 || type == 2) {
 			std::shared_ptr<s_skill_db> skill = skill_db.find(id);
 			if (!skill)
 				continue;
+
 			int lv = pc_checkskill(sd, id);
 			const char* skill_name = skill->desc[0] ? skill->desc : "\xca\xa1\xd4\xc5";
 			safesnprintf(buffer, sizeof(buffer), "%d - %s Lv.%d:", id, skill_name, lv);
@@ -29884,14 +30110,16 @@ BUILDIN_FUNC(autoattackmenulist)
 			std::shared_ptr<item_data> item = item_db.find(id);
 			if (!item)
 				continue;
+
 			const char* item_name = autoattack_item_display_name(item);
+
 			if (type == 6) {
 				safesnprintf(buffer, sizeof(buffer), "%d - %s:", id, item_name);
 			} else if (type == 7) {
-				auto buy_config = autoattack_read_buy_config();
 				auto config = buy_config.find(id);
 				const char* currency = config != buy_config.end() && config->second.currency == e_autoattack_buy_currency::CC ? "CC" : "Zeny";
 				int price = config != buy_config.end() ? config->second.price : 0;
+
 				if (config != buy_config.end() && config->second.buy_item_id != id) {
 					std::shared_ptr<item_data> buy_item = item_db.find(config->second.buy_item_id);
 					const char* buy_name = buy_item ? autoattack_item_display_name(buy_item) : "";
@@ -29905,7 +30133,10 @@ BUILDIN_FUNC(autoattackmenulist)
 		}
 
 		menu += buffer;
+		visible_ids.push_back(id);
 	}
+
+	autoattack_menu_cache[autoattack_menu_cache_key(sd, type)] = visible_ids;
 
 	menu += "\xa1\xc3\xcd\xa1\xe0\xcd\xa7\x20\x2f\x20\xa1\xc5\xd1\xba";
 	script_pushstrcopy(st, menu.c_str());
@@ -29921,14 +30152,23 @@ BUILDIN_FUNC(autoattackmenuid)
 
 	int type = script_getnum(st, 2);
 	int index = script_getnum(st, 3);
-	std::vector<int> ids = autoattack_menu_ids(sd, type);
+
+	uint64 key = autoattack_menu_cache_key(sd, type);
+	auto it = autoattack_menu_cache.find(key);
+
+	if (it == autoattack_menu_cache.end()) {
+		script_pushint(st, 0);
+		return SCRIPT_CMD_SUCCESS;
+	}
+
+	std::vector<int>& ids = it->second;
 
 	if (index < 1 || index > (int)ids.size() || index > 80) {
 		script_pushint(st, 0);
 		return SCRIPT_CMD_SUCCESS;
 	}
 
-	script_pushint(st, ids.at(index - 1));
+	script_pushint(st, ids[index - 1]);
 	return SCRIPT_CMD_SUCCESS;
 }
 
@@ -29944,54 +30184,76 @@ BUILDIN_FUNC(autoattackbuy)
 	autoattack_web_state(sd, "buy");
 
 	for (auto &entry : sd->aa.autobuyitems) {
-		if (!entry.is_active || entry.item_id <= 0 || entry.target_amount <= 0)
+		if (!entry.is_active || entry.item_id <= 0 || entry.min_amount <= 0 || entry.target_amount <= entry.min_amount)
 			continue;
 
 		auto config = buy_config.find(entry.item_id);
 		if (config == buy_config.end())
 			continue;
 
+		if (config->second.price <= 0 || config->second.amount_per_buy <= 0 || config->second.buy_item_id <= 0)
+			continue;
+
+		std::shared_ptr<item_data> target_item = item_db.find(entry.item_id);
+		std::shared_ptr<item_data> buy_item = item_db.find(config->second.buy_item_id);
+		if (!target_item || !buy_item)
+			continue;
+
+		// ถ้ามีของกล่อง/แพ็กในตัวอยู่แล้ว ให้เปิดก่อน เพื่อเช็กจำนวนจริงก่อนซื้อเพิ่ม
 		autoattack_open_bought_boxes(sd, config->second, entry.item_id, entry.target_amount);
 
 		int current = autoattack_count_item(sd, entry.item_id);
 		if (current >= entry.min_amount)
 			continue;
 
-		if (config->second.auto_open && config->second.buy_item_id != entry.item_id && pc_search_inventory(sd, config->second.buy_item_id) >= 0)
+		int need_final = entry.target_amount - current;
+		if (need_final <= 0)
 			continue;
 
-		std::shared_ptr<item_data> item = item_db.find(entry.item_id);
-		if (!item)
+		// จำกัดด้วยน้ำหนักของของปลายทางก่อน เพื่อไม่ให้ซื้อแล้วเปิดจนเกินน้ำหนักที่กำหนด
+		int safe_final_need = autoattack_buy_weight_limited_amount(sd, entry.item_id, need_final, config->second.max_weight_percent);
+		if (safe_final_need <= 0)
 			continue;
 
-		int need = entry.target_amount - current;
-		if (need <= 0)
+		int buy_units = (safe_final_need + config->second.amount_per_buy - 1) / config->second.amount_per_buy;
+		if (buy_units <= 0)
 			continue;
 
-		int safe_need = autoattack_buy_weight_limited_amount(sd, entry.item_id, need, config->second.max_weight_percent);
-		if (safe_need <= 0)
+		// จำกัดด้วยน้ำหนักของของที่ซื้อจริงด้วย เช่น ซื้อกล่อง/แพ็กก่อนเปิด
+		int safe_buy_units = autoattack_buy_weight_limited_amount(sd, config->second.buy_item_id, buy_units, config->second.max_weight_percent);
+		buy_units = cap_value(buy_units, 0, safe_buy_units);
+		if (buy_units <= 0)
 			continue;
 
-		int buy_count = (safe_need + config->second.amount_per_buy - 1) / config->second.amount_per_buy;
-		int can_afford = config->second.currency == e_autoattack_buy_currency::CC ? sd->cashPoints / config->second.price : sd->status.zeny / config->second.price;
-		buy_count = cap_value(buy_count, 0, can_afford);
-		if (buy_count <= 0)
+		int can_afford = 0;
+		if (config->second.currency == e_autoattack_buy_currency::CC)
+			can_afford = sd->cashPoints / config->second.price;
+		else
+			can_afford = sd->status.zeny / config->second.price;
+
+		buy_units = cap_value(buy_units, 0, can_afford);
+		if (buy_units <= 0)
 			continue;
 
-		if (!config->second.auto_open || config->second.buy_item_id == entry.item_id) {
-			int direct_amount = config->second.buy_item_id == entry.item_id ? buy_count * config->second.amount_per_buy : buy_count;
-			direct_amount = cap_value(direct_amount, 0, safe_need);
-			if (direct_amount <= 0)
-				continue;
-			buy_count = config->second.buy_item_id == entry.item_id ? (direct_amount + config->second.amount_per_buy - 1) / config->second.amount_per_buy : direct_amount;
+		int add_amount = buy_units;
+		// ถ้าซื้อของปลายทางโดยตรง และตั้ง amount_per_buy > 1 ให้เพิ่มตามจำนวนต่อชุดจริง
+		if (config->second.buy_item_id == entry.item_id)
+			add_amount = buy_units * config->second.amount_per_buy;
+
+		// ห้าม cap ราคาเป็น INT_MAX เพราะจะกลายเป็นช่องโหว่จ่ายต่ำกว่าราคาจริงเมื่อเลข overflow
+		int64 total_cost64 = (int64)config->second.price * buy_units;
+		if (total_cost64 <= 0 || total_cost64 > INT_MAX) {
+			ShowWarning("[AutoBuy] blocked invalid cost: player=%s char_id=%d target=%u buy_item=%u units=%d price=%d cost=%" PRId64 "\n",
+				sd->status.name, sd->status.char_id, (unsigned int)entry.item_id, (unsigned int)config->second.buy_item_id, buy_units, config->second.price, total_cost64);
+			continue;
 		}
-
-		int total_cost = (int)cap_value((int64)config->second.price * buy_count, 0, INT_MAX);
+		int total_cost = (int)total_cost64;
 
 		struct item tmp_item = {};
 		tmp_item.nameid = config->second.buy_item_id;
 		tmp_item.identify = 1;
 
+		// จ่ายเงิน/CC ก่อนเสมอ แล้วค่อยเพิ่มของ เพื่อกันซื้อฟรี
 		if (config->second.currency == e_autoattack_buy_currency::CC) {
 			if (pc_paycash(sd, total_cost, 0, LOG_TYPE_NPC) < 0)
 				continue;
@@ -30000,17 +30262,28 @@ BUILDIN_FUNC(autoattackbuy)
 				continue;
 		}
 
-		if (pc_additem(sd, &tmp_item, buy_count, LOG_TYPE_NPC)) {
+		if (pc_additem(sd, &tmp_item, add_amount, LOG_TYPE_NPC)) {
+			// เพิ่มของไม่สำเร็จ ต้องคืนเงิน/CC ให้ครบ
 			if (config->second.currency == e_autoattack_buy_currency::CC)
 				pc_getcash(sd, total_cost, 0, LOG_TYPE_NPC);
 			else
 				pc_getzeny(sd, total_cost, LOG_TYPE_NPC);
+
+			ShowWarning("[AutoBuy] refunded after additem failed: player=%s char_id=%d target=%u buy_item=%u amount=%d cost=%d %s\n",
+				sd->status.name, sd->status.char_id, (unsigned int)entry.item_id, (unsigned int)config->second.buy_item_id, add_amount, total_cost,
+				config->second.currency == e_autoattack_buy_currency::CC ? "CC" : "Zeny");
 			continue;
 		}
 
-		bought += buy_count;
+		bought += add_amount;
 
-		autoattack_open_bought_boxes(sd, config->second, entry.item_id, entry.target_amount);
+		// ถ้าซื้อเป็นกล่อง/แพ็ก ให้เปิดหลังจ่ายและหลังได้รับของแล้วเท่านั้น
+		if (config->second.auto_open && config->second.buy_item_id != entry.item_id)
+			autoattack_open_bought_boxes(sd, config->second, entry.item_id, entry.target_amount);
+
+		ShowInfo("[AutoBuy] %s(%d) bought target=%u buy_item=%u amount=%d cost=%d %s current_before=%d target_amount=%d\n",
+			sd->status.name, sd->status.char_id, (unsigned int)entry.item_id, (unsigned int)config->second.buy_item_id, add_amount, total_cost,
+			config->second.currency == e_autoattack_buy_currency::CC ? "CC" : "Zeny", current, entry.target_amount);
 	}
 
 	script_pushint(st, bought);
@@ -30024,16 +30297,12 @@ BUILDIN_FUNC(autoattackneedbuy)
 	if (!script_rid2sd(sd))
 		return SCRIPT_CMD_FAILURE;
 
-	auto buy_config = autoattack_read_buy_config();
-
 	for (auto &entry : sd->aa.autobuyitems) {
-		if (!entry.is_active || entry.item_id <= 0 || entry.target_amount <= 0)
-			continue;
-
-		if (buy_config.find(entry.item_id) == buy_config.end())
+		if (!entry.is_active || entry.item_id <= 0 || entry.min_amount <= 0 || entry.target_amount <= entry.min_amount)
 			continue;
 
 		int current = autoattack_count_item(sd, entry.item_id);
+
 		if (current < entry.min_amount) {
 			script_pushint(st, 1);
 			return SCRIPT_CMD_SUCCESS;
@@ -30198,20 +30467,6 @@ BUILDIN_FUNC(preg_match) {
 #include <custom/script.inc>
 // (^~_~^) Gepard Shield Start
 
-BUILDIN_FUNC(get_unique_id)
-{
-	map_session_data* sd;
-
-	if (!script_rid2sd(sd))
-	{
-		script_pushint(st, 0);
-		return SCRIPT_CMD_FAILURE;
-	}
-
-	script_pushint(st, session[sd->fd]->gepard_info.unique_id);
-
-	return SCRIPT_CMD_SUCCESS;
-}
 
 // --- Addon: City Faction War ---
 BUILDIN_FUNC(setcityfaction) {
@@ -30399,7 +30654,6 @@ struct script_function buildin_func[] = {
 
 // (^~_~^) Gepard Shield Start
 
-	BUILDIN_DEF(get_unique_id,""),
 	BUILDIN_DEF(voicegrant,"i"),
 	BUILDIN_DEF(voicerevoke,"?"),
 
@@ -30407,8 +30661,9 @@ struct script_function buildin_func[] = {
 
 	// NPC interaction
 	BUILDIN_DEF(mes,"s*"),
-	BUILDIN_DEF(spawn_offline_stall, "siiiiiiiiisss"),   // <--- วางแทรกตรงนี้
-	BUILDIN_DEF(clear_offline_stall, ""),                // <--- และตรงนี้
+		BUILDIN_DEF(spawn_offline_stall, "siiiiiiiiisss"),   // <--- วางแทรกตรงนี้
+		BUILDIN_DEF(clear_offline_stall, ""),                // <--- และตรงนี้
+		BUILDIN_DEF(clear_offline_stall_type, "i"),
 	BUILDIN_DEF(next,""),
 	BUILDIN_DEF(clear,""),
 	BUILDIN_DEF(close,""),
@@ -31171,6 +31426,7 @@ struct script_function buildin_func[] = {
 	BUILDIN_DEF(specialeffect3,"ii?"),
 	BUILDIN_DEF(spawn_fakeplayer, "isiis"),
 	BUILDIN_DEF(despawn_fakeplayer, "i"), // เติมบรรทัดนี้
+	BUILDIN_DEF(despawn_fakeplayers_map, "s"),
 	BUILDIN_DEF(fakeplayer_action, "ii"), // เติมบรรทัดนี้
 	BUILDIN_DEF(fakeplayer_walk, "iii"), // <--- เติมบรรทัดนี้ลงไป
 	BUILDIN_DEF(fakeplayer_chat, "is"),
@@ -31180,3 +31436,4 @@ struct script_function buildin_func[] = {
 
 	{NULL,NULL,NULL},
 };
+

@@ -624,10 +624,15 @@ static TIMER_FUNC(unit_walktoxy_timer)
 		speed = status_get_speed(bl);
 
 // ==========================================
-	// [Custom] แก้ปัญหาเดินทะลุ/เดินเลยมอนสเตอร์ (Overshoot Fix)
-	// ตรวจสอบระยะทุกๆ 1 ช่องที่ก้าวเดิน หากเข้าสู่ระยะโจมตีแล้วให้หยุดเดินและตีทันที
+	// [Custom] Overshoot Fix
+	// v22: ห้ามให้ AutoAttack skill-walk โดนตัด path กลางทาง
+	// เพราะบอทสายสกิลจะใช้ unit_walktobl(..., skill_range, 0) เพื่อเดินเข้าระยะร่าย
+	// ถ้าตัด path ทุกช่อง จะเกิดอาการเดินทีละช่อง/เดินหน้า-ถอยหลังหลังใช้สกิล
+	// เล่นมือ/ตัวที่ไม่ใช่ SC_AUTOATTACK ยังใช้ behavior เดิม 100%
 	// ==========================================
-	if (speed > 0 && ud->target_to && !ud->stepaction) {
+	map_session_data* aa_unit_sd = (bl->type == BL_PC) ? BL_CAST(BL_PC, bl) : nullptr;
+	bool aa_unit_autoattack = (aa_unit_sd && aa_unit_sd->sc.getSCE(SC_AUTOATTACK));
+	if (!aa_unit_autoattack && speed > 0 && ud->target_to && !ud->stepaction) {
 		struct block_list *tbl = map_id2bl(ud->target_to);
 		// ถ้าเป้าหมายยังอยู่ และเราเดินมาถึงระยะโจมตี (chaserange) แล้ว
 		if (tbl && tbl->m == bl->m && check_distance_bl(bl, tbl, ud->chaserange)) {
@@ -1932,16 +1937,16 @@ int unit_skilluse_id2(struct block_list *src, int target_id, uint16 skill_id, ui
 		unit_stop_stepaction(src);
 // Remember the skill request from the client while walking to the next cell
 	if(src->type == BL_PC && ud->walktimer != INVALID_TIMER && (!battle_check_range(src, target, range-1) || ignore_range)) {
-		// [Custom] บังคับหยุดเดินทันทีเพื่อร่ายสกิล ไม่ต้องรอ Step Action
-		unit_stop_walking(src, 1); 
-		
-		/* คอมเมนต์ระบบ Step Action ดั้งเดิมทิ้งไปเลย
+		// v22:
+		// - Manual players: keep the safe stepaction behavior from v21.
+		// - AutoAttack: also use stepaction instead of unit_stop_walking().
+		//   Force-stopping an AI mid-step resets path/fixpos and is one cause of
+		//   one-cell walking / front-back jitter after skill casts.
 		ud->stepaction = true;
 		ud->target_to = target_id;
 		ud->stepskill_id = skill_id;
 		ud->stepskill_lv = skill_lv;
-		return 0; // Attacking will be handled by unit_walktoxy_timer in this case
-		*/
+		return 0; // Skill will be executed by unit_walktoxy_timer after this step.
 	}
 
 	// Check range when not using skill on yourself or is a combo-skill during attack
@@ -2265,6 +2270,17 @@ int unit_skilluse_pos2( struct block_list *src, short skill_x, short skill_y, ui
 		unit_stop_stepaction(src);
 	// Remember the skill request from the client while walking to the next cell
 	if(src->type == BL_PC && ud->walktimer != INVALID_TIMER && (!battle_check_range(src, &bl, range-1) || ignore_range)) {
+		// v22 AI-only guard:
+		// AutoAttack ground skills should wait for the current cell step to finish.
+		// Manual players keep the existing custom behavior below, so manual play is not changed.
+		if (sd && sd->sc.getSCE(SC_AUTOATTACK)) {
+			struct map_data *md = &map[src->m];
+			ud->stepaction = true;
+			ud->target_to = (skill_x + skill_y * md->xs);
+			ud->stepskill_id = skill_id;
+			ud->stepskill_lv = skill_lv;
+			return 0; // Ground skill will be executed by unit_walktoxy_timer after this step.
+		}
 		
 		// [Custom] บังคับหยุดเดินทันทีเพื่อร่ายสกิลลงพื้น ไม่ต้องรอจบช่อง (Step Action)
 		unit_stop_walking(src, 1);
@@ -2537,6 +2553,18 @@ int unit_attack(struct block_list *src,int target_id,int continuous)
 		unit_stop_stepaction(src);
 	// [Custom] ปิด StepAction ทิ้งไปเลย เพื่อให้ผู้เล่นมือวิ่งไล่ตีได้สมูทและตอบสนองเทียบเท่า AI
 	if(src->type == BL_PC && ud->walktimer != INVALID_TIMER && !battle_check_range(src, target, range-1)) {
+		// v22 AI-only guard:
+		// AutoAttack waits until current cell step finishes before normal attack.
+		// Manual players keep the existing custom behavior below.
+		map_session_data* aa_attack_sd = BL_CAST(BL_PC, src);
+		if (aa_attack_sd && aa_attack_sd->sc.getSCE(SC_AUTOATTACK)) {
+			ud->stepaction = true;
+			ud->target_to = ud->target;
+			ud->stepskill_id = 0;
+			ud->stepskill_lv = 0;
+			return 0; // Attack will be handled by unit_walktoxy_timer after this step.
+		}
+		
 		unit_stop_walking(src, 1); 
 		
 		// --- โค้ดต้นฉบับ rAthena ที่ทำให้เดินถอยหลัง 1 ช่อง (Comment ทิ้งไปเลย) ---

@@ -610,7 +610,7 @@ uint64 BarterDatabase::parseBodyNode( const ryml::NodeRef& node ){
 				}
 			}
 
-			// ======== New: SuccessRate (% โอกาสสำเร็จ) ========
+			// New: optional SuccessRate percentage.
 			if( this->nodeExists( itemNode, "SuccessRate" ) ){
 				uint32 rate;
 
@@ -625,7 +625,7 @@ uint64 BarterDatabase::parseBodyNode( const ryml::NodeRef& node ){
 
 				item->success_rate = (uint8)rate;
 			}else{
-				// default 100% ถ้าไม่ได้ใส่ใน YAML
+				// default 100% ???????????? YAML
 				if( !item_exists ){
 					item->success_rate = 100;
 				}
@@ -1609,9 +1609,11 @@ int npc_timerevent_stop(struct npc_data* nd)
 		const struct TimerData *td = NULL;
 
 		td = get_timer(*tid);
-		if( td && td->data )
-			ers_free(timer_event_ers, (void*)td->data);
-		delete_timer(*tid,npc_timerevent);
+		if( td && td->func == npc_timerevent ) {
+			if( td->data )
+				ers_free(timer_event_ers, (void*)td->data);
+			delete_timer(*tid,npc_timerevent);
+		}
 		*tid = INVALID_TIMER;
 	}
 
@@ -1635,7 +1637,7 @@ void npc_timerevent_quit(map_session_data* sd)
 	// Check timer existance
 	if( sd->npc_timer_id == INVALID_TIMER )
 		return;
-	if( !(td = get_timer(sd->npc_timer_id)) )
+	if( !(td = get_timer(sd->npc_timer_id)) || td->func != npc_timerevent )
 	{
 		sd->npc_timer_id = INVALID_TIMER;
 		return;
@@ -2785,7 +2787,7 @@ static int npc_buylist_sub(map_session_data* sd, std::vector<s_npc_buy_list>& it
 e_purchase_result npc_buylist( map_session_data* sd, std::vector<s_npc_buy_list>& item_list ){
 	struct npc_data* nd;
 	struct npc_item_list *shop = NULL;
-	double z = 0, tax = 0; // [แก้ไข] กำหนดค่าเริ่มต้นเป็น 0 ทันที
+	double z = 0, tax = 0; // [???] ???????????????? 0 ????
 	int j,k,w,skill,new_;
 	uint8 market_index[MAX_INVENTORY];
 
@@ -2840,9 +2842,9 @@ e_purchase_result npc_buylist( map_session_data* sd, std::vector<s_npc_buy_list>
 	}
 
 	// ==========================================
-	// [1] ระบบภาษีใหม่ (Fix Memory Junk)
+	// [1] ??????????? (Fix Memory Junk)
 	// ==========================================
-	int total_tax_rate = battle_config.buy_vat; // ค่าเริ่มต้นจาก config (10%)
+	int total_tax_rate = battle_config.buy_vat; // ??????????? config (10%)
 	int is_town = 0;
 	
 	if (Sql_Query(mmysql_handle, "SELECT `tax_rate` FROM `mayor_towns` WHERE `town_map` = '%s' AND `is_active` = 1", map_mapid2mapname(sd->bl.m)) == SQL_SUCCESS) {
@@ -2868,7 +2870,7 @@ e_purchase_result npc_buylist( map_session_data* sd, std::vector<s_npc_buy_list>
 	if (pc_inventoryblank(sd) < new_) return e_purchase_result::PURCHASE_FAIL_COUNT;
 
 	// ==========================================
-	// [3] จัดการเงินเข้าคลัง (Fix Display Error)
+	// [3] ???????????? (Fix Display Error)
 	// ==========================================
 	if(z >= 100 && tax > 0) {
         if (Sql_Query(mmysql_handle, "UPDATE `castle_money` SET `money` = `money` + '%d' WHERE `castle` = 0", (int)tax) != SQL_SUCCESS) 
@@ -2882,7 +2884,7 @@ e_purchase_result npc_buylist( map_session_data* sd, std::vector<s_npc_buy_list>
 		char output[256]; 
 		int display_zeny = (int)(z - tax);
 		int display_tax = (int)tax;
-		// ใช้ msg_txt 1591 ตามที่ตั้งไว้ใน map_msg.conf
+		// ?? msg_txt 1591 ???????????? map_msg.conf
 		snprintf(output, sizeof(output), msg_txt(sd,1591), display_zeny, total_tax_rate, display_tax);
 		clif_displaymessage(sd->fd, output);
 	}
@@ -3032,7 +3034,7 @@ uint8 npc_selllist(map_session_data* sd, int list_length, PACKET_CZ_PC_SELL_ITEM
 	double z = 0;
 	struct npc_data *nd;
 	int i, skill, value; 
-	bool need_refresh = false; // ??? ตัวแปรดักจับเพื่อแก้บัคภาพหลอน
+	bool need_refresh = false; // ??? ????????????????????
 
 	nullpo_retr(1, sd);
 	nullpo_retr(1, item_list);
@@ -3040,7 +3042,7 @@ uint8 npc_selllist(map_session_data* sd, int list_length, PACKET_CZ_PC_SELL_ITEM
 	if( ( nd = npc_checknear(sd, map_id2bl(sd->npc_shopid)) ) == NULL || nd->subtype != NPCTYPE_SHOP )
 		return 1;
 
-// ===== คืนชีพให้ระบบ Dummy Shop (OnSellItem) ทำงานได้ =====
+// ===== ?????????? Dummy Shop (OnSellItem) ????? =====
 	if (nd->master_nd) {
 		npc_selllist_sub(sd, list_length, item_list, nd->master_nd);
 		return 0;
@@ -3065,7 +3067,7 @@ uint8 npc_selllist(map_session_data* sd, int list_length, PACKET_CZ_PC_SELL_ITEM
 		Sql_FreeResult(mmysql_handle);
 	}
 
-	// --- [ 1. ด่านตรวจ: ระบบหั่นบิล ] ---
+	// --- [ 1. ??????: ???????? ] ---
 	for( i = 0; i < list_length; i++ ) {
 		int idx = item_list[i].index - 2;
 		int original_amount = item_list[i].amount; 
@@ -3087,14 +3089,14 @@ uint8 npc_selllist(map_session_data* sd, int list_length, PACKET_CZ_PC_SELL_ITEM
 				if (original_amount > can_sell) {
 					char msg[256];
 					if (can_sell == 0) {
-						sprintf(msg, "[ตลาดหุ้น] โควตาเต็มแล้ว! (ยกเลิกการขายเฉพาะไอเทมชิ้นนี้)");
+						sprintf(msg, "[Stock Limit] Sell limit reached. No more items can be sold.");
 					} else {
-						sprintf(msg, "[ตลาดหุ้น] รับซื้อได้อีกแค่ %d ชิ้น (ส่วนเกินเด้งกลับเข้าตัว)", can_sell);
+						sprintf(msg, "[Stock Limit] Only %d item(s) can be sold now.", can_sell);
 					}
 					clif_displaymessage(sd->fd, msg);
 					
 					item_list[i].amount = can_sell; 
-					need_refresh = true; // ??? ตรวจพบการหั่นบิล สั่งให้เตรียมรีเฟรชหน้าจอ
+					need_refresh = true; // ??? ????????????? ???????????????????
 				}
 				
 				sm.pending += item_list[i].amount;
@@ -3103,7 +3105,7 @@ uint8 npc_selllist(map_session_data* sd, int list_length, PACKET_CZ_PC_SELL_ITEM
 		}
 	}
 
-	// --- [ 2. ขั้นตอนการขายจริง ] ---
+	// --- [ 2. ??????????? ] ---
 	for( i = 0; i < list_length; i++ ) {
 		int idx = item_list[i].index - 2;
 		int amount = item_list[i].amount; 
@@ -3143,7 +3145,7 @@ uint8 npc_selllist(map_session_data* sd, int list_length, PACKET_CZ_PC_SELL_ITEM
 
 	if( z > (double)MAX_ZENY ) z = (double)MAX_ZENY;
 
-	// --- [ 3. ระบบภาษีและ EXP ] ---
+	// --- [ 3. ?????????? EXP ] ---
 	if (z >= 100 && battle_config.trade_tax) {
 		int total_tax_rate = battle_config.vending_tax / 100;
 		int is_town = 0;
@@ -3191,7 +3193,7 @@ uint8 npc_selllist(map_session_data* sd, int list_length, PACKET_CZ_PC_SELL_ITEM
 		}
 	}
 
-	// ??? แก้บัคภาพหลอน: บังคับให้กระเป๋าผู้เล่นอัปเดตถ้ามีการหั่นบิลเกิดขึ้น
+	// ??? ????????: ?????????????????????????????????????
 	if (need_refresh) {
 		clif_inventorylist(sd); 
 	}
@@ -3206,33 +3208,33 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 	uint16 requiredSlots = 0;
 	uint32 requiredItems[MAX_INVENTORY] = { 0 };
 
-	// เตรียมเช็คของที่ต้องใช้ + Zeny + น้ำหนัก
+	// ??????????????? + Zeny + ?????
 	for( s_barter_purchase& purchase : purchases ){
-		// หา item_data ของไอเท็มที่จะได้รับ
+		// ?? item_data ???????????????
 		purchase.data = item_db.find( purchase.item->nameid ).get();
 		if( purchase.data == nullptr )
 			return e_purchase_result::PURCHASE_FAIL_EXCHANGE_FAILED;
 
 		uint32 amount = purchase.amount;
 
-		// เช็คสต็อก
+		// Stock check.
 		if( purchase.item->stockLimited && purchase.item->stock < amount )
 			return e_purchase_result::PURCHASE_FAIL_STOCK_EMPTY;
 
-		// เช็คช่องว่างในกระเป๋า (จำนวนช่อง)
+		// Inventory slot check.
 		char result = pc_checkadditem( &sd, purchase.item->nameid, amount );
 		if( result == CHKADDITEM_OVERAMOUNT )
 			return e_purchase_result::PURCHASE_FAIL_COUNT;
 		else if( result == CHKADDITEM_NEW )
 			requiredSlots += purchase.data->inventorySlotNeeded( amount );
 
-		// Zeny ที่ต้องใช้ (ต่อ attempt)
+		// Required zeny for this attempt.
 		requiredZeny += ( purchase.item->price * amount );
 
-		// น้ำหนักไอเท็มรางวัลรวม (ถ้าสำเร็จทั้งหมด)
+		// Required carrying weight.
 		requiredWeight += ( purchase.data->weight * amount );
 
-		// ของที่ต้องใช้ตาม Requirement
+		// ??????????? Requirement
 		for( const auto& requirementPair : purchase.item->requirements ){
 			std::shared_ptr<s_npc_barter_requirement> requirement = requirementPair.second;
 
@@ -3241,39 +3243,39 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 				return e_purchase_result::PURCHASE_FAIL_EXCHANGE_FAILED;
 
 			if( itemdb_isstackable2( id.get() ) ){
-				// แบบ stackable เช่นของกองเดียว
+				// ? stackable ?????????
 				int32 j;
 				for( j = 0; j < MAX_INVENTORY; j++ ){
 					if( sd.inventory.u.items_inventory[j].nameid == requirement->nameid ){
-						// ห้ามใช้อันที่ใส่อยู่
+						// ??????????????????
 						if( sd.inventory.u.items_inventory[j].equip != 0 )
 							continue;
-						// ห้ามใช้ไอเท็มใน equipSwitch
+						// ???????????? equipSwitch
 						if( sd.inventory.u.items_inventory[j].equipSwitch != 0 )
 							continue;
-						// ซ่อนไอเท็ม favorite ตอนขาย
+						// ???????? favorite ?????
 						if( battle_config.hide_fav_sell && sd.inventory.u.items_inventory[j].favorite != 0 )
 							continue;
-						// ถ้า requirement มีระบุ refine ให้เช็คด้วย
+						// ??? requirement ????? refine ????????
 						if( requirement->refine >= 0 && sd.inventory.u.items_inventory[j].refine != requirement->refine )
 							continue;
 
-						// สะสมจำนวนที่ต้องใช้
+						// ??????????????
 						requiredItems[j] += requirement->amount * amount;
 
-						// ถ้ามีน้อยกว่าที่ต้องการ  ไม่พอ
+						// ??????????????????  ????
 						if( requiredItems[j] > sd.inventory.u.items_inventory[j].amount )
 							return e_purchase_result::PURCHASE_FAIL_GOODS;
 
-						// เจอแล้วก็หยุด loop
+						// ?????????? loop
 						break;
 					}
 				}
-				// หาไม่เจอเลย
+				// Non-stackable requirement.
 				if( j == MAX_INVENTORY )
 					return e_purchase_result::PURCHASE_FAIL_GOODS;
 			}else{
-				// แบบไม่ stackable เช่นอาวุธ/เกราะชิ้น ๆ
+				// Stackable requirement.
 				for( int32 i = 0; i < ( requirement->amount * amount ); i++ ){
 					int32 j;
 					for( j = 0; j < MAX_INVENTORY; j++ ){
@@ -3287,20 +3289,20 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 							if( requirement->refine >= 0 && sd.inventory.u.items_inventory[j].refine != requirement->refine )
 								continue;
 
-							// ถ้าอันนี้ถูก mark แล้วว่าใช้ไปแล้ว ก็หาชิ้นอื่น
+							// ????????? mark ?????????????? ?????????
 							if( requiredItems[j] > 0 )
 								continue;
 
-							// mark ว่าใช้ช่องนี้แล้ว
+							// mark ??????????????
 							requiredItems[j] = 1;
 							break;
 						}
 					}
 
-					// รอบนี้หา requirement ไม่เจอ
+					// ??????? requirement ?????
 					if( j == MAX_INVENTORY ){
 						if( requirement->refine >= 0 ){
-							// ลองหา refine ที่สูงกว่า จาก refine+1 ไปจน MAX_REFINE
+							// ???? refine ????????? ?? refine+1 ?? MAX_REFINE
 							int32 refine;
 							for( refine = requirement->refine + 1; refine <= MAX_REFINE; refine++ ){
 								for( j = 0; j < MAX_INVENTORY; j++ ){
@@ -3324,35 +3326,35 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 								if( j < MAX_INVENTORY )
 									break;
 							}
-							// หาไม่เจอแม้แต่ refine สูงกว่า
+							// ???????????? refine ??????
 							if( refine > MAX_REFINE )
 								return e_purchase_result::PURCHASE_FAIL_GOODS;
 						}else{
-							// ไม่ได้ระบุ refine แต่ก็หาไม่ได้เลย
+							// ???????? refine ?????????????
 							return e_purchase_result::PURCHASE_FAIL_GOODS;
 						}
 					}
 				}
 			}
 
-			// น้ำหนักของ requirement ที่ใช้ไป (หักออกจากน้ำหนักรวม)
+			// Reduce requirement weight after exchange.
 			reducedWeight += ( purchase.amount * requirement->amount * id->weight );
 		}
 	}
 
-	// เช็ค Zeny
+	// ?? Zeny
 	if( sd.status.zeny < requiredZeny )
 		return e_purchase_result::PURCHASE_FAIL_MONEY;
 
-	// เช็คน้ำหนักรวมหลังรับของ - ของที่ใช้ไป
+	// ???????????????? - ????????
 	if( ( sd.weight + requiredWeight - reducedWeight ) > sd.max_weight )
 		return e_purchase_result::PURCHASE_FAIL_WEIGHT;
 
-	// เช็คช่องว่างในกระเป๋า
+	// ?????????????
 	if( pc_inventoryblank( &sd ) < requiredSlots )
 		return e_purchase_result::PURCHASE_FAIL_COUNT;
 
-	// ลบของที่ใช้ตาม requiredItems[]
+	// ?????????? requiredItems[]
 	for( int32 i = 0; i < MAX_INVENTORY; i++ ){
 		if( requiredItems[i] > 0 ){
 			if( pc_delitem( &sd, i, requiredItems[i], 0, 0, LOG_TYPE_BARTER ) != 0 )
@@ -3360,11 +3362,11 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 		}
 	}
 
-	// หัก Zeny
+	// ?? Zeny
 	if( pc_payzeny( &sd, (int32)requiredZeny, LOG_TYPE_BARTER ) != 0 )
 		return e_purchase_result::PURCHASE_FAIL_MONEY;
 
-	// ====== ตรงนี้เริ่มใช้ SuccessRate ======
+	// ====== ???????????? SuccessRate ======
 	for( s_barter_purchase& purchase : purchases ){
 		uint32 attempts = purchase.amount;
 		uint8 rate = purchase.item->success_rate ? purchase.item->success_rate : 100;
@@ -3377,8 +3379,8 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 			successCount = 0;
 		}else{
 			for( uint32 i = 0; i < attempts; i++ ){
-				// rnd() เป็น RNG ของ rAthena
-				int roll = rnd() % 100; // 0–99
+				// rnd() ?? RNG ?? rAthena
+				int roll = rnd() % 100; // 0?99
 				if( roll < rate )
 					successCount++;
 			}
@@ -3386,10 +3388,10 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 
 		failCount = attempts - successCount;
 
-		// อัปเดต stock ด้วยจำนวน "attempt" ทั้งหมด
+		// ??? stock ?????? "attempt" ??????
 		if( purchase.item->stockLimited ){
 			if( purchase.item->stock < attempts ){
-				// ป้องกันติดลบ (กรณีแปลก ๆ)
+				// ???????? (????? ?)
 				purchase.item->stock = 0;
 			}else{
 				purchase.item->stock -= attempts;
@@ -3403,31 +3405,31 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 			}
 		}
 
-		// ----- เอฟเฟกต์ + ข้อความ -----
-		// เคสยอดนิยม: 1 ชิ้นต่อครั้ง (เช่นตีบวก)
+		// Refine effect and global message.
+		// Broadcast only for single-attempt refine.
 		if( attempts == 1 ){
 			if( successCount == 1 ){
-				// Effect สำเร็จ (ส่งรอบตัวผู้เล่น)
+				// Success effect.
 				clif_specialeffect( &sd.bl, EF_REFINEOK, AREA );
 	
 				char msg[256];
-				snprintf( msg, sizeof(msg), "[Barter] %s แลก %s สำเร็จ! (เรท %u%%)",
+				snprintf( msg, sizeof(msg), "[Barter] %s upgraded %s successfully! (Rate %u%%)",
 					sd.status.name, purchase.data->name.c_str(), rate );
 				npc_globalmessage( barter->name.c_str(), msg );
 			}else{
-				// Effect ล้มเหลว
+				// Failure effect.
 				clif_specialeffect( &sd.bl, EF_REFINEFAIL, AREA );
 	
 				char msg[256];
-				snprintf( msg, sizeof(msg), "[Barter] %s แลก %s ล้มเหลว... (เรท %u%%)",
+				snprintf( msg, sizeof(msg), "[Barter] %s ?? %s ???????... (?? %u%%)",
 					sd.status.name, purchase.data->name.c_str(), rate );
 				npc_globalmessage( barter->name.c_str(), msg );
 			}
 		}else{
-			// ซื้อหลายชิ้นในครั้งเดียว
+			// ??????????????????
 			char msg[256];
 			snprintf( msg, sizeof(msg),
-				"[Barter] %s แลก %s %u ครั้ง: สำเร็จ %u ครั้ง ล้มเหลว %u ครั้ง (เรท %u%%)",
+				"[Barter] %s ?? %s %u ????: ????? %u ???? ??????? %u ???? (?? %u%%)",
 				sd.status.name, purchase.data->name.c_str(), attempts, successCount, failCount, rate );
 			npc_globalmessage( barter->name.c_str(), msg );
 	
@@ -3438,9 +3440,9 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 		}
 	
 
-		// ----- แจกของเฉพาะส่วนที่ "สำเร็จ" -----
+		// ----- ???????????? "?????" -----
 		if( successCount == 0 )
-			continue; // ไม่มีของให้
+			continue; // ?????????
 
 		if( itemdb_isstackable2( purchase.data ) ){
 			struct item it = {};
@@ -3460,7 +3462,7 @@ e_purchase_result npc_barter_purchase( map_session_data& sd, std::shared_ptr<s_n
 					struct item it = {};
 					it.nameid = purchase.item->nameid;
 					it.identify = true;
-					// ไม่ใช้ refine จาก item struct barter (ไม่มีแล้ว)
+					// Store refine value on the barter result item.
 
 					if( pc_additem( &sd, &it, 1, LOG_TYPE_BARTER ) != ADDITEM_SUCCESS )
 						return e_purchase_result::PURCHASE_FAIL_EXCHANGE_FAILED;
@@ -3585,10 +3587,10 @@ int npc_unload(struct npc_data* nd, bool single) {
 		map_remove_questinfo(nd->bl.m, nd);
 
 	if( (nd->subtype == NPCTYPE_SHOP || nd->subtype == NPCTYPE_CASHSHOP || nd->subtype == NPCTYPE_ITEMSHOP || nd->subtype == NPCTYPE_POINTSHOP || nd->subtype == NPCTYPE_MARKETSHOP) && nd->master_nd == NULL && nd->src_id == 0) {
-		// ??? [GUARD] เช็คความปลอดภัยสูงสุด ถ้า Pointer ไอเทมหน้าร้านมีอยู่จริงใน RAM และไม่ใช่ร้านโคลน ถึงจะอนุญาตให้ลบ
+		// ??? [GUARD] ??????????????? ??? Pointer ??????????????????? RAM ????????????? ???????????
 		if (nd->u.shop.shop_item != NULL) {
 			aFree(nd->u.shop.shop_item);
-			nd->u.shop.shop_item = NULL; // บังคับเซ็ตค่ากลับเป็น NULL ทันที ป้องกันตัวอื่นวิ่งมาลบซ้ำ
+			nd->u.shop.shop_item = NULL; // ???????????? NULL ???? ????????????????????
 		}
 	}
 	else if( nd->subtype == NPCTYPE_SCRIPT ) {
@@ -3607,9 +3609,11 @@ int npc_unload(struct npc_data* nd, bool single) {
 				if( td && td->id != nd->bl.id )
 					continue;
 
-				if( td && td->data )
-					ers_free(timer_event_ers, (void*)td->data);
-				delete_timer(sd->npc_timer_id, npc_timerevent);
+				if( td && td->func == npc_timerevent ) {
+					if( td->data )
+						ers_free(timer_event_ers, (void*)td->data);
+					delete_timer(sd->npc_timer_id, npc_timerevent);
+				}
 				sd->npc_timer_id = INVALID_TIMER;
 			}
 		}
@@ -3618,9 +3622,12 @@ int npc_unload(struct npc_data* nd, bool single) {
 		if (nd->u.scr.timerid != INVALID_TIMER) {
 			const struct TimerData *td;
 			td = get_timer(nd->u.scr.timerid);
-			if (td && td->data)
-				ers_free(timer_event_ers, (void*)td->data);
-			delete_timer(nd->u.scr.timerid, npc_timerevent);
+			if (td && td->func == npc_timerevent) {
+				if (td->data)
+					ers_free(timer_event_ers, (void*)td->data);
+				delete_timer(nd->u.scr.timerid, npc_timerevent);
+			}
+			nd->u.scr.timerid = INVALID_TIMER;
 		}
 		if (nd->u.scr.timer_event)
 			aFree(nd->u.scr.timer_event);
@@ -4233,7 +4240,7 @@ static const char* npc_parse_shop(char* w1, char* w2, char* w3, char* w4, const 
 				id->name.c_str(), nameid2, filepath, strline(buffer,start-buffer));
 		}
 		if( ( type == NPCTYPE_SHOP || type == NPCTYPE_MARKETSHOP ) && value*0.75 < id->value_sell*1.24 ) { 
-    // ??? [DISABLED BY GM] สั่งปิด Warning ดักราคาร้านค้าทิ้ง เพื่อไม่ให้ข้อความสีเหลืองพ่นรกหน้าคอนโซล Map-Server
+    // ??? [DISABLED BY GM] ???? Warning ????????????? ??????????????????????????????? Map-Server
     // ShowWarning("npc_parse_shop: Item %s [%u] discounted buying price (%d->%d) is less than overcharged selling price (%d->%d) at file '%s', line '%d'.\n",
     //     id->name.c_str(), nameid2, value, (int)(value*0.75), id->value_sell, (int)(id->value_sell*1.24), filepath, strline(buffer,start-buffer));
 }
@@ -5041,7 +5048,7 @@ static void npc_market_fromsql(void) {
 		}
 
 		if (list.value * 0.75 < id->value_sell * 1.24) { 
-    // ??? [DISABLED BY GM] สั่งปิด Warning ส่วนของประวัติราคาจาก Database SQL ไม่ให้ขึ้นสีเหลืองรกจอ
+    // ??? [DISABLED BY GM] ???? Warning ??????????????? Database SQL ??????????????????
     // ShowWarning("npc_market_fromsql: Item %s [%u] discounted buying price (%d->%d) is less than overcharged selling price (%d->%d) in table '%s'. Assigning to current sell value.\n",
     //             id->name.c_str(), list.nameid, list.value, (int)(list.value * 0.75), id->value_sell, (int)(id->value_sell * 1.24), market_table);
     list.value = id->value_sell;
@@ -5513,7 +5520,7 @@ static const char* npc_parse_mapflag(char* w1, char* w2, char* w3, char* w4, con
 
 	switch( mapflag ){
 		// =====================================
-		// เพิ่ม Mapflag ใหม่: ลดดาเมจเหมารวม & ลดรายสกิล
+		// ???? Mapflag ????: ????????????? & ???????
 		// =====================================
 		case MF_INVALID:
 			if (!strcmpi(w3, "mob_damagerate")) {
@@ -5524,7 +5531,7 @@ static const char* npc_parse_mapflag(char* w1, char* w2, char* w3, char* w4, con
 			if (!strcmpi(w3, "custom_skill_dmg")) {
 				if (state) {
 					int sk_id = 0, rate = 100;
-					// รับค่า 2 ตัว คือ รหัสสกิล และ เปอร์เซ็นต์ (คั่นด้วยลูกน้ำ)
+					// Expected format: skill_id,rate.
 					if (sscanf(w4, "%11d,%11d", &sk_id, &rate) == 2) {
 						map_getmapdata(m)->custom_skill_dmg[sk_id] = rate;
 					}

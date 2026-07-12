@@ -35,6 +35,49 @@
 #include "script.hpp" // script_config
 #include "storage.hpp"
 
+
+// AutoAttack attack-skill target mob save helpers.
+// Do not pack target_mob_id into aa_skills.min_hp; min_hp is too small for many mob ids.
+static inline uint32 aa_skill_swarm_min_for_save(const s_autoattackskills& skill)
+{
+	int swarm_min = (int)skill.swarm_min;
+if (swarm_min < 0)
+    swarm_min = 0;
+if (swarm_min > 50)
+    swarm_min = 50;
+return (uint32)swarm_min;
+}
+
+static inline uint32 aa_skill_target_mob_id_for_save(const s_autoattackskills& skill)
+{
+	return skill.target_mob_id;
+}
+
+static inline int aa_common_pack_combat_mode_for_save(map_session_data* sd)
+{
+	if (!sd)
+		return 0;
+	int mode = sd->aa.combat_mode;
+	if (mode < 0)
+		mode = 0;
+	if (mode > 2)
+		mode = 2;
+	return mode;
+}
+
+static inline int aa_common_pack_focus_swarm_for_save(map_session_data* sd)
+{
+	if (!sd)
+		return 0;
+	int skill_swarm_min = sd->aa.skill_swarm_min;
+	if (skill_swarm_min < 0)
+		skill_swarm_min = 0;
+	if (skill_swarm_min > 50)
+		skill_swarm_min = 50;
+	int focus_mob = sd->aa.focus_mob ? 1 : 0;
+	return skill_swarm_min * 10 + focus_mob;
+}
+
 static TIMER_FUNC(check_connect_char_server);
 
 static struct eri *auth_db_ers; //For reutilizing player login structures.
@@ -280,6 +323,9 @@ int chrif_save(map_session_data *sd, int flag) {
 	uint16 mmo_charstatus_len = 0;
 
 	nullpo_retr(-1, sd);
+	// Safezone fake player shadow: never save synthetic fd=0 map-only PCs.
+	if (sd->fd == 0 && sd->status.account_id == sd->bl.id && sd->status.char_id == sd->bl.id)
+		return 0;
 
 	pc_makesavestatus(sd);
 
@@ -390,9 +436,16 @@ void log_ip_to_login_table(struct map_session_data* sd) {
 }
 
 void chrif_aa_save(map_session_data* sd){
+	if (!sd)
+		return;
+
+	int saved_combat_mode = aa_common_pack_combat_mode_for_save(sd);
+	int saved_focus_swarm = aa_common_pack_focus_swarm_for_save(sd);
 
 	//aa_common_config
-	if( SQL_ERROR == Sql_Query( mmysql_handle, "REPLACE INTO `aa_common_config` (`char_id`,`stopmelee`,`pickup_item_config`,`aggressive_behavior`,`autositregen_conf`,`autositregen_maxhp`,`autositregen_minhp`,`autositregen_maxsp`,`autositregen_minsp`,`tp_use_teleport`,`tp_use_flywing`,`tp_min_hp`,`tp_delay_nomobmeet`,`skill_rate`,`teleport_boss`,`tp_swarm_enable`,`tp_swarm_count`,`focus_mob`,`stay_mode`,`revive_auto`,`party_auto`,`heal_party`,`heal_hp`) VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", sd->status.char_id, sd->aa.stopmelee, sd->aa.pickup_item_config, sd->aa.mobs.aggressive_behavior, sd->aa.autositregen.is_active, sd->aa.autositregen.max_hp, sd->aa.autositregen.min_hp, sd->aa.autositregen.max_sp, sd->aa.autositregen.min_sp, sd->aa.teleport.use_teleport, sd->aa.teleport.use_flywing, sd->aa.teleport.min_hp, sd->aa.teleport.delay_nomobmeet, sd->aa.skill_use_rate, sd->aa.teleport.facing_boss, sd->aa.teleport.swarm_enable, sd->aa.teleport.swarm_count, sd->aa.focus_mob, sd->aa.stay_mode, sd->aa.revive_auto, sd->aa.party_auto, sd->aa.heal_party, sd->aa.heal_hp ) ){
+	// stopmelee stores combat_mode and focus_mob stores skill_swarm_min*10+focus_mob.
+	// This keeps the feature persistent without adding SQL columns.
+	if( SQL_ERROR == Sql_Query( mmysql_handle, "REPLACE INTO `aa_common_config` (`char_id`,`stopmelee`,`pickup_item_config`,`aggressive_behavior`,`autositregen_conf`,`autositregen_maxhp`,`autositregen_minhp`,`autositregen_maxsp`,`autositregen_minsp`,`tp_use_teleport`,`tp_use_flywing`,`tp_min_hp`,`tp_delay_nomobmeet`,`skill_rate`,`teleport_boss`,`tp_swarm_enable`,`tp_swarm_count`,`focus_mob`,`stay_mode`,`revive_auto`,`party_auto`,`heal_party`,`heal_hp`) VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)", sd->status.char_id, saved_combat_mode, sd->aa.pickup_item_config, sd->aa.mobs.aggressive_behavior, sd->aa.autositregen.is_active, sd->aa.autositregen.max_hp, sd->aa.autositregen.min_hp, sd->aa.autositregen.max_sp, sd->aa.autositregen.min_sp, sd->aa.teleport.use_teleport, sd->aa.teleport.use_flywing, sd->aa.teleport.min_hp, sd->aa.teleport.delay_nomobmeet, sd->aa.skill_use_rate, sd->aa.teleport.facing_boss, sd->aa.teleport.swarm_enable, sd->aa.teleport.swarm_count, saved_focus_swarm, sd->aa.stay_mode, sd->aa.revive_auto, sd->aa.party_auto, sd->aa.heal_party, sd->aa.heal_hp ) ){
 		Sql_ShowDebug(mmysql_handle);
 	}
 
@@ -476,9 +529,12 @@ void chrif_aa_save(map_session_data* sd){
 	}
 
 	//insert aa_skills - 2 - autoattackskills
+	// min_hp stores only swarm_min, target_mob_id stores the monster target.
 	if(sd->aa.autoattackskills.size()){
 		for(auto &itAutoattackskills : sd->aa.autoattackskills){
-			if( SQL_ERROR == Sql_Query( mmysql_handle, "INSERT INTO `aa_skills` (`char_id`,`type`,`skill_id`,`skill_lv`,`min_hp`) VALUES (%d, 2, %d, %d, %d)", sd->status.char_id, itAutoattackskills.skill_id, itAutoattackskills.skill_lv, itAutoattackskills.swarm_min ) ){
+			uint32 swarm_min = aa_skill_swarm_min_for_save(itAutoattackskills);
+			uint32 target_mob_id = aa_skill_target_mob_id_for_save(itAutoattackskills);
+			if( SQL_ERROR == Sql_Query( mmysql_handle, "INSERT INTO `aa_skills` (`char_id`,`type`,`skill_id`,`skill_lv`,`min_hp`,`target_mob_id`) VALUES (%d, 2, %d, %d, %u, %u)", sd->status.char_id, itAutoattackskills.skill_id, itAutoattackskills.skill_lv, swarm_min, target_mob_id ) ){
 				Sql_ShowDebug(mmysql_handle);
 			}
 		}
@@ -576,6 +632,9 @@ static void chrif_save_ack(int fd) {
 // request to move a character between mapservers
 int chrif_changemapserver(map_session_data* sd, uint32 ip, uint16 port) {
 	nullpo_retr(-1, sd);
+	// Safezone fake player shadow: never save synthetic fd=0 map-only PCs.
+	if (sd->fd == 0 && sd->status.account_id == sd->bl.id && sd->status.char_id == sd->bl.id)
+		return 0;
 
 	if (other_mapserver_count < 1) {//No other map servers are online!
 		clif_authfail_fd(sd->fd, 0);
@@ -928,6 +987,9 @@ TIMER_FUNC(auth_db_cleanup){
  *------------------------------------------*/
 int chrif_charselectreq(map_session_data* sd, uint32 s_ip) {
 	nullpo_retr(-1, sd);
+	// Safezone fake player shadow: never save synthetic fd=0 map-only PCs.
+	if (sd->fd == 0 && sd->status.account_id == sd->bl.id && sd->status.char_id == sd->bl.id)
+		return 0;
 
 	if( !sd || !sd->bl.id || !sd->login_id1 )
 		return -1;
@@ -1895,22 +1957,7 @@ int chrif_parse(int fd) {
 	while ( RFIFOREST(fd) >= 2 ) {
 		int cmd = RFIFOW(fd,0);
 
-// (^~_~^) Gepard Shield Start
-		if (cmd == GEPARD_C2M_BLOCK_ACK)
-		{
-			if (chrif_gepard_ack_block(fd) == true)
-				continue;
-			else
-				return 0;
-		}
-		else if (cmd == GEPARD_C2M_UNBLOCK_ACK)
-		{
-			if (chrif_gepard_ack_unblock(fd) == true)
-				continue;
-			else
-				return 0;
-		}
-// (^~_~^) Gepard Shield End
+// (^~_~^
 
 		if (cmd < 0x2af8 || cmd >= 0x2af8 + ARRAYLENGTH(packet_len_table) || packet_len_table[cmd-0x2af8] == 0) {
 			int r = intif_parse(fd); // Passed on to the intif
@@ -2139,187 +2186,3 @@ void do_init_chrif(void) {
 	add_timer_interval(gettick() + 1000, send_usercount_tochar, 0, 0, UPDATE_INTERVAL);
 }
 
-// (^~_~^) Gepard Shield Start
-int chrif_gepard_req_block(unsigned int unique_id, const char* violator_name, unsigned int violator_aid, const char* initiator_name, unsigned int initiator_aid, const char* unban_time_str, const char* reason_str)
-{
-	unsigned int offset;
-	char send_buffer[2 + 4 + 4 + 4 + GEPARD_TIME_STR_LENGTH + GEPARD_REASON_LENGTH + NAME_LENGTH + NAME_LENGTH];
-
-	chrif_check(-1);
-
-	memset(send_buffer, '\0', sizeof(send_buffer));
-
-	WBUFW(send_buffer, 0) = GEPARD_M2C_BLOCK_REQ;
-	WBUFL(send_buffer, 2) = unique_id;
-	WBUFL(send_buffer, 6) = violator_aid;
-	WBUFL(send_buffer,10) = initiator_aid;
-	offset = (2 + 4 + 4 + 4);
-
-	if (unban_time_str != NULL)
-		safestrncpy((char*)WBUFP(send_buffer, offset), unban_time_str, GEPARD_TIME_STR_LENGTH);
-	offset += GEPARD_TIME_STR_LENGTH;
-
-	if (reason_str != NULL)
-		safestrncpy((char*)WBUFP(send_buffer, offset), reason_str, GEPARD_REASON_LENGTH);
-	offset += GEPARD_REASON_LENGTH;
-
-	if (violator_name != NULL)
-		safestrncpy((char*)WBUFP(send_buffer, offset), violator_name, NAME_LENGTH);
-	offset += NAME_LENGTH;
-
-	if (initiator_name != NULL)
-		safestrncpy((char*)WBUFP(send_buffer, offset), initiator_name, NAME_LENGTH);
-	offset += NAME_LENGTH;
-
-	WFIFOHEAD(char_fd, offset);
-	memcpy((void*)WFIFOP(char_fd, 0), send_buffer, offset);
-	WFIFOSET(char_fd, offset);
-
-	return 0;
-}
-
-bool chrif_gepard_ack_block(int fd)
-{
-	map_session_data* sd;
-	int violator_aid, initiator_aid;
-	unsigned int unique_id, offset;
-	char reason_str[GEPARD_REASON_LENGTH];
-	char result_str[GEPARD_RESULT_STR_LENGTH];
-	char unban_time_str[GEPARD_TIME_STR_LENGTH];
-
-	unsigned int packet_len = (2 + 4 + 4 + 4 + GEPARD_TIME_STR_LENGTH + GEPARD_REASON_LENGTH + GEPARD_RESULT_STR_LENGTH);
-
-	if (RFIFOREST(fd) < packet_len)
-		return false;
-
-	unique_id = RFIFOL(fd, 2);
-	violator_aid = RFIFOL(fd, 6);
-	initiator_aid = RFIFOL(fd, 10);
-	offset = (2 + 4 + 4 + 4);
-
-	safestrncpy(unban_time_str, (char*)RFIFOP(fd, offset), GEPARD_TIME_STR_LENGTH);
-	offset += GEPARD_TIME_STR_LENGTH;
-
-	safestrncpy(reason_str, (char*)RFIFOP(fd, offset), GEPARD_REASON_LENGTH);
-	offset += GEPARD_REASON_LENGTH;
-
-	safestrncpy(result_str, (char*)RFIFOP(fd, offset), GEPARD_RESULT_STR_LENGTH);
-	offset += GEPARD_RESULT_STR_LENGTH;
-
-	if (violator_aid != 0 && (sd = map_id2sd(violator_aid)) != NULL)
-	{
-		char message_info[300];
-		struct s_mapiterator* iter;
-	
-		safesnprintf(message_info, 300, "Unique ID has been banned!\r\rDate of unban:  %s\r\rUnique id: %u\r\rReason: %s", unban_time_str, unique_id, reason_str);
-
-		iter = mapit_getallusers();
-
-		for (sd = (TBL_PC*)mapit_first(iter); mapit_exists(iter); sd = (TBL_PC*)mapit_next(iter))
-		{
-			if (session[sd->fd]->gepard_info.unique_id == unique_id)
-			{
-				gepard_send_info(sd->fd, GEPARD_INFO_BANNED, message_info);
-				session[sd->fd]->recv_crypt.pos_1 = rand() % 255;
-				session[sd->fd]->recv_crypt.pos_2 = rand() % 255;
-				session[sd->fd]->recv_crypt.pos_3 = rand() % 255;
-			}
-		}
-	
-		mapit_free(iter);
-	}
-
-	RFIFOSKIP(fd, offset);
-
-	if (initiator_aid != 0 && (sd = map_id2sd(initiator_aid)) != NULL)
-	{
-		clif_displaymessage(sd->fd, result_str);
-	}
-
-	return true;
-}
-
-int chrif_gepard_req_unblock(unsigned int unique_id, const char* violator_name, unsigned int violator_aid, unsigned int initiator_aid)
-{
-	unsigned int offset;
-	char send_buffer[2 + 4 + 4 + 4 + NAME_LENGTH];
-
-	chrif_check(-1);
-
-	memset(send_buffer, '\0', sizeof(send_buffer));
-
-	WBUFW(send_buffer, 0) = GEPARD_M2C_UNBLOCK_REQ;
-	WBUFL(send_buffer, 2) = unique_id;
-	WBUFL(send_buffer, 6) = violator_aid;
-	WBUFL(send_buffer,10) = initiator_aid;
-	offset = (2 + 4 + 4 + 4);
-
-	if (violator_name != NULL)
-		safestrncpy((char*)WBUFP(send_buffer, offset), violator_name, NAME_LENGTH);
-	offset += NAME_LENGTH;
-
-	WFIFOHEAD(char_fd, offset);
-	memcpy((void*)WFIFOP(char_fd, 0), send_buffer, offset);
-	WFIFOSET(char_fd, offset);
-
-	return 0;
-}
-
-bool chrif_gepard_ack_unblock(int fd)
-{
-	map_session_data* sd;
-	int initiator_aid, offset;
-	char result_str[GEPARD_RESULT_STR_LENGTH];
-	unsigned int packet_len = (2 + 4 + GEPARD_RESULT_STR_LENGTH);
-
-	if (RFIFOREST(fd) < packet_len)
-		return false;
-
-	initiator_aid = RFIFOL(fd, 2);
-	offset = 2 + 4;
-
-	safestrncpy(result_str, (char*)RFIFOP(fd, offset), GEPARD_RESULT_STR_LENGTH);
-	offset += GEPARD_RESULT_STR_LENGTH;
-
-	RFIFOSKIP(fd, offset);
-
-	if (initiator_aid != 0 && (sd = map_id2sd(initiator_aid)) != NULL)
-	{
-		clif_displaymessage(sd->fd, result_str);
-	}
-
-	return true;
-}
-
-int chrif_gepard_save_report(map_session_data* sd, const char* report_str)
-{
-	struct socket_data* s = session[sd->fd];
-
-	unsigned int offset;
-	char send_buffer[2 + 4 + 4 + 4 + GEPARD_REPORT_LENGTH + NAME_LENGTH];
-
-	chrif_check(-1); //Character is saved on reconnect.
-
-	memset(send_buffer, '\0', sizeof(send_buffer));
-
-	WBUFW(send_buffer, 0) = GEPARD_M2C_SAVE_REPORT;
-	WBUFL(send_buffer, 2) = s->gepard_info.unique_id;
-	WBUFL(send_buffer, 6) = sd->status.account_id;
-	WBUFL(send_buffer, 10) = sd->status.char_id;
-
-	offset = (2 + 4 + 4 + 4);
-
-	safestrncpy((char*)WBUFP(send_buffer, offset), sd->status.name, NAME_LENGTH);
-	offset += NAME_LENGTH;
-
-	safestrncpy((char*)WBUFP(send_buffer, offset), report_str, GEPARD_REPORT_LENGTH);
-	offset += GEPARD_REPORT_LENGTH;
-
-	WFIFOHEAD(char_fd, offset);
-	memcpy((void*)WFIFOP(char_fd, 0), send_buffer, offset);
-	WFIFOSET(char_fd, offset);
-
-	return 0;
-}
-
-// (^~_~^) Gepard Shield End

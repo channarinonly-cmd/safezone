@@ -1,4 +1,4 @@
-// Copyright (c) rAthena Dev Teams - Licensed under GNU GPL
+﻿// Copyright (c) rAthena Dev Teams - Licensed under GNU GPL
 // For more information, see LICENCE in the main folder
 
 #ifndef CHRIF_HPP
@@ -97,12 +97,5 @@ int chrif_flush_fifo(void);
 
 void log_ip_to_login_table(struct map_session_data* sd);
 
-// (^~_~^) Gepard Shield Start
-int chrif_gepard_req_block(unsigned int unique_id, const char* violator_name, unsigned int violator_aid, const char* initiator_name, unsigned int initiator_aid, const char* unban_time_str, const char* reason_str);
-bool chrif_gepard_ack_block(int fd);
-int chrif_gepard_req_unblock(unsigned int unique_id, const char* violator_name, unsigned int violator_aid, unsigned int initiator_aid);
-bool chrif_gepard_ack_unblock(int fd);
-int chrif_gepard_save_report(map_session_data* sd, const char* report_str);
-// (^~_~^) Gepard Shield End
 
 #endif /* CHRIF_HPP */

@@ -1,4 +1,4 @@
-// Copyright (c) rAthena Dev Teams - Licensed under GNU GPL
+﻿// Copyright (c) rAthena Dev Teams - Licensed under GNU GPL
 // For more information, see LICENCE in the main folder
 
 #ifndef LOGINLOG_HPP
@@ -24,9 +24,6 @@ unsigned long loginlog_failedattempts(uint32 ip, unsigned int minutes);
  * @param message:
  */
 
-// (^~_~^) Gepard Shield Start
-void login_gepard_log(int fd, uint32 ip, const char* username, int rcode, const char* message);
-// (^~_~^) Gepard Shield End
 
 void login_log(uint32 ip, const char* username, int rcode, const char* message);
 

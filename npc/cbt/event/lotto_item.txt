@@ -11,7 +11,7 @@
 // - ออกรางวัลอัตโนมัติเวลา 19:00 น.
 // - เพิ่มปุ่มล้างกระดานและคืนเงินผู้เล่นตกค้าง
 // - จำราคาจ่ายจริงของแต่ละบิล คืนเงินได้เป๊ะ 100% ไม่ยึดเรทราคาปัจจุบัน
-// - จำกัดการซื้อ 5 เลข ต่อ "1 ไอดี" และ "1 เครื่อง (Gepard MAC)" (กันบั๊ก IP Proxy)
+// - จำกัดการซื้อ 5 เลข ต่อ 1 ไอดี
 // ใช้ได้กับ rAthena ปัจจุบัน 100%
 //======================================================
 
@@ -137,18 +137,7 @@ L_BUY:
 		close;
 	}
 
-	// เช็คสิทธิ์ Account ID / Hardware ก่อนดำเนินการเลือก
-	.@my_acc = getcharid(3);
-	.@my_mac$ = "";
-
-	if (.has_gepard) {
-		query_sql("SELECT `last_mac` FROM `login` WHERE `account_id` = "+.@my_acc, .@mac_res$);
-		if (getarraysize(.@mac_res$) > 0) .@my_mac$ = .@mac_res$[0];
-	}
-
-	if (.@my_mac$ != "") {
-		query_sql("SELECT COUNT(*) FROM `lotto_item_data` WHERE `status` = 2 AND (`account_id` = "+.@my_acc+" OR `mac_address` = '"+escape_sql(.@my_mac$)+"')", .@ip_count);
-	} else {
+	// เช็คสิทธิ์ Account ID ก่อนดำเนินการเลือก`r`n`t.@my_acc = getcharid(3);`r`n`tquery_sql("SELECT COUNT(*) FROM `lotto_item_data` WHERE `status` = 2 AND `account_id` = "+.@my_acc, .@ip_count); else {
 		query_sql("SELECT COUNT(*) FROM `lotto_item_data` WHERE `status` = 2 AND `account_id` = "+.@my_acc, .@ip_count);
 	}
 
@@ -508,12 +497,7 @@ OnInit:
 	if (.cost_type == 1) {
 		$lotto_cost = 1000000; // บังคับล้างค่าเดิมที่เซิร์ฟเวอร์จำไว้ ให้เป็น 1m แน่นอน
 		if ($lotto_cost > 0) .cost_zeny = $lotto_cost;
-	}
-
-	// เช็คว่าระบบมี Gepard Shield คอลัมน์ MAC Address หรือไม่ (ใช้แบบดึงตรง ป้องกัน Warning ขยะ)
-	query_sql("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE table_schema = DATABASE() AND table_name = 'login' AND column_name = 'last_mac'", .@chk_mac);
-	if (.@chk_mac > 0) .has_gepard = 1; else .has_gepard = 0;
-
+	}`r`n
 	// ====== สร้างตารางถ้ายังไม่มี ======
 	query_sql("CREATE TABLE IF NOT EXISTS `lotto_item_data` ("+
 		"`id` INT(12) NOT NULL AUTO_INCREMENT,"+

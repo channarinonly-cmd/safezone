@@ -1547,8 +1547,8 @@ Body:
     Script: |
       callfunc "F_UseStaminaPotion", 3503;
   - Id: 3504
-    AegisName: AI Autobot
-    Name: Test Item
+    AegisName: AI_Autobot
+    Name: AI Autobot
     Type: Delayconsume
     Buy: 500
     Weight: 1
@@ -6971,7 +6971,7 @@ Body:
       NoMail: true
   - Id: 30034
     AegisName: Stamina_Potion
-    Name: Stamina Potion
+    Name: Stamina Feature+
     Type: Delayconsume
     Buy: 2
     Weight: 10
@@ -13603,7 +13603,7 @@ Body:
     AegisName: Shadow_FLAREWHIP
     Name: Shadow FLAREWHIP
     Type: Shadowgear
-    View: 115
+    View: 41
     Jobs:
       BardDancer: true
     Gender: Female
@@ -13643,7 +13643,7 @@ Body:
     AegisName: Shadow_Eaglehorn
     Name: Shadow Eaglehorn
     Type: Shadowgear
-    View: 126
+    View: 45
     Jobs:
       Archer: true
       Hunter: true
@@ -39996,3 +39996,808 @@ Body:
       NoTrade: false
     Script: |
       callfunc "F_Upgrade7_Ticket", 35219;
+      
+########NEW################
+  - Id: 35220
+    AegisName: Charm_BOSS_Coronet
+    Name: Charm BOSS Coronet
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+      
+      // เพิ่มdrop ต่อ 1%      ระดับการตีบวก (หากยังไม่ตีบวกจะได้ 0)
+      if (.@r > 0) {
+         bonus2 bDropAddRace,RC_All,1 * .@r;
+      }
+  - Id: 35221
+    AegisName: Charm_BOSS_Golden
+    Name: Charm BOSS Golden
+    Type: Charm
+    Buy: 1000
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: false
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      skill "BS_GREED",1;
+      
+  - Id: 35222
+    AegisName: Charm_BOSS_Crown
+    Name: Charm BOSS Crown
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+
+      // เพิ่ม Max SP 20 ต่อ 1 ระดับการตีบวก
+      if (.@r > 0) {
+         bonus bMaxSP,20 * .@r;
+      }
+  - Id: 35223
+    AegisName: Charm_BOSS_Sphinx
+    Name: Charm BOSS Sphinx
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+
+      // เพิ่ม Max HP 200 ต่อ 1 ระดับการตีบวก
+      if (.@r > 0) {
+         bonus bMaxHP,200 * .@r;
+      }
+  - Id: 35224
+    AegisName: Charm_BOSS_Majestic
+    Name: Charm BOSS Majestic
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+
+      // เพิ่ม ATK/MATK 1% และ DROP 1% ต่อ 1 ระดับการตีบวก
+      if (.@r > 0) {
+         bonus bAtkRate,1 * .@r;
+         bonus bMatkRate,1 * .@r;
+         bonus2 bDropAddRace,RC_All,1 * .@r;
+      }
+  - Id: 35225
+    AegisName: Charm_BOSS_Jewel
+    Name: Charm BOSS Jewel
+    Buy: 1000
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: false
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      // ให้ใช้สกิล Gloria ได้
+      skill "PR_GLORIA",1;
+
+  - Id: 35226
+    AegisName: Charm_BOSS_Spiky
+    Name: Charm BOSS Spiky
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+      // เพิ่ม ป้องกันกึ่ง 1% ต่อ 1 ระดับการตีบวก
+      if (.@r > 0) {
+         bonus2 bSubRace,RC_DemiHuman,1 * .@r;
+         bonus2 bSubRace,RC_Player_Human,1 * .@r;
+      }
+  - Id: 35227
+    AegisName: Charm_BOSS_Corsiar
+    Name: Charm BOSS Corsiar
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+
+      // เพิ่ม MDEF 1% ต่อ 1 ระดับการตีบวก
+      if (.@r > 0) {
+         bonus bMdefRate,1 * .@r;
+      }
+  - Id: 35228
+    AegisName: Charm_BOSS_BoyCap
+    Name: Charm BOSS Boy Cap
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+
+      // ลดความเสียหายจากการโจมตีระยะใกล้ 1% ต่อ 1 ระดับการตีบวก
+      if (.@r > 0) {
+         bonus bNearAtkDef,1 * .@r;
+      }
+  - Id: 35229
+    AegisName: Charm_BOSS_Tiara
+    Name: Charm BOSS Tiara
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+
+      // ลด After-cast Delay ของสกิลลง 2% ต่อ 1 ระดับการตีบวก
+      if (.@r > 0) {
+         bonus bDelayrate,-2 * .@r;
+      }
+  - Id: 35230
+    AegisName: Charm_BOSS_Grand
+    Name: Charm BOSS Grand
+    Type: Charm_Upgrade
+    Buy: 1000
+    Refineable: true
+    Trade:
+      NoDrop: true
+      NoTrade: true
+      NoSell: true
+      NoCart: true
+      NoGuildStorage: true
+      NoMail: true
+      NoAuction: true
+    CharmMaxEffect: 1
+    CharmScript: |
+      // ดึงค่าระดับการตีบวกของ Charm
+      .@r = getcharmrefine();
+
+      // เพิ่ม Flee +5 และ ASPD +3% ต่อ 1 ระดับการตีบวก
+      if (.@r > 0) {
+         bonus bFlee,5 * .@r;
+         bonus bAspdRate,3 * .@r;
+      }
+# ============================================================
+# Catalysts / Quest Items (Etc / Ingedients)
+# Add these to item_db_usable.yml or item_db_etc.yml
+# ============================================================
+
+  - Id: 35240
+    AegisName: Aegis_Of_Immortal
+    Name: Aegis of the Immortal
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: false
+      NoTrade: false
+      NoCart: false
+      NoGuildStorage: false
+      NoMail: false
+      NoAuction: false
+
+  - Id: 35241
+    AegisName: Gold_Diamond_Unbreakable
+    Name: Gold Diamond Unbreakable
+    Type: Etc
+    Weight: 10
+    Trade:
+      NoDrop: false
+      NoTrade: false
+      NoCart: false
+      NoGuildStorage: false
+      NoMail: false
+      NoAuction: false
+
+# ============================================================
+# COSTUME LEGENDARY HEADGEARS (Add to item_db_equip.yml)
+# Standard Costume: 0 Slots
+# ============================================================
+
+# ------------------------------------------------------------
+# TIER 1 - ROYALE COSTUMES (ASPD +3%, DROP +15%)
+# ------------------------------------------------------------
+
+  - Id: 35242
+    AegisName: C_Majestic_Goat_Royale_Ltd
+    Name: Costume Majestic Royale Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 41
+    Script: |
+      bonus bAspdRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+  - Id: 35243
+    AegisName: C_Crown_Royale_Ltd
+    Name: Costume Crown Royale Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 45
+    Script: |
+      bonus bAspdRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+  - Id: 35244
+    AegisName: C_Grand_Circlet_Royale_Ltd
+    Name: Costume Grand Circlet Royale Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 93
+    Script: |
+      bonus bAspdRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+  - Id: 35245
+    AegisName: C_Tiara_Royale_Ltd
+    Name: Costume Tiara Royale Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 19
+    Script: |
+      bonus bAspdRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+  - Id: 35246
+    AegisName: C_Solar_God_Helm_Royale_Ltd
+    Name: Costume Solar God Helm Royale Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 138
+    Script: |
+      bonus bAspdRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+# ------------------------------------------------------------
+# TIER 1 - REGAL COSTUMES (ATK +3%, DROP +15%)
+# ------------------------------------------------------------
+
+  - Id: 35247
+    AegisName: C_Majestic_Goat_Regal_Ltd
+    Name: Costume Majestic Regal Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 41
+    Script: |
+      bonus bAtkRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+  - Id: 35248
+    AegisName: C_Crown_Regal_Ltd
+    Name: Costume Crown Regal Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 45
+    Script: |
+      bonus bAtkRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+  - Id: 35249
+    AegisName: C_Grand_Circlet_Regal_Ltd
+    Name: Costume Grand Circlet Regal Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 93
+    Script: |
+      bonus bAtkRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+  - Id: 35250
+    AegisName: C_Tiara_Regal_Ltd
+    Name: Costume Tiara Regal Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 19
+    Script: |
+      bonus bAtkRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+  - Id: 35251
+    AegisName: C_Solar_God_Helm_Regal_Ltd
+    Name: Costume Solar God Helm Regal Limited
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 138
+    Script: |
+      bonus bAtkRate,3;
+      bonus2 bDropAddRace,RC_All,15;
+
+# ------------------------------------------------------------
+# TIER 2 - IMMORTAL COSTUMES (Royale: ASPD +5%, MaxHP +5%, MaxSP +5% / Regal: ATK +5%, MaxHP +5%, MaxSP +5%)
+# ------------------------------------------------------------
+
+  - Id: 35252
+    AegisName: C_Majestic_Goat_Royale_Imt
+    Name: Costume Majestic Royale Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 41
+    Script: |
+      bonus bAspdRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35253
+    AegisName: C_Crown_Royale_Imt
+    Name: Costume Crown Royale Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 45
+    Script: |
+      bonus bAspdRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35254
+    AegisName: C_Grand_Circlet_Royale_Imt
+    Name: Costume Grand Circlet Royale Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 93
+    Script: |
+      bonus bAspdRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35255
+    AegisName: C_Tiara_Royale_Imt
+    Name: Costume Tiara Royale Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 19
+    Script: |
+      bonus bAspdRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35256
+    AegisName: C_Solar_God_Helm_Royale_Imt
+    Name: Costume Solar God Helm Royale Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 138
+    Script: |
+      bonus bAspdRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35257
+    AegisName: C_Majestic_Goat_Regal_Imt
+    Name: Costume Majestic Regal Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 41
+    Script: |
+      bonus bAtkRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35258
+    AegisName: C_Crown_Regal_Imt
+    Name: Costume Crown Regal Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 45
+    Script: |
+      bonus bAtkRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35259
+    AegisName: C_Grand_Circlet_Regal_Imt
+    Name: Costume Grand Circlet Regal Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 93
+    Script: |
+      bonus bAtkRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35260
+    AegisName: C_Tiara_Regal_Imt
+    Name: Costume Tiara Regal Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 19
+    Script: |
+      bonus bAtkRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+  - Id: 35261
+    AegisName: C_Solar_God_Helm_Regal_Imt
+    Name: Costume Solar God Helm Regal Immortal
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 138
+    Script: |
+      bonus bAtkRate,5;
+      bonus bMaxHPRate,5;
+      bonus bMaxSPRate,5;
+
+# ------------------------------------------------------------
+# TIER 3 - GOD COSTUMES (ASPD/ATK +7%, MaxHP +10%, MaxSP +10%, All Stats +3)
+# ------------------------------------------------------------
+
+  - Id: 35262
+    AegisName: C_Majestic_Goat_Royale_God
+    Name: Costume Majestic Royale God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 41
+    Script: |
+      bonus bAspdRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35263
+    AegisName: C_Crown_Royale_God
+    Name: Costume Crown Royale God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 45
+    Script: |
+      bonus bAspdRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35264
+    AegisName: C_Grand_Circlet_Royale_God
+    Name: Costume Grand Circlet Royale God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 93
+    Script: |
+      bonus bAspdRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35265
+    AegisName: C_Tiara_Royale_God
+    Name: Costume Tiara Royale God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 19
+    Script: |
+      bonus bAspdRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35266
+    AegisName: C_Solar_God_Helm_Royale_God
+    Name: Costume Solar God Helm Royale God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 138
+    Script: |
+      bonus bAspdRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35267
+    AegisName: C_Majestic_Goat_Regal_God
+    Name: Costume Majestic Regal God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 41
+    Script: |
+      bonus bAtkRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35268
+    AegisName: C_Crown_Regal_God
+    Name: Costume Crown Regal God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 45
+    Script: |
+      bonus bAtkRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35269
+    AegisName: C_Grand_Circlet_Regal_God
+    Name: Costume Grand Circlet Regal God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 93
+    Script: |
+      bonus bAtkRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35270
+    AegisName: C_Tiara_Regal_God
+    Name: Costume Tiara Regal God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 19
+    Script: |
+      bonus bAtkRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;
+
+  - Id: 35271
+    AegisName: C_Solar_God_Helm_Regal_God
+    Name: Costume Solar God Helm Regal God
+    Type: Armor
+    Slots: 0
+    Locations:
+      Costume_Head_Top: true
+    Flags:
+      Costume: true
+    Refineable: false
+    ArmorLevel: 1
+    View: 138
+    Script: |
+      bonus bAtkRate,7;
+      bonus bMaxHPRate,10;
+      bonus bMaxSPRate,10;
+      bonus bAllStats,3;

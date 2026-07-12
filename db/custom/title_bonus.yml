@@ -1,0 +1,46 @@
+Header:
+  Type: TITLE_BONUS_DB
+  Version: 1
+
+Body:
+  - TitleId: 1200
+    Name: "[A] Magma Hunter"
+    Script: |
+      bonus bBaseAtk,8;
+      bonus bMatk,8;
+      bonus bMaxHP,250;
+      bonus bMaxSP,30;
+      bonus bHit,5;
+
+  - TitleId: 1201
+    Name: "[S] Gefenia Hunter"
+    Script: |
+      bonus bBaseAtk,12;
+      bonus bMatk,12;
+      bonus bMaxHP,400;
+      bonus bMaxSP,50;
+      bonus bHit,8;
+      bonus bFlee,8;
+
+  - TitleId: 1202
+    Name: "[SS] Wander Man Hunter"
+    Script: |
+      bonus bAllStats,1;
+      bonus bBaseAtk,18;
+      bonus bMatk,18;
+      bonus bMaxHP,600;
+      bonus bMaxSP,80;
+      bonus bCritical,3;
+
+  - TitleId: 1203
+    Name: "[SSS] Louyang Master"
+    Script: |
+      bonus bAllStats,2;
+      bonus bBaseAtk,25;
+      bonus bMatk,25;
+      bonus bMaxHP,900;
+      bonus bMaxSP,120;
+      bonus bHit,10;
+      bonus bFlee,10;
+      bonus bCritical,5;
+      bonus bBossAtkRate,2;

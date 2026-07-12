@@ -1,0 +1,53 @@
+// ==========================================
+// สคริปต์สุ่มดรอปไข่บอส (Boss Egg Drop Script)
+// สำหรับเซิร์ฟเวอร์ Renewal Class 2-2
+// ==========================================
+
+-	script	BossEggDropSystem	-1,{
+
+OnNPCKillEvent:
+	// ตรวจสอบมอนสเตอร์ที่ตายว่าเป็นบอสทั้ง 30 ตัวหรือไม่
+	switch (killedrid) {
+		case 1011: .@egg = 9200; .@name$ = "Baphomet"; break;
+		case 1159: .@egg = 9201; .@name$ = "Phreeoni"; break;
+		case 1087: .@egg = 9202; .@name$ = "Orc Hero"; break;
+		case 1190: .@egg = 9203; .@name$ = "Orc Lord"; break;
+		case 1038: .@egg = 9204; .@name$ = "Osiris"; break;
+		case 1115: .@egg = 9205; .@name$ = "Eddga"; break;
+		case 1086: .@egg = 9206; .@name$ = "Golden Thief Bug"; break;
+		case 1150: .@egg = 9207; .@name$ = "Maya"; break;
+		case 1112: .@egg = 9208; .@name$ = "Drake"; break;
+		case 1116: .@egg = 9209; .@name$ = "Moonlight Flower"; break;
+		case 1046: .@egg = 9210; .@name$ = "Doppelganger"; break;
+		case 1272: .@egg = 9211; .@name$ = "Dark Lord"; break;
+		case 1251: .@egg = 9212; .@name$ = "Stormy Knight"; break;
+		case 1252: .@egg = 9213; .@name$ = "Hatii"; break;
+		case 1373: .@egg = 9214; .@name$ = "Lord of Death"; break;
+		case 1312: .@egg = 9215; .@name$ = "Turtle General"; break;
+		case 1751: .@egg = 9216; .@name$ = "Valkyrie Randgris"; break;
+		case 1832: .@egg = 9217; .@name$ = "Ifrit"; break;
+		case 1768: .@egg = 9218; .@name$ = "Gloom Under Night"; break;
+		case 1583: .@egg = 9219; .@name$ = "Tao Gunka"; break;
+		case 1590: .@egg = 9220; .@name$ = "Vesper"; break;
+		case 1688: .@egg = 9221; .@name$ = "Kiel D-01"; break;
+		case 1874: .@egg = 9222; .@name$ = "Beelzebub"; break;
+		case 1418: .@egg = 9223; .@name$ = "Evil Snake Lord"; break;
+		case 1685: .@egg = 9224; .@name$ = "Lady Tanee"; break;
+		case 1059: .@egg = 9225; .@name$ = "Mistress"; break;
+		case 1157: .@egg = 9226; .@name$ = "Pharaoh"; break;
+		case 1623: .@egg = 9227; .@name$ = "RSX 0806"; break;
+		case 1785: .@egg = 9228; .@name$ = "Atroce"; break;
+		case 1719: .@egg = 9229; .@name$ = "Detardeurus"; break;
+		default: end;
+	}
+
+	// อัตราดรอปไข่บอส (100 = 1%, 50 = 0.5%, 10 = 0.1%, 10000 = 100%)
+	// สามารถเปลี่ยนตัวเลขนี้เพื่อปรับอัตราดรอปได้ตามต้องการ
+	.@drop_rate = 10000; 
+
+	if (rand(1, 10000) <= .@drop_rate) {
+		getitem .@egg, 1;
+		announce "[Boss Eggs] : ยินดีด้วย! คุณ [" + strcharinfo(0) + "] ได้รับไข่บอส [" + .@name$ + " Egg] จากการล่าบอส!", bc_all, 0xFFFF00;
+	}
+	end;
+}

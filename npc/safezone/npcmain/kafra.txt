@@ -1,6 +1,6 @@
 // Izlude
 //============================================================
-izlude,127,148,6	script	Kafra Employee::kaf_izlude	31995,{
+izlude,127,148,6	script	Kafra Employee::kaf_izlude	112,{
 	cutin "kafra_01",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -39,21 +39,12 @@ izlude,127,148,6	script	Kafra Employee::kaf_izlude	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	initnpctimer;
-	end;
 }
 
 
 // Aldebaran
 //============================================================
-aldeba_in,96,181,4	script	Kafra Service#12	31995,{
+aldeba_in,96,181,4	script	Kafra Service#12	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -92,20 +83,10 @@ aldeba_in,96,181,4	script	Kafra Service#12	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(92,98);
-	set .@runy,rand(175,181);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-aldebaran,143,119,4	script	Kafra Service#13	31995,{
+aldebaran,143,119,4	script	Kafra Service#13	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -144,22 +125,11 @@ aldebaran,143,119,4	script	Kafra Service#13	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(134,145);
-	set .@runy,rand(113,123);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
-
 }
 
 // Geffen
 //============================================================
-geffen,120,62,0	script	Kafra Employee::kaf_geffen	31995,{
+geffen,120,62,0	script	Kafra Employee::kaf_geffen	112,{
 	cutin "kafra_03",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -198,20 +168,10 @@ geffen,120,62,0	script	Kafra Employee::kaf_geffen	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(114,124);
-	set .@runy,rand(62,74);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-geffen,203,123,2	script	Kafra Employee::geffen2	31995,{
+geffen,203,123,2	script	Kafra Employee::geffen2	112,{
 	cutin "kafra_04",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -249,16 +209,6 @@ geffen,203,123,2	script	Kafra Employee::geffen2	31995,{
 			mes "ขอบคุณที่ใช้บริการ";
 			close3;
 	}
-	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(197,203);
-	set .@runy,rand(117,123);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
 	end;
 }
 
@@ -471,7 +421,7 @@ morocc,174,31,4	script	Kafra Employee::kaf_morocc#3	112,{
 }
 
 /*
-morocc,210,67,4	script	Kafra Employee::kaf_morocc#4	31995,{
+morocc,210,67,4	script	Kafra Employee::kaf_morocc#4	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -510,20 +460,10 @@ morocc,210,67,4	script	Kafra Employee::kaf_morocc#4	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(210,211);
-	set .@runy,rand(61,72);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-morocc,231,53,4	script	Kafra Employee::kaf_morocc#5	31995,{
+morocc,231,53,4	script	Kafra Employee::kaf_morocc#5	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -562,20 +502,9 @@ morocc,231,53,4	script	Kafra Employee::kaf_morocc#5	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(231,232);
-	set .@runy,rand(46,58);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
-
 }
 
-morocc,187,93,4	script	Kafra Employee::kaf_morocc#6	31995,{
+morocc,187,93,4	script	Kafra Employee::kaf_morocc#6	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -614,19 +543,8 @@ morocc,187,93,4	script	Kafra Employee::kaf_morocc#6	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(182,187);
-	set .@runy,rand(88,93);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
-
 }
-morocc,146,188,4	script	Kafra Employee::kaf_morocc#7	31995,{
+morocc,146,188,4	script	Kafra Employee::kaf_morocc#7	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -665,19 +583,8 @@ morocc,146,188,4	script	Kafra Employee::kaf_morocc#7	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(144,150);
-	set .@runy,rand(183,189);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
-
 }
-morocc,117,76,4	script	Kafra Employee::kaf_morocc#8	31995,{
+morocc,117,76,4	script	Kafra Employee::kaf_morocc#8	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -716,20 +623,11 @@ morocc,117,76,4	script	Kafra Employee::kaf_morocc#8	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(117,119);
-	set .@runy,rand(72,76);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
+	}
 	end;
-
 }
 
-morocc,87,49,4	script	Kafra Employee::kaf_morocc#9	31995,{
+morocc,87,49,4	script	Kafra Employee::kaf_morocc#9	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -768,17 +666,6 @@ morocc,87,49,4	script	Kafra Employee::kaf_morocc#9	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(87,98);
-	set .@runy,rand(47,50);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
-
 }
 
 
@@ -827,7 +714,7 @@ morocc,120,102,4	script	Kafra::kaf_morocc#1001	112,{
 }
 // Payon
 //============================================================
-payon,99,116,4	script	Kafra Employee::kaf_payon	31995,{
+payon,99,116,4	script	Kafra Employee::kaf_payon	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -866,20 +753,9 @@ payon,99,116,4	script	Kafra Employee::kaf_payon	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(96,99);
-	set .@runy,rand(112,116);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
-
 }
 
-pay_arche,55,123,0	script	Kafra Employee::kaf_payon3	31995,{
+pay_arche,55,123,0	script	Kafra Employee::kaf_payon3	112,{
 	cutin "kafra_03",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -918,22 +794,12 @@ pay_arche,55,123,0	script	Kafra Employee::kaf_payon3	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(51,55);
-	set .@runy,rand(118,124);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Prontera
 //============================================================
-prontera,152,326,3	script	Kafra Employee::kaf_prontera	31995,{
+prontera,152,326,3	script	Kafra Employee::kaf_prontera	112,{
 	cutin "kafra_06",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -972,20 +838,9 @@ prontera,152,326,3	script	Kafra Employee::kaf_prontera	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(152,154);
-	set .@runy,rand(320,326);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
-
 }
 
-prontera,151,29,0	script	Kafra Employee::kaf_prontera2	31995,{
+prontera,151,29,0	script	Kafra Employee::kaf_prontera2	112,{
 	cutin "kafra_03",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1024,20 +879,10 @@ prontera,151,29,0	script	Kafra Employee::kaf_prontera2	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(151,153);
-	set .@runy,rand(29,34);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-prontera,29,207,6	script	Kafra Employee::kaf_prontera3	31995,{
+prontera,29,207,6	script	Kafra Employee::kaf_prontera3	112,{
 	cutin "kafra_05",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1075,21 +920,10 @@ prontera,29,207,6	script	Kafra Employee::kaf_prontera3	31995,{
 			mes "ขอบคุณที่ใช้บริการ";
 			close3;
 	}
-	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(29,34);
-	set .@runy,rand(207,209);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-prontera,282,200,2	script	Kafra Employee::kaf_prontera4	31995,{
+prontera,282,200,2	script	Kafra Employee::kaf_prontera4	112,{
 	cutin "kafra_04",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1128,20 +962,10 @@ prontera,282,200,2	script	Kafra Employee::kaf_prontera4	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(282,283);
-	set .@runy,rand(200,206);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-prontera,146,89,6	script	Kafra Employee::kaf_prontera5	31995,{
+prontera,146,89,6	script	Kafra Employee::kaf_prontera5	112,{
 	cutin "kafra_01",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1180,16 +1004,6 @@ prontera,146,89,6	script	Kafra Employee::kaf_prontera5	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(146,147);
-	set .@runy,rand(89,96);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
@@ -1197,7 +1011,7 @@ OnInit:
 
 // Juno
 //============================================================
-yuno,152,187,4	script	Kafra Employee::kaf_yuno	31995,{
+yuno,152,187,4	script	Kafra Employee::kaf_yuno	112,{
 	cutin "kafra_08",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1236,20 +1050,10 @@ yuno,152,187,4	script	Kafra Employee::kaf_yuno	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(152,154);
-	set .@runy,rand(184,187);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 
 }
 
-yuno,327,108,4	script	Kafra Employee::kaf_yuno2	31995,{
+yuno,327,108,4	script	Kafra Employee::kaf_yuno2	112,{
 	cutin "kafra_08",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1288,20 +1092,10 @@ yuno,327,108,4	script	Kafra Employee::kaf_yuno2	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(327,328);
-	set .@runy,rand(104,108);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-yuno,277,221,4	script	Kafra Employee::kaf_yuno3	31995,{
+yuno,277,221,4	script	Kafra Employee::kaf_yuno3	112,{
 	cutin "kafra_09",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1340,22 +1134,12 @@ yuno,277,221,4	script	Kafra Employee::kaf_yuno3	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(277,279);
-	set .@runy,rand(216,221);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Alberta
 //============================================================
-alberta,28,229,0	script	Kafra Employee::kaf_alberta	31995,{
+alberta,28,229,0	script	Kafra Employee::kaf_alberta	112,{
 	cutin "kafra_02",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1394,20 +1178,9 @@ alberta,28,229,0	script	Kafra Employee::kaf_alberta	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(20,28);
-	set .@runy,rand(229,231);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
-
 }
 
-alberta,113,60,6	script	Kafra Employee::kaf_alberta2	31995,{
+alberta,113,60,6	script	Kafra Employee::kaf_alberta2	112,{
 	cutin "kafra_06",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1446,21 +1219,12 @@ alberta,113,60,6	script	Kafra Employee::kaf_alberta2	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(113,116);
-	set .@runy,rand(55,60);
-	npcwalkto .@runx,.@runy;
-	initnpctimer;
-	end;
 }
 
 
 // Comodo
 //============================================================
-comodo,195,150,4	script	Kafra Employee::kaf_comodo	31995,{
+comodo,195,150,4	script	Kafra Employee::kaf_comodo	112,{
 	cutin "kafra_07",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1499,20 +1263,11 @@ comodo,195,150,4	script	Kafra Employee::kaf_comodo	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(193,195);
-	set .@runy,rand(144,150);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-cmd_fild07,136,134,4	script	Kafra Employee::kaf_cmd_fild07	31995,{
+cmd_fild07,136,134,4	script	Kafra Employee::kaf_cmd_fild07	112,{
 	cutin "kafra_07",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1551,22 +1306,12 @@ cmd_fild07,136,134,4	script	Kafra Employee::kaf_cmd_fild07	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
-
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(136,141);
-	set .@runy,rand(125,134);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 
 }
 
 // Moscovia
 //============================================================
-moscovia,223,191,3	script	Kafra Employee::kaf_mosk	31995,{
+moscovia,223,191,3	script	Kafra Employee::kaf_mosk	112,{
 	cutin "kafra_04",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1605,22 +1350,13 @@ moscovia,223,191,3	script	Kafra Employee::kaf_mosk	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Amatsu
 //============================================================
-amatsu,102,149,4	script	Kafra Employee::kaf_amatsu	31995,{
+amatsu,102,149,4	script	Kafra Employee::kaf_amatsu	112,{
 	cutin "kafra_02",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1659,22 +1395,13 @@ amatsu,102,149,4	script	Kafra Employee::kaf_amatsu	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 
 }
 
 // Ayothaya
 //============================================================
-ayothaya,212,169,5	script	Kafra Employee::kaf_ayothaya	31995,{
+ayothaya,212,169,5	script	Kafra Employee::kaf_ayothaya	112,{
 	cutin "kafra_02",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1713,22 +1440,13 @@ ayothaya,212,169,5	script	Kafra Employee::kaf_ayothaya	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Einbech
 //============================================================
-einbech,181,132,5	script	Kafra Employee#ein3::kaf_einbech	31995,{
+einbech,181,132,5	script	Kafra Employee#ein3::kaf_einbech	112,{
 	cutin "kafra_08",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1767,16 +1485,7 @@ einbech,181,132,5	script	Kafra Employee#ein3::kaf_einbech	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
@@ -1821,16 +1530,7 @@ einbroch,242,205,5	script	Kafra Employee#ein2::kaf_einbroch	3195,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
@@ -1873,22 +1573,13 @@ einbroch,59,203,6	script	Kafra Employee#ein1::kaf_einbroch2	3195,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Kunlun
 //============================================================
-gonryun,159,122,4	script	Kafra Employee::kaf_gonryun	31995,{
+gonryun,159,122,4	script	Kafra Employee::kaf_gonryun	112,{
 	cutin "kafra_02",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1927,21 +1618,12 @@ gonryun,159,122,4	script	Kafra Employee::kaf_gonryun	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 // Lighthalzen
 //============================================================
-lighthalzen,164,100,4	script	Kafra Employee::kaf_lighthalzen	31995,{
+lighthalzen,164,100,4	script	Kafra Employee::kaf_lighthalzen	112,{
 	cutin "kafra_08",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -1980,19 +1662,10 @@ lighthalzen,164,100,4	script	Kafra Employee::kaf_lighthalzen	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
-lighthalzen,191,320,4	script	Kafra Employee::kaf_lighthalzen2	31995,{
+lighthalzen,191,320,4	script	Kafra Employee::kaf_lighthalzen2	112,{
 	cutin "kafra_09",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2031,19 +1704,10 @@ lighthalzen,191,320,4	script	Kafra Employee::kaf_lighthalzen2	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
-lhz_in02,237,284,4	script	Kafra Employee::kaf_lhz_in02	31995,{
+lhz_in02,237,284,4	script	Kafra Employee::kaf_lhz_in02	112,{
 	cutin "kafra_09",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2082,22 +1746,13 @@ lhz_in02,237,284,4	script	Kafra Employee::kaf_lhz_in02	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Luoyang
 //============================================================
-louyang,210,104,5	script	Kafra Employee::kaf_louyang	31995,{
+louyang,210,104,5	script	Kafra Employee::kaf_louyang	112,{
 	cutin "kafra_01",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2136,22 +1791,13 @@ louyang,210,104,5	script	Kafra Employee::kaf_louyang	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Umbala
 //============================================================
-umbala,87,160,4	script	Kafra Employee::kaf_umbala	31995,{
+umbala,87,160,4	script	Kafra Employee::kaf_umbala	112,{
 	cutin "kafra_07",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2190,22 +1836,13 @@ umbala,87,160,4	script	Kafra Employee::kaf_umbala	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Niflheim
 //============================================================
-niflheim,202,180,3	script	Kafra Employee::kaf_niflheim	31995,{
+niflheim,202,180,3	script	Kafra Employee::kaf_niflheim	112,{
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
 	mes "คอยให้ความช่วยเหลือท่านเสมอ";
@@ -2243,16 +1880,7 @@ niflheim,202,180,3	script	Kafra Employee::kaf_niflheim	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
@@ -2260,7 +1888,7 @@ OnInit:
 //============================================================
 
 // - Byalan Island
-izlu2dun,106,58,8	script	Kafra Employee::kaf_izlu2dun	31995,{
+izlu2dun,106,58,8	script	Kafra Employee::kaf_izlu2dun	112,{
 	cutin "kafra_03",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2299,21 +1927,12 @@ izlu2dun,106,58,8	script	Kafra Employee::kaf_izlu2dun	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(106,108);
-	set .@runy,rand(52,58);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // - Culvert Sewers
-prt_fild05,290,224,3	script	Kafra Employee::prt_fild05	31995,{
+prt_fild05,290,224,3	script	Kafra Employee::prt_fild05	112,{
 	cutin "kafra_04",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2352,21 +1971,12 @@ prt_fild05,290,224,3	script	Kafra Employee::prt_fild05	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(288,290);
-	set .@runy,rand(219,224);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // - Coal Mine (Dead Pitt)
-mjolnir_02,83,362,4	script	Kafra Employee::kaf_mjolnir_02	31995,{
+mjolnir_02,83,362,4	script	Kafra Employee::kaf_mjolnir_02	112,{
 	cutin "kafra_02",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2405,21 +2015,12 @@ mjolnir_02,83,362,4	script	Kafra Employee::kaf_mjolnir_02	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(83,85);
-	set .@runy,rand(357,362);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // - Morocc Ruins
-moc_ruins,59,157,5	script	Kafra Employee::moc_ruins	31995,{
+moc_ruins,59,157,5	script	Kafra Employee::moc_ruins	112,{
 	cutin "kafra_04",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2458,21 +2059,12 @@ moc_ruins,59,157,5	script	Kafra Employee::moc_ruins	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(57,59);
-	set .@runy,rand(152,157);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // - Orc Dungeon
-gef_fild10,73,340,5	script	Kafra Employee::kaf_gef_fild10	31995,{
+gef_fild10,73,340,5	script	Kafra Employee::kaf_gef_fild10	112,{
 	cutin "kafra_02",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2511,21 +2103,12 @@ gef_fild10,73,340,5	script	Kafra Employee::kaf_gef_fild10	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(73,75);
-	set .@runy,rand(333,340);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // - Treasure Island
-alb2trea,59,69,5	script	Kafra Employee::kaf_alb2trea	31995,{
+alb2trea,59,69,5	script	Kafra Employee::kaf_alb2trea	112,{
 	cutin "kafra_01",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2564,22 +2147,13 @@ alb2trea,59,69,5	script	Kafra Employee::kaf_alb2trea	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(59,65);
-	set .@runy,rand(67,69);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Brasilis
 //============================================================
-brasilis,197,221,4	script	Kafra Employee::kaf_bra	31995,{
+brasilis,197,221,4	script	Kafra Employee::kaf_bra	112,{
 	cutin "kafra_01",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2618,22 +2192,13 @@ brasilis,197,221,4	script	Kafra Employee::kaf_bra	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Dewata
 //============================================================
-dewata,202,184,6	script	Kafra Employee::kaf_dewata	31995,{
+dewata,202,184,6	script	Kafra Employee::kaf_dewata	112,{
 	cutin "kafra_01",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2672,22 +2237,13 @@ dewata,202,184,6	script	Kafra Employee::kaf_dewata	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Glastheim
 //============================================================
-glast_01,200,275,6	script	Kafra Employee::kaf_glast	31995,{
+glast_01,200,275,6	script	Kafra Employee::kaf_glast	112,{
 	cutin "kafra_03",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2720,22 +2276,13 @@ glast_01,200,275,6	script	Kafra Employee::kaf_glast	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(200,203);
-	set .@runy,rand(269,275);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Lutie
 //============================================================
-xmas,148,134,6	script	Kafra Employee::kaf_xmas	31995,{
+xmas,148,134,6	script	Kafra Employee::kaf_xmas	112,{
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
 	mes "คอยให้ความช่วยเหลือท่านเสมอ";
@@ -2767,22 +2314,13 @@ xmas,148,134,6	script	Kafra Employee::kaf_xmas	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(148,150);
-	set .@runy,rand(130,134);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Eden Group
 //============================================================
-moc_para01,10,185,4	script	Kafra Employee::kaf_eden	31995,{
+moc_para01,10,185,4	script	Kafra Employee::kaf_eden	112,{
 	cutin "kafra_07",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2815,22 +2353,13 @@ moc_para01,10,185,4	script	Kafra Employee::kaf_eden	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Port Malaya
 //============================================================
-malaya,71,79,4	script	Kafra Employee::kaf_malaya1	31995,{
+malaya,71,79,4	script	Kafra Employee::kaf_malaya1	112,{
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
 	mes "คอยให้ความช่วยเหลือท่านเสมอ";
@@ -2868,20 +2397,11 @@ malaya,71,79,4	script	Kafra Employee::kaf_malaya1	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
-malaya,234,204,4	script	Kafra Employee::kaf_malaya2	31995,{
+malaya,234,204,4	script	Kafra Employee::kaf_malaya2	112,{
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
 	mes "คอยให้ความช่วยเหลือท่านเสมอ";
@@ -2919,22 +2439,13 @@ malaya,234,204,4	script	Kafra Employee::kaf_malaya2	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Rune Knight
 //============================================================
-job3_rune01,92,62,3	script	Kafra Employee::kaf_rune	31995,{
+job3_rune01,92,62,3	script	Kafra Employee::kaf_rune	112,{
 	cutin "kafra_04",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -2967,22 +2478,13 @@ job3_rune01,92,62,3	script	Kafra Employee::kaf_rune	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 
 // Rockridge
 //============================================================
-harboro1,291,207,5	script	Kafra Employee::kaf_rock	31995,{
+harboro1,291,207,5	script	Kafra Employee::kaf_rock	112,{
 	cutin "kafra_01",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -3021,20 +2523,11 @@ harboro1,291,207,5	script	Kafra Employee::kaf_rock	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(124,130);
-	set .@runy,rand(144,149);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 /////////////นอกเมือง////////////////////////
-prt_fild08,339,219,3	script	Kafra Employee::kaf_moc_fild12	31995,{
+prt_fild08,339,219,3	script	Kafra Employee::kaf_moc_fild12	112,{
 	cutin "kafra_03",2;
 	mes "[Kafra Employee]";
 	mes "ยินดีต้อนรับ Kafra";
@@ -3067,16 +2560,7 @@ prt_fild08,339,219,3	script	Kafra Employee::kaf_moc_fild12	31995,{
 			close3;
 	}
 	end;
-OnTimer7000:
 
-OnInit:
-	npcspeed 180;
-	set .@runx,rand(339,346);
-	set .@runy,rand(208,219);
-	npcwalkto .@runx,.@runy;
-	
-	initnpctimer;
-	end;
 }
 
 //= Function Script Kafra By [SPY]

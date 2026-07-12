@@ -5957,6 +5957,12 @@ void itemdb_reload(void) {
 	// readjust itemdb pointer cache for each player
 	iter = mapit_geteachpc();
 	for( sd = (map_session_data*)mapit_first(iter); mapit_exists(iter); sd = (map_session_data*)mapit_next(iter) ) {
+		// Custom fake players/offline stalls are represented as BL_PC with fd == 0,
+		// but they do not have a fully initialized real-player session. Recalculating
+		// them during @reloaditemdb can dereference uninitialized status fields.
+		if (sd == nullptr || sd->fd == 0)
+			continue;
+
 		memset(sd->item_delay, 0, sizeof(sd->item_delay));  // reset item delays
 		sd->combos.clear(); // clear combo bonuses
 		sd->collection_combos.clear(); // clear collection combo bonuses

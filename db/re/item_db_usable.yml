@@ -124,7 +124,7 @@ Body:
     AegisName: White_Potion
     Name: White Potion
     Type: Healing
-    Buy: 500
+    Buy: 1000
     Weight: 150
     Script: |
       itemheal rand(325,405),0;
@@ -33836,7 +33836,7 @@ Body:
       NoMail: true
       NoAuction: true
     Script: |
-      itemskill "BS_GREED",1;
+      skill "BS_GREED",1;
   - Id: 14600
     AegisName: Mental_Potion
     Name: Mental Potion
@@ -53468,7 +53468,11 @@ Body:
   - Id: 23038
     AegisName: White_Slim_Potion_Box_
     Name: White Slim Box
-    Type: Usable
+    Type: Cash
+    Buy: 5
+    Weight: 10
+    Flags:
+      UniqueId: true
     Trade:
       NoDrop: true
       NoTrade: true
@@ -53478,7 +53482,7 @@ Body:
       NoMail: true
       NoAuction: true
     Script: |
-      getitem 11573,200;
+      getitem 11573,100;
   - Id: 23042
     AegisName: Seed_Of_Yggdrasil_
     Name: "[NotForSale]Yggdrasil Seed"

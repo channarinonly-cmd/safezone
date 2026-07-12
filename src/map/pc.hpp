@@ -396,7 +396,8 @@ struct s_autoattackskills {
 	bool is_active;
 	uint16 skill_id;
 	uint16 skill_lv;
-	uint16 swarm_min;
+	uint32 swarm_min; // real swarm_min, or packed target_mob_id*100 + swarm_min when loaded from old aa_skills.min_hp
+	uint32 target_mob_id; // 0 = all monsters, >0 = only this mob id
 	t_tick last_use;
 };
 
@@ -496,6 +497,7 @@ struct s_autoattack {
 	t_tick last_emergency_wing;// anti-spam for 4-mob flywing
 	t_tick last_status_sync;   // throttle web status updates
 	bool stopmelee;
+	int combat_mode; // 0=normal, 1=skill only, 2=idle/support mode
 	bool focus_mob;
 	int stay_mode;  
   	int revive_auto;  
@@ -663,6 +665,7 @@ public:
 	unsigned int weight,max_weight,add_max_weight;
 	int cart_weight,cart_num,cart_weight_max;
 	int fd;
+	
 	unsigned short mapindex;
 	unsigned char head_dir; //0: Look forward. 1: Look right, 2: Look left.
 	t_tick client_tick;

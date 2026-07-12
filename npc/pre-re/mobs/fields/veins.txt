@@ -14,7 +14,6 @@
 //= 1.4 Updated spawns with info from RO Monthly [Playtester]
 //= 1.5 Updated spawn amounts to official [Playtester]
 //= 1.6 Even more accurate spawns [Playtester]
-//= 1.7 Corrected MVP spawn variance. [Gepard]
 //= 1.8 Updated to Renewal Spawns. [Kisuka]
 //= 1.9 Renewal spawn update.
 //= 2.0 Correct Spawn by Navigation's mob data. [attackjom]

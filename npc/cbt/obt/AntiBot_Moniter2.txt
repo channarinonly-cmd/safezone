@@ -10,15 +10,15 @@ OnPCLoginEvent:
 		#opk_temp_kills = 0; // [แก้ไข] เปลี่ยนเป็น # ให้ตรงกับข้างล่าง
 		@opk_is_safe = 0; // รีเซ็ตสถานะปลอดภัยตอนล็อกอิน
 		deltimer strnpcinfo(3)+"::OnMonitorCheck";
-		addtimer 60000, strnpcinfo(3)+"::OnMonitorCheck";
+		addtimer .check_interval, strnpcinfo(3)+"::OnMonitorCheck";
 	}
 	end;
 
-// ⏱️ 3. ลูปตรวจจับและอัปเดตเว็บ (ทุกๆ 1 นาที)
+// ⏱️ 3. ลูปตรวจจับและอัปเดตเว็บ
 OnMonitorCheck:
 	// ถ้าผู้เล่นคนนี้พิสูจน์แล้วว่าบริสุทธิ์ (ผ่าน 20 นาทีแล้วฆ่าน้อย) ให้ข้ามไปเลย ไม่ต้องเอาขึ้นเว็บอีก
 	if (@opk_is_safe) {
-		addtimer 60000, strnpcinfo(3)+"::OnMonitorCheck";
+		addtimer .check_interval, strnpcinfo(3)+"::OnMonitorCheck";
 		end;
 	}
 	
@@ -51,11 +51,15 @@ OnMonitorCheck:
 		}
 	}
 	
-	addtimer 60000, strnpcinfo(3)+"::OnMonitorCheck";
+	addtimer .check_interval, strnpcinfo(3)+"::OnMonitorCheck";
 	end;
 
 // 🏃‍♂️ 4. เคลียร์ชื่อออกตอนออฟไลน์
 OnPCLogoutEvent:
 	query_sql("DELETE FROM `tharakan_opk_monitor` WHERE char_id = " + getcharid(0));
+	end;
+
+OnInit:
+	.check_interval = 15000; // 15 seconds
 	end;
 }

@@ -1,5 +1,5 @@
 /*
-prontera,117,73,5	script	prontera#01	2489,{
+prontera,117,73,5	script	prontera#01	66,{
 
 	set .@delay, 30;
 
@@ -55,7 +55,7 @@ OnInit:
 	end;
 }
 
-prontera,34,211,5	script	Buff prontera#02	2489,{
+prontera,34,211,5	script	Buff prontera#02	66,{
 
 	set .@delay, 30;
 
@@ -111,7 +111,7 @@ OnInit:
 	end;
 }
 
-prontera,159,329,5	script	Buff prontera#03	2489,{
+prontera,159,329,5	script	Buff prontera#03	66,{
 
 	set .@delay, 30;
 
@@ -167,7 +167,7 @@ OnInit:
 	initnpctimer;
 	end;
 }
-prontera,284,210,5	script	Buff prontera#06	2489,{
+prontera,284,210,5	script	Buff prontera#06	66,{
 
 	set .@delay, 30;
 
@@ -224,7 +224,7 @@ OnInit:
 	end;
 }
 
-prontera,155,192,5	script	Buff prontera#04	2489,{
+prontera,155,192,5	script	Buff prontera#04	66,{
 
 	set .@delay, 30;
 
@@ -517,7 +517,7 @@ morocc,126,102,5	script	Buff#110	66,{
 }
 
 
-//morocc,186,48,5	script	Buff#01	2489,{
+//morocc,186,48,5	script	Buff#01	66,{
 //
 //	set .@delay, 30;
 //
@@ -573,7 +573,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 //
-//morocc,159,53,5	script	Buff2	2489,{
+//morocc,159,53,5	script	Buff2	66,{
 //
 //	set .@delay, 30;
 //
@@ -629,7 +629,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 //
-//morocc,158,97,5	script	Buff3	2489,{
+//morocc,158,97,5	script	Buff3	66,{
 //
 //	set .@delay, 30;
 //
@@ -685,7 +685,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 //
-//morocc,171,38,5	script	Buff4	2489,{
+//morocc,171,38,5	script	Buff4	66,{
 //
 //	set .@delay, 30;
 //
@@ -741,7 +741,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 //
-//morocc,207,67,5	script	Buff5	2489,{
+//morocc,207,67,5	script	Buff5	66,{
 //
 //	set .@delay, 30;
 //
@@ -797,7 +797,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 //
-//morocc,235,53,5	script	Buff6	2489,{
+//morocc,235,53,5	script	Buff6	66,{
 //
 //	set .@delay, 30;
 //
@@ -853,7 +853,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 //
-//morocc,191,93,5	script	Buff7	2489,{
+//morocc,191,93,5	script	Buff7	66,{
 //
 //	set .@delay, 30;
 //
@@ -909,7 +909,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 //
-//morocc,164,258,5	script	Buff8	2489,{
+//morocc,164,258,5	script	Buff8	66,{
 //
 //	set .@delay, 30;
 //
@@ -965,7 +965,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 //
-//morocc,149,187,5	script	Buff9	2489,{
+//morocc,149,187,5	script	Buff9	66,{
 //
 //	set .@delay, 30;
 //
@@ -1021,7 +1021,7 @@ morocc,126,102,5	script	Buff#110	66,{
 //	end;
 //}
 
-izlude,128,147,5	script	Buff10	2489,{
+izlude,128,147,5	script	Buff10	66,{
 
 	set .@delay, 30;
 
@@ -1066,18 +1066,9 @@ izlude,128,147,5	script	Buff10	2489,{
 			sleep2 2000;
 	end;
 
-OnTimer15000:
-		npcspeed 170;
-		set .@runx,rand(123,131);
-		set .@runy,rand(147,150);
-		npcwalkto .@runx,.@runy;
-
-OnInit:
-	initnpctimer;
-	end;
 }
 
-prontera,147,93,5	script	Buff prontera#10	2489,{
+prontera,146,93,5	script	Buff prontera#10	66,{
 
 	set .@delay, 30;
 
@@ -1121,20 +1112,9 @@ prontera,147,93,5	script	Buff prontera#10	2489,{
 			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
 			sleep2 2000;
 	end;
-
-OnTimer15000:
-		npcspeed 170;
-		set .@runx,rand(145,147);
-		set .@runy,rand(90,95);
-		npcwalkto .@runx,.@runy;
-		initnpctimer;
-
-OnInit:
-	initnpctimer;
-	end;
 }
 
-morocc,92,49,5	script	Buff#11	2489,{
+morocc,92,49,5	script	Buff#11	66,{
 
 	set .@delay, 30;
 
@@ -1178,19 +1158,9 @@ morocc,92,49,5	script	Buff#11	2489,{
 			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
 			sleep2 2000;
 	end;
-
-OnTimer15000:
-		npcspeed 170;
-		set .@runx,rand(87,98);
-		set .@runy,rand(48,50);
-		npcwalkto .@runx,.@runy;
-
-OnInit:
-	initnpctimer;
-	end;
 }
 
-prt_fild08,337,219,3	script	Buff#00	2489,{
+prt_fild08,337,219,3	script	Buff#00	66,{
 
 	set .@delay, 30;
 
@@ -1219,7 +1189,7 @@ prt_fild08,337,219,3	script	Buff#00	2489,{
 	end;
 }
 
-izlude,128,147,5	script	Buff11	2489,{
+izlude,128,147,5	script	Buff11	66,{
 
 	set .@delay, 30;
 
@@ -1262,15 +1232,5 @@ izlude,128,147,5	script	Buff11	2489,{
 			sleep2 2000;
 			npctalk "Buff : ลูกอีช่างขอนะมึงอะ", "", bc_self;
 			sleep2 2000;
-	end;
-
-OnTimer15000:
-		npcspeed 170;
-		set .@runx,rand(123,131);
-		set .@runy,rand(147,150);
-		npcwalkto .@runx,.@runy;
-
-OnInit:
-	initnpctimer;
 	end;
 }

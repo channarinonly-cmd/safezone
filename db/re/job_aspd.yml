@@ -94,7 +94,7 @@ Body:
       1hSword: 45
       1hAxe: 55
       Bow: 48
-      Katar: 37
+      Katar: 40
       Shield: 6
   - Jobs:
       Knight: true

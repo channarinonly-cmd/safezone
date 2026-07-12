@@ -17,10 +17,36 @@ print_start() {
 	#EOF
 }
 
+find_running_server(){
+	SRV_NAME="$1"
+	SRV_CWD="$(pwd -P)"
+	for PID in $(pgrep -u "$(id -u)" -x "${SRV_NAME}" 2>/dev/null)
+	do
+		PROC_CWD="$(readlink "/proc/${PID}/cwd" 2>/dev/null)"
+		if [ "${PROC_CWD}" = "${SRV_CWD}" ]; then
+			echo "${PID}"
+			return
+		fi
+	done
+}
+
 get_status(){
+	PSRUN=""
 	PIDFILE=.$1.pid
-	if [ -e ${PIDFILE} ]; then
-		PSRUN=$(pgrep -F ${PIDFILE})
+	SRV_CWD="$(pwd -P)"
+	if [ -e "${PIDFILE}" ]; then
+		PID="$(cat "${PIDFILE}" 2>/dev/null)"
+		PROC_NAME="$(cat "/proc/${PID}/comm" 2>/dev/null)"
+		PROC_CWD="$(readlink "/proc/${PID}/cwd" 2>/dev/null)"
+		if [ "${PROC_NAME}" = "$1" ] && [ "${PROC_CWD}" = "${SRV_CWD}" ]; then
+			PSRUN="${PID}"
+			return
+		fi
+	fi
+
+	PSRUN="$(find_running_server "$1")"
+	if [ -n "${PSRUN}" ]; then
+		echo "${PSRUN}" > "${PIDFILE}"
 	fi
 	#return ${PSRUN} #seems to cause an issue for some os
 }
@@ -223,4 +249,3 @@ case $1 in
 		$0 $readEnterKey
 	;;
 esac
-

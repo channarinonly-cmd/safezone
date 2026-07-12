@@ -13,7 +13,6 @@
 //= 1.4 Removed Duplicates [Silent]
 //= 1.5 Updated warps for episode 12.1 [L0ne_W0lf]
 //= 1.6 Fixed coordinates for pre-2010/06/09 maps (bugreport:3589)
-//=     Moved entrance to cmd_fild08 to match mapcache [Gepard]
 //============================================================
 
 //= Ant Hell =================================================

@@ -5523,7 +5523,7 @@ Body:
       IsQuest: true
     Range: 9
     Hit: Single
-    HitCount: 10
+    HitCount: 1
     Element: Holy
     CopyFlags:
       Skill:

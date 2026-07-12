@@ -1,0 +1,70 @@
+#!/bin/sh
+
+cd "$(dirname "$0")" || exit 1
+
+PORT="${ADMIN_MONITOR_PORT:-31911}"
+HOST="${ADMIN_MONITOR_HOST:-0.0.0.0}"
+PIDFILE=".admin-monitor.pid"
+LOGFILE="log/admin-monitor.log"
+APP="tools/admin_monitor.php"
+
+is_running() {
+	if [ -s "${PIDFILE}" ] && kill -0 "$(cat "${PIDFILE}")" 2>/dev/null; then
+		return 0
+	fi
+	return 1
+}
+
+case "$1" in
+	start)
+		if is_running; then
+			echo "admin-monitor is already running p$(cat "${PIDFILE}")"
+			exit 0
+		fi
+		if [ ! -f "${APP}" ]; then
+			echo "${APP} not found"
+			exit 1
+		fi
+		if [ ! -d log ]; then mkdir -p log; fi
+		nohup php -S "${HOST}:${PORT}" -t tools "${APP}" > "${LOGFILE}" 2>&1 &
+		echo "$!" > "${PIDFILE}"
+		sleep 1
+		if is_running; then
+			echo "admin-monitor started p$(cat "${PIDFILE}") on ${HOST}:${PORT}"
+		else
+			echo "admin-monitor failed to start"
+			tail -20 "${LOGFILE}" 2>/dev/null
+			exit 1
+		fi
+		;;
+	stop)
+		if is_running; then
+			kill "$(cat "${PIDFILE}")"
+			sleep 1
+			if is_running; then
+				echo "admin-monitor is still running p$(cat "${PIDFILE}")"
+				exit 1
+			fi
+			rm -f "${PIDFILE}"
+			echo "admin-monitor stopped"
+		else
+			rm -f "${PIDFILE}"
+			echo "admin-monitor is not running"
+		fi
+		;;
+	restart)
+		"$0" stop
+		"$0" start
+		;;
+	status)
+		if is_running; then
+			echo "admin-monitor is running p$(cat "${PIDFILE}") on ${HOST}:${PORT}"
+		else
+			echo "admin-monitor is down"
+		fi
+		;;
+	*)
+		echo "Usage: $0 { start | stop | restart | status }"
+		exit 1
+		;;
+esac

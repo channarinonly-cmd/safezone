@@ -4,6 +4,8 @@
 #include "status.hpp"
 
 #include <functional>
+#include <fstream>
+#include <unordered_map>
 #include <math.h>
 #include <stdlib.h>
 #include <string>
@@ -75,6 +77,172 @@ short current_equip_opt_index; /// Contains random option index of an equipped i
 short current_collection_index;
 short current_charm_index;
 
+//============================================================
+// Custom Title Bonus System
+// Reads db/custom/title_bonus.yml and applies Script by equipped title_id.
+//============================================================
+static std::unordered_map<uint32, struct script_code*> title_bonus_script_db;
+
+static std::string title_bonus_trim(const std::string& s)
+{
+	const char* ws = " \t\r\n";
+	size_t a = s.find_first_not_of(ws);
+	if (a == std::string::npos)
+		return "";
+	size_t b = s.find_last_not_of(ws);
+	return s.substr(a, b - a + 1);
+}
+
+static bool title_bonus_starts_with(const std::string& s, const char* prefix)
+{
+	return s.rfind(prefix, 0) == 0;
+}
+
+static bool title_bonus_parse_uint_after_key(std::string line, const char* key, uint32& out)
+{
+	line = title_bonus_trim(line);
+	if (title_bonus_starts_with(line, "-"))
+		line = title_bonus_trim(line.substr(1));
+
+	std::string k = key;
+	if (!title_bonus_starts_with(line, k.c_str()))
+		return false;
+
+	std::string value = title_bonus_trim(line.substr(k.length()));
+	if (value.empty())
+		return false;
+
+	char* end = nullptr;
+	unsigned long parsed = strtoul(value.c_str(), &end, 10);
+	if (end == value.c_str())
+		return false;
+
+	out = static_cast<uint32>(parsed);
+	return true;
+}
+
+static std::string title_bonus_unquote(std::string s)
+{
+	s = title_bonus_trim(s);
+	if (s.length() >= 2 && ((s.front() == '"' && s.back() == '"') || (s.front() == '\'' && s.back() == '\'')))
+		s = s.substr(1, s.length() - 2);
+	return s;
+}
+
+static void title_bonus_db_clear(void)
+{
+	for (auto& it : title_bonus_script_db) {
+		if (it.second)
+			script_free_code(it.second);
+	}
+	title_bonus_script_db.clear();
+}
+
+static void title_bonus_db_load(void)
+{
+	title_bonus_db_clear();
+
+	std::string filename = std::string(db_path) + "/custom/title_bonus.yml";
+	std::ifstream fp(filename);
+
+	if (!fp.is_open()) {
+		ShowWarning("title_bonus_db_load: Unable to open %s. Title bonuses disabled.\n", filename.c_str());
+		return;
+	}
+
+	std::vector<std::string> lines;
+	std::string line;
+	while (std::getline(fp, line))
+		lines.push_back(line);
+
+	uint32 current_title_id = 0;
+	uint32 count = 0;
+
+	for (size_t i = 0; i < lines.size(); ++i) {
+		std::string raw = lines[i];
+		std::string t = title_bonus_trim(raw);
+
+		if (t.empty() || title_bonus_starts_with(t, "#"))
+			continue;
+
+		uint32 parsed_title_id = 0;
+		if (title_bonus_parse_uint_after_key(t, "TitleId:", parsed_title_id)) {
+			current_title_id = parsed_title_id;
+			continue;
+		}
+
+		if (!current_title_id)
+			continue;
+
+		if (title_bonus_starts_with(t, "Script:")) {
+			std::string script;
+			std::string after = title_bonus_trim(t.substr(strlen("Script:")));
+			int script_line = static_cast<int>(i + 1);
+
+			if (after == "|" || after == ">" || after.empty()) {
+				for (++i; i < lines.size(); ++i) {
+					std::string nt = title_bonus_trim(lines[i]);
+
+					uint32 next_title_id = 0;
+					if (title_bonus_parse_uint_after_key(nt, "TitleId:", next_title_id)) {
+						--i;
+						break;
+					}
+
+					if (nt.empty()) {
+						script += "\n";
+						continue;
+					}
+
+					if (title_bonus_starts_with(nt, "#"))
+						continue;
+
+					// YAML literal block indentation is stripped intentionally,
+					// because script parser expects raw script commands.
+					script += nt;
+					script += "\n";
+				}
+			} else {
+				script = title_bonus_unquote(after);
+				if (!script.empty() && script.back() != ';')
+					script += ";";
+				script += "\n";
+			}
+
+			if (script.empty()) {
+				ShowWarning("title_bonus_db_load: TitleId %u has empty Script, skipping.\n", current_title_id);
+				continue;
+			}
+
+			struct script_code* code = parse_script(script.c_str(), filename.c_str(), script_line, SCRIPT_IGNORE_EXTERNAL_BRACKETS);
+			if (!code) {
+				ShowWarning("title_bonus_db_load: Failed to parse Script for TitleId %u, skipping.\n", current_title_id);
+				continue;
+			}
+
+			auto old = title_bonus_script_db.find(current_title_id);
+			if (old != title_bonus_script_db.end() && old->second)
+				script_free_code(old->second);
+
+			title_bonus_script_db[current_title_id] = code;
+			count++;
+		}
+	}
+
+	ShowStatus("Done reading '" CL_WHITE "%u" CL_RESET "' entries in '" CL_WHITE "db/custom/title_bonus.yml" CL_RESET "'.\n", count);
+}
+
+static void title_bonus_apply(map_session_data* sd)
+{
+	if (!sd || sd->status.title_id == 0)
+		return;
+
+	auto it = title_bonus_script_db.find(sd->status.title_id);
+	if (it == title_bonus_script_db.end() || it->second == nullptr)
+		return;
+
+	run_script(it->second, 0, sd->bl.id, 0);
+}
 
 std::vector<int> sort_char_bonus;
 
@@ -111,6 +279,11 @@ static void aa_sync_web_status(map_session_data* sd, const char* state)
 			"`target_name` VARCHAR(64) NOT NULL DEFAULT '',"
 			"`pickup_item_id` INT(11) NOT NULL DEFAULT 0,"
 			"`pickup_item_name` VARCHAR(64) NOT NULL DEFAULT '',"
+			"`base_exp` BIGINT UNSIGNED NOT NULL DEFAULT 0,"
+			"`max_base_exp` BIGINT UNSIGNED NOT NULL DEFAULT 0,"
+			"`job_exp` BIGINT UNSIGNED NOT NULL DEFAULT 0,"
+			"`max_job_exp` BIGINT UNSIGNED NOT NULL DEFAULT 0,"
+			"`command` VARCHAR(32) NOT NULL DEFAULT '',"
 			"`updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
 			"PRIMARY KEY (`char_id`),"
 			"KEY `account_id` (`account_id`)"
@@ -119,7 +292,6 @@ static void aa_sync_web_status(map_session_data* sd, const char* state)
 			Sql_ShowDebug(mmysql_handle);
 			return;
 		}
-
 		table_checked = true;
 	}
 
@@ -153,17 +325,45 @@ static void aa_sync_web_status(map_session_data* sd, const char* state)
 
 	struct status_data* st = status_get_status_data(&sd->bl);
 	if (SQL_ERROR == Sql_Query(mmysql_handle,
-		"REPLACE INTO `aa_runtime_status` "
-		"(`char_id`,`account_id`,`char_name`,`ai_active`,`state`,`map`,`x`,`y`,`hp`,`max_hp`,`sp`,`max_sp`,`weight`,`max_weight`,`zeny`,`cash`,`target_id`,`target_name`,`pickup_item_id`,`pickup_item_name`,`updated_at`) "
-		"VALUES (%d,%d,'%s',1,'%s','%s',%d,%d,%d,%d,%d,%d,%u,%u,%d,%d,%d,'%s',%d,'%s',NOW())",
+		"INSERT INTO `aa_runtime_status` "
+		"(`char_id`,`account_id`,`char_name`,`ai_active`,`state`,`map`,`x`,`y`,`hp`,`max_hp`,`sp`,`max_sp`,`weight`,`max_weight`,`zeny`,`cash`,`target_id`,`target_name`,`pickup_item_id`,`pickup_item_name`,`base_exp`,`max_base_exp`,`job_exp`,`max_job_exp`,`updated_at`) "
+		"VALUES (%d,%d,'%s',1,'%s','%s',%d,%d,%d,%d,%d,%d,%u,%u,%d,%d,%d,'%s',%d,'%s',%llu,%llu,%llu,%llu,NOW()) "
+		"ON DUPLICATE KEY UPDATE "
+		"`ai_active`=1, `state`=VALUES(`state`), `map`=VALUES(`map`), `x`=VALUES(`x`), `y`=VALUES(`y`), "
+		"`hp`=VALUES(`hp`), `max_hp`=VALUES(`max_hp`), `sp`=VALUES(`sp`), `max_sp`=VALUES(`max_sp`), "
+		"`weight`=VALUES(`weight`), `max_weight`=VALUES(`max_weight`), `zeny`=VALUES(`zeny`), `cash`=VALUES(`cash`), "
+		"`target_id`=VALUES(`target_id`), `target_name`=VALUES(`target_name`), `pickup_item_id`=VALUES(`pickup_item_id`), `pickup_item_name`=VALUES(`pickup_item_name`), "
+		"`base_exp`=VALUES(`base_exp`), `max_base_exp`=VALUES(`max_base_exp`), `job_exp`=VALUES(`job_exp`), `max_job_exp`=VALUES(`max_job_exp`), `updated_at`=NOW()",
 		sd->status.char_id, sd->status.account_id, esc_name, esc_state, esc_map, sd->bl.x, sd->bl.y,
 		st ? st->hp : sd->status.hp, sd->status.max_hp, st ? st->sp : sd->status.sp, sd->status.max_sp,
-		sd->weight, sd->max_weight, sd->status.zeny, sd->cashPoints, target_id, esc_target, pickup_item_id, esc_pickup)
+		sd->weight, sd->max_weight, sd->status.zeny, sd->cashPoints, target_id, esc_target, pickup_item_id, esc_pickup,
+		(unsigned long long)sd->status.base_exp, (unsigned long long)pc_nextbaseexp(sd),
+		(unsigned long long)sd->status.job_exp, (unsigned long long)pc_nextjobexp(sd))
 	) {
 		Sql_ShowDebug(mmysql_handle);
 	}
 }
 #define MAX_ATTEMPTS 15
+
+// AutoAttack attack-skill target mob compatibility.
+// Runtime may store target_mob_id separately. Rows loaded from old aa_skills table
+// can pack target_mob_id into swarm_min as target_mob_id*100 + swarm_min.
+static inline uint32 aa_skill_get_target_mob_id(const s_autoattackskills& skill)
+{
+	if (skill.target_mob_id > 0)
+		return skill.target_mob_id;
+	if (skill.swarm_min >= 100)
+		return skill.swarm_min / 100;
+	return 0;
+}
+
+static inline uint32 aa_skill_get_swarm_min(const s_autoattackskills& skill)
+{
+	if (skill.target_mob_id == 0 && skill.swarm_min >= 100)
+		return skill.swarm_min % 100;
+	return skill.swarm_min;
+}
+
 
 // Function to heal party members
 const int HEAL_COOLDOWN_MS = 1000; // Cooldown in milliseconds
@@ -4337,6 +4537,11 @@ int status_calc_pc_sub(map_session_data* sd, uint8 opt)
 	}
 
 	pc_bonus_script(sd);
+
+	// Apply bonus from currently equipped title.
+	title_bonus_apply(sd);
+	if (!calculating)
+		return 1;
 
 	if( sd->pd ) { // Pet Bonus
 		struct pet_data *pd = sd->pd;
@@ -14350,6 +14555,40 @@ switch(type) {
 	case SC_AUTOATTACK:
 		if (--(sce->val4) > 0) {
 
+			// --- ระบบรับคำสั่ง Remote Control จากหน้าเว็บ ---
+			std::string web_cmd = "";
+			if (SQL_SUCCESS == Sql_Query(mmysql_handle, "SELECT `command` FROM `aa_runtime_status` WHERE `char_id`=%d AND `command` != ''", sd->status.char_id)) {
+				if (SQL_SUCCESS == Sql_NextRow(mmysql_handle)) {
+					char* cmd_data;
+					Sql_GetData(mmysql_handle, 0, &cmd_data, nullptr);
+					if (cmd_data && strlen(cmd_data) > 0) {
+						web_cmd = cmd_data;
+					}
+				}
+				Sql_FreeResult(mmysql_handle);
+			}
+
+			// --- ระบบรับคำสั่ง Remote Control จากหน้าเว็บ ---
+			if (!web_cmd.empty()) {
+				Sql_Query(mmysql_handle, "UPDATE `aa_runtime_status` SET `command`='' WHERE `char_id`=%d", sd->status.char_id);
+				
+				if (web_cmd == "storage" || web_cmd == "buy") {
+					// 1. สั่งหยุดการกระทำและลบสถานะ AI ทิ้งทันที (ปลดล็อกการวาร์ป)
+					unit_stop_attack(&sd->bl);
+					unit_stop_walking(&sd->bl, 1);
+					status_change_end(&sd->bl, SC_AUTOATTACK, -1);
+
+					// 2. สะกิดเรียก NPC ให้ทำงานแยกกัน
+					if (web_cmd == "storage") {
+						npc_event(sd, "AutoAI_Main::OnWebStorage", 0);
+					} else if (web_cmd == "buy") {
+						npc_event(sd, "AutoAI_Main::OnWebBuy", 0);
+					}
+				}
+			}
+			// ------------------------------------------
+
+
 if (pc_isdead(sd)) {
 	aa_sync_web_status(sd, "dead");
 	if (sd->aa.revive_auto == 1) {
@@ -14362,22 +14601,6 @@ if (pc_isdead(sd)) {
 			
 			// บังคับ revive ก่อน
 			if (status_revive(&sd->bl, 100, 100)) {
-				int duration = 86400000;
-
-				// STAMINA ก่อน
-				status_change_start(&sd->bl, &sd->bl,
-					SC_STAMINA, 10000,
-					1, 0, 0, 0,
-					duration,
-					SCSTART_NOAVOID);
-
-				// AUTOATTACK ต่อ
-				status_change_start(&sd->bl, &sd->bl,
-					SC_AUTOATTACK, 10000,
-					1, 0, 0, 0,
-					duration,
-					SCSTART_NOAVOID);
-
 				// ลบ item ทีหลัง (ไม่กระทบการ revive) โดยเช็คสถานะ NoConsume ก่อน
 				std::shared_ptr<item_data> id_data = item_db.find(item_id);
 				if (id_data != nullptr && !id_data->flag.delay_consume) {
@@ -14417,10 +14640,63 @@ if (pc_isdead(sd)) {
 			unsigned int cooldown_buff = 5000; //Delay Buff
 			int heal_check_skill = pc_checkskill(sd, 28);			
 
+			// v25: lightweight action-lock scheduler for AutoAttack only.
+			// Purpose: after AI issues one meaningful action (skill / walk / pickup walk),
+			// do not let the next timer tick immediately issue a conflicting walk/attack.
+			// This removes the one-cell stutter without touching unit.cpp/manual play.
+			static std::unordered_map<int, t_tick> aa_action_lock_until;
+			static std::unordered_map<int, t_tick> aa_skill_wait_until;
+			// v28: smart exploration state. Kept local/static so we do not need pc.hpp/SQL changes.
+			// It only runs while SC_AUTOATTACK is active inside this timer block.
+			static std::unordered_map<int, t_tick> aa_no_target_since;
+			static std::unordered_map<int, int> aa_no_target_fail_count;
+			const int aa_action_key = sd->status.char_id ? sd->status.char_id : sd->bl.id;
+
+			auto aa_set_action_lock = [&](t_tick ms) {
+				if (ms <= 0)
+					return;
+				t_tick until = last_tick + ms;
+				auto it = aa_action_lock_until.find(aa_action_key);
+				if (it == aa_action_lock_until.end() || DIFF_TICK(until, it->second) > 0)
+					aa_action_lock_until[aa_action_key] = until;
+			};
+
+			auto aa_is_action_locked = [&]() -> bool {
+				auto it = aa_action_lock_until.find(aa_action_key);
+				if (it == aa_action_lock_until.end())
+					return false;
+				if (DIFF_TICK(last_tick, it->second) < 0)
+					return true;
+				aa_action_lock_until.erase(it);
+				return false;
+			};
+
+			auto aa_set_skill_wait = [&](t_tick until) {
+				if (DIFF_TICK(until, last_tick) <= 0)
+					return;
+				auto it = aa_skill_wait_until.find(aa_action_key);
+				if (it == aa_skill_wait_until.end() || DIFF_TICK(until, it->second) > 0)
+					aa_skill_wait_until[aa_action_key] = until;
+			};
+
+			auto aa_is_skill_waiting = [&]() -> bool {
+				auto it = aa_skill_wait_until.find(aa_action_key);
+				if (it == aa_skill_wait_until.end())
+					return false;
+				if (DIFF_TICK(last_tick, it->second) < 0)
+					return true;
+				aa_skill_wait_until.erase(it);
+				return false;
+			};
+
 			// --------------------------------------------------
 			// Emergency / safety behaviors while SC_AUTOATTACK is active
 			// --------------------------------------------------
+			// Flee-mob radar must not be too wide, otherwise crowded maps will look like random flywing spam.
+			// Exact flee-mob triggering is distance-limited again inside aa_danger_radar_sub().
 			const int range = (battle_config.autoattack_mob_detection > 0 ? battle_config.autoattack_mob_detection : 15);
+			const t_tick aa_flee_mob_wing_cd = 6000; // กันวิงรัวจากมอนหลบหนี / MVP
+			const t_tick aa_swarm_wing_cd = 5000;    // โดนรุมยังกันรัวไว้ 5 วิ
 			int aggro = 0;
 			bool found_danger = false;
 			bool hunting_boss = false;
@@ -14429,26 +14705,52 @@ if (pc_isdead(sd)) {
 			if (!flywing) {
 				aa_scan_environment(sd, range, aggro, found_danger, hunting_boss);
 				
-				// Danger Escape: ถ้าเจอบอส (และตั้งให้หนี) หรือมอนที่สั่งหนี ให้วาร์ปทันที
-				if (found_danger && (sd->aa.last_emergency_wing == 0 || DIFF_TICK(last_tick, sd->aa.last_emergency_wing) >= 1000)) {
-					flywing = aa_teleport(sd);
-					if (flywing) sd->aa.last_emergency_wing = last_tick;
+				// Danger Escape: ถ้าเจอบอส (และตั้งให้หนี) หรือมอนที่สั่งหนี ให้หยุดทุกอย่างแล้ววิงทันที
+				// ตั้ง cooldown เมื่อ "พยายามวิง" ด้วย ไม่ใช่เฉพาะตอนสำเร็จ เพื่อกัน spam ตอนของหมด/ตั้งค่าปิดวิง
+				if (found_danger) {
+					sd->aa.target_id = 0;
+					sd->aa.attack_target_id = 0;
+					sd->aa.itempick_id = 0;
+
+					if (sd->aa.last_emergency_wing == 0 || DIFF_TICK(last_tick, sd->aa.last_emergency_wing) >= aa_flee_mob_wing_cd) {
+						sd->aa.last_emergency_wing = last_tick;
+						flywing = aa_teleport(sd);
+
+						// v12: ถ้าวิงสำเร็จ ให้ reset timer ทุกตัวทันที
+						// ไม่งั้นหลังวิงหนีมอนแล้ว block stuck/no-mob ด้านล่างจะคิดว่ายังค้าง
+						// แล้วสั่งวิงซ้ำ แม้แมพใหม่ไม่มีมอนที่ตั้งให้หนีแล้ว
+						if (flywing) {
+							sd->aa.last_teleport = last_tick;
+							sd->aa.last_move = last_tick;
+							sd->aa.last_attack = last_tick;
+							sd->aa.last_hit = last_tick;
+						}
+					}
+
+					// ไม่ให้ tick เดียวกันเดินกลับไปหา/ใช้สกิลใส่มอนที่ตั้งให้หนี
+					skip = true;
 				}
 			}
 
 			// Swarm escape: วิงหนีเมื่อโดนรุม (ถ้าเรดาร์บอกว่ากำลังบวกบอสอยู่ จะไม่วิงหนีลูกน้องบอส)
 			if (!flywing && !hunting_boss && sd->aa.teleport.swarm_enable && sd->aa.teleport.swarm_count > 0) {
 				const int th = (int)sd->aa.teleport.swarm_count;
-				if (aggro >= th && (sd->aa.last_emergency_wing == 0 || DIFF_TICK(last_tick, sd->aa.last_emergency_wing) >= 1000)) {
+				if (aggro >= th && (sd->aa.last_emergency_wing == 0 || DIFF_TICK(last_tick, sd->aa.last_emergency_wing) >= aa_swarm_wing_cd)) {
+					sd->aa.last_emergency_wing = last_tick;
 					flywing = aa_teleport(sd);
-					if (flywing) sd->aa.last_emergency_wing = last_tick;
+					if (flywing) {
+						sd->aa.last_teleport = last_tick;
+						sd->aa.last_move = last_tick;
+						sd->aa.last_attack = last_tick;
+						sd->aa.last_hit = last_tick;
+					}
 				}
 			}
 
 			// [2] FIXED: If SC_AUTOATTACK is ON but the character is "stuck idle" (no move + no attack + no hit)
 			// for 60 seconds, force 1 teleport to unstick it.
 			const t_tick aa_stuck_ms = 60000;
-			if (move_tick >= aa_stuck_ms && attack_tick >= aa_stuck_ms && hit_tick >= aa_stuck_ms) {
+			if (!flywing && move_tick >= aa_stuck_ms && attack_tick >= aa_stuck_ms && hit_tick >= aa_stuck_ms) {
 				if (sd->status.zeny >= 60) {
 					if (sd->aa.last_stuck_tp_try == 0 || DIFF_TICK(last_tick, sd->aa.last_stuck_tp_try) >= 1000) {
 						sd->aa.last_stuck_tp_try = last_tick;
@@ -14465,6 +14767,73 @@ if (pc_isdead(sd)) {
 			struct mob_data * md_target = nullptr;
 			struct block_list* target = nullptr;
 
+			// AutoAttack combat mode:
+			// 0 = normal attack + attack skills
+			// 1 = attack skills only
+			// 2 = idle/support mode (no monster targeting/attack/movement; support still works)
+			int aa_combat_mode = sd->aa.combat_mode;
+			if (aa_combat_mode < 0 || aa_combat_mode > 2)
+				aa_combat_mode = 0;
+			bool aa_attack_enabled = (aa_combat_mode == 0 || aa_combat_mode == 1);
+			bool aa_normal_attack_enabled = (aa_combat_mode == 0 && !sd->aa.stopmelee);
+			bool aa_idle_mode = (aa_combat_mode == 2);
+
+			if (aa_idle_mode) {
+				sd->aa.target_id = 0;
+				sd->aa.attack_target_id = 0;
+				sd->aa.itempick_id = 0;
+			}
+
+			// v23: If the current target already died and no drop was selected,
+			// skip the pickup-walk path and immediately continue target/search logic.
+			// This is more direct than waiting after skill casts, and avoids the
+			// one-cell shuffle when a skill kills a mob that drops nothing.
+			bool aa_skip_pickup_walk_this_tick = false;
+			// v27: Physical/ranged normal attack can leave a stale chase/walk action
+			// toward the dead monster cell. When the mob dies with no drop, that stale
+			// unit action fights the next random walk and looks like walking back to the
+			// corpse position. Keep pickup skip separate from random-walk skip so target
+			// search can still run, but no random walk is issued on the same cleanup tick.
+			bool aa_skip_random_walk_this_tick = false;
+			if (!aa_idle_mode && aa_attack_enabled && sd->aa.target_id > 0) {
+				struct block_list* aa_dead_target_bl = map_id2bl(sd->aa.target_id);
+				TBL_MOB* aa_dead_target_md = (aa_dead_target_bl && aa_dead_target_bl->type == BL_MOB) ? (TBL_MOB*)aa_dead_target_bl : nullptr;
+
+				if (!aa_dead_target_bl || !aa_dead_target_md || aa_dead_target_md->status.hp <= 0 || aa_dead_target_md->special_state.summon) {
+					sd->aa.target_id = 0;
+					sd->aa.attack_target_id = 0;
+					// v25: target is dead/gone, so cancel all skill/action waiting immediately.
+					// This is what makes no-drop kills go straight to next target instead of
+					// dragging through pickup-walk or skill-wait logic.
+					aa_action_lock_until.erase(aa_action_key);
+					aa_skill_wait_until.erase(aa_action_key);
+
+					// Scan once for a real drop. If no item is found, do not enter
+					// pickup walking at all; go straight to selecting the next mob.
+					if (!sd->aa.itempick_id && battle_config.autoattack_item_pickup && sd->aa.pickup_item_config != 2)
+						aa_check_item_pickup_onfloor(sd);
+
+					if (!sd->aa.itempick_id) {
+						// v27: no-drop dead target cleanup for physical/ranged normal attacks.
+						// Stop any leftover attack/chase/walk action that still points to the
+						// monster death cell, then allow target search but block random walk for
+						// this tick. This prevents walk-out -> walk-back loops after no-drop kills.
+						unit_stop_attack(&sd->bl);
+						if (sd->ud.walktimer != INVALID_TIMER)
+							unit_stop_walking(&sd->bl, 1);
+						sd->aa.last_move = last_tick;
+						sd->aa.last_attack = last_tick;
+						sd->aa.lastposition.dx = 0;
+						sd->aa.lastposition.dy = 0;
+						aa_skip_pickup_walk_this_tick = true;
+						aa_skip_random_walk_this_tick = true;
+					}
+				}
+			}
+
+			bool aa_action_locked_now = aa_is_action_locked();
+			if (aa_action_locked_now)
+				skip = true;
 
 			//Follow Player
 			const char* name = pc_readaccountregstr(sd, add_str("#AI_charselect$"));
@@ -14473,8 +14842,8 @@ if (pc_isdead(sd)) {
 			}
 			
 			// Item pick up
-			if(battle_config.autoattack_item_pickup){
-				if(!pc_issit(sd) && sd->aa.pickup_item_config != 2){
+			if(!aa_action_locked_now && !aa_skip_pickup_walk_this_tick && battle_config.autoattack_item_pickup){
+				if(!pc_issit(sd) && sd->aa.pickup_item_config != 2 && !aa_idle_mode){
 					aa_check_item_pickup_onfloor(sd);
 					if(sd->aa.itempick_id){
 						struct block_list *fitem_bl = map_id2bl(sd->aa.itempick_id);
@@ -14486,6 +14855,7 @@ if (pc_isdead(sd)) {
 									sd->aa.itempick_id = 0; // ทิ้งไอเทมไปเลยถ้าอยู่นอกระยะ
 								} else {									
 									unit_walktobl(&sd->bl, fitem_bl, 1, 1);
+									aa_set_action_lock(350);
 								}
 							} else {
 								if(!sd->aa.last_pickup || DIFF_TICK(last_tick, sd->aa.last_pickup) > 0){
@@ -14500,7 +14870,9 @@ if (pc_isdead(sd)) {
 				}
 			}
 
-			if(!sd->aa.itempick_id)
+			// v23: Do not delay target search just because a skill was used.
+			// If there is no item to pick, immediately continue with target logic.
+			if(!sd->aa.itempick_id && aa_attack_enabled)
 				aa_check_target_alive(sd);
 
 			if(sd->aa.target_id){
@@ -14728,202 +15100,414 @@ if (pc_isdead(sd)) {
 				}
 			}
 
-//Attack skills
-			if (!skip && !pc_issit(sd) && sd->aa.target_id > 0 && !sd->aa.itempick_id){ //Attack
-				sd->aa.last_teleport = last_tick; // set it to 0 as we found target
+//Attack skills / Normal attack
+			bool aa_skill_casted = false;
+			bool aa_skill_moved = false;
+			bool aa_has_matching_skill = false;
 
-				if(sd->aa.target_id != sd->aa.attack_target_id){
-					sd->aa.attack_target_id = sd->aa.target_id;
-					sd->aa.last_attack = last_tick;
-				} else if(!sd->aa.teleport.use_teleport || !sd->aa.teleport.use_flywing){
+			// v26: ranged / magic smooth guard.
+			// Melee normal attack is already stable, so do not change it.
+			// Ranged weapons can stutter when unit_attack is re-issued every tick while
+			// the target is already being attacked or the unit is already walking to range.
+			bool aa_ranged_weapon = false;
+			switch (sd->status.weapon) {
+				case W_BOW:
+				case W_WHIP:
+				case W_MUSICAL:
+				case W_REVOLVER:
+				case W_RIFLE:
+				case W_GATLING:
+				case W_SHOTGUN:
+				case W_GRENADE:
+					aa_ranged_weapon = true;
+					break;
+				default:
+					break;
+			}
 
-					if(sd->aa.teleport.delay_nomobmeet && !sd->aa.target_id){
-
-						if(attack_tick > sd->aa.teleport.delay_nomobmeet && !skip)
-							flywing = aa_teleport(sd);
-
-					} else if(sd->aa.target_id && attack_tick > battle_config.autoattack_max_time_per_mob && !skip) // stuck on target, try to teleport
-						flywing = aa_teleport(sd);
+			if (!skip && !pc_issit(sd) && !sd->aa.itempick_id && aa_attack_enabled){ //Attack
+				if (!sd->aa.target_id || !aa_check_target(sd, sd->aa.target_id)) {
+					aa_check_target_alive(sd);
 				}
 
-				if(battle_config.autoattack_skill_attack){
-					if(last_tick >= sd->aa.skill_cd && sd->aa.autoattackskills.size()){
-						
-						// [ปรับปรุง] ใช้ thread_local mt19937 เพื่อลดการกิน CPU ของเซิร์ฟเวอร์
-						static thread_local std::mt19937 generator(std::random_device{}());
-						std::vector<s_autoattackskills> skills_temp_list = sd->aa.autoattackskills;
-						std::shuffle(skills_temp_list.begin(), skills_temp_list.end(), generator);
+				if (sd->aa.target_id > 0) {
+					target = map_id2bl(sd->aa.target_id);
+					md_target = nullptr;
+					if (target && target->type == BL_MOB)
+						md_target = (TBL_MOB*)target;
+				}
 
-						int aa_swarm_aggro = -1;
-						bool aa_need_swarm_scan = sd->aa.skill_swarm_min > 0;
-						for (const auto &skill_entry : skills_temp_list) {
-							if (skill_entry.swarm_min > 0) {
-								aa_need_swarm_scan = true;
-								break;
+				if (sd->aa.target_id > 0 && target && md_target) {
+					sd->aa.last_teleport = last_tick; // set it to 0 as we found target
+
+					if(sd->aa.target_id != sd->aa.attack_target_id){
+						sd->aa.attack_target_id = sd->aa.target_id;
+						sd->aa.last_attack = last_tick;
+					} else if(!sd->aa.teleport.use_teleport || !sd->aa.teleport.use_flywing){
+
+						if(sd->aa.teleport.delay_nomobmeet && !sd->aa.target_id){
+
+							if(attack_tick > sd->aa.teleport.delay_nomobmeet && !skip)
+								flywing = aa_teleport(sd);
+
+						} else if(sd->aa.target_id && attack_tick > battle_config.autoattack_max_time_per_mob && !skip) // stuck on target, try to teleport
+							flywing = aa_teleport(sd);
+					}
+
+					bool aa_waiting_attack_skill = (battle_config.autoattack_skill_attack && sd->aa.autoattackskills.size() && aa_is_skill_waiting());
+					if (aa_waiting_attack_skill) {
+						// v25: an attack skill was just used on this live target.
+						// While waiting for its real delay/cooldown, do NOT fall back to
+						// normal attack or random walk. This avoids range flip/flop stutter.
+						aa_skill_moved = true;
+					} else if(battle_config.autoattack_skill_attack){
+						if(last_tick >= sd->aa.skill_cd && sd->aa.autoattackskills.size()){
+							
+							// [ปรับปรุง] ใช้ thread_local mt19937 เพื่อลดการกิน CPU ของเซิร์ฟเวอร์
+							static thread_local std::mt19937 generator(std::random_device{}());
+							std::vector<s_autoattackskills> skills_temp_list = sd->aa.autoattackskills;
+							std::shuffle(skills_temp_list.begin(), skills_temp_list.end(), generator);
+
+							int aa_swarm_aggro = -1;
+							bool aa_need_swarm_scan = sd->aa.skill_swarm_min > 0;
+							for (const auto &skill_entry : skills_temp_list) {
+								if (aa_skill_get_swarm_min(skill_entry) > 0) {
+									aa_need_swarm_scan = true;
+									break;
+								}
 							}
-						}
-						if (aa_need_swarm_scan) {
-							const int range = (battle_config.autoattack_mob_detection > 0 ? battle_config.autoattack_mob_detection : 15);
-							bool dummy_danger = false;
-							bool dummy_boss = false;
-							// เรียกใช้เรดาร์ตัวใหม่ที่เราแก้ไป เพื่อหาค่า aggro (จำนวนมอนรุม)
-							aa_scan_environment(sd, range, aa_swarm_aggro, dummy_danger, dummy_boss);
-						}
+							if (aa_need_swarm_scan) {
+								const int range = (battle_config.autoattack_mob_detection > 0 ? battle_config.autoattack_mob_detection : 15);
+								bool dummy_danger = false;
+								bool dummy_boss = false;
+								// เรียกใช้เรดาร์ตัวใหม่ที่เราแก้ไป เพื่อหาค่า aggro (จำนวนมอนรุม)
+								aa_scan_environment(sd, range, aa_swarm_aggro, dummy_danger, dummy_boss);
+							}
 
-						for(auto &itAutoattackskills : skills_temp_list){
-							int skill_swarm_min = itAutoattackskills.swarm_min > 0 ? itAutoattackskills.swarm_min : sd->aa.skill_swarm_min;
-							if (skill_swarm_min > 0 && aa_swarm_aggro < skill_swarm_min)
-								continue;
-							if(last_tick >= sd->aa.skill_cd && last_tick >= itAutoattackskills.last_use && rand()%100 <= sd->aa.skill_use_rate){ // 25% is default rate
-								if(itAutoattackskills.is_active
-									&& !skill_isNotOk(itAutoattackskills.skill_id, sd)
-									&& pc_checkskill(sd, itAutoattackskills.skill_id) >= itAutoattackskills.skill_lv
-									&& skill_check_condition_castbegin(sd, itAutoattackskills.skill_id, itAutoattackskills.skill_lv)){
+							for(auto &itAutoattackskills : skills_temp_list){
+								if(!itAutoattackskills.is_active)
+									continue;
 
-									if(itAutoattackskills.skill_id == AL_HEAL && !aa_possible_heal_attack(sd,md_target))
+								// 0 = all monsters. >0 = use this attack skill only on that mob id.
+								uint32 skill_target_mob_id = aa_skill_get_target_mob_id(itAutoattackskills);
+								if (skill_target_mob_id > 0) {
+									if (!md_target || md_target->mob_id != skill_target_mob_id)
+										continue;
+								}
+
+								uint32 entry_swarm_min = aa_skill_get_swarm_min(itAutoattackskills);
+								int skill_swarm_min = entry_swarm_min > 0 ? (int)entry_swarm_min : sd->aa.skill_swarm_min;
+								if (skill_swarm_min > 0 && aa_swarm_aggro < skill_swarm_min)
+									continue;
+
+								if(skill_isNotOk(itAutoattackskills.skill_id, sd))
+									continue;
+								if(pc_checkskill(sd, itAutoattackskills.skill_id) < itAutoattackskills.skill_lv)
+									continue;
+								if(!skill_check_condition_castbegin(sd, itAutoattackskills.skill_id, itAutoattackskills.skill_lv))
+									continue;
+
+								if(itAutoattackskills.skill_id == AL_HEAL && !aa_possible_heal_attack(sd,md_target))
+									continue;
+
+								aa_has_matching_skill = true;
+
+								if (skill_get_inf(itAutoattackskills.skill_id) & INF_ATTACK_SKILL || skill_get_inf(itAutoattackskills.skill_id) & INF_GROUND_SKILL || skill_get_inf(itAutoattackskills.skill_id) & INF_SUPPORT_SKILL) {
+									int aa_skill_range = skill_get_range2(&sd->bl, itAutoattackskills.skill_id, itAutoattackskills.skill_lv, true);
+
+									if (aa_skill_range < 0)
+										aa_skill_range = aa_skill_range * -1;
+
+									if (aa_skill_range == 0)
+										aa_skill_range = 2;
+
+									// v26: ranged/magic hysteresis.
+									// Old logic forced long-range skills to walk to range-2 before casting.
+									// That is good for melee-like skills, but bad for magic/ranged behavior:
+									// the target moves, cooldown ends, AI walks closer again, then backs/retargets.
+									// Use only 1-cell safety from max range and only walk when truly outside it.
+									int aa_walk_range = aa_skill_range;
+									if (aa_walk_range >= 5)
+										aa_walk_range = aa_skill_range - 1;
+									if (aa_walk_range < 1)
+										aa_walk_range = 1;
+
+									// If a cast unexpectedly fails while already inside the safe range,
+									// recover by moving only one cell closer instead of reissuing the same edge walk.
+									int aa_fail_walk_range = (aa_walk_range > 1 ? aa_walk_range - 1 : 1);
+
+									// IMPORTANT: walk into skill range before applying skill-use chance.
+									// Otherwise skill-only mode can stand still when the random chance fails.
+									if (!check_distance_bl(&sd->bl, target, aa_walk_range)) {
+										if (sd->aa.stay_mode == 1) {
+											sd->aa.target_id = 0;
+											continue;
+										}
+
+										// กันสั่งเดินซ้ำทุก tick จนตัวละครแกว่งหน้า/หลัง
+										if (sd->ud.walktimer == INVALID_TIMER && DIFF_TICK(last_tick, sd->aa.last_move) >= 700) {
+											unit_walktobl(&sd->bl, target, aa_walk_range, 0);
+											sd->aa.last_move = last_tick;
+											aa_set_action_lock(450);
+										}
+										aa_skill_moved = true;
+										break;
+									}
+
+									// ถ้ากำลังเดินเข้าระยะสกิลอยู่ ให้รอให้เดินครบช่องก่อนค่อยร่าย
+									// ไม่งั้น unit_skilluse_id2() จะหยุดเดินกลางก้าว ทำให้บอทเดินทีละช่อง/ไม่สมูท
+									if (sd->ud.walktimer != INVALID_TIMER) {
+										aa_skill_moved = true;
+										break;
+									}
+
+									if(last_tick < itAutoattackskills.last_use || rand()%100 > sd->aa.skill_use_rate)
 										continue;
 
 									aa_ammo_skill_req(sd,md_target,itAutoattackskills.skill_id,itAutoattackskills.skill_lv);
 
-									if (skill_get_inf(itAutoattackskills.skill_id) & INF_ATTACK_SKILL || skill_get_inf(itAutoattackskills.skill_id) & INF_GROUND_SKILL || skill_get_inf(itAutoattackskills.skill_id) & INF_SUPPORT_SKILL) {
-										int aa_skill_range = skill_get_range(itAutoattackskills.skill_id, itAutoattackskills.skill_lv);
+									if (skill_get_inf(itAutoattackskills.skill_id) & INF_ATTACK_SKILL || skill_get_inf(itAutoattackskills.skill_id) & INF_SUPPORT_SKILL) {
 
-										if (aa_skill_range < 0)
-											aa_skill_range = aa_skill_range * -1;
-
-										if (aa_skill_range == 0)
-											aa_skill_range = 2;
-
-										if (!check_distance_bl(&sd->bl, target, aa_skill_range)) {
-											// [ปรับปรุง] ถ้าเปิด Stay Mode แล้วเป้าหมายอยู่นอกระยะ ให้ทิ้งเป้าหมายไปเลย (กันยืนเอ๋อ)
-											if (sd->aa.stay_mode == 1) {
-												sd->aa.target_id = 0;
-												continue;
+										if (!unit_skilluse_id(&sd->bl, sd->aa.target_id, itAutoattackskills.skill_id, itAutoattackskills.skill_lv)) {
+											if (sd->aa.stay_mode != 1 && target) {
+												if (sd->ud.walktimer == INVALID_TIMER && DIFF_TICK(last_tick, sd->aa.last_move) >= 700) {
+													unit_walktobl(&sd->bl, target, aa_fail_walk_range, 0);
+													sd->aa.last_move = last_tick;
+													aa_set_action_lock(450);
+												}
+												aa_skill_moved = true;
 											}
-											unit_walktobl(&sd->bl, target, aa_skill_range, 1);
 											continue;
 										}
+									} else if (skill_get_inf(itAutoattackskills.skill_id) & INF_GROUND_SKILL) {
 
-										if (skill_get_inf(itAutoattackskills.skill_id) & INF_ATTACK_SKILL || skill_get_inf(itAutoattackskills.skill_id) & INF_SUPPORT_SKILL) {
-
-											if (!unit_skilluse_id(&sd->bl, sd->aa.target_id, itAutoattackskills.skill_id, itAutoattackskills.skill_lv))
-												continue;
-										} else if (skill_get_inf(itAutoattackskills.skill_id) & INF_GROUND_SKILL) {
-
-											if (!unit_skilluse_pos(bl, target->x, target->y, itAutoattackskills.skill_id, itAutoattackskills.skill_lv))
-												continue;
-										}
-									} else if (skill_get_inf(itAutoattackskills.skill_id) & INF_SELF_SKILL) {
-										if (check_distance_bl(&sd->bl, target, 2)) {
-
-											if (!unit_skilluse_id(&sd->bl, sd->bl.id, itAutoattackskills.skill_id, itAutoattackskills.skill_lv))
-												continue;
-										} else {
-											// [ปรับปรุง] กันยืนเอ๋อสำหรับสกิลบัฟตัวเอง
-											if (sd->aa.stay_mode == 1) {
-												sd->aa.target_id = 0;
-												continue;
+										if (!unit_skilluse_pos(bl, target->x, target->y, itAutoattackskills.skill_id, itAutoattackskills.skill_lv)) {
+											if (sd->aa.stay_mode != 1 && target) {
+												if (sd->ud.walktimer == INVALID_TIMER && DIFF_TICK(last_tick, sd->aa.last_move) >= 700) {
+													unit_walktobl(&sd->bl, target, aa_fail_walk_range, 0);
+													sd->aa.last_move = last_tick;
+													aa_set_action_lock(450);
+												}
+												aa_skill_moved = true;
 											}
-											unit_walktobl(&sd->bl, target, 2, 1);
 											continue;
 										}
 									}
+								} else if (skill_get_inf(itAutoattackskills.skill_id) & INF_SELF_SKILL) {
+									if (!check_distance_bl(&sd->bl, target, 1)) {
+										if (sd->aa.stay_mode == 1) {
+											sd->aa.target_id = 0;
+											continue;
+										}
+										if (sd->ud.walktimer == INVALID_TIMER && DIFF_TICK(last_tick, sd->aa.last_move) >= 700) {
+											unit_walktobl(&sd->bl, target, 1, 0);
+											sd->aa.last_move = last_tick;
+											aa_set_action_lock(450);
+										}
+										aa_skill_moved = true;
+										break;
+									}
+
+									if(last_tick < itAutoattackskills.last_use || rand()%100 > sd->aa.skill_use_rate)
+										continue;
+
+									if (!unit_skilluse_id(&sd->bl, sd->bl.id, itAutoattackskills.skill_id, itAutoattackskills.skill_lv))
+										continue;
+								} else
+									continue;
 
 								sd->idletime = last_time;
+								aa_skill_casted = true;
+								// หลังร่ายสกิลสำเร็จ ให้ล็อก tick การเดิน/ตีไว้สั้น ๆ
+								// กัน main movement logic สั่งเดินสวนทันทีจนเกิดอาการหน้าถอยหลัง
+								sd->aa.last_attack = last_tick;
+								sd->aa.last_move = last_tick;
 								// Prevent skill spamming: combine aftercast delay + real cooldown + cast time,
 								// and apply a small global minimum GCD floor.
 								{
 									const t_tick aa_min_gcd = 600; // ms
-								t_tick next_cd = last_tick + skill_delayfix(&sd->bl, itAutoattackskills.skill_id, itAutoattackskills.skill_lv);
-								t_tick cd2 = last_tick + pc_get_skillcooldown(sd, itAutoattackskills.skill_id, itAutoattackskills.skill_lv)
-									+ skill_castfix(&sd->bl, itAutoattackskills.skill_id, itAutoattackskills.skill_lv);
-								if (next_cd < cd2)
-									next_cd = cd2;
-								if (next_cd < last_tick + aa_min_gcd)
-									next_cd = last_tick + aa_min_gcd;
-								sd->aa.skill_cd = itAutoattackskills.last_use = next_cd;
+									t_tick next_cd = last_tick + skill_delayfix(&sd->bl, itAutoattackskills.skill_id, itAutoattackskills.skill_lv);
+									t_tick cd2 = last_tick + pc_get_skillcooldown(sd, itAutoattackskills.skill_id, itAutoattackskills.skill_lv)
+										+ skill_castfix(&sd->bl,itAutoattackskills.skill_id, itAutoattackskills.skill_lv);
+									if (next_cd < cd2)
+										next_cd = cd2;
+									if (next_cd < last_tick + aa_min_gcd)
+										next_cd = last_tick + aa_min_gcd;
+									sd->aa.skill_cd = itAutoattackskills.last_use = next_cd;
+									aa_set_skill_wait(next_cd);
+									// Lock only the immediate scheduler window; skill_wait handles the full cooldown.
+									aa_set_action_lock((t_tick)cap_value((int)DIFF_TICK(next_cd, last_tick), 450, 1200));
 								}
-									break;
-								}
+								break;
 							}
 						}
 					}
-				}
 
-				if(!sd->aa.stopmelee)
-				unit_attack(bl, sd->aa.target_id, 1);
+					// Skill-only mode should not lock on a monster that has no matching attack skill.
+					if (aa_combat_mode == 1 && !aa_has_matching_skill && !aa_skill_moved && !aa_skill_casted) {
+						sd->aa.target_id = 0;
+						sd->aa.attack_target_id = 0;
+					}
+
+					// Do not start normal attack on the same tick after casting or walking for a skill.
+					// This prevents normal attack from cancelling cast-time skills.
+					if(!aa_skill_casted && !aa_skill_moved && aa_normal_attack_enabled) {
+						// v26: Do not spam unit_attack every AI tick for ranged weapons.
+						// Melee is left untouched because it was already smooth.
+						if (aa_ranged_weapon) {
+							if (sd->ud.attacktimer == INVALID_TIMER && sd->ud.walktimer == INVALID_TIMER)
+								unit_attack(bl, sd->aa.target_id, 1);
+						} else {
+							unit_attack(bl, sd->aa.target_id, 1);
+						}
+					}
+				}
 			}
+
+			// ถ้า tick นี้เพิ่งร่ายสกิลหรือสั่งเดินเข้าระยะสกิล อย่าให้ main movement logic ไปสั่งเดินสุ่มทับ
+			if (aa_skill_casted || aa_skill_moved)
+				skip = true;
 
 			if(!sd->aa.itempick_id && sd->aa.target_id)
 				if(aa_check_target_alive(sd))
 				    skip = true;
 
 			//stop walk
-			if (sd->aa.stay_mode == 1) {
+			if (aa_idle_mode) {
+				// Idle/support mode: do not move/search monsters. Support/heal/buff blocks above still run.
+				aa_no_target_since.erase(aa_action_key);
+				aa_no_target_fail_count.erase(aa_action_key);
+			} else if (sd->aa.stay_mode == 1) {
 				// No movement in stay_mode
+				aa_no_target_since.erase(aa_action_key);
+				aa_no_target_fail_count.erase(aa_action_key);
 			} else {
 			// Main movement logic
-			if (!skip && !pc_issit(sd) && ((sd->aa.target_id == 0 && sd->aa.itempick_id == 0) || 
+			// v28: Smart exploration when no target/no item is around.
+			// Old behavior could stand idle because every candidate cell was recently visited
+			// or because it kept trying the old autoattack_move_type vector. If no monster is
+			// found, increase walk distance slightly and use a second pass that ignores the
+			// recent-visited filter so the bot always leaves the empty spot.
+			bool aa_is_walking_now = (sd->ud.walktimer != INVALID_TIMER);
+			bool aa_no_target_now = (sd->aa.target_id == 0 && sd->aa.itempick_id == 0);
+			if (aa_no_target_now) {
+				if (aa_no_target_since.find(aa_action_key) == aa_no_target_since.end())
+					aa_no_target_since[aa_action_key] = last_tick;
+			} else {
+				aa_no_target_since.erase(aa_action_key);
+				aa_no_target_fail_count.erase(aa_action_key);
+			}
+
+			if (!skip && !aa_skip_random_walk_this_tick && !pc_issit(sd) && !aa_is_walking_now && (aa_no_target_now || 
 				attack_tick > battle_config.autoattack_mob_struck || idle_tick > 15) && !flywing) {
 
-				const int d = battle_config.autoattack_move; 
-				int dx, dy, tx, ty;
+				int base_d = battle_config.autoattack_move;
+				if (base_d < 3)
+					base_d = 3;
+
+				t_tick no_target_tick = 0;
+				auto no_target_it = aa_no_target_since.find(aa_action_key);
+				if (no_target_it != aa_no_target_since.end())
+					no_target_tick = DIFF_TICK(last_tick, no_target_it->second);
+
+				int fail_count = 0;
+				auto fail_it = aa_no_target_fail_count.find(aa_action_key);
+				if (fail_it != aa_no_target_fail_count.end())
+					fail_count = fail_it->second;
+
+				int d = base_d;
+				if (aa_no_target_now) {
+					if (no_target_tick >= 2500 || fail_count >= 1)
+						d += 2;
+					if (no_target_tick >= 5000 || fail_count >= 2)
+						d += 2;
+					if (d > 10)
+						d = 10;
+				}
+
+				int dx = 0, dy = 0, tx = 0, ty = 0;
 				bool dest_checked = false;
+				bool moved = false;
 
 				if ((!sd->aa.teleport.use_teleport || !sd->aa.teleport.use_flywing) && 
 					sd->aa.teleport.delay_nomobmeet && tele_tick > sd->aa.teleport.delay_nomobmeet && 
 					!sd->aa.target_id && !skip) {
 					flywing = aa_teleport(sd);
+					if (flywing) {
+						sd->aa.last_teleport = last_tick;
+						sd->aa.last_move = last_tick;
+						sd->aa.last_attack = last_tick;
+						sd->aa.last_hit = last_tick;
+						aa_no_target_since.erase(aa_action_key);
+						aa_no_target_fail_count.erase(aa_action_key);
+					}
 				}
 
-				if (move_tick > 500 && !flywing) {
+				// Explore faster only when the bot truly has nothing to do.
+				const t_tick aa_move_interval = aa_no_target_now ? 450 : 800;
+				if (move_tick > aa_move_interval && !flywing && sd->ud.walktimer == INVALID_TIMER) {
 					int directions[8][2] = {{d, 0}, {-d, 0}, {0, d}, {0, -d}, {d, d}, {-d, -d}, {d, -d}, {-d, d}}; 
 
-					if (battle_config.autoattack_move_type) {
+					if (battle_config.autoattack_move_type && !aa_no_target_now) {
 						tx = sd->aa.lastposition.dx + sd->bl.x;
 						ty = sd->aa.lastposition.dy + sd->bl.y;
 					}
 
-					for (int attempts = 0; attempts < MAX_ATTEMPTS; attempts++) { 
-						int r = rnd() % 8; 
-						dx = directions[r][0];
-						dy = directions[r][1];
+					// Pass 0: respect recent-position history.
+					// Pass 1: if every candidate was recently visited/blocked, ignore history and move anyway.
+					for (int pass = 0; pass < 2 && !moved; pass++) {
+						for (int attempts = 0; attempts < MAX_ATTEMPTS; attempts++) { 
+							int r = rnd() % 8; 
+							dx = directions[r][0];
+							dy = directions[r][1];
 
-						int x = sd->bl.x + dx;
-						int y = sd->bl.y + dy;
+							int x = sd->bl.x + dx;
+							int y = sd->bl.y + dy;
 
-						// Check if the area has been visited recently
-						if (has_visited_recently(sd, x, y)) {
-							continue; // Retry finding a new direction
-						}
+							// Check if the area has been visited recently. In explore fallback pass,
+							// ignore this or the bot can stand still in small/empty rooms.
+							if (pass == 0 && has_visited_recently(sd, x, y))
+								continue;
 
-						if (battle_config.autoattack_move_type && !dest_checked &&
-							(sd->aa.lastposition.dx != 0 || sd->aa.lastposition.dy != 0) &&
-							((tx != sd->bl.x) || (ty != sd->bl.y)) &&
-							map_getcell(sd->bl.m, tx, ty, CELL_CHKPASS) &&
-							unit_walktoxy(&sd->bl, tx, ty, 0)) {
+							if (!aa_no_target_now && battle_config.autoattack_move_type && !dest_checked &&
+								(sd->aa.lastposition.dx != 0 || sd->aa.lastposition.dy != 0) &&
+								((tx != sd->bl.x) || (ty != sd->bl.y)) &&
+								map_getcell(sd->bl.m, tx, ty, CELL_CHKPASS) &&
+								unit_walktoxy(&sd->bl, tx, ty, 0)) {
 
 							sd->aa.last_move = last_tick;
+							aa_set_action_lock(aa_no_target_now ? 300 : 500);
 							add_position_to_history(sd);
+							moved = true;
 							break;
 						} else {
 							dest_checked = true; 
 						}
 
-						// Check if the target position is valid and move there
-						if (((x != sd->bl.x) || (y != sd->bl.y)) &&
-							map_getcell(sd->bl.m, x, y, CELL_CHKPASS) &&
-							unit_walktoxy(&sd->bl, x, y, 0)) {
+							// Check if the target position is valid and move there.
+							if (((x != sd->bl.x) || (y != sd->bl.y)) &&
+								map_getcell(sd->bl.m, x, y, CELL_CHKPASS) &&
+								unit_walktoxy(&sd->bl, x, y, 0)) {
 
 							sd->aa.last_move = last_tick;
+							aa_set_action_lock(aa_no_target_now ? 300 : 500);
 							add_position_to_history(sd);
 
 							if (battle_config.autoattack_move_type) {
 								sd->aa.lastposition.dx = dx;
 								sd->aa.lastposition.dy = dy;
 							}
+							moved = true;
 							break;
 						}
+					}
+				}
+
+					if (aa_no_target_now) {
+						if (moved)
+							aa_no_target_fail_count[aa_action_key] = 0;
+						else
+							aa_no_target_fail_count[aa_action_key] = fail_count + 1;
 					}
 				}
 			}
@@ -16780,18 +17364,17 @@ bool aa_check_target(map_session_data *sd, unsigned int id)
 	}
 	// ===================================================
 
-	// ---- FLEE MOB CHECK (must work even if far/unreachable) ----
-	if (util::vector_exists(sd->aa.flee_mobs, md->mob_id)) {
-		aa_teleport(sd);
+	// ---- FLEE MOB CHECK ----
+	// Do NOT teleport from target validation. The radar block handles flee-mob/boss wing
+	// with cooldown. Teleporting here can be called many times during mob scanning and
+	// causes rapid flywing spam.
+	if (util::vector_exists(sd->aa.flee_mobs, md->mob_id))
 		return false;
-	}
 
 	// ---- FACING BOSS (MVP) ----
 	e_mob_bosstype bosstype = md->get_bosstype();
-	if (sd->aa.teleport.facing_boss && bosstype == BOSSTYPE_MVP) {
-		aa_teleport(sd);
+	if (sd->aa.teleport.facing_boss && bosstype == BOSSTYPE_MVP)
 		return false;
-	}
 
 	// Ignore hidden/cloaked mobs
 	if (md->sc.option & (OPTION_HIDE|OPTION_CLOAK))
@@ -16893,21 +17476,41 @@ static int aa_danger_radar_sub(struct block_list* bl, va_list ap)
 	if (!md || status_isdead(&md->bl) || md->special_state.summon)
 		return 0;
 
-	// 1. เรดาร์จับบอส และมอนสเตอร์ที่สั่งให้หนี
+	// Ignore clones / fake-player mobs / hidden mobs.
+	// Otherwise flee radar can react to units that players cannot really fight/see.
+	if (md->npc_event[0] != '\0' && (strstr(md->npc_event, "OnFieldDead") || strstr(md->npc_event, "FPCtrl")))
+		return 0;
+	if (md->sc.option & (OPTION_HIDE|OPTION_CLOAK))
+		return 0;
+
+	const bool is_targeting_me = (md->target_id == sd->bl.id);
+	const bool is_flee_mob = util::vector_exists(sd->aa.flee_mobs, md->mob_id);
+	const int dist = distance_xy(sd->bl.x, sd->bl.y, md->bl.x, md->bl.y);
+	const int aa_flee_mob_trigger_range = 7;
+
+	// 1. เรดาร์จับมอนสเตอร์ที่สั่งให้หนีก่อนเสมอ แต่ต้องเป็นอันตรายจริง ๆ
+	// - มันกำลังเล็งเราอยู่ หรือ
+	// - อยู่ใกล้ไม่เกิน 7 ช่อง และเดินถึงกันได้
+	// ไม่งั้นแมพที่มีมอนชนิดนั้นเยอะ จะวิงรัวเหมือนมั่วทั้งที่มอนอยู่ไกล ๆ
 	if (!radar->found_danger) {
-		if (md->get_bosstype() == BOSSTYPE_MVP) {
+		if (is_flee_mob) {
+			bool reachable = false;
+			if (dist <= aa_flee_mob_trigger_range)
+				reachable = path_search(NULL, sd->bl.m, sd->bl.x, sd->bl.y, md->bl.x, md->bl.y, 1, CELL_CHKNOREACH);
+
+			if (is_targeting_me || (dist <= aa_flee_mob_trigger_range && reachable))
+				radar->found_danger = true;
+		} else if (md->get_bosstype() == BOSSTYPE_MVP) {
 			if (sd->aa.teleport.facing_boss) {
 				radar->found_danger = true; // ตั้งให้หนีบอส -> เจอแล้วสั่งวิง
 			} else {
 				radar->hunting_boss = true; // ตั้งให้สู้บอส -> ห้ามวิงหนีลูกน้อง
 			}
-		} else if (util::vector_exists(sd->aa.flee_mobs, md->mob_id)) {
-			radar->found_danger = true;
 		}
 	}
 
 	// 2. เรดาร์นับจำนวนตัวที่กำลังตีเราอยู่ (Swarm Count)
-	if (md->target_id == sd->bl.id) {
+	if (is_targeting_me) {
 		radar->aggro_count++;
 	}
 
@@ -18984,6 +19587,7 @@ void status_readdb( bool reload ){
 		custom_buff_db.reload();
 		char_bonus_db.reload();
 		char_bonus_combo_db.reload();
+		title_bonus_db_load();
 		global_drop_db.reload();
 	}else{
 		size_fix_db.load();
@@ -18995,6 +19599,7 @@ void status_readdb( bool reload ){
 		custom_buff_db.load();
 		char_bonus_db.load();
 		char_bonus_combo_db.load();
+		title_bonus_db_load();
 		global_drop_db.load();
 	}
 	elemental_attribute_db.load();
