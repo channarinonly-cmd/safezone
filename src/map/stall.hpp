@@ -74,6 +74,7 @@ void stall_close(map_session_data* sd);
 void stall_close_from_gm(uint32 vender_id);
 void stall_vending_getbackitems(struct s_stall_data* st);
 void stall_buying_getbackzeny(struct s_stall_data* st);
+void stall_process_pending_notice(map_session_data* sd);
 bool stall_isStallOpen(unsigned int CID);
 bool stall_searchall(map_session_data* sd, const struct s_search_store_search* s, const struct s_stall_data* st, short type);
 TIMER_FUNC(stall_timeout);

@@ -62,6 +62,7 @@
 #include "script.hpp" // struct script_reg, struct script_regstr
 #include "searchstore.hpp"  // struct s_search_store_info
 #include "status.hpp" // OPTION_*, struct weapon_atk
+#include "stall.hpp"
 #include "storage.hpp"
 #include "unit.hpp" // unit_stop_attack(), unit_stop_walking()
 #include "vending.hpp" // struct s_vending
@@ -15562,6 +15563,7 @@ void pc_scdata_received(map_session_data *sd) {
 	}
 
 	sd->state.pc_loaded = true;
+	stall_process_pending_notice(sd);
 
 	if (sd->state.connect_new == 0 && sd->fd) { // Character already loaded map! Gotta trigger LoadEndAck manually.
 		sd->state.connect_new = 1;

@@ -34,6 +34,241 @@
 static int stall_id=START_STALL_NUM;
 std::vector<s_stall_data *> stall_db;
 std::vector<mail_message> stall_mail_db;
+static const t_itemid STALL_CC_ITEM_ID = 30000;
+
+static bool stall_trade_notice_table_ready = false;
+
+static bool stall_ensure_trade_notice_table(void)
+{
+	if (stall_trade_notice_table_ready)
+		return true;
+
+	if (SQL_ERROR == Sql_Query(mmysql_handle,
+		"CREATE TABLE IF NOT EXISTS `stall_trade_notice` ("
+		"`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,"
+		"`char_id` INT UNSIGNED NOT NULL,"
+		"`account_id` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`direction` VARCHAR(16) NOT NULL,"
+		"`channel` VARCHAR(16) NOT NULL,"
+		"`currency` VARCHAR(8) NOT NULL,"
+		"`amount` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`before_amount` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`after_amount` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`counterparty_id` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`counterparty_name` VARCHAR(24) NOT NULL DEFAULT '',"
+		"`item_id` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`item_name` VARCHAR(64) NOT NULL DEFAULT '',"
+		"`item_amount` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`unit_price` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`total_price` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`tax` INT UNSIGNED NOT NULL DEFAULT 0,"
+		"`claimed` TINYINT UNSIGNED NOT NULL DEFAULT 0,"
+		"`created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+		"`claimed_at` DATETIME NULL,"
+		"PRIMARY KEY (`id`),"
+		"KEY `char_claim` (`char_id`,`claimed`)"
+		") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
+		Sql_ShowDebug(mmysql_handle);
+		return false;
+	}
+
+	stall_trade_notice_table_ready = true;
+	return true;
+}
+
+static const char* stall_currency_name(bool is_cash)
+{
+	return is_cash ? "CC" : "Zeny";
+}
+
+static const char* stall_item_display_name(t_itemid nameid)
+{
+	std::shared_ptr<item_data> id = item_db.find(nameid);
+	return id ? id->name.c_str() : "Unknown item";
+}
+
+static int stall_count_inventory_item(map_session_data* sd, t_itemid nameid)
+{
+	int amount = 0;
+
+	for (int i = 0; i < MAX_INVENTORY; i++) {
+		if (sd->inventory.u.items_inventory[i].nameid == nameid)
+			amount += sd->inventory.u.items_inventory[i].amount;
+	}
+
+	return amount;
+}
+
+static bool stall_del_inventory_item(map_session_data* sd, t_itemid nameid, int amount)
+{
+	if (amount <= 0)
+		return true;
+	if (stall_count_inventory_item(sd, nameid) < amount)
+		return false;
+
+	for (int i = 0; i < MAX_INVENTORY && amount > 0; i++) {
+		if (sd->inventory.u.items_inventory[i].nameid != nameid)
+			continue;
+
+		int remove_amount = min(amount, sd->inventory.u.items_inventory[i].amount);
+		if (pc_delitem(sd, i, remove_amount, 0, 0, LOG_TYPE_VENDING) != 0)
+			return false;
+		amount -= remove_amount;
+	}
+
+	return amount <= 0;
+}
+
+static bool stall_give_payout(map_session_data* sd, bool is_cash, int amount, int source_char_id, int& before_amount, int& after_amount)
+{
+	before_amount = 0;
+	after_amount = 0;
+
+	if (amount <= 0)
+		return true;
+
+	if (is_cash) {
+		before_amount = stall_count_inventory_item(sd, STALL_CC_ITEM_ID);
+		if (pc_checkadditem(sd, STALL_CC_ITEM_ID, amount) == CHKADDITEM_OVERAMOUNT)
+			return false;
+
+		struct item cc_item = {};
+		cc_item.nameid = STALL_CC_ITEM_ID;
+		cc_item.amount = amount;
+		cc_item.identify = 1;
+		if (pc_additem(sd, &cc_item, amount, LOG_TYPE_VENDING) != 0)
+			return false;
+
+		after_amount = before_amount + amount;
+		return true;
+	}
+
+	before_amount = sd->status.zeny;
+	if ((uint64)before_amount + (uint64)amount > (uint64)MAX_ZENY)
+		return false;
+
+	pc_getzeny(sd, amount, LOG_TYPE_VENDING, source_char_id);
+	after_amount = sd->status.zeny;
+	return true;
+}
+
+static void stall_notice_trade(map_session_data* sd, const char* action, const char* item_name, int item_amount, const char* counterparty_name, bool is_cash, int total_price, int payout, int before_amount, int after_amount)
+{
+	char msg[CHAT_SIZE_MAX];
+
+	snprintf(msg, sizeof(msg), "Stall: %s %s x%d via %s, total %d, partner %s.",
+		action, item_name, item_amount, stall_currency_name(is_cash), total_price, counterparty_name);
+	clif_displaymessage(sd->fd, msg);
+
+	if (payout > 0) {
+		snprintf(msg, sizeof(msg), "Stall: received %d %s. Before %d, after %d.",
+			payout, stall_currency_name(is_cash), before_amount, after_amount);
+		clif_displaymessage(sd->fd, msg);
+	}
+}
+
+static void stall_store_trade_notice(int char_id, int account_id, const char* direction, const char* channel, bool is_cash, int amount, int before_amount, int after_amount, int counterparty_id, const char* counterparty_name, t_itemid item_id, const char* item_name, int item_amount, int unit_price, int total_price, int tax, bool claimed)
+{
+	if (!stall_ensure_trade_notice_table())
+		return;
+
+	char esc_direction[48], esc_channel[48], esc_currency[24], esc_counterparty[NAME_LENGTH * 2], esc_item[128];
+	Sql_EscapeString(mmysql_handle, esc_direction, direction);
+	Sql_EscapeString(mmysql_handle, esc_channel, channel);
+	Sql_EscapeString(mmysql_handle, esc_currency, stall_currency_name(is_cash));
+	Sql_EscapeString(mmysql_handle, esc_counterparty, counterparty_name ? counterparty_name : "");
+	Sql_EscapeString(mmysql_handle, esc_item, item_name ? item_name : "");
+
+	if (SQL_ERROR == Sql_Query(mmysql_handle,
+		"INSERT INTO `stall_trade_notice` "
+		"(`char_id`,`account_id`,`direction`,`channel`,`currency`,`amount`,`before_amount`,`after_amount`,"
+		"`counterparty_id`,`counterparty_name`,`item_id`,`item_name`,`item_amount`,`unit_price`,`total_price`,`tax`,`claimed`,`claimed_at`) "
+		"VALUES (%d,%d,'%s','%s','%s',%d,%d,%d,%d,'%s',%u,'%s',%d,%d,%d,%d,%d,%s)",
+		char_id, account_id, esc_direction, esc_channel, esc_currency, amount, before_amount, after_amount,
+		counterparty_id, esc_counterparty, item_id, esc_item, item_amount, unit_price, total_price, tax,
+		claimed ? 1 : 0, claimed ? "NOW()" : "NULL")) {
+		Sql_ShowDebug(mmysql_handle);
+	}
+}
+
+static void stall_queue_seller_payout(int seller_char_id, bool is_cash, int payout, int buyer_char_id, const char* buyer_name, t_itemid item_id, const char* item_name, int item_amount, int unit_price, int total_price, int tax)
+{
+	stall_store_trade_notice(seller_char_id, 0, "sale", "offline", is_cash, payout, 0, 0, buyer_char_id, buyer_name, item_id, item_name, item_amount, unit_price, total_price, tax, false);
+}
+
+void stall_process_pending_notice(map_session_data* sd)
+{
+	nullpo_retv(sd);
+
+	if (!sd->state.pc_loaded || !stall_ensure_trade_notice_table())
+		return;
+
+	struct s_stall_pending_notice {
+		uint64 id;
+		char currency[8];
+		int payout;
+		int counterparty_id;
+		char counterparty_name[NAME_LENGTH];
+		int item_id;
+		char item_name[64];
+		int item_amount;
+		int unit_price;
+		int total_price;
+		int tax;
+	};
+	std::vector<s_stall_pending_notice> pending;
+
+	if (SQL_ERROR == Sql_Query(mmysql_handle,
+		"SELECT `id`,`currency`,`amount`,`counterparty_id`,`counterparty_name`,`item_id`,`item_name`,`item_amount`,`unit_price`,`total_price`,`tax` "
+		"FROM `stall_trade_notice` WHERE `char_id`=%d AND `claimed`=0 ORDER BY `id` ASC LIMIT 20",
+		sd->status.char_id)) {
+		Sql_ShowDebug(mmysql_handle);
+		return;
+	}
+
+	while (SQL_SUCCESS == Sql_NextRow(mmysql_handle)) {
+		char *data = nullptr;
+		unsigned long len = 0;
+		s_stall_pending_notice row = {};
+
+		Sql_GetData(mmysql_handle, 0, &data, &len); row.id = data ? strtoull(data, nullptr, 10) : 0;
+		Sql_GetData(mmysql_handle, 1, &data, &len); safestrncpy(row.currency, data ? data : "", sizeof(row.currency));
+		Sql_GetData(mmysql_handle, 2, &data, &len); row.payout = data ? atoi(data) : 0;
+		Sql_GetData(mmysql_handle, 3, &data, &len); row.counterparty_id = data ? atoi(data) : 0;
+		Sql_GetData(mmysql_handle, 4, &data, &len); safestrncpy(row.counterparty_name, data ? data : "", sizeof(row.counterparty_name));
+		Sql_GetData(mmysql_handle, 5, &data, &len); row.item_id = data ? atoi(data) : 0;
+		Sql_GetData(mmysql_handle, 6, &data, &len); safestrncpy(row.item_name, data ? data : "", sizeof(row.item_name));
+		Sql_GetData(mmysql_handle, 7, &data, &len); row.item_amount = data ? atoi(data) : 0;
+		Sql_GetData(mmysql_handle, 8, &data, &len); row.unit_price = data ? atoi(data) : 0;
+		Sql_GetData(mmysql_handle, 9, &data, &len); row.total_price = data ? atoi(data) : 0;
+		Sql_GetData(mmysql_handle, 10, &data, &len); row.tax = data ? atoi(data) : 0;
+		pending.push_back(row);
+	}
+
+	Sql_FreeResult(mmysql_handle);
+
+	for (const auto& row : pending) {
+		bool is_cash = strcmp(row.currency, "CC") == 0;
+		int before_amount = 0, after_amount = 0;
+		if (!stall_give_payout(sd, is_cash, row.payout, row.counterparty_id, before_amount, after_amount)) {
+			clif_displaymessage(sd->fd, "Stall: pending sale payout could not be received. Please free weight/space or reduce carried money.");
+			continue;
+		}
+
+		stall_notice_trade(sd, "sold", row.item_name, row.item_amount, row.counterparty_name, is_cash, row.total_price, row.payout, before_amount, after_amount);
+		if (row.tax > 0) {
+			char msg[CHAT_SIZE_MAX];
+			snprintf(msg, sizeof(msg), "Stall: tax %d %s was deducted from this sale.", row.tax, stall_currency_name(is_cash));
+			clif_displaymessage(sd->fd, msg);
+		}
+
+		if (SQL_ERROR == Sql_Query(mmysql_handle,
+			"UPDATE `stall_trade_notice` SET `claimed`=1,`before_amount`=%d,`after_amount`=%d,`account_id`=%d,`claimed_at`=NOW() WHERE `id`=%llu",
+			before_amount, after_amount, sd->status.account_id, (unsigned long long)row.id)) {
+			Sql_ShowDebug(mmysql_handle);
+		}
+	}
+}
 
 /// failure constants for clif functions
 enum e_buyingstore_failure
@@ -483,13 +718,18 @@ int8 stall_buying_setup(map_session_data* sd, const char* message, const int16 x
 	}
 
 	if (currency_mode == 1) {
-		if ((uint64)sd->cashPoints < temp_price) {
-			clif_displaymessage(sd->fd, "You don't have enough Cash Points.");
+		if ((uint64)stall_count_inventory_item(sd, STALL_CC_ITEM_ID) < temp_price) {
+			clif_displaymessage(sd->fd, "You don't have enough CC item.");
 			clif_stall_ui_close(sd,101,STALLSTORE_OK);
 			aFree(st);
 			return 5;
 		}
-		pc_paycash(sd, (int)temp_price, 0, LOG_TYPE_BUYING_STORE);
+		if (!stall_del_inventory_item(sd, STALL_CC_ITEM_ID, (int)temp_price)) {
+			clif_displaymessage(sd->fd, "Failed to pay CC item.");
+			clif_stall_ui_close(sd,101,STALLSTORE_OK);
+			aFree(st);
+			return 5;
+		}
 	} else {
 		if ((uint64)sd->status.zeny < temp_price) {
 			clif_displaymessage(sd->fd, "You don't have enough Zeny.");
@@ -733,26 +973,19 @@ void stall_vending_purchasereq(map_session_data* sd, int aid, int uid, const uin
 	// ==========================================
 	// 🔵 ระบบเก่า: ผู้เล่นทั่วไปตั้งร้าน Offline (ส่งจดหมายตามปกติ)
 	// ==========================================
-	struct mail_message temp_mail_check;
-	if (count > ARRAYLENGTH(temp_mail_check.item)) {
-		clif_displaymessage(sd->fd, "You cannot purchase this many different items at once due to mail system limits.");
-		clif_buyvending(sd, 0, 0, 6);
-		return;
-	}
-
 	for (int i = 0; i < count; i++) {
 		short check_idx = *(uint16*)(data + 4*i + 2);
 		for (int j = 0; j < i; j++) {
 			if (check_idx == *(uint16*)(data + 4*j + 2)) {
-				ShowWarning("Stall Exploit: ผู้เล่น %s พยายามปั๊มไอเทม!\n", sd->status.name);
+				ShowWarning("Stall Exploit: player %s tried to duplicate purchase packet!\n", sd->status.name);
 				clif_buyvending(sd, 0, 0, 6);
 				return;
 			}
 		}
 	}
 
-	z = 0.; 
-	w = 0;  
+	z = 0.;
+	w = 0;
 	for( i = 0; i < count; i++ ) {
 		short amount = *(uint16*)(data + 4*i + 0);
 		short idx    = *(uint16*)(data + 4*i + 2);
@@ -764,99 +997,84 @@ void stall_vending_purchasereq(map_session_data* sd, int aid, int uid, const uin
 
 		z += ((double)st->price[idx] * (double)amount);
 		if (is_cash) {
-			if( z > (double)sd->cashPoints || z < 0. ) {
-				clif_buyvending(sd, idx, amount, 1); 
+			if( z > (double)stall_count_inventory_item(sd, STALL_CC_ITEM_ID) || z < 0. || z > (double)MAX_ZENY ) {
+				clif_buyvending(sd, idx, amount, 1);
 				return;
 			}
 		} else {
 			if( z > sd->status.zeny || z < 0. || z > (double)MAX_ZENY ) {
-				clif_buyvending(sd, idx, amount, 1); 
+				clif_buyvending(sd, idx, amount, 1);
 				return;
 			}
 		}
 		w += (uint64)itemdb_weight(st->items_inventory[idx].nameid) * (uint64)amount;
 		if( w + (uint64)sd->weight > (uint64)sd->max_weight ) {
-			clif_buyvending(sd, idx, amount, 2); 
+			clif_buyvending(sd, idx, amount, 2);
+			return;
+		}
+
+		uint8 chk_flag = pc_checkadditem(sd, st->items_inventory[idx].nameid, amount);
+		if (chk_flag == CHKADDITEM_OVERAMOUNT) {
+			clif_buyvending(sd, idx, amount, 2);
 			return;
 		}
 
 		if( amount > st->items_inventory[idx].amount ){
-			clif_buyvending(sd, idx, st->items_inventory[idx].amount, 4); 
+			clif_buyvending(sd, idx, st->items_inventory[idx].amount, 4);
 			return;
 		}
 	}
 
 	if (is_cash) {
-		pc_paycash(sd, (int)z, 0, LOG_TYPE_VENDING);
+		if (!stall_del_inventory_item(sd, STALL_CC_ITEM_ID, (int)z)) {
+			clif_buyvending(sd, 0, 0, 1);
+			return;
+		}
 	} else {
 		pc_payzeny(sd, (int)z, LOG_TYPE_VENDING, st->vended_id);
 	}
 
-	struct mail_message msg_buyer = {};
-	msg_buyer.dest_id = sd->status.char_id;
-	safestrncpy( msg_buyer.send_name, "Street vendor", NAME_LENGTH );
-	safestrncpy( msg_buyer.title, "Stall purchase items", MAIL_TITLE_LENGTH );
-	msg_buyer.status = MAIL_NEW;
-	msg_buyer.type = MAIL_INBOX_NORMAL;
-	msg_buyer.timestamp = time( nullptr );
-
-	struct mail_message msg_vendor = {};
-	msg_vendor.dest_id = st->vended_id;
-	msg_vendor.zeny = 0;
-	safestrncpy( msg_vendor.send_name, "Street vendor", NAME_LENGTH );
-	safestrncpy( msg_vendor.title, "Stall sold items", MAIL_TITLE_LENGTH );
-	msg_vendor.status = MAIL_NEW;
-	msg_vendor.type = MAIL_INBOX_NORMAL;
-	msg_vendor.timestamp = time( nullptr );
-
-	char timestring[23];
-	time_t curtime;
-	time(&curtime);
-	strftime(timestring, 22, "%m/%d/%Y, %H:%M", localtime(&curtime));
-
-	std::ostringstream stream;
-	stream << "<MSG>2932</MSG>" << timestring << "\r\n";
-
-	uint64 total_price = 0; 
+	uint64 total_price = 0;
+	struct s_stall_sold_notice {
+		t_itemid item_id;
+		char item_name[64];
+		int item_amount;
+		int unit_price;
+		int total_price;
+	};
+	s_stall_sold_notice sold_items[MAX_STALL_SLOT] = {};
 
 	for( i = 0; i < count; i++ ) {
 		short amount = *(uint16*)(data + 4*i + 0);
 		short idx    = *(uint16*)(data + 4*i + 2);
-		uint32 price = 0;
-		uint64 total = 0;
 		idx -= 1;
+
+		uint32 price = st->price[idx];
+		uint64 total = (uint64)price * (uint64)amount;
+		t_itemid item_id = st->items_inventory[idx].nameid;
+		struct item sold_item = {};
+		memcpy(&sold_item, &st->items_inventory[idx], sizeof(struct item));
+		sold_item.amount = amount;
+
+		sold_items[i].item_id = item_id;
+		safestrncpy(sold_items[i].item_name, stall_item_display_name(item_id), sizeof(sold_items[i].item_name));
+		sold_items[i].item_amount = amount;
+		sold_items[i].unit_price = price;
+		sold_items[i].total_price = (int)min(total, (uint64)MAX_ZENY);
 
 		st->items_inventory[idx].amount -= amount;
 
-		price = st->price[idx];
-		total = (uint64)price * (uint64)amount;
-
-		if (i < ARRAYLENGTH(msg_buyer.item)) {
-			memcpy(&msg_buyer.item[i],&st->items_inventory[idx],sizeof(struct item));
-			msg_buyer.item[i].amount = amount;
-		}
-
-		if ((uint64)msg_vendor.zeny + total > (uint64)MAX_ZENY) {
-			msg_vendor.zeny = MAX_ZENY;
-		} else {
-			msg_vendor.zeny += (int)total;
-		}
-
-		std::shared_ptr<item_data> id = item_db.find(st->items_inventory[idx].nameid);
-		stream << "\r\n<MSG>2933</MSG>" << id->name.c_str() << "\r\n";
-
-		if (is_cash) {
-			stream << "<MSG>2934</MSG>" << price << " Cash \r\n";
-			stream << "<MSG>2936</MSG>" << total << " Cash \r\n";
-		} else {
-			stream << "<MSG>2934</MSG>" << price << " Zeny \r\n";
-			stream << "<MSG>2936</MSG>" << total << " Zeny \r\n";
+		unsigned char flag = pc_additem(sd, &sold_item, amount, LOG_TYPE_VENDING);
+		if (flag) {
+			clif_additem(sd, 0, 0, flag);
+			if (pc_candrop(sd, &sold_item))
+				map_addflooritem(&sold_item, amount, sd->bl.m, sd->bl.x, sd->bl.y, 0, 0, 0, 0, 0);
 		}
 
 		total_price += total;
 	}
 
-	int total_tax_rate = battle_config.buy_vat; 
+	int total_tax_rate = battle_config.buy_vat;
 	int is_town = 0;
 
 	if (Sql_Query(mmysql_handle, "SELECT `tax_rate` FROM `mayor_towns` WHERE `town_map` = '%s' AND `is_active` = 1", map_mapid2mapname(st->bl.m)) == SQL_SUCCESS) {
@@ -873,59 +1091,48 @@ void stall_vending_purchasereq(map_session_data* sd, int aid, int uid, const uin
 
 	int tax = 0;
 	int treasury_income = 0;
-	uint64 tax_calculation = 0;
-
 	if (is_cash) {
-		tax_calculation = (total_price * (uint64)total_tax_rate) / 100;
-		tax = (int)tax_calculation;
-		if (tax > 0) {
+		tax = (int)((total_price * (uint64)total_tax_rate) / 100);
+		if (tax > 0)
 			treasury_income = tax * battle_config.stall_cash_to_zeny_tax_rate;
-		}
 	} else {
 		if (total_price >= 100) {
-			tax_calculation = (total_price * (uint64)total_tax_rate) / 100;
-			tax = (int)tax_calculation;
+			tax = (int)((total_price * (uint64)total_tax_rate) / 100);
 			treasury_income = tax;
 		}
 	}
 
-	if (tax > 0 && total_tax_rate > 0) {
-		msg_vendor.zeny -= tax; 
-
-		if (treasury_income > 0) {
-			if (Sql_Query(mmysql_handle, "UPDATE `castle_money` SET `money` = `money` + %d WHERE `castle` = 0", treasury_income) != SQL_SUCCESS) {
+	if (tax > 0 && total_tax_rate > 0 && treasury_income > 0) {
+		if (Sql_Query(mmysql_handle, "UPDATE `castle_money` SET `money` = `money` + %d WHERE `castle` = 0", treasury_income) != SQL_SUCCESS)
+			Sql_ShowDebug(mmysql_handle);
+		if (is_town) {
+			if (Sql_Query(mmysql_handle, "UPDATE `mayor_towns` SET `treasury` = `treasury` + %d WHERE `town_map` = '%s'", treasury_income, map_mapid2mapname(st->bl.m)) != SQL_SUCCESS)
 				Sql_ShowDebug(mmysql_handle);
-			}
-			if (is_town) {
-				if (Sql_Query(mmysql_handle, "UPDATE `mayor_towns` SET `treasury` = `treasury` + %d WHERE `town_map` = '%s'", treasury_income, map_mapid2mapname(st->bl.m)) != SQL_SUCCESS) {
-					Sql_ShowDebug(mmysql_handle);
-				}
-			}
 		}
+	}
 
-		if (is_cash) {
-			stream << "\r\n<MSG>337</MSG> " << tax << " Cash (Tax " << total_tax_rate << "%)\r\n";
+	map_session_data* vendor_sd = map_charid2sd(st->vended_id);
+	for (i = 0; i < count; i++) {
+		int item_tax = total_price > 0 ? (int)(((uint64)tax * (uint64)sold_items[i].total_price) / total_price) : 0;
+		int item_payout = sold_items[i].total_price - item_tax;
+		int before_amount = 0, after_amount = 0;
+		bool delivered = false;
+
+		if (vendor_sd != nullptr)
+			delivered = stall_give_payout(vendor_sd, is_cash, item_payout, sd->status.char_id, before_amount, after_amount);
+
+		if (delivered) {
+			stall_notice_trade(vendor_sd, "sold", sold_items[i].item_name, sold_items[i].item_amount, sd->status.name, is_cash, sold_items[i].total_price, item_payout, before_amount, after_amount);
+			stall_store_trade_notice(vendor_sd->status.char_id, vendor_sd->status.account_id, "sale", "online", is_cash, item_payout, before_amount, after_amount, sd->status.char_id, sd->status.name, sold_items[i].item_id, sold_items[i].item_name, sold_items[i].item_amount, sold_items[i].unit_price, sold_items[i].total_price, item_tax, true);
 		} else {
-			stream << "\r\n<MSG>337</MSG> " << tax << " Zeny (Tax " << total_tax_rate << "%)\r\n";
+			stall_queue_seller_payout(st->vended_id, is_cash, item_payout, sd->status.char_id, sd->status.name, sold_items[i].item_id, sold_items[i].item_name, sold_items[i].item_amount, sold_items[i].unit_price, sold_items[i].total_price, item_tax);
 		}
+
+		stall_notice_trade(sd, "bought", sold_items[i].item_name, sold_items[i].item_amount, st->name, is_cash, sold_items[i].total_price, 0, 0, 0);
 	}
 
-	if (is_cash) {
-		int final_cash = msg_vendor.zeny; 
-		msg_vendor.zeny = 0; 
-		if (final_cash > 0) {
-			msg_vendor.item[0].nameid = 30000;
-			msg_vendor.item[0].amount = final_cash;
-			msg_vendor.item[0].identify = 1;
-		}
-	}
-	stream << "\0";
-
-	safestrncpy( msg_buyer.body, const_cast<char*>(stream.str().c_str()), MAIL_BODY_LENGTH );
-	intif_Mail_send( 0, &msg_buyer );
-
-	safestrncpy( msg_vendor.body, const_cast<char*>(stream.str().c_str()), MAIL_BODY_LENGTH );
-	intif_Mail_send( 0, &msg_vendor );
+	if (vendor_sd != nullptr && save_settings&CHARSAVE_VENDING)
+		chrif_save(vendor_sd, CSAVE_INVENTORY);
 
 	bool remain_items = false;
 	for( i = 0; i < st->vend_num; i++ ){
@@ -1994,6 +2201,38 @@ BUILDIN_FUNC(clear_offline_stall) {
 			if((*itStalls)->timer != INVALID_TIMER) delete_timer((*itStalls)->timer, stall_timeout);
 			clif_clearunit_area(&(*itStalls)->bl, CLR_OUTSIGHT);
 			map_delblock(&(*itStalls)->bl);
+			map_freeblock(&(*itStalls)->bl);
+			stall_db.erase(itStalls);
+		}
+	}
+	return 0;
+}
+
+BUILDIN_FUNC(clear_offline_stall_type) {
+	int clear_type = script_getnum(st, 2);
+	if (clear_type != 0 && clear_type != 1)
+		return 0;
+
+	std::vector<int> remove_list;
+	for (auto& itStalls : stall_db) {
+		if (itStalls != nullptr && itStalls->vended_id >= 6000000 && itStalls->type == clear_type)
+			remove_list.push_back(itStalls->vender_id);
+	}
+
+	for (auto& vid : remove_list) {
+		auto itStalls = std::find_if(stall_db.begin(), stall_db.end(), [&](s_stall_data *const & itst) {
+			return itst != nullptr && vid == itst->vender_id;
+		});
+		if(itStalls != stall_db.end()){
+			Sql_Query( mmysql_handle, "DELETE FROM `char` WHERE `char_id` = %d AND `account_id` = 6000000;", (*itStalls)->vended_id );
+			Sql_Query( mmysql_handle, "DELETE FROM `%s` WHERE `id` = %d;", stalls_table, (*itStalls)->vender_id );
+			Sql_Query( mmysql_handle, "DELETE FROM `%s` WHERE `stalls_id` = %d;", stalls_vending_items_table, (*itStalls)->vender_id );
+			Sql_Query( mmysql_handle, "DELETE FROM `%s` WHERE `stalls_id` = %d;", stalls_buying_items_table, (*itStalls)->vender_id );
+			if((*itStalls)->timer != INVALID_TIMER) delete_timer((*itStalls)->timer, stall_timeout);
+			clif_clearunit_area(&(*itStalls)->bl, CLR_OUTSIGHT);
+			map_delblock(&(*itStalls)->bl);
+			map_deliddb(&(*itStalls)->bl);
+			status_change_clear(&(*itStalls)->bl, 1);
 			map_freeblock(&(*itStalls)->bl);
 			stall_db.erase(itStalls);
 		}
