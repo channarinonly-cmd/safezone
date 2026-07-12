@@ -1,0 +1,98 @@
+// Pending reward claim NPC for systems that no longer use mail.
+morocc,160,54,4	script	Reward Claim	123,{
+	mes "[Reward Claim]";
+	.@char_id = getcharid(0);
+	.@count = 0;
+	query_sql("SELECT COUNT(*) FROM `pending_npc_rewards` WHERE `char_id` = "+.@char_id+" AND `claimed` = 0", .@count);
+	if (.@count <= 0) {
+		mes "You do not have pending rewards.";
+		close;
+	}
+
+	mes "Pending rewards: ^0000FF"+.@count+"^000000";
+	mes "Press claim to receive rewards into this character.";
+	next;
+	if (select("Claim rewards:Cancel") == 2) close;
+
+	.@rows = query_sql("SELECT `id`,`item_id`,`amount`,`identify`,`refine`,`attribute`,`card0`,`card1`,`card2`,`card3`,`opt0_id`,`opt0_val`,`opt0_param`,`opt1_id`,`opt1_val`,`opt1_param`,`opt2_id`,`opt2_val`,`opt2_param`,`opt3_id`,`opt3_val`,`opt3_param`,`opt4_id`,`opt4_val`,`opt4_param`,`grade`,`zeny` FROM `pending_npc_rewards` WHERE `char_id` = "+.@char_id+" AND `claimed` = 0 ORDER BY `id` ASC LIMIT 20",
+		.@id,.@item_id,.@amount,.@identify,.@refine,.@attribute,.@card0,.@card1,.@card2,.@card3,
+		.@opt0_id,.@opt0_val,.@opt0_param,.@opt1_id,.@opt1_val,.@opt1_param,.@opt2_id,.@opt2_val,.@opt2_param,
+		.@opt3_id,.@opt3_val,.@opt3_param,.@opt4_id,.@opt4_val,.@opt4_param,.@grade,.@zeny);
+
+	for (.@i = 0; .@i < .@rows; .@i++) {
+		if (.@item_id[.@i] > 0 && .@amount[.@i] > 0 && !checkweight(.@item_id[.@i], .@amount[.@i])) {
+			.@blocked++;
+			continue;
+		}
+		if (.@zeny[.@i] > 0 && Zeny + .@zeny[.@i] > 1000000000) {
+			.@blocked++;
+			continue;
+		}
+
+		query_sql("UPDATE `pending_npc_rewards` SET `claimed` = 2 WHERE `id` = "+.@id[.@i]+" AND `claimed` = 0");
+
+		if (.@zeny[.@i] > 0)
+			Zeny += .@zeny[.@i];
+
+		if (.@item_id[.@i] > 0 && .@amount[.@i] > 0) {
+			setarray .@opt_id[0], .@opt0_id[.@i], .@opt1_id[.@i], .@opt2_id[.@i], .@opt3_id[.@i], .@opt4_id[.@i];
+			setarray .@opt_val[0], .@opt0_val[.@i], .@opt1_val[.@i], .@opt2_val[.@i], .@opt3_val[.@i], .@opt4_val[.@i];
+			setarray .@opt_param[0], .@opt0_param[.@i], .@opt1_param[.@i], .@opt2_param[.@i], .@opt3_param[.@i], .@opt4_param[.@i];
+			getitem4 .@item_id[.@i], .@amount[.@i], .@identify[.@i], .@refine[.@i], .@attribute[.@i], .@card0[.@i], .@card1[.@i], .@card2[.@i], .@card3[.@i], .@grade[.@i], .@opt_id, .@opt_val, .@opt_param;
+		}
+
+		query_sql("UPDATE `pending_npc_rewards` SET `claimed` = 1, `claimed_at` = NOW() WHERE `id` = "+.@id[.@i]+" AND `claimed` = 2");
+		.@claimed++;
+	}
+
+	mes "[Reward Claim]";
+	mes "Claimed: ^009900"+.@claimed+"^000000";
+	if (.@blocked > 0) {
+		mes "Skipped: ^FF0000"+.@blocked+"^000000";
+		mes "Make inventory space or reduce weight, then claim again.";
+	}
+	close;
+
+OnInit:
+	query_sql(
+		"CREATE TABLE IF NOT EXISTS `pending_npc_rewards` ("+
+		"`id` int(11) NOT NULL AUTO_INCREMENT,"+
+		"`char_id` int(11) NOT NULL,"+
+		"`source` varchar(64) NOT NULL DEFAULT '',"+
+		"`title` varchar(128) NOT NULL DEFAULT '',"+
+		"`item_id` int(11) NOT NULL DEFAULT 0,"+
+		"`amount` int(11) NOT NULL DEFAULT 0,"+
+		"`identify` tinyint(3) NOT NULL DEFAULT 1,"+
+		"`refine` int(11) NOT NULL DEFAULT 0,"+
+		"`attribute` int(11) NOT NULL DEFAULT 0,"+
+		"`card0` int(11) NOT NULL DEFAULT 0,"+
+		"`card1` int(11) NOT NULL DEFAULT 0,"+
+		"`card2` int(11) NOT NULL DEFAULT 0,"+
+		"`card3` int(11) NOT NULL DEFAULT 0,"+
+		"`opt0_id` int(11) NOT NULL DEFAULT 0,"+
+		"`opt0_val` int(11) NOT NULL DEFAULT 0,"+
+		"`opt0_param` int(11) NOT NULL DEFAULT 0,"+
+		"`opt1_id` int(11) NOT NULL DEFAULT 0,"+
+		"`opt1_val` int(11) NOT NULL DEFAULT 0,"+
+		"`opt1_param` int(11) NOT NULL DEFAULT 0,"+
+		"`opt2_id` int(11) NOT NULL DEFAULT 0,"+
+		"`opt2_val` int(11) NOT NULL DEFAULT 0,"+
+		"`opt2_param` int(11) NOT NULL DEFAULT 0,"+
+		"`opt3_id` int(11) NOT NULL DEFAULT 0,"+
+		"`opt3_val` int(11) NOT NULL DEFAULT 0,"+
+		"`opt3_param` int(11) NOT NULL DEFAULT 0,"+
+		"`opt4_id` int(11) NOT NULL DEFAULT 0,"+
+		"`opt4_val` int(11) NOT NULL DEFAULT 0,"+
+		"`opt4_param` int(11) NOT NULL DEFAULT 0,"+
+		"`grade` int(11) NOT NULL DEFAULT 0,"+
+		"`zeny` int(11) NOT NULL DEFAULT 0,"+
+		"`claimed` tinyint(3) NOT NULL DEFAULT 0,"+
+		"`created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,"+
+		"`claimed_at` datetime NULL,"+
+		"PRIMARY KEY (`id`),"+
+		"KEY `char_claim` (`char_id`,`claimed`)"+
+		") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
+	);
+	query_sql("UPDATE `pending_npc_rewards` SET `claimed` = 0 WHERE `claimed` = 2");
+	end;
+}

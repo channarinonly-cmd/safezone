@@ -37,7 +37,7 @@ OnInit:
 	set .NoOwner,0;
 	set .ExitWarp,0;
 	set .GMAccess,99;
-	set .Options, 5;
+	set .Options, 7;
 	setarray .Reward[0],6633,50,6634,50;
 
 	setarray .Castles$[0],
@@ -137,13 +137,12 @@ OnReward:
 					setd ".@ip_"+.@i+"_"+.@ip$,1;
 				}
 				if (.Options&2) {
-					query_sql("INSERT INTO `mail` (send_name,dest_id,title,message,nameid,amount,identify,zeny,time) VALUES ("+
-					          "'no-reply',"+.@cid[.@j]+",'** Siege Reward: "+getcastlename(.Castles$[.@i])+" **',"+
-					          "'Brave one,% % Congratulations!% Your guild has successfully occupied% territory in the War of Emperium on% "+.@str$+".% % % % % [ Your reward is attached. ]',"+
-					          .Reward[0]+","+.Reward[1]+",0,"+.Reward[2]+",UNIX_TIMESTAMP(NOW()))");
+					for(set .@k,0; .@k<getarraysize(.Reward); set .@k,.@k+2) {
+						query_sql("INSERT INTO `pending_npc_rewards` (`char_id`,`source`,`title`,`item_id`,`amount`,`identify`) VALUES ("+.@cid[.@j]+",'Siege Reward','Siege Reward: "+escape_sql(getcastlename(.Castles$[.@i]))+"',"+.Reward[.@k]+","+.Reward[.@k+1]+",1)");
+					}
 					if (!getd(".@str_"+.@cid[.@j]) && isloggedin(.@aid[.@j],.@cid[.@j])) {
 						setd ".@str_"+.@cid[.@j],1;
-						message rid2name(.@aid[.@j]),"คุณได้รับจดหมาย โปรดตรวจสอบ.";
+						message rid2name(.@aid[.@j]),"You have pending Siege Reward. Please claim it at Reward Claim NPC.";
 					}
 				} else if (isloggedin(.@aid[.@j])) {
 					for(set .@k,0; .@k<getarraysize(.Reward); set .@k,.@k+2)
@@ -152,7 +151,6 @@ OnReward:
 				}
 			}
 		}
-	if (.Options&2) query_sql("UPDATE `mail` SET message = REPLACE(message,'%',CHAR(13)) WHERE send_name = 'no-reply'");
 	return;
 
 OnPCLoadMapEvent:

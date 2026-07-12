@@ -362,7 +362,7 @@ S_GiveReward:
 		setarray .@mail_amt[0], .reward_amt;
 		
 		announce "[ จบศึก Top Spender รอบนี้! ] แชมป์คือ ["+$PromoTop_Name$[0]+"] ยอดสูงสุด "+$PromoTop_Pts[0]+" ชิ้น!!", bc_all, 0xFFCE00;
-		mail $PromoTop_CID[0], "Top Spender", "รางวัล Top Spender", "ยินดีด้วยครับบอส! คุณคือที่ 1 ของรอบนี้ รับของรางวัลสุดแรร์ไปเลย!", 0, .@mail_item, .@mail_amt;
+		for (.@i = 0; .@i < getarraysize(.@mail_item); .@i++) query_sql("INSERT INTO `pending_npc_rewards` (`char_id`,`source`,`title`,`item_id`,`amount`,`identify`) VALUES ("+$PromoTop_CID[0]+",'Top Spender','Top Spender Reward',"+.@mail_item[.@i]+","+.@mail_amt[.@i]+",1)");
 	}
 	callsub S_ClearData;
 	return;
