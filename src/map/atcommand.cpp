@@ -8287,7 +8287,7 @@ ACMD_FUNC(misceffect)
 ACMD_FUNC(mail)
 {
 	nullpo_ret(sd);
-	mail_openmail(sd);
+	clif_displaymessage(fd, "Mail system is disabled.");
 	return 0;
 }
 
@@ -11911,6 +11911,7 @@ ACMD_FUNC(setcard)
 }
 
 // (^~_~^) Gepard Shield Start
+#ifdef ENABLE_GEPARD_SHIELD
 
 ACMD_FUNC(gepard_block_nick)
 {
@@ -11979,9 +11980,11 @@ ACMD_FUNC(gepard_block_nick)
 	return 0;
 }
 
+#endif
 // (^~_~^) Gepard Shield End
 
 // (^~_~^) Gepard Shield Start
+#ifdef ENABLE_GEPARD_SHIELD
 
 ACMD_FUNC(gepard_block_account_id)
 {
@@ -12173,6 +12176,7 @@ ACMD_FUNC(gepard_unblock_unique_id)
 	return 0;
 }
 
+#endif
 // (^~_~^) Gepard Shield End
 
 #include <custom/atcommand.inc>
@@ -12413,6 +12417,7 @@ void atcommand_basecommands(void) {
 	AtCommandInfo atcommand_base[] = {
 
 // (^~_~^) Gepard Shield Start
+#ifdef ENABLE_GEPARD_SHIELD
 
 		ACMD_DEF(gepard_block_nick),
 		ACMD_DEF(gepard_block_account_id),
@@ -12421,6 +12426,7 @@ void atcommand_basecommands(void) {
 		ACMD_DEF(gepard_unblock_account_id),
 		ACMD_DEF(gepard_unblock_unique_id),
 
+#endif
 // (^~_~^) Gepard Shield End
 
 #include <custom/atcommand_def.inc>

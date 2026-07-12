@@ -86,6 +86,7 @@ static inline int32 client_exp(t_exp exp) {
 #endif
 
 // (^~_~^) Gepard Shield Start
+#ifdef ENABLE_GEPARD_SHIELD
 
 bool clif_gepard_process_packet(map_session_data* sd)
 {
@@ -143,6 +144,7 @@ bool clif_gepard_process_packet(map_session_data* sd)
 	return gepard_process_cs_packet(fd, s, 0);
 }
 
+#endif
 // (^~_~^) Gepard Shield End
 
 /* for clif_clearunit_delayed */
@@ -11169,11 +11171,13 @@ void clif_parse_WantToConnection(int fd, map_session_data* sd)
 
 // (^~_~^) Gepard Shield Start
 
+#ifdef ENABLE_GEPARD_SHIELD
 	if (is_gepard_active && !session[fd]->flag.roplay)
 	{
 		gepard_init(session[fd], fd, GEPARD_MAP);
 		session[fd]->gepard_info.sync_tick = gettick();
 	}
+#endif
 
 // (^~_~^) Gepard Shield End
 
@@ -16754,7 +16758,20 @@ void clif_Mail_refreshinbox(map_session_data *sd,enum mail_inbox_type type,int64
 /// 09ef <mail tab>.B <mail id>.Q (CZ_REQ_REFRESH_MAIL_LIST)
 /// 0ac0 <mail id>.Q <unknown>.16B (CZ_OPEN_MAILBOX2)
 /// 0ac1 <mail id>.Q <unknown>.16B (CZ_REQ_REFRESH_MAIL_LIST2)
+static bool clif_mail_feature_disabled(map_session_data *sd)
+{
+	nullpo_retr(true, sd);
+	clif_displaymessage(sd->fd, "Mail system is disabled.");
+	sd->state.mail_writing = false;
+	mail_clear(sd);
+	return true;
+}
+
 void clif_parse_Mail_refreshinbox(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 	if( mail_invalid_operation( sd ) ){
 		return;
 	}
@@ -16935,6 +16952,10 @@ void clif_Mail_read( map_session_data *sd, int mail_id ){
 /// 0241 <mail id>.L (CZ_MAIL_OPEN)
 /// 09ea <mail tab>.B <mail id>.Q (CZ_REQ_READ_MAIL)
 void clif_parse_Mail_read(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER < 20150513
 	int mail_id = RFIFOL(fd,packet_db[RFIFOW(fd,0)].pos[0]);
 #else
@@ -16965,6 +16986,10 @@ void clif_send_Mail_beginwrite_ack( map_session_data *sd, char* name, bool succe
 /// 0a08 <receiver>.24B (CZ_REQ_OPEN_WRITE_MAIL)
 void clif_parse_Mail_beginwrite( int fd, map_session_data *sd ){
 	char name[NAME_LENGTH];
+
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
 
 	safestrncpy(name, RFIFOCP(fd, 2), NAME_LENGTH);
 
@@ -17010,6 +17035,10 @@ void clif_Mail_Receiver_Ack( map_session_data* sd, uint32 char_id, short class_,
 /// Request information about the recipient
 /// 0a13 <name>.24B (CZ_CHECK_RECEIVE_CHARACTER_NAME)
 void clif_parse_Mail_Receiver_Check(int fd, map_session_data *sd) {
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER >= 20140423
 #if PACKETVER_MAIN_NUM >= 20201104 || PACKETVER_RE_NUM >= 20211103 || PACKETVER_ZERO_NUM >= 20201118
 	struct PACKET_CZ_CHECKNAME2* p = (struct PACKET_CZ_CHECKNAME2*)RFIFOP( fd, 0 );
@@ -17033,6 +17062,10 @@ void clif_parse_Mail_Receiver_Check(int fd, map_session_data *sd) {
 /// 09f1 <mail id>.Q <mail tab>.B (CZ_REQ_ZENY_FROM_MAIL)
 /// 09f3 <mail id>.Q <mail tab>.B (CZ_REQ_ITEM_FROM_MAIL)
 void clif_parse_Mail_getattach( int fd, map_session_data *sd ){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 	int i;
 	struct mail_message* msg;
 #if PACKETVER < 20150513
@@ -17139,6 +17172,10 @@ void clif_parse_Mail_getattach( int fd, map_session_data *sd ){
 /// 0243 <mail id>.L (CZ_MAIL_DELETE)
 /// 09f5 <mail tab>.B <mail id>.Q (CZ_REQ_DELETE_MAIL)
 void clif_parse_Mail_delete(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER < 20150513
 	int mail_id = RFIFOL(fd,packet_db[RFIFOW(fd,0)].pos[0]);
 #else
@@ -17183,6 +17220,10 @@ void clif_parse_Mail_delete(int fd, map_session_data *sd){
 /// Request to return a mail (CZ_REQ_MAIL_RETURN).
 /// 0273 <mail id>.L <receive name>.24B
 void clif_parse_Mail_return(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER_MAIN_NUM >= 20201104 || PACKETVER_RE_NUM >= 20211103 || PACKETVER_ZERO_NUM >= 20201118
 	struct PACKET_CZ_UNCONFIRMED_RODEX_RETURN* p = (struct PACKET_CZ_UNCONFIRMED_RODEX_RETURN*)RFIFOP( fd, 0 );
 
@@ -17215,6 +17256,10 @@ void clif_parse_Mail_return(int fd, map_session_data *sd){
 /// 0247 <index>.W <amount>.L (CZ_MAIL_ADD_ITEM)
 /// 0a04 <index>.W <amount>.W (CZ_REQ_ADD_ITEM_TO_MAIL)
 void clif_parse_Mail_setattach(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 	struct s_packet_db* info = &packet_db[RFIFOW(fd,0)];
 	uint16 idx = RFIFOW(fd,info->pos[0]);
 #if PACKETVER < 20150513
@@ -17277,6 +17322,10 @@ void clif_mail_removeitem( map_session_data* sd, bool success, int index, int am
 /// 0a06 <index>.W <amount>.W (CZ_REQ_REMOVE_ITEM_MAIL)
 void clif_parse_Mail_winopen(int fd, map_session_data *sd)
 {
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER < 20150513
 	int type = RFIFOW(fd,packet_db[RFIFOW(fd,0)].pos[0]);
 
@@ -17297,6 +17346,10 @@ void clif_parse_Mail_winopen(int fd, map_session_data *sd)
 /// 09ec <packet len>.W <recipient>.24B <sender>.24B <zeny>.Q <title length>.W <body length>.W <title>.?B <body>.?B (CZ_REQ_WRITE_MAIL)
 /// 0a6e <packet len>.W <recipient>.24B <sender>.24B <zeny>.Q <title length>.W <body length>.W <char id>.L <title>.?B <body>.?B (CZ_REQ_WRITE_MAIL2)
 void clif_parse_Mail_send(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER < 20150513
 	struct s_packet_db* info = &packet_db[RFIFOW(fd,0)];
 
@@ -27217,6 +27270,7 @@ static int clif_parse(int fd)
 
 // (^~_~^) Gepard Shield Start
 
+#ifdef ENABLE_GEPARD_SHIELD
 		if (RFIFOW(fd, 0) == 0x0825) {
 		if (RFIFOREST(fd) >= 4) {
 			uint16 pkt_len = RFIFOW(fd, 2);
@@ -27232,6 +27286,7 @@ static int clif_parse(int fd)
 	{
 		return 0;
 	}
+#endif
 
 // (^~_~^) Gepard Shield End
 
