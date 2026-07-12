@@ -35,6 +35,7 @@ static int stall_id=START_STALL_NUM;
 std::vector<s_stall_data *> stall_db;
 std::vector<mail_message> stall_mail_db;
 static const t_itemid STALL_CC_ITEM_ID = 30000;
+static const uint32 STALL_MAX_UNIT_PRICE = BUYINGSTALL_MAX_PRICE;
 
 static bool stall_trade_notice_table_ready = false;
 
@@ -85,6 +86,22 @@ static const char* stall_item_display_name(t_itemid nameid)
 {
 	std::shared_ptr<item_data> id = item_db.find(nameid);
 	return id ? id->name.c_str() : "Unknown item";
+}
+
+static bool stall_valid_unit_price(uint64 price)
+{
+	return price > 0 && price <= STALL_MAX_UNIT_PRICE && price <= (uint64)MAX_ZENY;
+}
+
+static bool stall_valid_item_amount(struct item_data* id, int amount)
+{
+	if (id == nullptr || amount <= 0 || amount > MAX_AMOUNT)
+		return false;
+
+	if (!itemdb_isstackable2(id) && amount != 1)
+		return false;
+
+	return true;
 }
 
 static int stall_count_inventory_item(map_session_data* sd, t_itemid nameid)
@@ -441,9 +458,14 @@ int8 stall_vending_setup(map_session_data* sd, const char* message, const int16 
 		unsigned int value = *(uint32*)(data + 8*j + 4);
 
 		index = index - 2; 
+		struct item_data* item_data = (index >= 0 && index < MAX_INVENTORY) ? sd->inventory_data[index] : nullptr;
 
 		if( index < 0 || index >= MAX_INVENTORY 
+		||  item_data == nullptr
 		||  amount <= 0 
+		||  !stall_valid_item_amount(item_data, amount)
+		||  (!itemdb_isstackable2(item_data) && sd->inventory.u.items_inventory[index].amount != 1)
+		||  !stall_valid_unit_price(value)
 		||  sd->inventory.u.items_inventory[index].amount < amount 
 		||  !sd->inventory.u.items_inventory[index].identify
 		||  sd->inventory.u.items_inventory[index].attribute == 1 
@@ -460,7 +482,7 @@ int8 stall_vending_setup(map_session_data* sd, const char* message, const int16 
 
 		memcpy(&st->items_inventory[i], &temp_item, sizeof(struct item));
 		st->items_inventory[i].amount = amount;
-		st->price[i] = min(value, (unsigned int)battle_config.vending_max_value);
+		st->price[i] = min(value, min((unsigned int)battle_config.vending_max_value, STALL_MAX_UNIT_PRICE));
 		i++;
 	}
 
@@ -668,8 +690,9 @@ int8 stall_buying_setup(map_session_data* sd, const char* message, const int16 x
 
 		struct item_data* id = itemdb_search( item->itemId );
 
-		if( id == NULL || item->count == 0 
-		||  item->price <= 0 || item->price > BUYINGSTALL_MAX_PRICE 
+		if( id == NULL || item->count == 0
+		||  !stall_valid_item_amount(id, item->count)
+		||  !stall_valid_unit_price(item->price)
 		||  !id->flag.buyingstore || !itemdb_cantrade_sub( id, pc_get_group_level( sd ), pc_get_group_level( sd ) ) ) 
 			continue;
 
@@ -921,6 +944,11 @@ void stall_vending_purchasereq(map_session_data* sd, int aid, int uid, const uin
 			if( amount <= 0 ) return;
 			if( idx < 0 || idx >= st->vend_num ) return;
 			if( st->items_inventory[idx].amount <= 0 ) return;
+			struct item_data* sale_data = itemdb_search(st->items_inventory[idx].nameid);
+			if( !stall_valid_item_amount(sale_data, amount) || !stall_valid_item_amount(sale_data, st->items_inventory[idx].amount) || !stall_valid_unit_price(st->price[idx]) ){
+				clif_buyvending(sd, idx, amount, 6);
+				return;
+			}
 			if( amount > st->items_inventory[idx].amount ){
 				clif_buyvending(sd, idx, st->items_inventory[idx].amount, 4); 
 				return;
@@ -1007,6 +1035,11 @@ void stall_vending_purchasereq(map_session_data* sd, int aid, int uid, const uin
 		if( amount <= 0 ) return;
 		if( idx < 0 || idx >= st->vend_num ) return;
 		if( st->items_inventory[idx].amount <= 0 ) return;
+		struct item_data* sale_data = itemdb_search(st->items_inventory[idx].nameid);
+		if( !stall_valid_item_amount(sale_data, amount) || !stall_valid_item_amount(sale_data, st->items_inventory[idx].amount) || !stall_valid_unit_price(st->price[idx]) ){
+			clif_buyvending(sd, idx, amount, 6);
+			return;
+		}
 
 		z += ((double)st->price[idx] * (double)amount);
 		if (is_cash) {
@@ -1225,7 +1258,7 @@ void stall_buying_purchasereq(map_session_data* sd, int aid, int uid, const stru
 			int index = item->index - 2; 
 			if( item->amount <= 0 ) return;
 
-			if( index < 0 || index >= ARRAYLENGTH( sd->inventory.u.items_inventory ) || sd->inventory_data[index] == NULL || sd->inventory.u.items_inventory[index].nameid != item->itemId || sd->inventory.u.items_inventory[index].amount < item->amount ){
+			if( index < 0 || index >= ARRAYLENGTH( sd->inventory.u.items_inventory ) || sd->inventory_data[index] == NULL || sd->inventory.u.items_inventory[index].nameid != item->itemId || sd->inventory.u.items_inventory[index].amount < item->amount || !stall_valid_item_amount(sd->inventory_data[index], item->amount) ){
 				clif_buyingstore_trade_failed_seller( sd, BUYINGSTORE_TRADE_SELLER_FAILED, item->itemId );
 				return;
 			}
@@ -1243,12 +1276,16 @@ void stall_buying_purchasereq(map_session_data* sd, int aid, int uid, const stru
 				}
 			}
 
-			if( listidx == -1 || st->amount[listidx] <= 0 || st->amount[listidx] < item->amount){
+			if( listidx == -1 || st->amount[listidx] <= 0 || st->amount[listidx] < item->amount || !stall_valid_unit_price(st->price[listidx])){
 				clif_buyingstore_trade_failed_seller( sd, BUYINGSTORE_TRADE_SELLER_COUNT, item->itemId );
 				return;
 			}
 
 			total_price += (uint64)item->amount * (uint64)st->price[listidx];
+			if (total_price > (uint64)MAX_ZENY) {
+				clif_buyingstore_trade_failed_seller(sd, BUYINGSTORE_TRADE_SELLER_ZENY, item->itemId);
+				return;
+			}
 		}
 
 		int total_tax_rate = battle_config.buy_vat; 
@@ -1309,6 +1346,7 @@ void stall_buying_purchasereq(map_session_data* sd, int aid, int uid, const stru
 		return;
 	}
 
+	uint64 checked_total_price = 0;
 	for( int i = 0; i < count; i++ ){
 		const struct PACKET_CZ_REQ_TRADE_BUYING_STORE_sub* item = &itemlist[i];
 
@@ -1323,7 +1361,7 @@ void stall_buying_purchasereq(map_session_data* sd, int aid, int uid, const stru
 
 		if( item->amount <= 0 ) return;
 
-		if( index < 0 || index >= ARRAYLENGTH( sd->inventory.u.items_inventory ) || sd->inventory_data[index] == NULL || sd->inventory.u.items_inventory[index].nameid != item->itemId || sd->inventory.u.items_inventory[index].amount < item->amount ){
+		if( index < 0 || index >= ARRAYLENGTH( sd->inventory.u.items_inventory ) || sd->inventory_data[index] == NULL || sd->inventory.u.items_inventory[index].nameid != item->itemId || sd->inventory.u.items_inventory[index].amount < item->amount || !stall_valid_item_amount(sd->inventory_data[index], item->amount) ){
 			clif_buyingstore_trade_failed_seller( sd, BUYINGSTORE_TRADE_SELLER_FAILED, item->itemId );
 			return;
 		}
@@ -1341,8 +1379,14 @@ void stall_buying_purchasereq(map_session_data* sd, int aid, int uid, const stru
 			}
 		}
 
-		if( listidx == -1 || st->amount[listidx] <= 0 || st->amount[listidx] < item->amount){
+		if( listidx == -1 || st->amount[listidx] <= 0 || st->amount[listidx] < item->amount || !stall_valid_unit_price(st->price[listidx])){
 			clif_buyingstore_trade_failed_seller( sd, BUYINGSTORE_TRADE_SELLER_COUNT, item->itemId );
+			return;
+		}
+
+		checked_total_price += (uint64)item->amount * (uint64)st->price[listidx];
+		if (checked_total_price > (uint64)MAX_ZENY) {
+			clif_buyingstore_trade_failed_seller(sd, BUYINGSTORE_TRADE_SELLER_ZENY, item->itemId);
 			return;
 		}
 	}
