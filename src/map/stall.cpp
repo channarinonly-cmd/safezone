@@ -250,7 +250,20 @@ void stall_process_pending_notice(map_session_data* sd)
 	for (const auto& row : pending) {
 		bool is_cash = strcmp(row.currency, "CC") == 0;
 		int before_amount = 0, after_amount = 0;
+
+		if (SQL_ERROR == Sql_Query(mmysql_handle,
+			"UPDATE `stall_trade_notice` SET `claimed`=2 WHERE `id`=%llu AND `claimed`=0",
+			(unsigned long long)row.id)) {
+			Sql_ShowDebug(mmysql_handle);
+			continue;
+		}
+
 		if (!stall_give_payout(sd, is_cash, row.payout, row.counterparty_id, before_amount, after_amount)) {
+			if (SQL_ERROR == Sql_Query(mmysql_handle,
+				"UPDATE `stall_trade_notice` SET `claimed`=0 WHERE `id`=%llu AND `claimed`=2",
+				(unsigned long long)row.id)) {
+				Sql_ShowDebug(mmysql_handle);
+			}
 			clif_displaymessage(sd->fd, "Stall: pending sale payout could not be received. Please free weight/space or reduce carried money.");
 			continue;
 		}
