@@ -864,13 +864,9 @@ izlude,130,150,5	script	Tool Dealer#002	31994,{
 	end;
 
 OnTimer30000:
-		npcspeed 120;
-		set .@runx,rand(130,135);
-		set .@runy,rand(147,149);
-		npcwalkto .@runx,.@runy;
+		end;
 
 OnInit:
-	initnpctimer;
 	sleep 2000;
 	showscript "ร้านขายของใช้ทั่วไป";
 	sleep 10000;
