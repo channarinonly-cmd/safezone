@@ -1,0 +1,143 @@
+// LionShield color menu
+// Name color + clothes color service.
+// Uses CharNameColor$ directly because live map-server may not have setcharnamecolor buildin.
+
+prontera,156,185,4	script	Name_Color	115,{
+	mes "[LionShield Color]";
+	mes "Choose the color system you want to use.";
+	next;
+	.@main = select("Name Color:Clothes Color:Reset Name Color:Reset Clothes Color:Cancel");
+	switch (.@main) {
+	case 1:
+		goto L_NameColor;
+	case 2:
+		goto L_ClothesColor;
+	case 3:
+		set CharNameColor$, "FFFFFF";
+		mes "[LionShield Color]";
+		mes "Name color reset to white.";
+		mes "Relog or change map if it does not refresh immediately.";
+		close;
+	case 4:
+		setlook 7, 0;
+		mes "[LionShield Color]";
+		mes "Clothes color reset.";
+		close;
+	default:
+		close;
+	}
+
+L_NameColor:
+	mes "[LionShield Name Color]";
+	mes "Select your character name color.";
+	next;
+	.@choice = select("Default White:Soft Sky Blue:Imperial Gold:Ruby Red:Cherry Pink:Neon Violet:Mandarin Orange:Emerald Green:Ocean Turquoise:Rainbow RGB:Cancel");
+	switch (.@choice) {
+	case 1: set CharNameColor$, "FFFFFF"; break;
+	case 2: set CharNameColor$, "3399FF"; break;
+	case 3: set CharNameColor$, "FFD700"; break;
+	case 4: set CharNameColor$, "FF0033"; break;
+	case 5: set CharNameColor$, "FF007F"; break;
+	case 6: set CharNameColor$, "9900FF"; break;
+	case 7: set CharNameColor$, "FF9900"; break;
+	case 8: set CharNameColor$, "00FF66"; break;
+	case 9: set CharNameColor$, "00FFFF"; break;
+	case 10: set CharNameColor$, "RGBRGB"; break;
+	default: close;
+	}
+	mes "[LionShield Name Color]";
+	mes "Name color saved.";
+	mes "Relog or change map if it does not refresh immediately.";
+	close;
+
+L_ClothesColor:
+	mes "[LionShield Clothes Color]";
+	mes "Select your clothes color.";
+	mes "Client supports color 0-6 on this client.";
+	next;
+	.@cloth = select("Default / 0:Color 1:Color 2:Color 3:Color 4:Color 5:Color 6:Cancel") - 1;
+	if (.@cloth < 0 || .@cloth > 6) close;
+	setlook 7, .@cloth;
+	mes "[LionShield Clothes Color]";
+	mes "Clothes color saved.";
+	mes "Relog or change map if it does not refresh immediately.";
+	close;
+
+OnInit:
+	waitingroom "Color System", 0;
+	bindatcmd "color", strnpcinfo(3) + "::OnCommand", 0, 99;
+	bindatcmd "namecolor", strnpcinfo(3) + "::OnCommand", 0, 99;
+	end;
+
+OnCommand:
+	goto L_NameColor;
+}
+
+morocc,155,95,4	script	Name_Color_Morocc	115,{
+	mes "[LionShield Color]";
+	mes "Choose the color system you want to use.";
+	next;
+	.@main = select("Name Color:Clothes Color:Reset Name Color:Reset Clothes Color:Cancel");
+	switch (.@main) {
+	case 1:
+		goto L_NameColor;
+	case 2:
+		goto L_ClothesColor;
+	case 3:
+		set CharNameColor$, "FFFFFF";
+		mes "[LionShield Color]";
+		mes "Name color reset to white.";
+		mes "Relog or change map if it does not refresh immediately.";
+		close;
+	case 4:
+		setlook 7, 0;
+		mes "[LionShield Color]";
+		mes "Clothes color reset.";
+		close;
+	default:
+		close;
+	}
+
+L_NameColor:
+	mes "[LionShield Name Color]";
+	mes "Select your character name color.";
+	next;
+	.@choice = select("Default White:Soft Sky Blue:Imperial Gold:Ruby Red:Cherry Pink:Neon Violet:Mandarin Orange:Emerald Green:Ocean Turquoise:Rainbow RGB:Cancel");
+	switch (.@choice) {
+	case 1: set CharNameColor$, "FFFFFF"; break;
+	case 2: set CharNameColor$, "3399FF"; break;
+	case 3: set CharNameColor$, "FFD700"; break;
+	case 4: set CharNameColor$, "FF0033"; break;
+	case 5: set CharNameColor$, "FF007F"; break;
+	case 6: set CharNameColor$, "9900FF"; break;
+	case 7: set CharNameColor$, "FF9900"; break;
+	case 8: set CharNameColor$, "00FF66"; break;
+	case 9: set CharNameColor$, "00FFFF"; break;
+	case 10: set CharNameColor$, "RGBRGB"; break;
+	default: close;
+	}
+	mes "[LionShield Name Color]";
+	mes "Name color saved.";
+	mes "Relog or change map if it does not refresh immediately.";
+	close;
+
+L_ClothesColor:
+	mes "[LionShield Clothes Color]";
+	mes "Select your clothes color.";
+	mes "Client supports color 0-6 on this client.";
+	next;
+	.@cloth = select("Default / 0:Color 1:Color 2:Color 3:Color 4:Color 5:Color 6:Cancel") - 1;
+	if (.@cloth < 0 || .@cloth > 6) close;
+	setlook 7, .@cloth;
+	mes "[LionShield Clothes Color]";
+	mes "Clothes color saved.";
+	mes "Relog or change map if it does not refresh immediately.";
+	close;
+
+OnInit:
+	waitingroom "Color System", 0;
+	end;
+}
+
+
+
