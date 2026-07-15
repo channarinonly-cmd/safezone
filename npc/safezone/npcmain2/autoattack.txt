@@ -1,8 +1,8 @@
 function	script	F_AutoAT	{
-    query_sql("SELECT `name` FROM `char` WHERE `char_id` = '"+getcharid(0)+"'",#AI_self$);
+	query_sql("SELECT `name` FROM `char` WHERE `char_id` = '"+getcharid(0)+"'",#AI_self$);
 
-    doevent "AutoAI_Main::OnMainMenu";
-    end;
+	doevent "AutoAI_Main::OnMainMenu";
+	end;
 }
 
 -	script	AI_BOT_LOG	-1,{
@@ -15,6 +15,8 @@ OnPCLogoutEvent:
         if (#AI_self$ != "")
             pcstopfollow getCharID(3,#AI_self$);
         deltimer "AutoAI_Main::OnWeightCheck";
+        deltimer "AutoAI_Main::OnTownService";
+        deltimer "AutoAI_Main::OnAutoReturnFarm";
         end;
     }
 
@@ -25,11 +27,14 @@ OnPCLoginEvent:
         if (#AI_self$ != "")
             pcstopfollow getCharID(3,#AI_self$);
         deltimer "AutoAI_Main::OnWeightCheck";
+        deltimer "AutoAI_Main::OnTownService";
+        deltimer "AutoAI_Main::OnAutoReturnFarm";
         end;
     }
 
-
 OnStatusEndEvent:
+    // Do not delete town timers here.
+    // autostart(false) can trigger this event while the town-service flow is running.
     if (getstatus(SC_AUTOATTACK)){
         sc_end SC_AUTOATTACK;
         sc_end SC_STAMINA;
@@ -47,222 +52,505 @@ OnStatusEndEvent:
 -	script	AutoAI_Main	-1,{
 	end;
 
+OnInit:
+	bindatcmd "aitoggle", strnpcinfo(3)+"::OnWebToggle", 0, 99;
+	bindatcmd "aistop", strnpcinfo(3)+"::OnWebStop", 0, 99;
+	bindatcmd "aifarm", strnpcinfo(3)+"::OnWebPresetFarm", 0, 99;
+	bindatcmd "aiskill", strnpcinfo(3)+"::OnWebPresetSkill", 0, 99;
+	bindatcmd "aisafe", strnpcinfo(3)+"::OnWebPresetSafe", 0, 99;
+	bindatcmd "aiatkall", strnpcinfo(3)+"::OnWebMobAllOn", 0, 99;
+	bindatcmd "ailistonly", strnpcinfo(3)+"::OnWebMobAllOff", 0, 99;
+	bindatcmd "aiatknormal", strnpcinfo(3)+"::OnWebAttackNormal", 0, 99;
+	bindatcmd "aiatkskill", strnpcinfo(3)+"::OnWebAttackSkill", 0, 99;
+	bindatcmd "aiatksupport", strnpcinfo(3)+"::OnWebAttackSupport", 0, 99;
+	bindatcmd "aiwingon", strnpcinfo(3)+"::OnWebTeleportOn", 0, 99;
+	bindatcmd "aiwingoff", strnpcinfo(3)+"::OnWebTeleportOff", 0, 99;
+	bindatcmd "aistorage", strnpcinfo(3)+"::OnWebStorage", 0, 99;
+	bindatcmd "aibuy", strnpcinfo(3)+"::OnWebBuy", 0, 99;
+	bindatcmd "aimove", strnpcinfo(3)+"::OnWebMoveFree", 0, 99;
+	bindatcmd "aistopwalk", strnpcinfo(3)+"::OnWebMoveStop", 0, 99;
+	bindatcmd "aipartyon", strnpcinfo(3)+"::OnWebPartyOn", 0, 99;
+	bindatcmd "aipartyoff", strnpcinfo(3)+"::OnWebPartyOff", 0, 99;
+	bindatcmd "aireviveon", strnpcinfo(3)+"::OnWebReviveOn", 0, 99;
+	bindatcmd "aireviveoff", strnpcinfo(3)+"::OnWebReviveOff", 0, 99;
+	bindatcmd "aipickall", strnpcinfo(3)+"::OnWebPickupAll", 0, 99;
+	bindatcmd "aipicklist", strnpcinfo(3)+"::OnWebPickupList", 0, 99;
+	bindatcmd "aipicknone", strnpcinfo(3)+"::OnWebPickupNone", 0, 99;
+	bindatcmd "aiclearmob", strnpcinfo(3)+"::OnWebClearMob", 0, 99;
+	bindatcmd "aiclearitem", strnpcinfo(3)+"::OnWebClearItem", 0, 99;
+	bindatcmd "aiclearall", strnpcinfo(3)+"::OnWebClearAll", 0, 99;
+	bindatcmd "aiconfig", strnpcinfo(3)+"::OnUiConfig", 0, 99;
+	bindatcmd "aiclearraw", strnpcinfo(3)+"::OnUiClearRaw", 0, 99;
+	bindatcmd "aioldmenu", strnpcinfo(3)+"::OnMainMenu", 0, 99;
+	bindatcmd "aimeleemenu", strnpcinfo(3)+"::Onmelee_attack", 0, 99;
+	bindatcmd "airegenmenu", strnpcinfo(3)+"::Onregeneration_menu", 0, 99;
+	bindatcmd "aiattackskillmenu", strnpcinfo(3)+"::Onattackskills_menu", 0, 99;
+	bindatcmd "aibuffskillmenu", strnpcinfo(3)+"::Onbuffskills_menu", 0, 99;
+	bindatcmd "aisupportmenu", strnpcinfo(3)+"::Onsupport_mode", 0, 99;
+	bindatcmd "aibuffitemmenu", strnpcinfo(3)+"::Onbuffitems_menu", 0, 99;
+	bindatcmd "aiteleportmenu", strnpcinfo(3)+"::Onteleport_menu", 0, 99;
+	bindatcmd "aimonstermenu", strnpcinfo(3)+"::Onmonsters_menu", 0, 99;
+	bindatcmd "ailootmenu", strnpcinfo(3)+"::Onpickupitems_menu", 0, 99;
+	bindatcmd "aikeepmenu", strnpcinfo(3)+"::Onstorage_keep_menu", 0, 99;
+	bindatcmd "aibuymenu", strnpcinfo(3)+"::Onautobuy_menu", 0, 99;
+	end;
+
+OnUiConfig:
+	if (.@atcmd_numparameters < 1) {
+		dispbottom "[AI UI] Usage: @aiconfig <autoattackset-code>";
+		end;
+	}
+	autoattackset(.@atcmd_parameters$[0]);
+	dispbottom "[AI UI] Config saved: " + .@atcmd_parameters$[0];
+	end;
+
+OnUiClearRaw:
+	if (.@atcmd_numparameters < 1) {
+		dispbottom "[AI UI] Usage: @aiclearraw <info-id>";
+		end;
+	}
+	autoattackclear(atoi(.@atcmd_parameters$[0]));
+	dispbottom "[AI UI] List cleared.";
+	end;
+
 // ==================================================
-// ระบบเช็คน้ำหนัก (ย้ายมาทำงานเบื้องหลังแทน While Loop เพื่อไม่ให้ NPC ค้าง)
+// Auto AI town-service flow
+// Rule: every path that goes to town MUST store first, then buy if needed.
+// reason: 1=overweight, 2=need buy, 3=web storage, 4=web buy
 // ==================================================
 OnWeightCheck:
 	if(!sc_check(SC_AUTOATTACK)) end;
+	if(@AI_service_busy) end;
 
 	.@overweight = (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90);
 	.@needbuy = autoattackneedbuy();
+
 	if (.@overweight || .@needbuy) {
 		getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
+		if (@AI_return_map$ == "") end;
+
 		@AI_return_timer = @ai_timer;
 		@AI_return_reason = .@overweight ? 1 : 2;
 		@AI_store_retry = 0;
+		@AI_service_busy = 1;
+		@AI_resume_after = 1;
+
+		// IMPORTANT: stop AI before warping to town.
+		// Some cores return early from autostart(false) on noautoattack maps.
 		autostart(false);
-		if (#AI_self$ != "") {
+
+		if (#AI_self$ != "")
 			pcstopfollow getCharID(3,#AI_self$);
-		}
+
 		deltimer strnpcinfo(3)+"::OnWeightCheck";
+		deltimer strnpcinfo(3)+"::OnTownService";
+		deltimer strnpcinfo(3)+"::OnAutoReturnFarm";
+
 		warp "SavePoint", 0, 0;
+
 		if (.@overweight)
-			dispbottom "น้ำหนักเกิน 90% กลับจุดเซฟเพื่อเก็บของ";
+			dispbottom "[AI] Overweight 90%. Return town to store first.";
 		else
-			dispbottom "[AI] ของที่ตั้งซื้อไว้ใกล้หมด กลับจุดเซฟเพื่อซื้อของ";
-		addtimer 2500, strnpcinfo(3)+"::OnAutoStore";
+			dispbottom "[AI] Need buy. Return town to store first, then buy.";
+
+		addtimer 4000, strnpcinfo(3)+"::OnTownService";
 		end;
 	}
+
 	addtimer 5000, strnpcinfo(3)+"::OnWeightCheck";
 	end;
 
 OnAutoStore:
-	if (@AI_return_map$ == "") end;
+	if (@AI_return_reason == 0)
+		@AI_return_reason = 1;
+	goto(OnTownService);
 
-	// 1. สั่งฝากของเข้าคลังก่อนเสมอ
-	.@stored = autoattackstore();
-
-	// 2. เช็คน้ำหนัก "หลังฝาก" (ก่อนซื้อ) เพื่อดูว่ามีปัญหาที่คลังเต็ม หรือตั้งของเก็บในตัวหนักไปไหม
-	.@overweight_after_store = (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90);
-
-	if (.@overweight_after_store) {
-		@AI_store_retry++;
-		if (@AI_store_retry < 4) {
-			dispbottom "[AI] น้ำหนักยังเกินอยู่ กำลังลองฝากของใหม่...";
-			addtimer 2000, strnpcinfo(3)+"::OnAutoStore";
-			end;
-		}
-		
-		// กรณีฝากไม่ได้จริงๆ แจ้งเตือนแล้วหยุดการทำงานของ AI
-		dispbottom "[AI] ระบบหยุดทำงาน! น้ำหนักตัวละครยังเกิน 90% หลังพยายามฝากของ";
-		dispbottom "[AI] สาเหตุที่เป็นไปได้: 1.คลังเต็ม 2.ตั้งค่า 'ของที่เก็บไว้ในตัว' หนักเกินไป";
-		set @AI_return_map$, "";
-		set @AI_return_x, 0;
-		set @AI_return_y, 0;
-		set @AI_return_timer, 0;
-		set @AI_return_reason, 0;
-		set @AI_store_retry, 0;
+OnTownService:
+	if (@AI_return_map$ == "") {
+		@AI_service_busy = 0;
 		end;
 	}
 
-	// 3. ถ้าฝากของผ่าน (น้ำหนักลดลงแล้ว) ค่อยเช็คว่าต้องซื้อของไหม
-	.@needbuy = autoattackneedbuy();
-	
-	if (.@needbuy) {
-		// ทำการซื้อของ
-		.@bought = autoattackbuy();
+	.@weight_percent_before = (MaxWeight > 0 ? (Weight * 100 / MaxWeight) : 0);
 
-		// ตรวจสอบน้ำหนัก "หลังซื้อ" ทันที
-		.@overweight_after_buy = (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90);
+	// 1) Store first every time. Never buy before this line.
+	.@stored = autoattackstore();
+	sleep2 300;
 
-		if (.@overweight_after_buy) {
-			// แจ้งเตือนผู้เล่นชัดเจนตามข้อ 5
-			dispbottom "[AI] ระบบหยุดทำงาน! คุณตั้งค่าซื้อของมากเกินไปจนน้ำหนักทะลุ 90%";
-			dispbottom "[AI] โปรดไปที่ตั้งค่า 'ซื้อของอัตโนมัติ' และลดจำนวนการซื้อลง";
-			set @AI_return_map$, "";
-			set @AI_return_x, 0;
-			set @AI_return_y, 0;
-			set @AI_return_timer, 0;
-			set @AI_return_reason, 0;
-			set @AI_store_retry, 0;
+	.@weight_percent_after_store = (MaxWeight > 0 ? (Weight * 100 / MaxWeight) : 0);
+	dispbottom "[AI-DEBUG] reason=" + @AI_return_reason + " store=" + .@stored + " weight=" + .@weight_percent_before + "%->" + .@weight_percent_after_store + "%";
+
+	// 2) If still overweight after storage, never buy and never return to farm.
+	.@overweight_after_store = (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90);
+	if (.@overweight_after_store) {
+		@AI_store_retry++;
+		if (@AI_store_retry < 4) {
+			dispbottom "[AI] Still overweight after store. Retry store...";
+			addtimer 2000, strnpcinfo(3)+"::OnTownService";
 			end;
 		}
 
-		if (.@bought <= 0) {
-			@AI_store_retry++;
-			if (@AI_store_retry < 4) {
-				dispbottom "[AI] ซื้อของไม่สำเร็จ กำลังลองใหม่...";
-				addtimer 2000, strnpcinfo(3)+"::OnAutoStore";
-				end;
-			}
-			
-			dispbottom "[AI] ระบบหยุดทำงาน! ไม่สามารถซื้อของได้ โปรดเช็คเงิน Zeny/CC หรือไอดีไอเทม";
-			set @AI_return_map$, "";
-			set @AI_return_x, 0;
-			set @AI_return_y, 0;
-			set @AI_return_timer, 0;
-			set @AI_return_reason, 0;
-			set @AI_store_retry, 0;
+		dispbottom "[AI] STOP: still overweight after store. No buy, no return.";
+		dispbottom "[AI] Check storage full / keep list / potion / buff / flywing / autobuy items.";
+		callsub S_ClearTownState;
+		autostart(false);
+		end;
+	}
+
+	// 3) Buy only after store.
+	.@bought = 0;
+	.@should_buy = 0;
+
+	if (@AI_return_reason == 2 || @AI_return_reason == 4) {
+		.@should_buy = 1;
+	} else if (@AI_return_reason == 1) {
+		.@should_buy = autoattackneedbuy();
+	}
+
+	if (.@should_buy) {
+		.@bought = autoattackbuy();
+		sleep2 300;
+
+		.@weight_percent_after_buy = (MaxWeight > 0 ? (Weight * 100 / MaxWeight) : 0);
+		dispbottom "[AI-DEBUG] buy=" + .@bought + " weight=" + .@weight_percent_after_store + "%->" + .@weight_percent_after_buy + "%";
+
+		.@overweight_after_buy = (MaxWeight > 0 && (Weight * 100 / MaxWeight) >= 90);
+		if (.@overweight_after_buy) {
+			dispbottom "[AI] STOP: overweight after buy. Reduce autobuy amount.";
+			callsub S_ClearTownState;
+			autostart(false);
 			end;
-		} else {
-			dispbottom "[AI] ซื้อของอัตโนมัติสำเร็จ จำนวน " + .@bought + " ชิ้น";
 		}
 	}
 
-	// 4. เมื่อฝากและซื้อเสร็จสมบูรณ์ เตรียมตัววาร์ปกลับไปฟาร์ม
+	// 4) Guard for automatic service.
+	// Auto overweight/need-buy should not return if nothing was done.
+	// Web commands may return even if store/buy result is 0, because they are manual commands.
+	if (.@stored <= 0 && .@bought <= 0) {
+		if (@AI_return_reason == 1) {
+			dispbottom "[AI] STOP: overweight return but stored=0.";
+			dispbottom "[AI] Item may be protected by keep/autobuy/potion/buff/flywing or storage is full.";
+			callsub S_ClearTownState;
+			autostart(false);
+			end;
+		}
+
+		if (@AI_return_reason == 2) {
+			dispbottom "[AI] STOP: need buy but bought=0.";
+			dispbottom "[AI] Check buy_config / zeny-CC / item_id / min-target amount.";
+			callsub S_ClearTownState;
+			autostart(false);
+			end;
+		}
+
+		if (@AI_return_reason == 3)
+			dispbottom "[Web] Storage command done. Nothing to store.";
+		if (@AI_return_reason == 4)
+			dispbottom "[Web] Buy command done, but bought=0. Returning to farm anyway.";
+	}
+
+	if (.@stored > 0)
+		dispbottom "[AI] Stored " + .@stored + " item(s).";
+	if (.@bought > 0)
+		dispbottom "[AI] Bought " + .@bought + " item(s).";
+
 	@AI_store_retry = 0;
-	dispbottom "[AI] จัดการสัมภาระเสร็จสิ้น กำลังกลับไปฟาร์ม...";
+	dispbottom "[AI] Town service done. Return to farm...";
 	warp @AI_return_map$, @AI_return_x, @AI_return_y;
-	addtimer 2000, strnpcinfo(3)+"::OnAutoReturnFarm";
+	addtimer 3000, strnpcinfo(3)+"::OnAutoReturnFarm";
 	end;
 
 OnAutoReturnFarm:
-	if (@AI_return_map$ == "") end;
-
-	if (getstatus(SC_STAMINA)) {
-		if(@AI_return_timer){
-			autostart(true,@AI_return_timer);
-		}else{
-			autostart(true);
-		}
-		deltimer strnpcinfo(3)+"::OnWeightCheck";
-		addtimer 5000, strnpcinfo(3)+"::OnWeightCheck";
-		dispbottom "[AI] กลับมาฟาร์มต่อ";
-	} else {
-		dispbottom "[AI] Stamina ปิดอยู่ จึงไม่เปิดฟาร์มต่อ";
+	if (@AI_return_map$ == "") {
+		@AI_service_busy = 0;
+		end;
 	}
 
-	set @AI_return_map$, "";
-	set @AI_return_x, 0;
-	set @AI_return_y, 0;
-	set @AI_return_timer, 0;
-	set @AI_return_reason, 0;
-	set @AI_store_retry, 0;
+	if (@AI_resume_after) {
+		// กลับจากฝาก/ซื้อของแล้วเปิด Stamina ให้อัตโนมัติ ก่อนเปิด AI ต่อ
+		if(!getstatus(SC_STAMINA))
+			sc_start SC_STAMINA, 86400000, 0;
+
+		if(@AI_return_timer)
+			autostart(true,@AI_return_timer);
+		else
+			autostart(true);
+
+		deltimer strnpcinfo(3)+"::OnWeightCheck";
+		deltimer strnpcinfo(3)+"::OnTownService";
+		deltimer strnpcinfo(3)+"::OnAutoReturnFarm";
+		addtimer 5000, strnpcinfo(3)+"::OnWeightCheck";
+		dispbottom "[AI] Resume farming.";
+	} else {
+		dispbottom "[AI] Town service done, but AI was not resumed.";
+	}
+
+	callsub S_ClearTownState;
 	end;
 
 // ==================================================
-// ระบบรับคำสั่งจาก Web
+// Web commands
+// Web buttons MUST call only these labels:
+//   AutoAI_Main::OnWebStorage
+//   AutoAI_Main::OnWebBuy
+// Do not call OnTownService or OnAutoReturnFarm directly from the web.
 // ==================================================
 OnWebStorage:
-	getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
-	@AI_return_timer = @ai_timer;
-	autostart(false); // ปิด AI 
-	if (#AI_self$ != "") pcstopfollow getCharID(3,#AI_self$);
-	deltimer strnpcinfo(3)+"::OnWeightCheck";
-	
-	warp "SavePoint", 0, 0;
-	dispbottom "[Web] ได้รับคำสั่งฝากของ บังคับกลับจุดเซฟ...";
-	addtimer 2000, strnpcinfo(3)+"::OnWebForceStorage"; // หน่วง 2 วินาทีให้โหลดแมปเสร็จ
-	end;
+	if(@AI_service_busy) {
+		dispbottom "[Web] AI service is busy. Please wait.";
+		end;
+	}
 
-OnWebForceStorage:
-	autoattackstore();
-	dispbottom "[Web] จัดการสัมภาระเสร็จสิ้น รอเดินทางกลับ...";
-	addtimer 2000, strnpcinfo(3)+"::OnWebReturnFarm"; // หน่วง 2 วินาทีก่อนวาร์ปกลับ
+	getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
+	if (@AI_return_map$ == "") {
+		dispbottom "[Web] Failed to save return position.";
+		end;
+	}
+
+	@AI_return_timer = @ai_timer;
+	@AI_return_reason = 3;
+	@AI_store_retry = 0;
+	@AI_service_busy = 1;
+	@AI_resume_after = 1;
+
+	// Stop before warp, then store in town.
+	autostart(false);
+
+	if (#AI_self$ != "")
+		pcstopfollow getCharID(3,#AI_self$);
+
+	deltimer strnpcinfo(3)+"::OnWeightCheck";
+	deltimer strnpcinfo(3)+"::OnTownService";
+	deltimer strnpcinfo(3)+"::OnAutoReturnFarm";
+
+	warp "SavePoint", 0, 0;
+	dispbottom "[Web] Storage command received. Return town...";
+	addtimer 4000, strnpcinfo(3)+"::OnTownService";
 	end;
 
 OnWebBuy:
+	if(@AI_service_busy) {
+		dispbottom "[Web] AI service is busy. Please wait.";
+		end;
+	}
+
 	getmapxy(@AI_return_map$, @AI_return_x, @AI_return_y, BL_PC);
+	if (@AI_return_map$ == "") {
+		dispbottom "[Web] Failed to save return position.";
+		end;
+	}
+
 	@AI_return_timer = @ai_timer;
-	autostart(false); // ปิด AI
-	if (#AI_self$ != "") pcstopfollow getCharID(3,#AI_self$);
+	@AI_return_reason = 4;
+	@AI_store_retry = 0;
+	@AI_service_busy = 1;
+	@AI_resume_after = 1;
+
+	// Stop before warp, then store first, then buy in town.
+	autostart(false);
+
+	if (#AI_self$ != "")
+		pcstopfollow getCharID(3,#AI_self$);
+
 	deltimer strnpcinfo(3)+"::OnWeightCheck";
-	
+	deltimer strnpcinfo(3)+"::OnTownService";
+	deltimer strnpcinfo(3)+"::OnAutoReturnFarm";
+
 	warp "SavePoint", 0, 0;
-	dispbottom "[Web] ได้รับคำสั่งซื้อของ บังคับกลับจุดเซฟ...";
-	addtimer 2000, strnpcinfo(3)+"::OnWebForceBuy"; // หน่วง 2 วินาทีให้โหลดแมปเสร็จ
+	dispbottom "[Web] Buy command received. Return town to store first...";
+	addtimer 4000, strnpcinfo(3)+"::OnTownService";
 	end;
 
-OnWebForceBuy:
-	autoattackstore(); // ฝากของก่อนเพื่อเคลียร์น้ำหนัก
-	.@bought = autoattackbuy();
-	if (.@bought > 0) dispbottom "[Web] ซื้อของสำเร็จ จำนวน " + .@bought + " ชิ้น";
-	else dispbottom "[Web] ของในตัวมีเพียงพอแล้ว หรือ ซื้อไม่สำเร็จ";
-	
-	dispbottom "[Web] จัดการสัมภาระเสร็จสิ้น รอเดินทางกลับ...";
-	addtimer 2000, strnpcinfo(3)+"::OnWebReturnFarm"; // หน่วง 2 วินาทีก่อนวาร์ปกลับ
-	end;
-
-OnWebReturnFarm:
-	if (@AI_return_map$ == "") end;
-	warp @AI_return_map$, @AI_return_x, @AI_return_y;
-	dispbottom "[Web] วาร์ปกลับจุดฟาร์ม รอเปิดระบบ AI...";
-	addtimer 2000, strnpcinfo(3)+"::OnWebResumeAI"; // หน่วง 2 วินาทีให้โหลดแมปฟาร์มเสร็จ
-	end;
-
-OnWebResumeAI:
-	if (@AI_return_map$ == "") end;
-	
-	// บังคับเปิด Stamina (กรณีที่บัฟหาย จะได้รันต่อได้)
-	if (!getstatus(SC_STAMINA)) {
-		sc_start SC_STAMINA, 86400000, 0; // ให้บัฟ Stamina 24 ชม.
+OnWebToggle:
+	autoattackset("12;0");
+	if(!sc_check(SC_AUTOATTACK)) {
+		if(!getstatus(SC_STAMINA))
+			sc_start SC_STAMINA, 86400000, 0;
+		if(@ai_timer)
+			autostart(true,@ai_timer);
+		else
+			autostart(true);
+		deltimer strnpcinfo(3)+"::OnWeightCheck";
+		addtimer 5000, strnpcinfo(3)+"::OnWeightCheck";
+		dispbottom "[Web] AI started.";
+	} else {
+		autostart(false);
+		if(#AI_self$ != "")
+			pcstopfollow getCharID(3,#AI_self$);
+		deltimer strnpcinfo(3)+"::OnWeightCheck";
+		deltimer strnpcinfo(3)+"::OnTownService";
+		deltimer strnpcinfo(3)+"::OnAutoReturnFarm";
+		callsub S_ClearTownState;
+		dispbottom "[Web] AI stopped.";
 	}
+	end;
 
-	// บังคับเปิด Auto Attack
-	if(@AI_return_timer){
-		autostart(true,@AI_return_timer);
-	}else{
-		autostart(true);
-	}
-	
+OnWebStop:
+	autostart(false);
+	if(#AI_self$ != "")
+		pcstopfollow getCharID(3,#AI_self$);
 	deltimer strnpcinfo(3)+"::OnWeightCheck";
-	addtimer 5000, strnpcinfo(3)+"::OnWeightCheck";
-	dispbottom "[Web] กลับมาฟาร์มต่อเรียบร้อยแล้ว";
+	deltimer strnpcinfo(3)+"::OnTownService";
+	deltimer strnpcinfo(3)+"::OnAutoReturnFarm";
+	callsub S_ClearTownState;
+	dispbottom "[Web] AI stopped.";
+	end;
 
+OnWebPresetFarm:
+	autoattackset("1004;0");
+	autoattackset("6;0");
+	autoattackset("9;2;0");
+	autoattackset("7;1;1");
+	autoattackset("7;2;30");
+	autoattackset("7;3;15");
+	autoattackset("10;20");
+	autoattackset("12;0");
+	dispbottom "[Web] Preset: farm.";
+	end;
+
+OnWebPresetSkill:
+	autoattackset("1004;1");
+	autoattackset("6;1");
+	autoattackset("9;2;0");
+	autoattackset("7;1;1");
+	autoattackset("7;2;35");
+	autoattackset("7;3;10");
+	autoattackset("10;60");
+	autoattackset("12;0");
+	dispbottom "[Web] Preset: skill farm.";
+	end;
+
+OnWebPresetSafe:
+	autoattackset("1004;0");
+	autoattackset("6;0");
+	autoattackset("9;2;2");
+	autoattackset("7;1;1");
+	autoattackset("7;2;55");
+	autoattackset("7;3;20");
+	autoattackset("10;10");
+	autoattackset("12;0");
+	dispbottom "[Web] Preset: safe.";
+	end;
+
+OnWebAttackNormal:
+	autoattackset("1004;0");
+	dispbottom "[Web] Attack mode: normal.";
+	end;
+
+OnWebAttackSkill:
+	autoattackset("1004;1");
+	dispbottom "[Web] Attack mode: skill only.";
+	end;
+
+OnWebAttackSupport:
+	autoattackset("1004;2");
+	dispbottom "[Web] Attack mode: support.";
+	end;
+
+OnWebMoveFree:
+	autoattackset("13;0");
+	dispbottom "[Web] Move mode: free walk.";
+	end;
+
+OnWebMoveStop:
+	autoattackset("13;1");
+	dispbottom "[Web] Move mode: stop walk.";
+	end;
+
+OnWebReviveOn:
+	autoattackset("14;1");
+	dispbottom "[Web] Auto revive enabled.";
+	end;
+
+OnWebReviveOff:
+	autoattackset("14;0");
+	dispbottom "[Web] Auto revive disabled.";
+	end;
+
+OnWebPartyOn:
+	autoattackset("15;1");
+	dispbottom "[Web] Auto party enabled.";
+	end;
+
+OnWebPartyOff:
+	autoattackset("15;0");
+	dispbottom "[Web] Auto party disabled.";
+	end;
+
+OnWebTeleportOn:
+	autoattackset("7;1;1");
+	dispbottom "[Web] Wing teleport enabled.";
+	end;
+
+OnWebTeleportOff:
+	autoattackset("7;1;0");
+	dispbottom "[Web] Wing teleport disabled.";
+	end;
+
+OnWebPickupAll:
+	autoattackset("9;2;0");
+	dispbottom "[Web] Pickup mode: all.";
+	end;
+
+OnWebPickupList:
+	autoattackset("9;2;1");
+	dispbottom "[Web] Pickup mode: list only.";
+	end;
+
+OnWebPickupNone:
+	autoattackset("9;2;2");
+	dispbottom "[Web] Pickup mode: none.";
+	end;
+
+OnWebMobAllOn:
+	autoattackset("8;0;0;1");
+	dispbottom "[Web] Attack all monsters enabled.";
+	end;
+
+OnWebMobAllOff:
+	autoattackset("8;0;0;0");
+	dispbottom "[Web] Attack all monsters disabled.";
+	end;
+
+OnWebClearMob:
+	autoattackclear(GET_INFO_MOB);
+	dispbottom "[Web] Monster targets cleared.";
+	end;
+
+OnWebClearItem:
+	autoattackclear(GET_INFO_PICKUP_ITEM);
+	dispbottom "[Web] Pickup items cleared.";
+	end;
+
+OnWebClearAll:
+	autoattackclear(9999);
+	autoattackset("12;0");
+	dispbottom "[Web] All AI settings cleared.";
+	end;
+
+S_ClearTownState:
 	set @AI_return_map$, "";
 	set @AI_return_x, 0;
 	set @AI_return_y, 0;
 	set @AI_return_timer, 0;
 	set @AI_return_reason, 0;
 	set @AI_store_retry, 0;
-	end;
+	set @AI_service_busy, 0;
+	set @AI_resume_after, 0;
+	return;
 // ==================================================
 
 OnMainAI:
 	autoattackset("12;0");
 	if(!sc_check(SC_AUTOATTACK)){
 		// showscript "เปิดระบบ AI ฟาร์ม";
-		if(getstatus(SC_STAMINA)) {
+
+		// เปิด Stamina ให้อัตโนมัติ ไม่ต้องไปกดเปิดเองก่อนใช้ AI
+		if(!getstatus(SC_STAMINA)) {
+			sc_start SC_STAMINA, 86400000, 0;
+			dispbottom "[AI] เปิด Stamina อัตโนมัติแล้ว";
+		}
+
             set .@pyname$, strcharinfo(0);
             set .@vending,0;
             .@size = query_sql( "select name from `char` left join login on `char`.account_id = login.account_id where online = 1 and last_ip = '"+getcharip()+"'", .@name$ );
@@ -301,15 +589,15 @@ OnMainAI:
 
             close2; // ปิดหน้าต่างสนทนาทันทีเพื่อให้ผู้เล่นขยับได้
             end;
-        }
-        mes "กรุณาเปิดระบบ Stamina ก่อน";
-        close;
 	}else{
 		// showscript "ปิดระบบ AI ฟาร์ม";
 		autostart(false);
 		if(#AI_self$ != "")
 		pcstopfollow getCharID(3,#AI_self$);
         deltimer strnpcinfo(3)+"::OnWeightCheck";
+        deltimer strnpcinfo(3)+"::OnTownService";
+        deltimer strnpcinfo(3)+"::OnAutoReturnFarm";
+        callsub S_ClearTownState;
         close;
 	}
 	end;
@@ -340,7 +628,7 @@ config_menu:
 
 	// To disable an option, comment the line
 	menu	" ^ff0000~^000000 ย้อนกลับ",main_menu,
-			" ^ff0000~^000000 โจมตีปกติ",melee_attack,
+			" ^ff0000~^000000 โหมดโจมตี",melee_attack,
 			" ^ff0000~^000000 โหมดการเคลื่อนที่",stop_walk,
 			" ^ff0000~^000000 ฟื้นฟู",regeneration_menu,
 			" ^ff0000~^000000 สกิลโจมตี",attackskills_menu,
@@ -391,7 +679,8 @@ quick_preset_menu:
 
 	switch(.@preset) {
 		case 1:
-			autoattackset("6;1");
+			autoattackset("1004;0");
+			autoattackset("6;0");
 			autoattackset("9;2;0");
 			autoattackset("7;1;1");
 			autoattackset("7;2;30");
@@ -401,6 +690,7 @@ quick_preset_menu:
 			dispbottom "[AI] ใช้ตั้งค่าเร็ว: ฟาร์มทั่วไป";
 			break;
 		case 2:
+			autoattackset("1004;1");
 			autoattackset("6;1");
 			autoattackset("9;2;0");
 			autoattackset("7;1;1");
@@ -411,7 +701,8 @@ quick_preset_menu:
 			dispbottom "[AI] ใช้ตั้งค่าเร็ว: ฟาร์มใช้สกิล";
 			break;
 		case 3:
-			autoattackset("6;1");
+			autoattackset("1004;0");
+			autoattackset("6;0");
 			autoattackset("9;2;2");
 			autoattackset("7;1;1");
 			autoattackset("7;2;55");
@@ -504,6 +795,7 @@ revive_mode:
 goto(config_menu);
 end;
 
+Onsupport_mode:
 support_mode:
 clear();
 	mes "[^FF0000•^000000 ^2f00ffตั้งค่า^000000 ^FF0000•^000000]";
@@ -625,6 +917,7 @@ clear();
 end;
 
 
+Onpickupitems_menu:
 pickupitems_menu:
 	clear2();
 	.@menu$ = "[^FF0000•^000000 ^2f00ffกำหนดการเก็บไอเทม^000000 ^FF0000•^000000]";
@@ -727,6 +1020,7 @@ pickupitems_menu:
 	end;
 
 
+Onstorage_keep_menu:
 storage_keep_menu:
 	clear2();
 	.@menu$ = "[^FF0000*^000000 ^2f00ffของที่เก็บไว้ในตัว^000000 ^FF0000*^000000]";
@@ -759,6 +1053,7 @@ storage_keep_menu:
 	goto(storage_keep_menu);
 	end;
 
+Onautobuy_menu:
 autobuy_menu:
 	clear2();
 	.@menu$ = "[^FF0000*^000000 ^2f00ffซื้อของอัตโนมัติ^000000 ^FF0000*^000000]";
@@ -802,6 +1097,7 @@ autobuy_amount_menu:
 	autoattackset("1003;1;" + .@item_id + ";" + .@min_amount + ";" + .@target_amount);
 	goto(autobuy_menu);
 	end;
+Onmonsters_menu:
 monsters_menu:
 	clear2();
 	.@menu$ = "[^FF0000•^000000 ^2f00ffกำหนดเป้าหมาย^000000 ^FF0000•^000000]";
@@ -862,6 +1158,7 @@ monsters_menu:
 	goto(monsters_menu);
 	end;
 
+Onteleport_menu:
 teleport_menu:
 	clear();
 	autoattackset("7;0;1");
@@ -963,26 +1260,48 @@ teleport_menu:
 	goto(teleport_menu);
 	end;
 
+Onmelee_attack:
 melee_attack:
 	clear2();
-	.@menu$ = "[^FF0000•^000000 ^2f00ffโจมตีปกติ^000000 ^FF0000•^000000]";
+	mes "[^FF0000*^000000 ^2f00ffโหมดโจมตี^000000 ^FF0000*^000000]";
 
-	mes .@menu$;
-	mes autoattackstrinfo(GET_INFO_ATTACK);
+	.@mode = autoattackintinfo(1004);
 
-	.@melee_menu = select(autoattackintinfo(GET_INFO_ATTACK)?"^ff0000~^000000 เปิดใช้งาน":"^ff0000~^000000 ปิดใช้งาน","^ff0000~^000000 ยกเลิก");
+	if (.@mode == 0)
+		mes "ปัจจุบัน: ^00AA00โจมตีปกติ^000000";
+	else if (.@mode == 1)
+		mes "ปัจจุบัน: ^0000FFใช้สกิลเท่านั้น^000000";
+	else
+		mes "ปัจจุบัน: ^FF9900อยู่เฉย ๆ / ซัพพอร์ต^000000";
 
-	if( .@melee_menu == 1 ){
-		if(autoattackintinfo(GET_INFO_ATTACK))
-			autoattackset("6;0");
-		else
-			autoattackset("6;1");
-		clear();
+	mes "";
+	mes "โจมตีปกติ: ใช้สกิลโจมตี + ตีธรรมดา";
+	mes "ใช้สกิลเท่านั้น: ใช้เฉพาะสกิลโจมตี ไม่ตีธรรมดา";
+	mes "อยู่เฉย ๆ / ซัพพอร์ต: ไม่หาเป้ามอน ไม่โจมตี แต่ฮีล/บัฟยังทำงาน";
+	mes "หมายเหตุ: โหมดใช้สกิลเท่านั้น ควรตั้ง % ใช้สกิลมากกว่า 0";
 
-		goto(melee_attack);
+	.@select = select(
+		" โจมตีปกติ",
+		" ใช้สกิลเท่านั้น",
+		" อยู่เฉย ๆ / ซัพพอร์ต",
+		" กลับ"
+	);
+
+	if (.@select == 1) {
+		autoattackset("1004;0");
+		dispbottom "[AI] โหมดโจมตี: โจมตีปกติ";
+	} else if (.@select == 2) {
+		autoattackset("1004;1");
+		dispbottom "[AI] โหมดโจมตี: ใช้สกิลเท่านั้น";
+	} else if (.@select == 3) {
+		autoattackset("1004;2");
+		dispbottom "[AI] โหมดโจมตี: อยู่เฉย ๆ / ซัพพอร์ต";
+	} else {
+		goto(config_menu);
 	}
 
-	goto(config_menu);
+	next;
+	goto(melee_attack);
 	end;
 
 focus_menu:
@@ -1019,6 +1338,7 @@ focus_menu:
 	goto(config_menu);
 	end;
 
+Onregeneration_menu:
 regeneration_menu:
 	clear2();
 	.@menu$ = "[^FF0000•^000000 ^2f00ffฟื้นฟู^000000 ^FF0000•^000000]";
@@ -1221,6 +1541,7 @@ sit_regen_menu:
 	goto(sit_regen_menu);
 	end;
 
+Onbuffskills_menu:
 buffskills_menu:
 	clear();
 	.@menu$ = "[^FF0000•^000000 ^2f00ffสกิลบัฟ^000000 ^FF0000•^000000]";
@@ -1283,6 +1604,7 @@ buffskills_menu:
 	end;
 
 
+Onattackskills_menu:
 attackskills_menu:
 	clear();
 	.@menu$ = "[^FF0000•^000000 ^2f00ffสกิลโจมตี^000000 ^FF0000•^000000]";
@@ -1342,7 +1664,25 @@ attackskills_menu:
 		mes "ใส่ 0 = ใช้ได้ตลอด";
 		input .@attack_swarm_min,0,50;
 
-		autoattackset("4;1;"+ .@attack_skillid + ";" + .@attack_skilllv + ";" + .@attack_swarm_min);
+		clear();
+		mes .@menu$;
+		mes "ต้องการใช้สกิลนี้กับมอนสเตอร์ตัวไหน?";
+		mes "0 = ทุกมอนสเตอร์";
+		.@target_mob_id = 0;
+		.@target_mob_menu = select("ทุกมอนสเตอร์", "เลือกมอนสเตอร์จากแผนที่", "กรอก Mob ID");
+		if (.@target_mob_menu == 2) {
+			.@choice = select(autoattackmenulist(0));
+			.@target_mob_id = autoattackmenuid(0,.@choice);
+			if (.@target_mob_id < 0)
+				.@target_mob_id = 0;
+		} else if (.@target_mob_menu == 3) {
+			mes "Mob ID (0 = ทุกมอนสเตอร์):";
+			input .@target_mob_id;
+			if (.@target_mob_id < 0)
+				.@target_mob_id = 0;
+		}
+
+		autoattackset("4;1;"+ .@attack_skillid + ";" + .@attack_skilllv + ";" + .@attack_swarm_min + ";" + .@target_mob_id);
 		goto(attackskills_menu);
 	}
 	if(.@attackskills_menu == 3) {
@@ -1352,9 +1692,21 @@ attackskills_menu:
 			next;
 			goto(attackskills_menu);
 		}
-		mes "ระบุเลขสกิลไอดีที่ต้องการลบ";
+		mes "กรอก Skill ID ที่ต้องการลบ";
 		input .@attack_skillid;
-		autoattackset("4;0;"+ .@attack_skillid + ";0");
+		mes "ต้องการลบการตั้งค่าแบบไหน?";
+		.@delete_target_menu = select("ลบทุกการตั้งค่าของสกิลนี้", "ลบเฉพาะ Mob ID");
+		.@delete_target_mob_id = 0;
+		if (.@delete_target_menu == 2) {
+			mes "Mob ID ที่ต้องการลบ:";
+			input .@delete_target_mob_id;
+		}
+
+		if (.@delete_target_mob_id > 0)
+			autoattackset("4;0;"+ .@attack_skillid + ";0;0;" + .@delete_target_mob_id);
+		else
+			autoattackset("4;0;"+ .@attack_skillid + ";0");
+
 		goto(attackskills_menu);
 	}
 
@@ -1380,6 +1732,7 @@ attackskills_menu:
 	end;
 
 
+Onbuffitems_menu:
 buffitems_menu:
 	clear();
 	.@menu$ = "[^FF0000•^000000 ^2f00ffไอเทมบัฟ^000000 ^FF0000•^000000]";
@@ -1446,13 +1799,35 @@ flee_mob_menu:
 		case 1:
 			clear();
 			mes .@menu$;
-			mes "ระบุไอดีมอนสเตอร์ (สูงสุด "+getbattleflag("autoattack_max_flee_mob")+")";
+			mes "เลือกมอนสเตอร์ที่ต้องการให้ AI หลบหนี";
+			mes "สูงสุด: " + getbattleflag("autoattack_max_flee_mob") + " ตัว";
 			mes autoattackstrinfo(GET_INFO_FLEE_MOB,-1);
-			input .@mob_id;
+
+			.@add_type = select(" เลือกมอนสเตอร์จากแผนที่"," กรอก Mob ID เอง"," กลับ");
+			if (.@add_type == 1) {
+				clear();
+				mes .@menu$;
+				mes "เลือกมอนสเตอร์จากแผนที่ปัจจุบัน";
+				.@choice = select(autoattackmenulist(0));
+				.@mob_id = autoattackmenuid(0,.@choice);
+				if(.@mob_id <= 0) {
+					mes "ไม่พบมอนสเตอร์ให้เลือก กรุณากรอก Mob ID เอง";
+					input .@mob_id;
+				}
+			} else if (.@add_type == 2) {
+				clear();
+				mes .@menu$;
+				mes "กรอก Mob ID ที่ต้องการให้หลบหนี";
+				input .@mob_id;
+			} else {
+				goto(flee_mob_menu);
+			}
+
 			if(.@mob_id <= 0 )
 				goto(flee_mob_menu);
 
 			autoattackset("11;1;" + .@mob_id);
+			dispbottom "[AI] เพิ่มมอนสเตอร์หลบหนี: " + .@mob_id;
 			break;
 
 		case 2:
@@ -1463,6 +1838,7 @@ flee_mob_menu:
 					goto(flee_mob_menu);
 
 				autoattackset("11;0;" + .@mob_id);
+				dispbottom "[AI] ลบมอนสเตอร์หลบหนี: " + .@mob_id;
 			} else {
 				clear();
 				mes .@menu$;
@@ -1473,6 +1849,7 @@ flee_mob_menu:
 
 		case 3:
 			autoattackclear(GET_INFO_FLEE_MOB);
+			dispbottom "[AI] ล้างรายการมอนสเตอร์หลบหนีแล้ว";
 			break;
 
 		case 4:

@@ -3,14 +3,21 @@
 // For more information, see LICENCE in the main folder
 
 #include "clif.hpp"
+#include "../config/lionshield.hpp"
+#include <common/sql.hpp>
 
 #include <unordered_set>
 
+#include <algorithm>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include <common/cbasetypes.hpp>
 #include <common/conf.hpp>
@@ -86,6 +93,7 @@ static inline int32 client_exp(t_exp exp) {
 #endif
 
 // (^~_~^) Gepard Shield Start
+#ifdef ENABLE_GEPARD_SHIELD
 
 bool clif_gepard_process_packet(map_session_data* sd)
 {
@@ -143,6 +151,7 @@ bool clif_gepard_process_packet(map_session_data* sd)
 	return gepard_process_cs_packet(fd, s, 0);
 }
 
+#endif
 // (^~_~^) Gepard Shield End
 
 /* for clif_clearunit_delayed */
@@ -7356,6 +7365,10 @@ void clif_wis_end(int fd, int result)
 /// 0af7 <flag>.W <char id>.L <name>.24B
 void clif_solved_charname(int fd, int charid, const char* name)
 {
+	map_session_data* sd = map_charid2sd(charid);
+	if (sd != nullptr && sd->colored_name[0] != '\0') {
+		name = sd->colored_name;
+	}
 #if PACKETVER >= 20180221
 	WFIFOHEAD(fd,packet_len(0xaf7));
 	WFIFOW(fd,0) = 0xaf7;
@@ -7370,6 +7383,45 @@ void clif_solved_charname(int fd, int charid, const char* name)
 	safestrncpy(WFIFOCP(fd,6), name, NAME_LENGTH);
 	WFIFOSET(fd,packet_len(0x194));
 #endif
+}
+
+int clif_send_charname(struct block_list* bl, va_list ap) {
+	map_session_data* tsd = (map_session_data*)bl;
+	map_session_data* sd = va_arg(ap, map_session_data*);
+	if (!sd || !tsd) return 0;
+
+	WFIFOHEAD(tsd->fd, packet_len(0x2b0));
+	WFIFOW(tsd->fd,0) = 0x2b0;
+	WFIFOL(tsd->fd,2) = sd->bl.id;
+	safestrncpy(WFIFOCP(tsd->fd,6), sd->colored_name[0] ? sd->colored_name : sd->status.name, NAME_LENGTH);
+	WFIFOSET(tsd->fd, packet_len(0x2b0));
+
+	return 0;
+}
+
+void clif_solved_charname_area(map_session_data* sd) {
+	if (!sd) return;
+
+	WFIFOHEAD(sd->fd, packet_len(0x2b0));
+	WFIFOW(sd->fd,0) = 0x2b0;
+	WFIFOL(sd->fd,2) = sd->bl.id;
+	safestrncpy(WFIFOCP(sd->fd,6), sd->colored_name[0] ? sd->colored_name : sd->status.name, NAME_LENGTH);
+	WFIFOSET(sd->fd, packet_len(0x2b0));
+
+	map_foreachinarea(clif_send_charname, sd->bl.m,
+		sd->bl.x - AREA_SIZE, sd->bl.y - AREA_SIZE,
+		sd->bl.x + AREA_SIZE, sd->bl.y + AREA_SIZE,
+		BL_PC, sd);
+}
+
+void clif_openurl(map_session_data* sd, const char* url) {
+	if (!sd || !sd->fd) return;
+	int len = strlen(url) + 1;
+	WFIFOHEAD(sd->fd, len + 4);
+	WFIFOW(sd->fd, 0) = 0x81f; // ZC_OPEN_WEBSITE
+	WFIFOW(sd->fd, 2) = len + 4;
+	safestrncpy(WFIFOCP(sd->fd, 4), url, len);
+	WFIFOSET(sd->fd, len + 4);
 }
 
 
@@ -10390,7 +10442,10 @@ void clif_name( struct block_list* src, struct block_list *bl, send_target targe
 				return;
 			}
 
-			safestrncpy( packet.name, sd->status.name, NAME_LENGTH );
+			if( sd->colored_name[0] )
+				safestrncpy( packet.name, sd->colored_name, NAME_LENGTH );
+			else
+				safestrncpy( packet.name, sd->status.name, NAME_LENGTH );
 
 			party_data *p = nullptr;
 
@@ -10409,7 +10464,13 @@ void clif_name( struct block_list* src, struct block_list *bl, send_target targe
 				// Will get the position of the guild the player is in
 				position = guild_getposition(*sd);
 
-				safestrncpy( packet.guild_name, sd->guild->guild.name, NAME_LENGTH );
+				if( sd->colored_name[0] == '^' && sd->colored_name[1] != '\0' ){
+					char colored_guild_name[NAME_LENGTH];
+					safesnprintf( colored_guild_name, sizeof( colored_guild_name ), "^%.6s%s", sd->colored_name + 1, sd->guild->guild.name );
+					safestrncpy( packet.guild_name, colored_guild_name, NAME_LENGTH );
+				}else{
+					safestrncpy( packet.guild_name, sd->guild->guild.name, NAME_LENGTH );
+				}
 				safestrncpy( packet.position_name, sd->guild->guild.position[position].name, NAME_LENGTH );
 			}else if( sd->clan ){
 				safestrncpy( packet.position_name, sd->clan->name, NAME_LENGTH );
@@ -11169,11 +11230,13 @@ void clif_parse_WantToConnection(int fd, map_session_data* sd)
 
 // (^~_~^) Gepard Shield Start
 
+#ifdef ENABLE_GEPARD_SHIELD
 	if (is_gepard_active && !session[fd]->flag.roplay)
 	{
 		gepard_init(session[fd], fd, GEPARD_MAP);
 		session[fd]->gepard_info.sync_tick = gettick();
 	}
+#endif
 
 // (^~_~^) Gepard Shield End
 
@@ -12728,6 +12791,490 @@ void clif_parse_UseItem(int fd, map_session_data *sd)
 
 	if (!pc_useitem(sd,n))
 		clif_useitemack(sd,n,0,false); //Send an empty ack packet or the client gets stuck.
+}
+
+/// SafeZone in-game AutoAttack UI command.
+/// 0b20 <action>.W <value>.W
+/// action 1: open the same menu as item 3504 (F_AutoAT -> AutoAI_Main::OnMainMenu).
+static int clif_attackauto_scan_mob_sub(struct block_list* bl, va_list ap)
+{
+	nullpo_ret(bl);
+
+	TBL_MOB* md = (TBL_MOB*)bl;
+	std::vector<uint32>* mob_ids = va_arg(ap, std::vector<uint32>*);
+	if (!md || !md->mob_id || !md->db || !mob_ids)
+		return 0;
+
+	if (md->special_state.clone || md->special_state.summon || md->special_state.ai || md->master_id || md->guardian_data)
+		return 0;
+
+	if (md->npc_event[0] != '\0')
+		return 0;
+
+	if (std::find(mob_ids->begin(), mob_ids->end(), md->mob_id) == mob_ids->end())
+		mob_ids->push_back(md->mob_id);
+
+	return 0;
+}
+
+static bool clif_attackauto_is_equipment_item(t_itemid nameid)
+{
+	std::shared_ptr<item_data> item = item_db.find(nameid);
+	if (!item)
+		return false;
+
+	return item->type == IT_ARMOR || item->type == IT_WEAPON || item->type == IT_SHADOWGEAR || item->type == IT_PETARMOR;
+}
+
+static void clif_attackauto_add_dropitem(std::vector<t_itemid>& item_ids, t_itemid nameid, bool allow_equipment = true)
+{
+	if (!nameid)
+		return;
+
+	if (!item_db.exists(nameid))
+		return;
+
+	if (!allow_equipment && clif_attackauto_is_equipment_item(nameid))
+		return;
+
+	if (std::find(item_ids.begin(), item_ids.end(), nameid) == item_ids.end())
+		item_ids.push_back(nameid);
+}
+
+static void clif_attackauto_add_itemdaily_drops(std::vector<t_itemid>& daily_item_ids, const std::vector<uint32>& mob_ids)
+{
+	if (mob_ids.empty())
+		return;
+
+	std::string mob_list;
+	for (uint32 mob_id : mob_ids) {
+		if (!mob_id)
+			continue;
+		if (!mob_list.empty())
+			mob_list += ",";
+		mob_list += std::to_string(mob_id);
+	}
+	if (mob_list.empty())
+		return;
+
+	if (SQL_ERROR == Sql_Query(mmysql_handle,
+		"SELECT DISTINCT `item_id` FROM `item_daily_drops` "
+		"WHERE `day_key` = DATE_FORMAT(CURDATE(), '%%Y%%m%%d') + 0 "
+		"AND `mob_id` IN (%s)",
+		mob_list.c_str())) {
+		Sql_ShowDebug(mmysql_handle);
+		return;
+	}
+
+	while (SQL_SUCCESS == Sql_NextRow(mmysql_handle)) {
+		char* data = nullptr;
+		Sql_GetData(mmysql_handle, 0, &data, nullptr);
+		if (!data)
+			continue;
+		clif_attackauto_add_dropitem(daily_item_ids, (t_itemid)strtoul(data, nullptr, 10));
+	}
+}
+
+static std::string clif_attackauto_trim_copy(std::string value)
+{
+	value.erase(value.begin(), std::find_if(value.begin(), value.end(), [](unsigned char ch) {
+		return !std::isspace(ch);
+	}));
+	value.erase(std::find_if(value.rbegin(), value.rend(), [](unsigned char ch) {
+		return !std::isspace(ch);
+	}).base(), value.end());
+	return value;
+}
+
+static void clif_attackauto_add_line(std::string& payload, t_itemid nameid, const char* suffix = nullptr)
+{
+	static const size_t ATTACKAUTO_SCAN_PAYLOAD_LIMIT = 60000;
+	std::shared_ptr<item_data> item = item_db.find(nameid);
+	if (!item)
+		return;
+
+	const char* name = !item->ename.empty() ? item->ename.c_str() : item->name.c_str();
+	if (!name || !name[0])
+		name = "Unknown";
+
+	char line[220] = { 0 };
+	if (suffix && suffix[0])
+		safesnprintf(line, sizeof(line), "%u\t%s %s\n", nameid, name, suffix);
+	else
+		safesnprintf(line, sizeof(line), "%u\t%s\n", nameid, name);
+	if (payload.size() + strlen(line) <= ATTACKAUTO_SCAN_PAYLOAD_LIMIT)
+		payload += line;
+}
+
+static bool clif_attackauto_payload_full(const std::string& payload, size_t add = 0)
+{
+	static const size_t ATTACKAUTO_SCAN_PAYLOAD_LIMIT = 60000;
+	return payload.size() + add > ATTACKAUTO_SCAN_PAYLOAD_LIMIT;
+}
+
+static bool clif_attackauto_is_ai_buff_item(t_itemid nameid)
+{
+	for (const auto& entry : ai_item_buff) {
+		if (entry.itemid == nameid)
+			return true;
+	}
+	return false;
+}
+
+static void clif_attackauto_send_scanlist(map_session_data *sd, uint8 list_type)
+{
+	if (!sd || !session_isActive(sd->fd))
+		return;
+
+	std::string payload;
+
+	if (list_type == 1) {
+		std::vector<uint32> mob_ids;
+		map_foreachinmap(clif_attackauto_scan_mob_sub, sd->bl.m, BL_MOB, &mob_ids);
+		std::sort(mob_ids.begin(), mob_ids.end());
+
+		payload = "0\tAll monsters\n";
+		for (uint32 mob_id : mob_ids) {
+			std::shared_ptr<s_mob_db> mob = mob_db.find(mob_id);
+			if (!mob)
+				continue;
+
+			const char* name = !mob->jname.empty() ? mob->jname.c_str() : mob->name.c_str();
+			if (!name || !name[0])
+				name = "Unknown";
+
+			char line[160] = { 0 };
+			safesnprintf(line, sizeof(line), "%u\t%s\n", mob_id, name);
+			if (clif_attackauto_payload_full(payload, strlen(line)))
+				break;
+			payload += line;
+		}
+	} else if (list_type == 3) {
+		std::vector<uint32> mob_ids;
+		std::vector<t_itemid> item_ids;
+		std::vector<t_itemid> daily_item_ids;
+		map_foreachinmap(clif_attackauto_scan_mob_sub, sd->bl.m, BL_MOB, &mob_ids);
+		std::sort(mob_ids.begin(), mob_ids.end());
+
+		for (uint32 mob_id : mob_ids) {
+			std::shared_ptr<s_mob_db> mob = mob_db.find(mob_id);
+			if (!mob)
+				continue;
+
+			bool allow_equipment = mob->get_bosstype() != BOSSTYPE_NONE;
+			for (int i = 0; i < MAX_MOB_DROP_TOTAL; i++)
+				clif_attackauto_add_dropitem(item_ids, mob->dropitem[i].nameid, allow_equipment);
+			for (int i = 0; i < MAX_MVP_DROP_TOTAL; i++)
+				clif_attackauto_add_dropitem(item_ids, mob->mvpitem[i].nameid);
+		}
+		clif_attackauto_add_itemdaily_drops(daily_item_ids, mob_ids);
+
+		std::sort(item_ids.begin(), item_ids.end());
+		std::sort(daily_item_ids.begin(), daily_item_ids.end());
+		payload = "0\tNone\n";
+		for (t_itemid nameid : daily_item_ids) {
+			clif_attackauto_add_line(payload, nameid, "[ItemDaily]");
+			if (clif_attackauto_payload_full(payload))
+				break;
+		}
+		for (t_itemid nameid : item_ids) {
+			if (std::find(daily_item_ids.begin(), daily_item_ids.end(), nameid) != daily_item_ids.end())
+				continue;
+			std::shared_ptr<item_data> item = item_db.find(nameid);
+			if (!item)
+				continue;
+
+			const char* name = !item->ename.empty() ? item->ename.c_str() : item->name.c_str();
+			if (!name || !name[0])
+				name = "Unknown";
+
+			char line[180] = { 0 };
+			safesnprintf(line, sizeof(line), "%u\t%s\n", nameid, name);
+			if (clif_attackauto_payload_full(payload, strlen(line)))
+				break;
+			payload += line;
+		}
+	} else if (list_type == 4) {
+		std::vector<t_itemid> item_ids;
+		payload = "0\tNone\n";
+		for (int i = 0; i < MAX_INVENTORY; i++) {
+			struct item& inv_item = sd->inventory.u.items_inventory[i];
+			if (inv_item.nameid <= 0 || inv_item.amount <= 0 || inv_item.equip != 0)
+				continue;
+
+			std::shared_ptr<item_data> item = item_db.find(inv_item.nameid);
+			if (!item)
+				continue;
+
+			if (std::find(item_ids.begin(), item_ids.end(), inv_item.nameid) != item_ids.end())
+				continue;
+
+			item_ids.push_back(inv_item.nameid);
+			char suffix[40] = { 0 };
+			safesnprintf(suffix, sizeof(suffix), "x%d", inv_item.amount);
+			clif_attackauto_add_line(payload, inv_item.nameid, suffix);
+			if (clif_attackauto_payload_full(payload))
+				break;
+		}
+	} else if (list_type == 5) {
+		payload = "0\tNone\n";
+		std::ifstream file("db/custom/ai_buy_items.txt");
+		std::string line;
+
+		while (std::getline(file, line)) {
+			size_t comment = line.find("//");
+			if (comment != std::string::npos)
+				line.erase(comment);
+
+			line = clif_attackauto_trim_copy(line);
+			if (line.empty())
+				continue;
+
+			std::stringstream ss(line);
+			std::string id_text;
+			std::string currency_text;
+			std::string price_text;
+			if (!std::getline(ss, id_text, ',') || !std::getline(ss, currency_text, ',') || !std::getline(ss, price_text, ','))
+				continue;
+
+			id_text = clif_attackauto_trim_copy(id_text);
+			currency_text = clif_attackauto_trim_copy(currency_text);
+			price_text = clif_attackauto_trim_copy(price_text);
+
+			try {
+				t_itemid nameid = (t_itemid)std::stoi(id_text);
+				int price = std::stoi(price_text);
+				if (nameid <= 0 || price <= 0 || !item_db.exists(nameid))
+					continue;
+
+				std::transform(currency_text.begin(), currency_text.end(), currency_text.begin(), [](unsigned char ch) {
+					return (char)std::tolower(ch);
+				});
+
+				char suffix[80] = { 0 };
+				safesnprintf(suffix, sizeof(suffix), "(%d %s)", price, currency_text == "cc" || currency_text == "cash" ? "CC" : "Zeny");
+				clif_attackauto_add_line(payload, nameid, suffix);
+				if (clif_attackauto_payload_full(payload))
+					break;
+			} catch (...) {
+			}
+		}
+	} else if (list_type == 6) {
+		std::vector<t_itemid> item_ids;
+		payload = "0\tNone\n";
+		for (int i = 0; i < MAX_INVENTORY; i++) {
+			struct item& inv_item = sd->inventory.u.items_inventory[i];
+			if (inv_item.nameid <= 0 || inv_item.amount <= 0 || inv_item.equip != 0)
+				continue;
+
+			if (!clif_attackauto_is_ai_buff_item(inv_item.nameid))
+				continue;
+
+			if (std::find(item_ids.begin(), item_ids.end(), inv_item.nameid) != item_ids.end())
+				continue;
+
+			item_ids.push_back(inv_item.nameid);
+			char suffix[40] = { 0 };
+			safesnprintf(suffix, sizeof(suffix), "x%d", inv_item.amount);
+			clif_attackauto_add_line(payload, inv_item.nameid, suffix);
+			if (clif_attackauto_payload_full(payload))
+				break;
+		}
+	} else if (list_type == 7) {
+		std::vector<t_itemid> item_ids;
+		payload = "0\tNone\n";
+		for (int i = 0; i < MAX_INVENTORY; i++) {
+			struct item& inv_item = sd->inventory.u.items_inventory[i];
+			if (inv_item.nameid <= 0 || inv_item.amount <= 0 || inv_item.equip != 0)
+				continue;
+
+			std::shared_ptr<item_data> item = item_db.find(inv_item.nameid);
+			if (!item || item->type != IT_HEALING)
+				continue;
+
+			if (std::find(item_ids.begin(), item_ids.end(), inv_item.nameid) != item_ids.end())
+				continue;
+
+			item_ids.push_back(inv_item.nameid);
+			char suffix[40] = { 0 };
+			safesnprintf(suffix, sizeof(suffix), "x%d", inv_item.amount);
+			clif_attackauto_add_line(payload, inv_item.nameid, suffix);
+			if (clif_attackauto_payload_full(payload))
+				break;
+		}
+	} else if (list_type == 8) {
+		payload = "0\tNone\n";
+		if (sd->status.party_id > 0) {
+			struct party_data* p = party_search(sd->status.party_id);
+			if (p) {
+				int index = 1;
+				for (int i = 0; i < MAX_PARTY; i++) {
+					struct map_session_data* tsd = p->data[i].sd;
+					if (!tsd && p->party.member[i].char_id > 0)
+						tsd = map_charid2sd(p->party.member[i].char_id);
+					if (!tsd || tsd == sd)
+						continue;
+					if (tsd->bl.m != sd->bl.m)
+						continue;
+
+					char line[160] = { 0 };
+					safesnprintf(line, sizeof(line), "%d\t%s\n", index++, tsd->status.name);
+					if (clif_attackauto_payload_full(payload, strlen(line)))
+						break;
+					payload += line;
+				}
+			}
+		}
+	} else if (list_type == 2) {
+		payload = "0\tNone\n";
+		for (int i = 0; i < MAX_SKILL; i++) {
+			uint16 skill_id = sd->status.skill[i].id;
+			uint8 skill_lv = sd->status.skill[i].lv;
+			if (skill_id <= 0 || skill_lv <= 0)
+				continue;
+
+			std::shared_ptr<s_skill_db> skill = skill_db.find(skill_id);
+			if (!skill || skill_get_inf(skill_id) == INF_PASSIVE_SKILL)
+				continue;
+
+			const char* name = skill->desc;
+			if (!name || !name[0])
+				name = skill->name;
+			if (!name || !name[0])
+				name = "Unknown";
+
+			char line[180] = { 0 };
+			safesnprintf(line, sizeof(line), "%u\t%s Lv.%u\n", skill_id, name, skill_lv);
+			if (clif_attackauto_payload_full(payload, strlen(line)))
+				break;
+			payload += line;
+		}
+	} else {
+		payload = "0\tUnsupported list\n";
+	}
+
+	{
+		std::ofstream out("log/attackauto_scan_latest.txt", std::ios::binary | std::ios::trunc);
+		if (out.good()) {
+			out.write(payload.data(), static_cast<std::streamsize>(payload.size()));
+		}
+	}
+	{
+		char typed_path[128] = { 0 };
+		safesnprintf(typed_path, sizeof(typed_path), "log/attackauto_scan_type_%u.txt", list_type);
+		std::ofstream out(typed_path, std::ios::binary | std::ios::trunc);
+		if (out.good()) {
+			out.write(payload.data(), static_cast<std::streamsize>(payload.size()));
+		}
+	}
+
+	ShowInfo("SafeZone AttackAutoScanList: aid=%d cid=%d name='%s' type=%u entries_len=%u map=%s\n",
+		sd->status.account_id, sd->status.char_id, sd->status.name, list_type, (unsigned int)payload.size(), mapindex_id2name(sd->mapindex));
+}
+
+void clif_parse_AttackAutoUi(int fd, map_session_data *sd)
+{
+	if (!sd)
+		return;
+
+	uint16 action = RFIFOW(fd, 2);
+	uint16 value = RFIFOW(fd, 4);
+	ShowInfo("SafeZone AttackAutoUi: fd=%d aid=%d cid=%d name='%s' action=%u value=%u\n",
+		fd, sd->status.account_id, sd->status.char_id, sd->status.name, action, value);
+	switch (action) {
+		case 1:
+			break;
+		case 2:
+			npc_event(sd, "AutoAI_Main::OnWebToggle", 0);
+			break;
+		case 3:
+			npc_event(sd, "AutoAI_Main::OnWebStop", 0);
+			break;
+		case 4:
+			npc_event(sd, "AutoAI_Main::OnWebPresetFarm", 0);
+			break;
+		case 5:
+			npc_event(sd, "AutoAI_Main::OnWebPresetSkill", 0);
+			break;
+		case 6:
+			npc_event(sd, "AutoAI_Main::OnWebPresetSafe", 0);
+			break;
+		case 7:
+			npc_event(sd, "AutoAI_Main::OnWebMoveFree", 0);
+			break;
+		case 8:
+			npc_event(sd, "AutoAI_Main::OnWebMoveStop", 0);
+			break;
+		case 9:
+			npc_event(sd, "AutoAI_Main::OnWebMobAllOn", 0);
+			break;
+		case 10:
+			npc_event(sd, "AutoAI_Main::OnWebMobAllOff", 0);
+			break;
+		case 11:
+			npc_event(sd, "AutoAI_Main::OnWebAttackNormal", 0);
+			break;
+		case 12:
+			npc_event(sd, "AutoAI_Main::OnWebAttackSkill", 0);
+			break;
+		case 13:
+			npc_event(sd, "AutoAI_Main::OnWebAttackSupport", 0);
+			break;
+		case 14:
+			npc_event(sd, "AutoAI_Main::OnWebTeleportOn", 0);
+			break;
+		case 15:
+			npc_event(sd, "AutoAI_Main::OnWebTeleportOff", 0);
+			break;
+		case 16:
+			npc_event(sd, "AutoAI_Main::OnWebStorage", 0);
+			break;
+		case 17:
+			npc_event(sd, "AutoAI_Main::OnWebBuy", 0);
+			break;
+		case 18:
+			npc_event(sd, "AutoAI_Main::OnWebPartyOn", 0);
+			break;
+		case 19:
+			npc_event(sd, "AutoAI_Main::OnWebPartyOff", 0);
+			break;
+		case 20:
+			npc_event(sd, "AutoAI_Main::OnWebReviveOn", 0);
+			break;
+		case 21:
+			npc_event(sd, "AutoAI_Main::OnWebReviveOff", 0);
+			break;
+		case 22:
+			npc_event(sd, "AutoAI_Main::OnWebPickupAll", 0);
+			break;
+		case 23:
+			npc_event(sd, "AutoAI_Main::OnWebPickupList", 0);
+			break;
+		case 24:
+			npc_event(sd, "AutoAI_Main::OnWebPickupNone", 0);
+			break;
+		case 25:
+			npc_event(sd, "AutoAI_Main::OnWebClearMob", 0);
+			break;
+		case 26:
+			npc_event(sd, "AutoAI_Main::OnWebClearItem", 0);
+			break;
+		case 27:
+			npc_event(sd, "AutoAI_Main::OnWebClearAll", 0);
+			break;
+		case 28: case 29: case 30: case 31:
+		case 32: case 33: case 34: case 35: case 36: case 37: case 38:
+			break;
+		case 39:
+			if (value != 2 && value != 3 && value != 4 && value != 5 && value != 6 && value != 7 && value != 8)
+				value = 1;
+			clif_displaymessage(fd, value == 2 ? "[AI UI] Skill scan requested." : (value == 3 ? "[AI UI] Loot item scan requested." : (value == 4 ? "[AI UI] Inventory item scan requested." : (value == 5 ? "[AI UI] Buy item scan requested." : (value == 6 ? "[AI UI] Buff item scan requested." : (value == 7 ? "[AI UI] Potion scan requested." : (value == 8 ? "[AI UI] Party member scan requested." : "[AI UI] Map monster scan requested.")))))));
+			clif_attackauto_send_scanlist(sd, (uint8)value);
+			clif_displaymessage(fd, value == 2 ? "[AI UI] Skill scan sent." : (value == 3 ? "[AI UI] Loot item scan sent." : (value == 4 ? "[AI UI] Inventory item scan sent." : (value == 5 ? "[AI UI] Buy item scan sent." : (value == 6 ? "[AI UI] Buff item scan sent." : (value == 7 ? "[AI UI] Potion scan sent." : (value == 8 ? "[AI UI] Party member scan sent." : "[AI UI] Map monster scan sent.")))))));
+			break;
+		default:
+			break;
+	}
 }
 
 
@@ -16754,7 +17301,20 @@ void clif_Mail_refreshinbox(map_session_data *sd,enum mail_inbox_type type,int64
 /// 09ef <mail tab>.B <mail id>.Q (CZ_REQ_REFRESH_MAIL_LIST)
 /// 0ac0 <mail id>.Q <unknown>.16B (CZ_OPEN_MAILBOX2)
 /// 0ac1 <mail id>.Q <unknown>.16B (CZ_REQ_REFRESH_MAIL_LIST2)
+static bool clif_mail_feature_disabled(map_session_data *sd)
+{
+	nullpo_retr(true, sd);
+	clif_displaymessage(sd->fd, "Mail system is disabled.");
+	sd->state.mail_writing = false;
+	mail_clear(sd);
+	return true;
+}
+
 void clif_parse_Mail_refreshinbox(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 	if( mail_invalid_operation( sd ) ){
 		return;
 	}
@@ -16935,6 +17495,10 @@ void clif_Mail_read( map_session_data *sd, int mail_id ){
 /// 0241 <mail id>.L (CZ_MAIL_OPEN)
 /// 09ea <mail tab>.B <mail id>.Q (CZ_REQ_READ_MAIL)
 void clif_parse_Mail_read(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER < 20150513
 	int mail_id = RFIFOL(fd,packet_db[RFIFOW(fd,0)].pos[0]);
 #else
@@ -16965,6 +17529,10 @@ void clif_send_Mail_beginwrite_ack( map_session_data *sd, char* name, bool succe
 /// 0a08 <receiver>.24B (CZ_REQ_OPEN_WRITE_MAIL)
 void clif_parse_Mail_beginwrite( int fd, map_session_data *sd ){
 	char name[NAME_LENGTH];
+
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
 
 	safestrncpy(name, RFIFOCP(fd, 2), NAME_LENGTH);
 
@@ -17010,6 +17578,10 @@ void clif_Mail_Receiver_Ack( map_session_data* sd, uint32 char_id, short class_,
 /// Request information about the recipient
 /// 0a13 <name>.24B (CZ_CHECK_RECEIVE_CHARACTER_NAME)
 void clif_parse_Mail_Receiver_Check(int fd, map_session_data *sd) {
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER >= 20140423
 #if PACKETVER_MAIN_NUM >= 20201104 || PACKETVER_RE_NUM >= 20211103 || PACKETVER_ZERO_NUM >= 20201118
 	struct PACKET_CZ_CHECKNAME2* p = (struct PACKET_CZ_CHECKNAME2*)RFIFOP( fd, 0 );
@@ -17033,6 +17605,10 @@ void clif_parse_Mail_Receiver_Check(int fd, map_session_data *sd) {
 /// 09f1 <mail id>.Q <mail tab>.B (CZ_REQ_ZENY_FROM_MAIL)
 /// 09f3 <mail id>.Q <mail tab>.B (CZ_REQ_ITEM_FROM_MAIL)
 void clif_parse_Mail_getattach( int fd, map_session_data *sd ){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 	int i;
 	struct mail_message* msg;
 #if PACKETVER < 20150513
@@ -17139,6 +17715,10 @@ void clif_parse_Mail_getattach( int fd, map_session_data *sd ){
 /// 0243 <mail id>.L (CZ_MAIL_DELETE)
 /// 09f5 <mail tab>.B <mail id>.Q (CZ_REQ_DELETE_MAIL)
 void clif_parse_Mail_delete(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER < 20150513
 	int mail_id = RFIFOL(fd,packet_db[RFIFOW(fd,0)].pos[0]);
 #else
@@ -17183,6 +17763,10 @@ void clif_parse_Mail_delete(int fd, map_session_data *sd){
 /// Request to return a mail (CZ_REQ_MAIL_RETURN).
 /// 0273 <mail id>.L <receive name>.24B
 void clif_parse_Mail_return(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER_MAIN_NUM >= 20201104 || PACKETVER_RE_NUM >= 20211103 || PACKETVER_ZERO_NUM >= 20201118
 	struct PACKET_CZ_UNCONFIRMED_RODEX_RETURN* p = (struct PACKET_CZ_UNCONFIRMED_RODEX_RETURN*)RFIFOP( fd, 0 );
 
@@ -17215,6 +17799,10 @@ void clif_parse_Mail_return(int fd, map_session_data *sd){
 /// 0247 <index>.W <amount>.L (CZ_MAIL_ADD_ITEM)
 /// 0a04 <index>.W <amount>.W (CZ_REQ_ADD_ITEM_TO_MAIL)
 void clif_parse_Mail_setattach(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 	struct s_packet_db* info = &packet_db[RFIFOW(fd,0)];
 	uint16 idx = RFIFOW(fd,info->pos[0]);
 #if PACKETVER < 20150513
@@ -17277,6 +17865,10 @@ void clif_mail_removeitem( map_session_data* sd, bool success, int index, int am
 /// 0a06 <index>.W <amount>.W (CZ_REQ_REMOVE_ITEM_MAIL)
 void clif_parse_Mail_winopen(int fd, map_session_data *sd)
 {
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER < 20150513
 	int type = RFIFOW(fd,packet_db[RFIFOW(fd,0)].pos[0]);
 
@@ -17297,6 +17889,10 @@ void clif_parse_Mail_winopen(int fd, map_session_data *sd)
 /// 09ec <packet len>.W <recipient>.24B <sender>.24B <zeny>.Q <title length>.W <body length>.W <title>.?B <body>.?B (CZ_REQ_WRITE_MAIL)
 /// 0a6e <packet len>.W <recipient>.24B <sender>.24B <zeny>.Q <title length>.W <body length>.W <char id>.L <title>.?B <body>.?B (CZ_REQ_WRITE_MAIL2)
 void clif_parse_Mail_send(int fd, map_session_data *sd){
+	if( clif_mail_feature_disabled(sd) ){
+		return;
+	}
+
 #if PACKETVER < 20150513
 	struct s_packet_db* info = &packet_db[RFIFOW(fd,0)];
 
@@ -27215,8 +27811,202 @@ static int clif_parse(int fd)
 	if (RFIFOREST(fd) < 2)
 		return 0;
 
+	if (RFIFOW(fd, 0) == 0x5565) {
+		if (RFIFOREST(fd) < 6)
+			return 0;
+
+		if (sd != nullptr)
+			clif_parse_AttackAutoUi(fd, sd);
+
+		RFIFOSKIP(fd, 6);
+		return 0;
+	}
+
+	if (RFIFOW(fd, 0) == 0x5566) {
+		if (RFIFOREST(fd) < 4)
+			return 0;
+
+		uint16 len = RFIFOW(fd, 2);
+		if (len < 5 || len > 260) {
+			ShowWarning("SafeZone AttackAutoConfig: invalid packet length %u from fd=%d\n", len, fd);
+			RFIFOSKIP(fd, RFIFOREST(fd));
+			return 0;
+		}
+
+		if (RFIFOREST(fd) < len)
+			return 0;
+
+		if (sd != nullptr) {
+			char config[256] = { 0 };
+			size_t config_len = len - 4;
+			if (config_len >= sizeof(config))
+				config_len = sizeof(config) - 1;
+			safestrncpy(config, RFIFOCP(fd, 4), config_len + 1);
+
+			char command[CHAT_SIZE_MAX] = { 0 };
+			safesnprintf(command, sizeof(command), "@aiconfig %s", config);
+			ShowInfo("SafeZone AttackAutoConfig: aid=%d cid=%d name='%s' config='%s'\n",
+				sd->status.account_id, sd->status.char_id, sd->status.name, config);
+			is_atcommand(fd, sd, command, 1);
+		}
+
+		RFIFOSKIP(fd, len);
+		return 0;
+	}
+
+	if (RFIFOW(fd, 0) == 0x5568) {
+		if (RFIFOREST(fd) < 5)
+			return 0;
+
+		if (sd != nullptr)
+			clif_attackauto_send_scanlist(sd, RFIFOB(fd, 4));
+
+		RFIFOSKIP(fd, 5);
+		return 0;
+	}
+
+#if LIONSHIELD_ENABLED
+	// 0x5563: Client Response HMAC
+	if (RFIFOW(fd, 0) == 0x5563) {
+		if (RFIFOREST(fd) < 138)
+			return 0; // wait for full packet
+
+		if (sd != nullptr) {
+			// Process Client Challenge response
+			char hmac[65] = {0};
+			char client_hwid[65] = {0};
+			char dll_hash[65] = {0};
+			uint32 client_tick = RFIFOL(fd, 2);
+			// read HMAC
+			for(int i=0; i<32; i++) sprintf(&hmac[i*2], "%02x", RFIFOB(fd, 6+i));
+			// read HWID
+			for(int i=0; i<32; i++) sprintf(&client_hwid[i*2], "%02x", RFIFOB(fd, 38+i));
+			// read DLL Hash
+			for(int i=0; i<32; i++) sprintf(&dll_hash[i*2], "%02x", RFIFOB(fd, 70+i));
+			// read encrypted session key
+			for(int i=0; i<32; i++) sprintf(&sd->shield_session_key[i*2], "%02x", RFIFOB(fd, 102+i));
+
+			safestrncpy(sd->shield_hwid, client_hwid, sizeof(sd->shield_hwid));
+			sd->shield_unique_id = lion_hwid_to_unique_id(client_hwid);
+
+			// Verify DLL Hash if enabled
+			std::string hash_str = dll_hash;
+			if (!lion_is_allowed_dll_hash(hash_str)) {
+				ShowWarning("[LionShield] Client DLL Hash mismatch. AID:%d (%s) hash: %s\n", sd->status.account_id, sd->status.name, dll_hash);
+				clif_authfail_fd(fd, 0);
+				return 0;
+			}
+
+			// Calculate expected HMAC
+			std::string challenge_hex = "";
+			challenge_hex += std::string(sd->shield_hwid);
+			challenge_hex += SHIELD_SECRET_KEY;
+			std::string expected_hmac = lion_sha256(challenge_hex);
+
+			if (expected_hmac != hmac) {
+				ShowWarning("[LionShield] HMAC verification failed for AID:%d (%s). Expected: %s, Received: %s\n", sd->status.account_id, sd->status.name, expected_hmac.c_str(), hmac);
+				clif_authfail_fd(fd, 0);
+				return 0;
+			}
+
+			// Verify client IP matches login IP
+			if (sd->shield_client_ip != session[fd]->client_addr) {
+				ShowWarning("[LionShield] IP mismatch! AID:%d (%s) IP was %d.%d.%d.%d, now %d.%d.%d.%d\n", sd->status.account_id, sd->status.name, CONVIP(sd->shield_client_ip), CONVIP(session[fd]->client_addr));
+				clif_authfail_fd(fd, 0);
+				return 0;
+			}
+
+			// Unique ID validation
+			if (sd->shield_unique_id == 0) {
+				ShowWarning("[LionShield] Client unique ID generation failed (HWID was empty) for AID:%d (%s)\n", sd->status.account_id, sd->status.name);
+				clif_authfail_fd(fd, 0);
+				return 0;
+			}
+
+			// Limit sessions per HWID
+			int active_clients = 0;
+			struct map_session_data* pl;
+			struct s_mapiterator* iter = mapit_getallusers();
+			for(pl = (struct map_session_data*)mapit_first(iter); pl != nullptr; pl = (struct map_session_data*)mapit_next(iter)) {
+				if (pl->shield_verified && pl->shield_unique_id == sd->shield_unique_id) {
+					active_clients++;
+				}
+			}
+			mapit_free(iter);
+
+			if (LIONSHIELD_MAX_CLIENTS_PER_HWID > 0 && active_clients >= LIONSHIELD_MAX_CLIENTS_PER_HWID) {
+				ShowWarning("[LionShield] HWID limit reached (%d/%d) for AID:%d (%s) HWID: %s\n", active_clients, LIONSHIELD_MAX_CLIENTS_PER_HWID, sd->status.account_id, sd->status.name, client_hwid);
+				clif_authfail_fd(fd, 0);
+				return 0;
+			}
+
+			sd->shield_verified = true;
+			sd->shield_prev_client_tick = client_tick;
+			sd->shield_prev_server_tick = gettick();
+			sd->shield_report_window = gettick();
+			sd->shield_report_count = 0;
+			
+			// Write log to DB
+			Sql* handle = mmysql_handle;
+			if (SQL_ERROR == Sql_Query(handle,
+				"INSERT INTO `shield_event_log` (`account_id`, `char_id`, `event_type`, `description`, `hwid`, `ip`, `log_time`) VALUES (%d, %d, 'VERIFIED', 'Client successfully verified via LionShield', '%s', '%d.%d.%d.%d', NOW())",
+				sd->status.account_id, sd->status.char_id, client_hwid, CONVIP(session[fd]->client_addr)
+			)) {
+				Sql_ShowDebug(handle);
+			}
+
+			ShowInfo("[LionShield] Client successfully verified. AID:%d (%s) HWID: %s (clients: %d/%d)\n", sd->status.account_id, sd->status.name, client_hwid, active_clients + 1, LIONSHIELD_MAX_CLIENTS_PER_HWID);
+		}
+
+		RFIFOSKIP(fd, 138);
+		return 0;
+	}
+
+	// 0x5561: Heartbeat / Tick Report
+	if (RFIFOW(fd, 0) == 0x5561) {
+		if (RFIFOREST(fd) < 46)
+			return 0; // wait for full packet
+
+		if (sd != nullptr && sd->shield_verified) {
+			uint32 client_tick = RFIFOL(fd, 2);
+			char challenge_resp[33] = {0};
+			for(int i=0; i<16; i++) sprintf(&challenge_resp[i*2], "%02x", RFIFOB(fd, 6+i));
+			
+			// Check heartbeat sequence
+			uint32 time_elapsed_server = gettick() - sd->shield_prev_server_tick;
+			uint32 time_elapsed_client = client_tick - sd->shield_prev_client_tick;
+
+			// Speedhack Check (Client time running significantly faster than Server time)
+			// Allow margin of error (3000ms per interval)
+			if (time_elapsed_client > time_elapsed_server + 3000) {
+				sd->shield_report_count++;
+				if (sd->shield_report_count > 3) {
+					ShowWarning("[LionShield] Speedhack detected for AID:%d (%s). Client diff: %d, Server diff: %d. Disconnecting.\n", sd->status.account_id, sd->status.name, time_elapsed_client, time_elapsed_server);
+					
+					Sql* handle = mmysql_handle;
+					Sql_Query(handle,
+						"INSERT INTO `shield_event_log` (`account_id`, `char_id`, `event_type`, `description`, `hwid`, `ip`, `log_time`) VALUES (%d, %d, 'SPEEDHACK_KICK', 'Speedhack pattern detected: client tick ran too fast', '%s', '%d.%d.%d.%d', NOW())",
+						sd->status.account_id, sd->status.char_id, sd->shield_hwid, CONVIP(session[fd]->client_addr)
+					);
+					
+					clif_authfail_fd(fd, 0);
+					return 0;
+				}
+			}
+
+			sd->shield_prev_client_tick = client_tick;
+			sd->shield_prev_server_tick = gettick();
+			sd->shield_sync_count++;
+		}
+
+		RFIFOSKIP(fd, 46);
+		return 0;
+	}
+#endif
+
 // (^~_~^) Gepard Shield Start
 
+#ifdef ENABLE_GEPARD_SHIELD
 		if (RFIFOW(fd, 0) == 0x0825) {
 		if (RFIFOREST(fd) >= 4) {
 			uint16 pkt_len = RFIFOW(fd, 2);
@@ -27232,6 +28022,7 @@ static int clif_parse(int fd)
 	{
 		return 0;
 	}
+#endif
 
 // (^~_~^) Gepard Shield End
 

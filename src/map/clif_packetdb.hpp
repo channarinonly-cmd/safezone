@@ -2486,4 +2486,6 @@
 	parseable_packet(HEADER_CZ_REQ_BUY_EMOTION_EXPANSION, sizeof(struct PACKET_CZ_REQ_BUY_EMOTION_EXPANSION), clif_parse_req_buy_emotion_expansion, 0);
 #endif
 
+parseable_packet(0x5565, 6, clif_parse_AttackAutoUi, 2, 4);
+
 #endif /* CLIF_PACKETDB_HPP */

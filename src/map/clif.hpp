@@ -783,6 +783,8 @@ void clif_wis_message(map_session_data* sd, const char* nick, const char* mes, i
 void clif_wis_end(int fd, int result);
 
 void clif_solved_charname(int fd, int charid, const char* name);
+void clif_solved_charname_area(map_session_data* sd);
+void clif_openurl(map_session_data* sd, const char* url);
 void clif_name( struct block_list* src, struct block_list *bl, send_target target );
 #define clif_name_self(bl) clif_name( (bl), (bl), SELF )
 #define clif_name_area(bl) clif_name( (bl), (bl), AREA )
