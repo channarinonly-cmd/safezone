@@ -8,15 +8,6 @@
 #include <common/mmo.hpp> // ACCOUNT_REG2_NUM, WEB_AUTH_TOKEN_LENGTH
 #include <config/core.hpp>
 
-// (^~_~^) Gepard Shield Start
-
-#include <common/socket.hpp>
-
-void account_gepard_update_last_unique_id(int account_id, unsigned int unique_id);
-bool account_gepard_check_unique_id(int fd, struct socket_data* s);
-int account_gepard_check_license_version(struct socket_data* s, int fd, int group_id);
-
-// (^~_~^) Gepard Shield End
 
 typedef struct AccountDB AccountDB;
 typedef struct AccountDBIterator AccountDBIterator;
@@ -155,5 +146,7 @@ struct AccountDB {
 
 void mmo_send_global_accreg(AccountDB* self, int fd, uint32 account_id, uint32 char_id);
 void mmo_save_global_accreg(AccountDB* self, int fd, uint32 account_id, uint32 char_id);
+bool account_db_shield_save(AccountDB* self, uint32 account_id, const char* shield_hwid, uint64_t shield_unique_id);
+bool account_db_shield_load(AccountDB* self, uint32 account_id, char* shield_hwid, size_t shield_hwid_len, uint64_t* shield_unique_id);
 
 #endif /* ACCOUNT_HPP */

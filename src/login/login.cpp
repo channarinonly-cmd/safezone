@@ -90,6 +90,8 @@ struct online_login_data* login_add_online_user(int char_server, uint32 account_
 		p->account_id = account_id;
 		p->char_server = char_server;
 		p->waiting_disconnect = INVALID_TIMER;
+		p->shield_hwid[0] = '\0';
+		p->shield_unique_id = 0;
 	}else{
 		p->char_server = char_server;
 
@@ -99,9 +101,34 @@ struct online_login_data* login_add_online_user(int char_server, uint32 account_
 		}
 	}
 
+	struct auth_node* node = login_get_auth_node(account_id);
+	if (node != nullptr && node->shield_unique_id != 0) {
+		safestrncpy(p->shield_hwid, node->shield_hwid, sizeof(p->shield_hwid));
+		p->shield_unique_id = node->shield_unique_id;
+	} else if (p->shield_unique_id == 0) {
+		account_db_shield_load(accounts, account_id, p->shield_hwid, sizeof(p->shield_hwid), &p->shield_unique_id);
+	}
+
 	accounts->enable_webtoken( accounts, account_id );
 
 	return p;
+}
+
+int login_count_online_shield(uint64 shield_unique_id, uint32 except_account_id) {
+	if (shield_unique_id == 0)
+		return 0;
+
+	int count = 0;
+	for (const auto& pair : online_db) {
+		const struct online_login_data& data = pair.second;
+
+		if (data.account_id == except_account_id)
+			continue;
+		if (data.shield_unique_id == shield_unique_id)
+			count++;
+	}
+
+	return count;
 }
 
 /**
@@ -136,6 +163,9 @@ struct auth_node* login_add_auth_node( struct login_session_data* sd, uint32 ip 
 	node->account_id = sd->account_id;
 	node->login_id1 = sd->login_id1;
 	node->login_id2 = sd->login_id2;
+	node->shield_login_token = lion_secure_rnd32();
+	safestrncpy(node->shield_hwid, sd->shield_hwid, sizeof(node->shield_hwid));
+	node->shield_unique_id = (sd->shield_hwid[0] != '\0') ? lion_hwid_to_unique_id(sd->shield_hwid) : 0;
 	node->sex = sd->sex;
 	node->ip = ip;
 	node->clienttype = sd->clienttype;
@@ -691,6 +721,8 @@ bool login_config_read(const char* cfgName, bool normal) {
 			}
 		} else if (!strcmpi(w1, "usercount_disable"))
 			login_config.usercount_disable = config_switch(w2);
+		else if (!strcmpi(w1, "lionshield_enable"))
+			login_config.lionshield_enable = (bool)config_switch(w2);
 		else if (!strcmpi(w1, "usercount_low"))
 			login_config.usercount_low = atoi(w2);
 		else if (!strcmpi(w1, "usercount_medium"))
@@ -769,6 +801,7 @@ void login_set_defaults() {
 	login_config.client_hash_check = 0;
 	login_config.client_hash_nodes = NULL;
 	login_config.usercount_disable = false;
+	login_config.lionshield_enable = true;
 	login_config.usercount_low = 200;
 	login_config.usercount_medium = 500;
 	login_config.usercount_high = 1000;
@@ -806,19 +839,8 @@ void LoginServer::finalize(){
 		aFree(tmp);
 	}
 
-// (^~_~^) Gepard Shield Start
-/*
-// (^~_~^) Gepard Shield End
 	login_log(0, "login server", 100, "login server shutdown");
-// (^~_~^) Gepard Shield Start
-*/
-// (^~_~^) Gepard Shield End
 
-// (^~_~^) Gepard Shield Start
-
-	login_gepard_log(0, 0, "login server", 100, "login server shutdown");
-
-// (^~_~^) Gepard Shield End
 
 	ShowStatus("Terminating...\n");
 
@@ -912,19 +934,8 @@ bool LoginServer::initialize( int argc, char* argv[] ){
 	do_init_logincnslif();
 
 	ShowStatus("The login-server is " CL_GREEN "ready" CL_RESET " (Server is listening on the port %u).\n\n", login_config.login_port);
-// (^~_~^) Gepard Shield Start
-/*
-// (^~_~^) Gepard Shield End
 	login_log(0, "login server", 100, "login server started");
-// (^~_~^) Gepard Shield Start
-*/
-// (^~_~^) Gepard Shield End
 
-// (^~_~^) Gepard Shield Start
-
-	login_gepard_log(0, 0, "login server", 100, "login server started");
-
-// (^~_~^) Gepard Shield End
 
 	return true;
 }

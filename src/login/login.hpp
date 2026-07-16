@@ -4,6 +4,8 @@
 #ifndef LOGIN_HPP
 #define LOGIN_HPP
 
+#include <config/lionshield.hpp>
+
 #include <memory>
 
 #include <common/cbasetypes.hpp>
@@ -55,6 +57,14 @@ struct login_session_data {
 
 	uint8 client_hash[16];		///hash of client
 	int has_client_hash;		///client ha sent an hash
+
+	// LionShield - HWID preauth hint (0x5560 is advisory only)
+	char shield_hwid[65];		///< Last advisory HWID announced by the client
+	bool shield_verified;		///< Reserved for compatibility; real auth happens on map-server
+	uint32 shield_preauth_nonce;	///< One-time nonce emitido pelo login-server para o 0x5560
+	uint32 shield_preauth_token;	///< Token one-shot que vincula o 0x5560 a esta sessao de login
+	uint32 shield_preauth_expire;	///< Epoch second de expiracao do nonce atual
+	bool shield_preauth_pending;	///< Login aguardando a prova 0x5560 com nonce valido
 
 	int fd;				///socket of client
 
@@ -112,6 +122,7 @@ struct Login_Config {
 	char lanconf_name[256];							/// name of lan config file
 
 	bool usercount_disable;							/// Disable colorization and description in general?
+	bool lionshield_enable;							/// Enable or disable LionShield preauth checking
 	int usercount_low;								/// Amount of users that will display in green
 	int usercount_medium;							/// Amount of users that will display in yellow
 	int usercount_high;								/// Amount of users that will display in red
@@ -144,6 +155,8 @@ struct online_login_data {
 	uint32 account_id;
 	int waiting_disconnect;
 	int char_server;
+	char shield_hwid[65];
+	uint64 shield_unique_id;
 };
 
 /// Auth database
@@ -152,6 +165,9 @@ struct auth_node {
 	uint32 account_id;
 	uint32 login_id1;
 	uint32 login_id2;
+	uint32 shield_login_token;
+	char shield_hwid[65];
+	uint64 shield_unique_id;
 	uint32 ip;
 	char sex;
 	uint8 clienttype;
@@ -171,6 +187,8 @@ struct online_login_data* login_get_online_user( uint32 account_id );
  * @return the new|registered online data
  */
 struct online_login_data* login_add_online_user(int char_server, uint32 account_id);
+
+int login_count_online_shield(uint64 shield_unique_id, uint32 except_account_id);
 
 /**
  * Function to remove a user from online_db.

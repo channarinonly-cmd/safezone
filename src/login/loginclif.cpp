@@ -22,6 +22,142 @@
 #include "loginchrif.hpp"
 #include "loginlog.hpp"
 
+#include <ctime>
+#include <string>
+#include <unordered_map>
+#include <config/lionshield.hpp>
+
+// LionShield - vincula o 0x5560 a uma sessao pendente via token one-shot.
+namespace {
+	struct ShieldPendingPreauth {
+		int32 fd;
+		uint32_t issued_sec;
+	};
+	struct PACKET_LABX_PREAUTH_CHALLENGE {
+		uint16 packetType;
+		uint16 packetLen;
+		uint32 server_nonce;
+		uint32 preauth_token;
+		uint32 padding;
+	};
+	static constexpr uint16 LIONSHIELD_LOGIN_CHALLENGE_PACKET = 0x5564;
+	static constexpr uint16 LIONSHIELD_HWID_PACKET_LEN = 208;
+	static constexpr uint32 LIONSHIELD_PREAUTH_TTL_SEC = 15;
+	static std::unordered_map<uint32_t, ShieldPendingPreauth> g_shield_preauth_tokens;
+	static uint32_t g_shield_preauth_cleanup = 0;
+
+	static void shield_cleanup_preauth_tokens(uint32_t now) {
+		if (now < g_shield_preauth_cleanup)
+			return;
+
+		for (auto it = g_shield_preauth_tokens.begin(); it != g_shield_preauth_tokens.end(); ) {
+			bool expired = now - it->second.issued_sec > 60;
+			bool invalid_fd = !session_isValid(it->second.fd) || session[it->second.fd] == nullptr || session[it->second.fd]->session_data == nullptr;
+			if (expired || invalid_fd) {
+				if (!invalid_fd) {
+					auto* sd = (struct login_session_data*)session[it->second.fd]->session_data;
+					if (sd != nullptr && sd->shield_preauth_token == it->first)
+						sd->shield_preauth_token = 0;
+				}
+				it = g_shield_preauth_tokens.erase(it);
+			} else {
+				++it;
+			}
+		}
+
+		g_shield_preauth_cleanup = now + 120;
+	}
+
+	static void shield_unregister_preauth_token(struct login_session_data* sd) {
+		if (sd == nullptr || sd->shield_preauth_token == 0)
+			return;
+
+		g_shield_preauth_tokens.erase(sd->shield_preauth_token);
+		sd->shield_preauth_token = 0;
+	}
+
+	static uint32_t shield_issue_preauth_token(int32 fd, struct login_session_data* sd) {
+		uint32_t now = (uint32_t)time(nullptr);
+		shield_cleanup_preauth_tokens(now);
+		shield_unregister_preauth_token(sd);
+
+		uint32_t token = 0;
+		do {
+			token = lion_secure_rnd32();
+		} while (token == 0 || g_shield_preauth_tokens.find(token) != g_shield_preauth_tokens.end());
+
+		g_shield_preauth_tokens[token] = { fd, now };
+		sd->shield_preauth_token = token;
+		return token;
+	}
+
+	static struct login_session_data* shield_consume_preauth_target(uint32_t token, uint32_t source_ip) {
+		if (token == 0)
+			return nullptr;
+
+		uint32_t now = (uint32_t)time(nullptr);
+		shield_cleanup_preauth_tokens(now);
+
+		auto it = g_shield_preauth_tokens.find(token);
+		if (it == g_shield_preauth_tokens.end())
+			return nullptr;
+
+		int32 target_fd = it->second.fd;
+		g_shield_preauth_tokens.erase(it);
+
+		if (!session_isValid(target_fd) || session[target_fd] == nullptr || session[target_fd]->session_data == nullptr)
+			return nullptr;
+
+		if ((uint32_t)session[target_fd]->client_addr != source_ip)
+			return nullptr;
+
+		auto* target_sd = (struct login_session_data*)session[target_fd]->session_data;
+		if (target_sd == nullptr || target_sd->shield_preauth_token != token || !target_sd->shield_preauth_pending)
+			return nullptr;
+
+		if (now >= target_sd->shield_preauth_expire) {
+			target_sd->shield_preauth_token = 0;
+			return nullptr;
+		}
+
+		target_sd->shield_preauth_token = 0;
+		return target_sd;
+	}
+
+} // namespace
+
+static void shield_send_preauth_challenge(int32 fd, struct login_session_data* sd) {
+	if (sd == nullptr)
+		return;
+
+	uint32 now = (uint32)time(nullptr);
+	sd->shield_preauth_nonce = lion_secure_rnd32();
+	sd->shield_preauth_expire = now + LIONSHIELD_PREAUTH_TTL_SEC;
+	uint32 token = shield_issue_preauth_token(fd, sd);
+
+	WFIFOHEAD(fd, sizeof(PACKET_LABX_PREAUTH_CHALLENGE));
+	WFIFOW(fd, 0) = LIONSHIELD_LOGIN_CHALLENGE_PACKET;
+	WFIFOW(fd, 2) = sizeof(PACKET_LABX_PREAUTH_CHALLENGE);
+	WFIFOL(fd, 4) = sd->shield_preauth_nonce;
+	WFIFOL(fd, 8) = token;
+	WFIFOL(fd, 12) = 0; // padding
+	WFIFOSET(fd, sizeof(PACKET_LABX_PREAUTH_CHALLENGE));
+	ShowInfo("[LionShield] Preauth challenge enviado para fd=%d nonce=%08X token=%08X\n", fd, sd->shield_preauth_nonce, token);
+}
+
+static bool shield_defer_login_until_preauth(int32 fd, struct login_session_data* sd, const char* ip) {
+	if (!login_config.lionshield_enable)
+		return false;
+
+	if (sd == nullptr || sd->shield_hwid[0] != '\0')
+		return false;
+
+	shield_send_preauth_challenge(fd, sd);
+	sd->shield_preauth_pending = true;
+	ShowInfo("[LionShield] Preauth challenge enviado para IP: %s nonce=%08X token=%08X\n", ip, sd->shield_preauth_nonce, sd->shield_preauth_token);
+	return true;
+}
+
 /**
  * Transmit auth result to client.
  * @param fd: client file desciptor link
@@ -108,20 +244,16 @@ static void logclif_auth_ok(struct login_session_data* sd) {
 		}
 	}
 
-// (^~_~^) Gepard Shield Start
-/*
-// (^~_~^) Gepard Shield End
+	// LionShield - preauth check (controlled by config)
+	if (login_config.lionshield_enable && sd->shield_hwid[0] == '\0') {
+		ShowWarning("[LionShield] Login BLOQUEADO - preauth 0x5560 ausente/incompleto. IP: %s conta: %s\n",
+			ip2str(ip, nullptr), sd->userid);
+		logclif_sent_auth_result(fd, 3); // Rejected from Server
+		return;
+	}
+
 	login_log(ip, sd->userid, 100, "login ok");
-// (^~_~^) Gepard Shield Start
-*/
-// (^~_~^) Gepard Shield End
 
-// (^~_~^) Gepard Shield Start
-
-	account_gepard_update_last_unique_id(sd->account_id, session[fd]->gepard_info.unique_id);
-	login_gepard_log(fd, ip, sd->userid, 100, "login ok");
-
-// (^~_~^) Gepard Shield End
 
 	ShowStatus("Connection of the account '%s' accepted.\n", sd->userid);
 
@@ -225,29 +357,13 @@ static void logclif_auth_failed(struct login_session_data* sd, int result) {
 
 	if (login_config.log_login)
 	{
-// (^~_~^) Gepard Shield Start
-/*
-// (^~_~^) Gepard Shield End
 		if(result >= 0 && result <= 15)
 		    login_log(ip, sd->userid, result, msg_txt(result));
 		else if(result >= 99 && result <= 104)
 		    login_log(ip, sd->userid, result, msg_txt(result-83)); //-83 offset
 		else
 		    login_log(ip, sd->userid, result, msg_txt(22)); //unknow error
-// (^~_~^) Gepard Shield Start
-*/
-// (^~_~^) Gepard Shield End
 
-// (^~_~^) Gepard Shield Start
-
-		if (result >= 0 && result <= 15)
-		    login_gepard_log(fd, ip, sd->userid, result, msg_txt(result));
-		else if (result >= 99 && result <= 104)
-		    login_gepard_log(fd, ip, sd->userid, result, msg_txt(result-83)); //-83 offset
-		else
-		    login_gepard_log(fd, ip, sd->userid, result, msg_txt(22)); //unknow error
-
-// (^~_~^) Gepard Shield End
 
 	}
 
@@ -313,6 +429,8 @@ static bool logclif_parse_reqauth_raw( int fd, login_session_data& sd ){
 	}
 
 	sd.passwdenc = 0;
+	if (shield_defer_login_until_preauth(fd, &sd, ip))
+		return true;
 
 	int result = login_mmo_auth( &sd, false );
 
@@ -345,6 +463,9 @@ static bool logclif_parse_reqauth_md5( int fd, login_session_data& sd ){
 		logclif_auth_failed( &sd, 3 ); // send "rejected from server"
 		return false;
 	}
+
+	if (shield_defer_login_until_preauth(fd, &sd, ip))
+		return true;
 
 	int result = login_mmo_auth( &sd, false );
 
@@ -379,6 +500,8 @@ static bool logclif_parse_reqauth_sso( int fd, login_session_data& sd ){
 	}
 
 	sd.passwdenc = 0;
+	if (shield_defer_login_until_preauth(fd, &sd, ip))
+		return true;
 
 	int result = login_mmo_auth( &sd, false );
 
@@ -452,19 +575,8 @@ static int logclif_parse_reqcharconnec(int fd, struct login_session_data *sd, ch
 
 		ShowInfo("Connection request of the char-server '%s' @ %u.%u.%u.%u:%u (account: '%s', ip: '%s')\n", server_name, CONVIP(server_ip), server_port, sd->userid, ip);
 		sprintf(message, "charserver - %s@%u.%u.%u.%u:%u", server_name, CONVIP(server_ip), server_port);
-// (^~_~^) Gepard Shield Start
-/*
-// (^~_~^) Gepard Shield End
 		login_log(session[fd]->client_addr, sd->userid, 100, message);
-// (^~_~^) Gepard Shield Start
-*/
-// (^~_~^) Gepard Shield End
 
-// (^~_~^) Gepard Shield Start
-
-		login_gepard_log(fd, session[fd]->client_addr, sd->userid, 100, message);
-
-// (^~_~^) Gepard Shield End
 
 		result = login_mmo_auth(sd, true);
 		if( global_core->is_running() &&
@@ -524,7 +636,6 @@ static bool logclif_parse_otp_login( int fd, struct login_session_data& ){
 	return 1;
 }
 
-
 class LoginPacketDatabase : public PacketDatabase<login_session_data>{
 public:
 	LoginPacketDatabase(){
@@ -567,19 +678,8 @@ int logclif_parse(int fd) {
 		if( login_config.ipban && ipban_check(ipl) )
 		{
 			ShowStatus("Connection refused: IP isn't authorised (deny/allow, ip: %s).\n", ip);
-// (^~_~^) Gepard Shield Start
-/*
-// (^~_~^) Gepard Shield End
 			login_log(ipl, "unknown", -3, "ip banned");
-// (^~_~^) Gepard Shield Start
-*/
-// (^~_~^) Gepard Shield End
 
-// (^~_~^) Gepard Shield Start
-
-	login_gepard_log(fd, ipl, "unknown", -3, "ip banned");
-
-// (^~_~^) Gepard Shield End
 
 			logclif_auth_failed( fd, 3 ); // 3 = Rejected from Server
 
@@ -596,39 +696,123 @@ int logclif_parse(int fd) {
 	{
 		uint16 command = RFIFOW(fd,0);
 
-// (^~_~^) Gepard Shield Start
-
-		if (command == 0x0825) {
-			if (RFIFOREST(fd) >= 4) {
-				uint16 pkt_len = RFIFOW(fd, 2);
-				if (RFIFOREST(fd) >= pkt_len) {
-					session[fd]->flag.roplay = 1;
-					RFIFOSKIP(fd, pkt_len);
-					continue;
-				}
-			}
-		}
-
-		if (is_gepard_active == true && !session[fd]->flag.roplay)
-		{
-			bool is_processed = gepard_process_cs_packet(fd, session[fd], 0);
-
-			if (is_processed == true)
-			{
-				if (command == CS_GEPARD_INIT_ACK)
-				{
-					account_gepard_check_unique_id(fd, session[fd]);
-				}
-
-				return 0;
-			}
-		}
-
-// (^~_~^) Gepard Shield End
 
 		switch( command ){
 			// Connection request of a char-server
 			case 0x2710: logclif_parse_reqcharconnec(fd,sd, ip); return 0; // processing will continue elsewhere
+			// LionShield - receive HWID + HMAC (packet 0x5560)
+			case 0x5560: {
+				if (RFIFOREST(fd) < LIONSHIELD_HWID_PACKET_LEN)
+					return 0;
+				// Per-IP rate limiting: max 5 auth attempts per 60s
+				{
+					struct RLEntry { uint32_t count; uint32_t first_sec; };
+					static std::unordered_map<uint32_t, RLEntry> s_5560_rl;
+					static uint32_t s_next_cleanup = 0;
+					uint32_t now_sec = (uint32_t)time(nullptr);
+					uint32_t client_ip = (uint32_t)session[fd]->client_addr;
+					if (now_sec >= s_next_cleanup) {
+						for (auto it = s_5560_rl.begin(); it != s_5560_rl.end(); )
+							it = (now_sec - it->second.first_sec > 60) ? s_5560_rl.erase(it) : ++it;
+						s_next_cleanup = now_sec + 120;
+					}
+					auto& rl = s_5560_rl[client_ip];
+					if (now_sec - rl.first_sec > 60) { rl.count = 0; rl.first_sec = now_sec; }
+					if (++rl.count > 5) {
+						ShowWarning("[LionShield] 0x5560 rate limit exceeded IP: %s -- disconnecting\n", ip);
+						set_eof(fd);
+						return 0;
+					}
+				}
+				char hwid_tmp[65] = {};
+				uint32_t client_nonce = RFIFOL(fd, 68);
+				uint32_t server_nonce = RFIFOL(fd, 72);
+				uint32_t preauth_token = RFIFOL(fd, 76);
+				char dll_hash_tmp[65] = {};
+				char hmac_tmp[65] = {};
+				memcpy(hwid_tmp, RFIFOP(fd, 4),  64);
+				memcpy(dll_hash_tmp, RFIFOP(fd, 80), 64);
+				memcpy(hmac_tmp, RFIFOP(fd, 144), 64);
+				auto is_hex64 = [](const char* p) {
+					for (int i = 0; i < 64; i++) {
+						char c = p[i];
+						if (!((c>='0'&&c<='9')||(c>='a'&&c<='f')||(c>='A'&&c<='F'))) return false;
+					}
+					return true;
+				};
+				if (!is_hex64(hwid_tmp) || !is_hex64(dll_hash_tmp) || !is_hex64(hmac_tmp)) {
+					ShowWarning("[LionShield] Invalid HWID packet from IP: %s\n", ip);
+					RFIFOSKIP(fd, LIONSHIELD_HWID_PACKET_LEN); break;
+				}
+				auto* target_sd = shield_consume_preauth_target(preauth_token, (uint32_t)session[fd]->client_addr);
+				if (target_sd == nullptr) {
+					ShowWarning("[LionShield] Invalid preauth token from IP: %s token=%08X\n", ip, preauth_token);
+					RFIFOSKIP(fd, LIONSHIELD_HWID_PACKET_LEN); break;
+				}
+				if (target_sd->shield_hwid[0] != '\0') {
+					ShowWarning("[LionShield] Duplicate 0x5560 from IP: %s token=%08X\n", ip, preauth_token);
+					RFIFOSKIP(fd, LIONSHIELD_HWID_PACKET_LEN); break;
+				}
+				uint32 now_sec = (uint32)time(nullptr);
+				if (target_sd->shield_preauth_nonce == 0 || target_sd->shield_preauth_nonce != server_nonce || now_sec >= target_sd->shield_preauth_expire) {
+					ShowWarning("[LionShield] Invalid or expired preauth nonce from IP: %s\n", ip);
+					RFIFOSKIP(fd, LIONSHIELD_HWID_PACKET_LEN); break;
+				}
+				std::string hwid_str(hwid_tmp);
+				for (auto& c : hwid_str) c = toupper(c);
+				std::string dll_hash_str(dll_hash_tmp);
+				for (auto& c : dll_hash_str) c = toupper(c);
+				char client_nonce_hex[9] = {};
+				char server_nonce_hex[9] = {};
+				char token_hex[9] = {};
+				snprintf(client_nonce_hex, sizeof(client_nonce_hex), "%08X", client_nonce);
+				snprintf(server_nonce_hex, sizeof(server_nonce_hex), "%08X", server_nonce);
+				snprintf(token_hex, sizeof(token_hex), "%08X", preauth_token);
+				std::string expected = lion_sha256(hwid_str + client_nonce_hex + server_nonce_hex + token_hex + dll_hash_str + "P0T2" + SHIELD_SECRET_KEY);
+				std::string received(hmac_tmp);
+				for (auto& c : received) c = tolower(c);
+				if (received != expected) {
+					std::string debug_str = hwid_str + client_nonce_hex + server_nonce_hex + token_hex + dll_hash_str + "P0T2" + SHIELD_SECRET_KEY;
+					ShowWarning("[LionShield] HMAC mismatch. IP: %s\n", ip);
+					ShowWarning("  Expected: %s\n", expected.c_str());
+					ShowWarning("  Received: %s\n", received.c_str());
+					ShowWarning("  Debug String: %s\n", debug_str.c_str());
+					RFIFOSKIP(fd, LIONSHIELD_HWID_PACKET_LEN); break;
+				}
+				if (!lion_is_allowed_dll_hash(dll_hash_str)) {
+					ShowWarning("[LionShield] DLL hash not allowed from IP: %s hash=%.64s\n", ip, dll_hash_tmp);
+					RFIFOSKIP(fd, LIONSHIELD_HWID_PACKET_LEN); break;
+				}
+				memset(target_sd->shield_hwid, 0, sizeof(target_sd->shield_hwid));
+				memcpy(target_sd->shield_hwid, hwid_str.c_str(), 64);
+				target_sd->shield_verified = false;
+				target_sd->shield_preauth_nonce = 0;
+				target_sd->shield_preauth_token = 0;
+				target_sd->shield_preauth_expire = 0;
+				ShowInfo("[LionShield] HWID preauth accepted: %.64s | IP: %s token=%08X\n", target_sd->shield_hwid, ip, preauth_token);
+				RFIFOSKIP(fd, LIONSHIELD_HWID_PACKET_LEN);
+				if (target_sd->shield_preauth_pending) {
+					target_sd->shield_preauth_pending = false;
+					int32 result = login_mmo_auth(target_sd, false);
+					if (result == -1) {
+						uint64_t uid = lion_hwid_to_unique_id(target_sd->shield_hwid);
+						if (LIONSHIELD_MAX_CLIENTS_PER_HWID > 0) {
+							int active_clients = login_count_online_shield(uid, target_sd->account_id);
+							if (active_clients >= LIONSHIELD_MAX_CLIENTS_PER_HWID) {
+								ShowWarning("[LionShield] HWID client limit exceeded. AID:%u HWID:%.64s active:%d limit:%d\n",
+									target_sd->account_id, target_sd->shield_hwid, active_clients, LIONSHIELD_MAX_CLIENTS_PER_HWID);
+								logclif_auth_failed(target_sd, 3);
+								break;
+							}
+						}
+						account_db_shield_save(login_get_accounts_db(), target_sd->account_id, target_sd->shield_hwid, uid);
+						logclif_auth_ok(target_sd);
+					} else {
+						logclif_auth_failed(target_sd, result);
+					}
+				}
+				break;
+			}
 			default:
 				if( !login_packet_db.handle( fd, *sd ) ){
 					return 0;

@@ -44,166 +44,6 @@ typedef struct AccountDBIterator_SQL {
 	int last_account_id;
 } AccountDBIterator_SQL;
 
-// (^~_~^) Gepard Shield Start
-static AccountDB_SQL* db_sql;
-
-void account_gepard_init(AccountDB* self)
-{
-	db_sql = (AccountDB_SQL*)self;
-
-	if (SQL_SUCCESS != Sql_Query(db_sql->accounts,
-		"CREATE TABLE IF NOT EXISTS `gepard_report_log` ("
-		"`time` datetime NOT NULL,"
-		"`unique_id` int(11) unsigned NOT NULL DEFAULT '0',"
-		"`account_id` int(11) unsigned NOT NULL DEFAULT '0',"
-		"`char_id` int(11) unsigned NOT NULL DEFAULT '0',"
-		"`char_name` varchar(24) NOT NULL,"
-		"`report_str` varchar(120) NOT NULL"
-		") ENGINE=MyISAM DEFAULT CHARSET=latin1;"))
-	{
-		Sql_ShowDebug(db_sql->accounts);
-		exit(EXIT_FAILURE);
-	}
-
-	if (SQL_SUCCESS != Sql_Query(db_sql->accounts, 
-		"CREATE TABLE IF NOT EXISTS `gepard_block` ("
-		"`unique_id` int(11) unsigned NOT NULL DEFAULT '0',"
-		"`unban_time` datetime NOT NULL,"
-		"`reason` varchar(50) NOT NULL,"
-		"UNIQUE KEY `unique_id` (`unique_id`)"
-		") ENGINE=MyISAM DEFAULT CHARSET=latin1;"))
-	{
-		Sql_ShowDebug(db_sql->accounts);
-		exit(EXIT_FAILURE);
-	}
-
-	if (SQL_SUCCESS != Sql_Query(db_sql->accounts, 
-		"CREATE TABLE IF NOT EXISTS `gepard_block_log` ("
-		"`id` int(11) unsigned NOT NULL AUTO_INCREMENT,"
-		"`unique_id` int(11) unsigned NOT NULL DEFAULT '0',"
-		"`block_time` datetime NOT NULL,"
-		"`unban_time` datetime NOT NULL,"
-		"`violator_name` varchar(24) NOT NULL,"
-		"`violator_account_id` int(11) NOT NULL,"
-		"`initiator_name` varchar(24) NOT NULL,"
-		"`initiator_account_id` int(11) NOT NULL,"
-		"`reason` varchar(50) NOT NULL,"
-		"PRIMARY KEY (`id`)"
-		") ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1;"))
-	{
-		Sql_ShowDebug(db_sql->accounts);
-		exit(EXIT_FAILURE);
-	}
-
-	if (SQL_SUCCESS != Sql_Query(db_sql->accounts, "SHOW COLUMNS FROM `login` LIKE 'last_unique_id'"))
-	{
-		Sql_ShowDebug(db_sql->accounts);
-		exit(EXIT_FAILURE);
-	}
-
-	if (Sql_NumRows(db_sql->accounts) == 0)
-	{
-		if (SQL_SUCCESS != Sql_Query(db_sql->accounts, "ALTER TABLE `login` ADD `last_unique_id` INT(11) UNSIGNED NOT NULL DEFAULT '0';"))
-		{
-			Sql_ShowDebug(db_sql->accounts);
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	if (SQL_SUCCESS != Sql_Query(db_sql->accounts, "SHOW COLUMNS FROM `login` LIKE 'blocked_unique_id'"))
-	{
-		Sql_ShowDebug(db_sql->accounts);
-		exit(EXIT_FAILURE);
-	}
-
-	if (Sql_NumRows(db_sql->accounts) == 0)
-	{
-		if (SQL_SUCCESS != Sql_Query(db_sql->accounts, "ALTER TABLE `login` ADD `blocked_unique_id` INT(11) UNSIGNED NOT NULL DEFAULT '0';"))
-		{
-			Sql_ShowDebug(db_sql->accounts);
-			exit(EXIT_FAILURE);
-		}
-	}
-}
-
-void account_gepard_update_last_unique_id(int account_id, unsigned int unique_id)
-{
-	if (is_gepard_active == false)
-	{
-		return;
-	}
-
-	if (SQL_SUCCESS != Sql_Query(db_sql->accounts, "UPDATE `login` SET `last_unique_id`= '%u' WHERE `account_id` = '%d'", unique_id, account_id))
-	{
-		Sql_ShowDebug(db_sql->accounts);
-	}
-	else if (SQL_SUCCESS == Sql_NextRow(db_sql->accounts))
-	{
-		Sql_ShowDebug(db_sql->accounts);
-	}
-
-	Sql_FreeResult(db_sql->accounts);
-}
-
-bool account_gepard_check_unique_id(int fd, struct socket_data* s)
-{
-	unsigned int unique_id = s->gepard_info.unique_id;
-
-	if (SQL_SUCCESS != Sql_Query(db_sql->accounts, "SELECT `unban_time`, `reason` FROM `gepard_block` WHERE `unique_id` = '%u'", unique_id))
-	{
-		Sql_ShowDebug(db_sql->accounts);
-		gepard_send_info(fd, GEPARD_INFO_MESSAGE, "Tell administrator about SQL problem.");
-	}
-	else if (SQL_SUCCESS == Sql_NextRow(db_sql->accounts))
-	{
-		char* data;
-		struct tm unblock_tm;
-		time_t time_unban, time_server;
-		int year, month, day, hour, min, sec;
-		char reason_str[GEPARD_REASON_LENGTH];
-		char unban_time_str[GEPARD_TIME_STR_LENGTH];
-
-		memset((void*)&unblock_tm, 0, sizeof(unblock_tm));
-
-		Sql_GetData(db_sql->accounts,  0, &data, NULL);
-		safestrncpy(unban_time_str, data, sizeof(unban_time_str));
-
-		sscanf(unban_time_str, "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &min, &sec);
-
-		unblock_tm.tm_year = year - 1900;
-		unblock_tm.tm_mon = month - 1;
-		unblock_tm.tm_mday = day;
-		unblock_tm.tm_hour = hour;
-		unblock_tm.tm_min = min;
-		unblock_tm.tm_sec = sec;
-
-		time_unban = mktime(&unblock_tm);
-		time(&time_server);
-
-		if (time_server <= time_unban)
-		{
-			char message_info[200];
-
-			Sql_GetData(db_sql->accounts,  1, &data, NULL);
-			safestrncpy(reason_str, data, sizeof(reason_str));
-
-			safesnprintf(message_info, sizeof(message_info), "Unique ID has been banned!\r\rDate of unban:  %s\r\rUnique id: %u\r\rReason: %s", unban_time_str, unique_id, reason_str);
-
-			s->gepard_info.is_init_ack_received = false;
-
-			gepard_send_info(fd, GEPARD_INFO_BANNED, message_info);
-		}
-		else if (SQL_ERROR == Sql_Query(db_sql->accounts, "DELETE FROM `gepard_block` WHERE `unique_id` = '%u'", unique_id))
-		{
-			Sql_ShowDebug(db_sql->accounts);
-		}
-	}
-
-	Sql_FreeResult(db_sql->accounts);
-
-	return false;
-}
-// (^~_~^) Gepard Shield End
 
 /// internal functions
 static bool account_db_sql_init(AccountDB* self);
@@ -284,14 +124,6 @@ static bool account_db_sql_init(AccountDB* self) {
 	if( !db->codepage.empty() && SQL_ERROR == Sql_SetEncoding(sql_handle, db->codepage.c_str()) )
 		Sql_ShowDebug(sql_handle);
 
-// (^~_~^) Gepard Shield Start
-
-	if (is_gepard_active == true)
-	{
-		account_gepard_init(self);
-	}
-
-// (^~_~^) Gepard Shield End
 
 	self->remove_webtokens( self );
 
@@ -1121,4 +953,60 @@ bool account_db_sql_remove_webtokens( AccountDB* self ){
 	}
 
 	return true;
+}
+
+// LionShield: persiste shield_hwid e shield_unique_id
+bool account_db_shield_save(AccountDB* self, uint32 account_id, const char* shield_hwid, uint64_t shield_unique_id) {
+	AccountDB_SQL* db = (AccountDB_SQL*)self;
+	if (!db || !db->accounts) {
+		ShowWarning("[LionShield] account_db_shield_save: handle SQL nulo para AID:%u\n",
+			(unsigned)account_id);
+		return false;
+	}
+	char escaped[129] = {};
+	Sql_EscapeString(db->accounts, escaped, shield_hwid ? shield_hwid : "");
+	if (SQL_ERROR == Sql_Query(db->accounts,
+		"UPDATE `%s` SET `shield_hwid` = '%s', `shield_unique_id` = '%" PRIu64 "'"
+		" WHERE `account_id` = '%u'",
+		db->account_db, escaped, shield_unique_id, (unsigned)account_id)) {
+		Sql_ShowDebug(db->accounts);
+		ShowWarning("[LionShield] Falha ao salvar shield_hwid para AID:%u"
+			" -- verifique se lionshield.sql foi aplicado!\n", (unsigned)account_id);
+		return false;
+	}
+	ShowInfo("[LionShield] shield_hwid/shield_unique_id salvos no login DB para AID:%u\n",
+		(unsigned)account_id);
+	return true;
+}
+
+bool account_db_shield_load(AccountDB* self, uint32 account_id, char* shield_hwid, size_t shield_hwid_len, uint64_t* shield_unique_id) {
+	AccountDB_SQL* db = (AccountDB_SQL*)self;
+	if (!db || !db->accounts || shield_hwid == nullptr || shield_hwid_len == 0 || shield_unique_id == nullptr)
+		return false;
+
+	shield_hwid[0] = '\0';
+	*shield_unique_id = 0;
+
+	if (SQL_ERROR == Sql_Query(db->accounts,
+		"SELECT `shield_hwid`, `shield_unique_id` FROM `%s` WHERE `account_id` = '%u' LIMIT 1",
+		db->account_db, (unsigned)account_id)) {
+		Sql_ShowDebug(db->accounts);
+		return false;
+	}
+
+	if (SQL_SUCCESS != Sql_NextRow(db->accounts)) {
+		Sql_FreeResult(db->accounts);
+		return false;
+	}
+
+	char* data = nullptr;
+	size_t len = 0;
+	if (SQL_SUCCESS == Sql_GetData(db->accounts, 0, &data, &len) && data != nullptr)
+		safestrncpy(shield_hwid, data, shield_hwid_len);
+
+	if (SQL_SUCCESS == Sql_GetData(db->accounts, 1, &data, &len) && data != nullptr)
+		*shield_unique_id = strtoull(data, nullptr, 10);
+
+	Sql_FreeResult(db->accounts);
+	return shield_hwid[0] != '\0' && *shield_unique_id != 0;
 }
